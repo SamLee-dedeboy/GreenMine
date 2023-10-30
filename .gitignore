@@ -1,5 +1,6 @@
 api_key
 data/*
+!data/README.md
 taskone
 Rui
 .vscode
