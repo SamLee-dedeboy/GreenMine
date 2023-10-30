@@ -9,10 +9,10 @@
         1: "bg-gray-100",
         0: "bg-lime-100"
     }
-    $: show_chunk = Array.apply(null, Array(data.reduce((total_chunks, interview_chunk_num) => total_chunks + interview_chunk_num, 0))).map(() => false);
+    $: show_chunk = data.map(interview => interview.data.map(chunk => false))
     $: show_interview = Array.apply(null, Array(data.length)).map(() => false);
     onMount(() => {
-        console.log(data)
+        console.log(data, show_chunk)
     })
 </script>
 <div>
@@ -28,8 +28,8 @@
                         {#each interview.data as chunk, chunk_index}
                             <!-- svelte-ignore a11y-click-events-have-key-events -->
                             <!-- svelte-ignore a11y-no-static-element-interactions -->
-                            <div class="interview-chunk pl-2 border rounded cursor-pointer hover:bg-gray-300" on:click={() => show_chunk[chunk_index] = !show_chunk[chunk_index]}> chunk_{chunk_index} </div>
-                            {#if show_chunk[chunk_index]}
+                            <div class="interview-chunk pl-2 border rounded cursor-pointer hover:bg-gray-300" on:click={() => show_chunk[interview_index][chunk_index] = !show_chunk[interview_index][chunk_index]}> chunk_{chunk_index} </div>
+                            {#if show_chunk[interview_index][chunk_index]}
                                 {#each chunk as message, message_index}
                                 <div class="interview-message border-b ml-3 p-1 border-l border-black border-dashed {speaker_background[message.speaker]}">
                                     <div class="interview-message-speaker font-bold"> {speaker_title[message.speaker]}: </div>
