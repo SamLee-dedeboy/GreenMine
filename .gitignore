@@ -7,3 +7,4 @@ Rui
 *.pyc
 .DS_Store
 notes
+__pychache__
