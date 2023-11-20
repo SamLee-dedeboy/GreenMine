@@ -76,7 +76,7 @@ def concise_title(title):
             
              {
                 "role": "system", "content": """
-                您是一位總結分析師，請概括其重點成一句相關且合理的短語。
+                您是一位總結分析師，請用中文概括其重點成一句相關且合理的短語。
                 """
              },
             {"role": "user", "content": title},
@@ -92,7 +92,7 @@ for chunk in chunks:
         summarization = concise_summarization(summarization)
     # title = topic_title(summarization)
     title = topic_title(summarization)
-    if len(title) > 10:
+    if len(title) > 15:
         title = concise_title(title)
     # title = infer_title(question, toString(chunk))
     # print(question)
@@ -106,7 +106,7 @@ for chunk in chunks:
     results.append({"title": title, "summary": summarization})
     titles = [result["title"] for result in results]
     summaries = [result["summary"] for result in results]
-    with open("promptA_sumIII.txt", "w") as file:
+    with open("promptA_sumII.txt", "w") as file:
         j = 1
         for j, (title, summary) in enumerate(zip(titles, summaries)):
             file.write(f"{j}. 「{title}」\n")
