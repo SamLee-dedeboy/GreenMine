@@ -52,9 +52,15 @@ def processData():
     for interview in interviews:
         for chunk in interview['data']:
             chunk_nodes[chunk['id']] = chunk
-    return interviews, reports, report_embeddings, chunk_links, chunk_nodes
+    # topic tsnes
+    topic_tsnes = json.load(open('../data/result/chunk_coordinates.json'))
 
-interviews, reports, report_embeddings, chunk_links, chunk_nodes = processData()
+    # keywords 
+    keyword_coordinates = json.load(open('../data/result/keyword_coordinates.json'))
+    keyword_statistics = json.load(open('../data/result/keyword_statistics.json'))
+    return interviews, reports, report_embeddings, chunk_links, chunk_nodes, topic_tsnes, keyword_coordinates, keyword_statistics
+
+interviews, reports, report_embeddings, chunk_links, chunk_nodes, topic_tsnes, keyword_coordinates, keyword_statistics = processData()
     
 
 @app.route("/data/")
@@ -65,6 +71,9 @@ def get_data():
         'reports': reports,
         'chunk_links': chunk_links,
         'chunk_nodes': chunk_nodes,
+        'topic_tsnes': topic_tsnes,
+        'keyword_coordinates': keyword_coordinates,
+        'keyword_statistics': keyword_statistics
     }
     return json.dumps(res, default=vars)
 @app.route("/report/relevant_nodes", methods=['POST'])
