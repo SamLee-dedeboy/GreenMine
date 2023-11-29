@@ -1,12 +1,6 @@
 import * as d3 from 'd3';
+import {hexbin as Hexbin} from "d3-hexbin";
 import { scale } from 'svelte/transition';
-let padding = {
-    top: 10,
-    right: 10,
-    bottom: 10,
-    left: 10
-}
-
 
 const group_bboxes = (() => {
     let bboxes: any = []
@@ -67,54 +61,126 @@ const group_bboxes = (() => {
 })()
 
 export const simgraph = {
-    init(svgId, width, height, handleNodeClick) {
+    init(svgId, width, height, paddings, handlers) {
         const svg = d3.select("#" + svgId).attr("viewBox", `0 0 ${width} ${height}`)
-        // const innerGroup = svg.append("g").attr("class", "inner-canvas")
-        //     .attr("overflow", "visible")
-        svg.append("g").attr("class", "outer-link-group")
-        // svg.append("g").attr("class", "node-group")
-        this.handleNodeClick = handleNodeClick
+        const topic_region = svg.select("g.topic_region")
+        const keyword_region = svg.select("g.keyword_region").attr("transform", `translate(${paddings.left}, ${paddings.top})`)
+        this.keyword_region_size = {
+            width: width - paddings.left - paddings.right,
+            height: height - paddings.top - paddings.bottom
+        }
+
+        this.xScale_keywords = d3.scaleLinear().domain([0,1]).range([0, this.keyword_region_size.width])
+        this.yScale_keywords = d3.scaleLinear().domain([0,1]).range([0, this.keyword_region_size.height])
+        this.handlers = handlers
         this.width = width
         this.height = height
+        this.svgId = svgId
     },
 
-    update_treemap(svgId, treemap_data) {
-        console.log({treemap_data})
-        const svg = d3.select("#" + svgId)
-        const tile = d3.treemapSquarify
-        const root = d3.treemap()
-            .tile(tile) // e.g., d3.treemapSquarify
-            .size([this.width, this.height])
-            .padding(1)
-            .round(true)
-        (d3.hierarchy(treemap_data)
-            .sum(d => d.value)
-            .sort((a, b) => b.value - a.value));
-        const leaf = svg.selectAll("g")
-        .data(root.leaves())
-        .join("g")
-            .attr("transform", d => `translate(${d.x0},${d.y0})`)
-            .each(function(d) {
-                console.log(d)
-                const group = d3.select(this)
-                group.selectAll("*").remove()
-                group.append("rect")
-                .attr("id", d => (d.name))
-                // .attr("fill", d => { while (d.depth > 1) d = d.parent; return color(d.data.name); })
-                .attr("fill", "none")
-                .attr("width", d => d.x1 - d.x0)
-                .attr("height", d => d.y1 - d.y0)
-                .attr("stroke", "black")
-                .attr("stroke-width", 1)
-                group.append("text")
-                    .attr("x", 5)
-                    .attr("y", 15)
-                    .text(() => d.data.name + " - " + d.data.value)
-
+    update_keywords(keyword_data, _) {
+        const xScale = this.xScale_keywords
+        const yScale = this.yScale_keywords
+        const hexbin = Hexbin().x(d => xScale(keyword_data.keyword_coordinates[d][0])).y(d => yScale(keyword_data.keyword_coordinates[d][1]))
+            .radius(20)
+            .extent([[0, 0], [this.keyword_region_size.width, this.keyword_region_size.height]])
+        const data_bins = hexbin(Object.keys(keyword_data.keyword_coordinates))
+        const scaleRadius = d3.scaleLinear()
+            .domain([0, d3.max(data_bins, d => d.length)])
+            .range([0, hexbin.radius() * Math.SQRT2]);
+        const scaleOpacity = d3.scalePow().exponent(2)
+            .domain([0, d3.max(data_bins, d => d.length)])
+            .range([0, 1]);
+        const hex_centers = hexbin.centers()
+        const find_closest_hex_index = (x, y) => {
+            let min_dist = 100000
+            let closest_hex_index = 0
+            hex_centers.forEach((hex, index) => {
+                const dist = Math.pow(hex[0] - x, 2) + Math.pow(hex[1] - y, 2)
+                if(dist < min_dist) {
+                    min_dist = dist
+                    closest_hex_index = index
+                }
             })
+            return closest_hex_index
+        }
+        const group = d3.select("#" + this.svgId).select("g.keyword_region")
+        const keyword_coordinates = keyword_data.keyword_coordinates
+        const keyword_statistics = keyword_data.keyword_statistics
+        group.selectAll("path.hex")
+        .data(data_bins)
+        .join("path")
+        .attr("class", "hex")
+            // .attr("d", d => `M${d.x},${d.y}${hexbin.hexagon(scaleRadius(d.length))}`)
+            .attr("d", d => `M${d.x},${d.y}${hexbin.hexagon()}`)
+            .attr("fill", "lightskyblue")
+            // .attr("stroke", "white")
+            // .attr("stroke-width", 1)
+            .attr("opacity", (d) => scaleOpacity(d.length))
+            .attr("filter", (d) => d.length > 3? "url(#drop-shadow-hex)": "none")
+        let hex_labels = new Array(hex_centers.length).fill(null)
+        Object.keys(keyword_coordinates)
+        // .filter(keyword => keyword_statistics[keyword].frequency > 5)
+            .forEach(keyword => {
+                const coordinate = keyword_coordinates[keyword]
+                const closest_hex_index = find_closest_hex_index(xScale(coordinate[0]), yScale(coordinate[1]))
+                console.log(keyword, closest_hex_index)
+                if(hex_labels[closest_hex_index] != null) {
+                    const previous_label_freq = keyword_statistics[hex_labels[closest_hex_index]].frequency
+                    const current_label_freq = keyword_statistics[keyword].frequency
+                    if(current_label_freq > previous_label_freq) {
+                        hex_labels[closest_hex_index] = keyword
+                    }
+                } else {
+                    hex_labels[closest_hex_index] = keyword
+                }
+            })
+        console.log(hex_labels)
+        group.selectAll("text.label")
+            .data(hex_labels)
+            .join("text")
+            .text(d => d || "")
+            .attr("class", "label")
+            .attr("x", (_, i) => hex_centers[i][0])
+            .attr("y", (_, i) => hex_centers[i][1])
+            .attr("opacity", (d) => (d === null? 0 : (keyword_statistics[d].frequency > 5 ? 1 : 0)))
+            .attr("font-size", "0.8rem")
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "middle")
+            .attr("pointer-events", "none")
     },
 
-    update(svgId, groups, nodes, links, weights, scaleRadius, topicColors) {
+    _update_keywords(keyword_data, scaleRadius) { // deprecated: uses scatterplot
+        console.log(keyword_data)
+        const xScale = this.xScale_keywords
+        const yScale = this.yScale_keywords
+        const group = d3.select("#" + this.svgId).select("g.keyword_region")
+        const keyword_coordinates = keyword_data.keyword_coordinates
+        const keyword_statistics = keyword_data.keyword_statistics
+        group.selectAll("circle.keyword")
+            .data(Object.keys(keyword_coordinates))
+            .join("circle")
+            .attr("class", "keyword")
+            .attr("r", (d) => {console.log(d); return scaleRadius(keyword_statistics[d].frequency)})
+            .attr("cx", d => xScale(keyword_coordinates[d][0]))
+            .attr("cy", d => yScale(keyword_coordinates[d][1]))
+            .attr("fill", "white")
+            .attr("stroke", "black")
+            .attr("stroke-width", 1)
+        group.selectAll("text.label")
+            .data(Object.keys(keyword_coordinates))
+            .join("text")
+            .text(d => d)
+            .attr("class", "label")
+            .attr("x", d => xScale(keyword_coordinates[d][0]))
+            .attr("y", d => yScale(keyword_coordinates[d][1]))
+            .attr("opacity", (d) => keyword_statistics[d].frequency > 10 ? 1 : 0)
+            .attr("font-size", "0.8rem")
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "middle")
+    },
+
+    update_treemap(svgId, groups, nodes, links, weights, scaleRadius, topicColors) {
         const tile = d3.treemapSquarify
         const treemap_data = {
             name: "root",
