@@ -112,7 +112,8 @@
       const topic = nodes[node_id].topic;
       const degree = degree_dict[node_id] || 0;
       const coordinate = chunk_coordinates[node_id];
-      nodes[node_id] = { id: node_id, topic, degree, coordinate };
+      const emotion = nodes[node_id].emotion;
+      nodes[node_id] = { id: node_id, topic, degree, coordinate, emotion };
       if (!groups[topic]) groups[topic] = [];
       groups[topic].push(nodes[node_id]);
     });

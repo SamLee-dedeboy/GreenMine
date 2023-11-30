@@ -33,6 +33,28 @@
     "#fdbf6f",
   ];
 
+  const emotionColorScale = d3
+    .scaleOrdinal()
+    .domain([
+      "Happiness",
+      "Sadness",
+      "Fear",
+      "Disgust",
+      "Anger",
+      "Surprise",
+      "Neutral",
+    ])
+    .range([
+      "#ff8000", // happy
+      "#515dc1", // sad
+      "#69301d", // fear
+      "#89b348", // disgust
+      "#920000", // anger
+      "#f3d027", // surprise
+      "#d4d4d4", // neutral
+    ]);
+  console.log(emotionColorScale("Happiness"));
+
   const svgId = "simgraph-svg";
   const handlers = {
     nodeClick: handleNodeClick,
@@ -65,7 +87,15 @@
         Math.max(...topic_data.nodes.map((node) => node.degree)),
       ])
       .range([3, 12]);
-
+    simgraph.update_chunks(
+      topic_data.groups,
+      topic_data.nodes,
+      topic_data.links,
+      topic_data.weights,
+      scaleRadius,
+      topicColorScale,
+      emotionColorScale
+    );
     // simgraph.update_treemap(
     //   svgId,
     //   topic_data.groups,
@@ -122,8 +152,8 @@
   }
 </script>
 
-<div bind:this={container} class="w-full h-full relative">
-  <svg id={svgId} class="w-full h-full">
+<div bind:this={container} class="w-full h-full relative p-2 pt-4">
+  <svg id={svgId} class="w-full h-full overflow-visible">
     <g class="chunk_region"></g>
     <g class="keyword_region"></g>
     <defs>
@@ -135,6 +165,19 @@
           in2="blurOut"
           mode="normal"
           flood-color="rgba(0, 0, 0, 0)"
+        />
+      </filter>
+    </defs>
+    <defs>
+      <!-- border shadow filter -->
+      <filter id="drop-shadow-border" x="0" y="0">
+        <feOffset result="offOut" in="SourceAlpha" dx="0" dy="3" />
+        <feGaussianBlur result="blurOut" in="offOut" stdDeviation="2" />
+        <feBlend
+          in="SourceGraphic"
+          in2="blurOut"
+          mode="normal"
+          flood-color="rgba(0, 0, 0, 0.7)"
         />
       </filter>
     </defs>

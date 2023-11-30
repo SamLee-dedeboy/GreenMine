@@ -78,6 +78,65 @@ export const simgraph = {
         this.svgId = svgId
     },
 
+    update_chunks(groups, nodes, links, weights, scaleRadius, topicColors, emotionColorScale) {
+        console.log(groups, nodes)
+        const group_node_sizes = Object.keys(groups).map(group_id => groups[group_id].length)
+        const bbox_min_max_size = [d3.min(group_node_sizes), d3.max(group_node_sizes)]
+        const bboxRadiusScale = d3.scaleLinear().domain(bbox_min_max_size).range([150, 280])
+        const bboxes = radialBboxes(Object.keys(groups), this.width, this.height, {width: 200, height: 200})
+        const chunk_region = d3.select("#" + this.svgId).select("g.chunk_region")
+        chunk_region.selectAll("g.topic")
+            .data(Object.keys(groups))
+            .join("g")
+            .attr("class", "topic")
+            .each(function(d) {
+                const group = d3.select(this)
+                group.selectAll("*").remove()
+                const bbox_size = bboxRadiusScale(groups[d].length)
+                const bbox_center = bboxes[d].center
+                const bbox_origin = [bbox_center[0] - bbox_size/2, bbox_center[1] - bbox_size/2]
+                const bboxCoordinateScaleX = d3.scaleLinear().domain([0, 1]).range([bbox_origin[0], bbox_origin[0] + bbox_size])
+                const bboxCoordinateScaleY = d3.scaleLinear().domain([0, 1]).range([bbox_origin[1], bbox_origin[1] + bbox_size])
+                const bbox = group.append("rect")
+                    .attr("x", bbox_center[0] - bbox_size/2)
+                    .attr("y", bbox_center[1] - bbox_size/2)
+                    .attr("width", bbox_size)
+                    .attr("height", bbox_size)
+                    .attr("fill", "none")
+                    // .attr("filter", "url(#drop-shadow-border)")
+                    .attr("stroke", "gray")
+                    .attr("stroke-width", 1)
+                    .attr("cursor", "pointer")
+                    .attr("rx", "5")
+                const node_group = group.append("g").attr("class", "node-group")
+                node_group.selectAll("circle.node")
+                    .data(groups[d])
+                    .join("circle")
+                    .attr("class", "node")
+                    .attr("r", (d) => {return 3})
+                    // .attr("r", (d) => {return scaleRadius(d.degree)})
+                    // .attr("fill", (d) => topicColors(d.topic))
+                    .attr("fill", (d) => {console.log(d.emotion, emotionColorScale(d.emotion)); return emotionColorScale(d.emotion)})
+                    .attr("stroke", "black")
+                    .attr("stroke-width", 1)
+                    .attr("cursor", "pointer")
+                    .attr("cx", (d) => bboxCoordinateScaleX(d.coordinate[0]))
+                    .attr("cy", (d) => bboxCoordinateScaleY(d.coordinate[1]))
+                    // .on("mouseover", function() { 
+                    //     d3.select(this).attr("stroke-width", 2)
+                    // })
+                    // .on("mouseout", function() {
+                    //     d3.select(this).attr("stroke-width", 1)
+                    // })
+                    // .on("click", (event, d) => this.handlers.handleNodeClick(event, d))
+                    // .selection()
+                group.append("text")
+                    .attr("x", bbox_center[0] - bbox_size/2 + 5)
+                    .attr("y", bbox_center[1] - bbox_size/2 - 10)
+                    .text(d)
+            })
+    },
+
     update_keywords(keyword_data, _) {
         const xScale = this.xScale_keywords
         const yScale = this.yScale_keywords
@@ -124,7 +183,6 @@ export const simgraph = {
             .forEach(keyword => {
                 const coordinate = keyword_coordinates[keyword]
                 const closest_hex_index = find_closest_hex_index(xScale(coordinate[0]), yScale(coordinate[1]))
-                console.log(keyword, closest_hex_index)
                 if(hex_labels[closest_hex_index] != null) {
                     const previous_label_freq = keyword_statistics[hex_labels[closest_hex_index]].frequency
                     const current_label_freq = keyword_statistics[keyword].frequency
@@ -135,7 +193,6 @@ export const simgraph = {
                     hex_labels[closest_hex_index] = keyword
                 }
             })
-        console.log(hex_labels)
         group.selectAll("text.label")
             .data(hex_labels)
             .join("text")
@@ -393,6 +450,27 @@ function createForceLink(nodes, weights) {
     }
     return force_links
 }
+
 function clip(x, range) {
     return Math.max(Math.min(x, range[1]), range[0])
+}
+
+function radialBboxes(groups, width, height, maxBboxSize) {
+    console.log(groups)
+    groups[0] = "環境生態"
+    groups[7] = "整體經濟"
+    const angleScale = d3.scaleBand().domain(groups).range([0, 0+Math.PI * 2])
+    let bboxes = {}
+    const a = width/2 - maxBboxSize.width/2 - 38
+    const b = height/2 - maxBboxSize.height/2
+    groups.forEach((group, index) => {
+        const angle = angleScale(group)
+        const r = (a*b)/Math.sqrt(Math.pow(b*Math.cos(angle), 2) + Math.pow(a*Math.sin(angle), 2))
+        const x = width / 2 + r * Math.cos(angle)
+        const y = height / 2 + r * Math.sin(angle)
+        bboxes[group] = {
+            center: [x, y]
+        }
+    })
+    return bboxes
 }
