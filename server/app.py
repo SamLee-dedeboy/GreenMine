@@ -4,21 +4,51 @@ from flask_cors import CORS
 import json
 from DataUtils import DocumentController
 from functools import cmp_to_key
+from collections import defaultdict
 
 app = Flask(__name__)
 CORS(app)
 openai_api_key = open("api_key").read()
 document_controller = DocumentController(r'../data/result/chunk_embeddings/1103/all_chunks.json', openai_api_key)
+def normalize_weight(links):
+    def sigmoid(x): 
+        return 1/(1 + pow(2.71828, -x))
+    def min_max_norm(x, min, max):
+        return (x - min) / (max - min)
+    max_weight = 0
+    min_weight = 100
+    avg_weight = 0
+    for link in links:
+        max_weight = max(max_weight, link[2])
+        min_weight = min(min_weight, link[2])
+        avg_weight += link[2]
+    avg_weight /= len(links)
+
+    for link in links:
+        link[2] = min_max_norm(link[2] - avg_weight, min_weight - avg_weight, max_weight - avg_weight)
+    return links
+
 def processData():
     # interview
+    interview_dict = defaultdict(dict)
     interviews = []
-    for interview_file in glob.glob("../data/result/chunk_summaries/*.json"):
+
+
+    for interview_file in glob.glob("../data/result/chunk_summaries/1201/*.json"):
         interview_data = json.load(open(interview_file))
         file_name = interview_file.split('/')[-1].replace(".json", "")
+        participant = file_name.split("_")[0]
+        background_topics = file_name.split("_")[1]
+        interview_dict[participant][background_topics] = interview_data
+    interview_dict = dict(sorted(interview_dict.items(), key=lambda x: int(x[0].replace("N", ""))))
+    for participant, interview in interview_dict.items():
+        background = interview['background']
+        topics = interview['topics']
+        whole_interview = background + topics
         interviews.append(
             {
-                "file_name": file_name,
-                "data": interview_data
+                "file_name": participant,
+                "data": whole_interview
             }
         )
     def fcmp(x1, x2):
@@ -32,7 +62,7 @@ def processData():
             else:
                 return 0 
     # interviews = sorted(interviews, key=lambda x: int(x['file_name'].replace("N", "").replace("_background", "").replace("_topics", "")), )
-    interviews.sort(key=cmp_to_key(fcmp))
+    # interviews.sort(key=cmp_to_key(fcmp))
     # reports
     reports = []
     report_embeddings = {}
@@ -48,6 +78,7 @@ def processData():
 
     # chunk_graph
     chunk_links = json.load(open("../data/result/chunk_embeddings/1103/chunk_similarities.json"))
+    chunk_links = normalize_weight(chunk_links)
     chunk_nodes = {}
     for interview in interviews:
         for chunk in interview['data']:

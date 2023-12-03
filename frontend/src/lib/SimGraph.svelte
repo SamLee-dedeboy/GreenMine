@@ -2,62 +2,23 @@
   import { onMount } from "svelte";
   import { simgraph } from "./SimGraph";
   import * as d3 from "d3";
+  import { createEventDispatcher } from "svelte";
+  import { categoricalColors, emotionColorScale } from "./Colors";
+  const dispatch = createEventDispatcher();
 
   export let topic_data;
   export let interview_data;
   export let keyword_data;
+  let highlight_keywords: string[] | undefined = undefined;
   let container;
 
-  const categoricalColors = [
-    "#8dd3c7",
-    "#ffffb3",
-    "#bebada",
-    "#fb8072",
-    "#80b1d3",
-    "#fdb462",
-    "#b3de69",
-    "#fccde5",
-    "#d9d9d9",
-    "#bc80bd",
-    "#ccebc5",
-    "#ffed6f",
-    "#1f78b4",
-    "#33a02c",
-    "#e31a1c",
-    "#ff7f00",
-    "#6a3d9a",
-    "#b15928",
-    "#a6cee3",
-    "#b2df8a",
-    "#fb9a99",
-    "#fdbf6f",
-  ];
-
-  const emotionColorScale = d3
-    .scaleOrdinal()
-    .domain([
-      "Happiness",
-      "Sadness",
-      "Fear",
-      "Disgust",
-      "Anger",
-      "Surprise",
-      "Neutral",
-    ])
-    .range([
-      "#ff8000", // happy
-      "#515dc1", // sad
-      "#69301d", // fear
-      "#89b348", // disgust
-      "#920000", // anger
-      "#f3d027", // surprise
-      "#d4d4d4", // neutral
-    ]);
   console.log(emotionColorScale("Happiness"));
 
   const svgId = "simgraph-svg";
   const handlers = {
     nodeClick: handleNodeClick,
+    nodesSelected: handleNodesSelected,
+    keywordsSelected: handleKeywordSelected,
   };
   const paddings = {
     left: 300,
@@ -87,15 +48,48 @@
         Math.max(...topic_data.nodes.map((node) => node.degree)),
       ])
       .range([3, 12]);
+    const group_statistics = (() => {
+      let res = {};
+      Object.keys(topic_data.groups).forEach((topic) => {
+        const topic_chunks = topic_data.groups[topic];
+        const emotions_grouped = Object.groupBy(
+          topic_chunks,
+          ({ emotion }) => emotion
+        );
+        let emotion_counts = {};
+        let total = 0;
+        Object.keys(emotions_grouped).forEach((emotion) => {
+          emotion_counts[emotion] = emotions_grouped[emotion].length;
+          total += emotions_grouped[emotion].length;
+        });
+        res[topic] = {
+          emotion_counts,
+          total,
+        };
+      });
+      return res;
+    })();
     simgraph.update_chunks(
       topic_data.groups,
-      topic_data.nodes,
-      topic_data.links,
-      topic_data.weights,
-      scaleRadius,
-      topicColorScale,
+      topic_data.group_ccs,
       emotionColorScale
     );
+    // simgraph.update_force(
+    //   topic_data.groups,
+    //   topic_data.nodes,
+    //   topic_data.links,
+    //   topic_data.weights,
+    //   scaleRadius,
+    //   topicColorScale,
+    //   emotionColorScale
+    // );
+
+    // simgraph.update_chunks(
+    //   topic_data.groups,
+    //   group_statistics,
+    //   emotionColorScale
+    // );
+
     // simgraph.update_treemap(
     //   svgId,
     //   topic_data.groups,
@@ -146,10 +140,28 @@
     // simgraph.highlight_links(svgId, selected_links)
   }
 
-  export function highlight_nodes(nodes) {
-    console.log({ nodes });
-    simgraph.highlight_nodes(svgId, nodes);
+  function handleNodesSelected(nodes) {
+    dispatch("chunks-selected", nodes);
+    if (nodes === null) {
+      simgraph.dehighlight_keywords();
+      return;
+    }
+    let keyword_set = new Set<string>();
+    nodes.forEach((node) => {
+      node.keywords.forEach((keyword) => keyword_set.add(keyword));
+    });
+    highlight_keywords = Array.from(keyword_set);
+    simgraph.highlight_keywords(highlight_keywords, keyword_data);
   }
+
+  function handleKeywordSelected(keywords) {
+    dispatch("keywords-selected", keywords);
+  }
+
+  // export function highlight_nodes(nodes) {
+  //   console.log({ nodes });
+  //   simgraph.highlight_nodes(svgId, nodes);
+  // }
 </script>
 
 <div bind:this={container} class="w-full h-full relative p-2 pt-4">
@@ -170,8 +182,11 @@
     </defs>
     <defs>
       <!-- border shadow filter -->
-      <filter id="drop-shadow-border" x="0" y="0">
-        <feOffset result="offOut" in="SourceAlpha" dx="0" dy="3" />
+      <filter id="drop-shadow-border">
+        <feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="gray" />
+      </filter>
+      <!-- <filter id="drop-shadow-border" x="0" y="0">
+        <feOffset result="offOut" in="SourceAlpha" dx="0" dy="0" />
         <feGaussianBlur result="blurOut" in="offOut" stdDeviation="2" />
         <feBlend
           in="SourceGraphic"
@@ -179,7 +194,7 @@
           mode="normal"
           flood-color="rgba(0, 0, 0, 0.7)"
         />
-      </filter>
+      </filter> -->
     </defs>
   </svg>
   <!-- <div class='top-[15%] bottom-[15%] left-[20%] right-[20%] absolute p-2 flex flex-col text-left pointer-events-none'>
@@ -191,3 +206,51 @@
         </div>
     </div> -->
 </div>
+
+<style>
+  :global(.node-highlight) {
+    stroke-width: 1.5;
+    opacity: 1;
+  }
+  :global(.node-not-highlight) {
+    opacity: 0.3;
+  }
+  /* borders */
+  :global(.border-highlight) {
+    stroke-width: 3;
+    fill: yellow;
+  }
+  :global(.border:hover) {
+    stroke-width: 3;
+  }
+
+  /* keywords */
+  :global(.hex-highlight) {
+    opacity: 1;
+  }
+  :global(.hex-not-highlight) {
+    opacity: 0.1;
+  }
+  :global(.hex:hover) {
+    stroke: black;
+    stroke-width: 3;
+    transition: all 0.05s ease-in-out;
+  }
+  :global(.hex-label-highlight) {
+    opacity: 1;
+  }
+  :global(.hex-label-not-highlight) {
+    opacity: 0;
+  }
+  :global(.hex-selected) {
+    stroke: black;
+    stroke-width: 3;
+  }
+  :global(.hex-not-selected) {
+    stroke: none;
+  }
+  :global(.shadow) {
+    filter: drop-shadow(0px 0px 3px #cccccc);
+    /* filter: drop-shadow(0px 0px 3px #8abedd); */
+  }
+</style>

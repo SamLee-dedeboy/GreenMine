@@ -14,11 +14,23 @@
   let relevancy_threshold: number = 0.87;
   let search_threshold: number = 0.8;
   let interview_viewer_component;
-  let chunk_graph: any;
-  let link_threshold: number = 0.92;
+  let chunk_graph: any = undefined;
+  let link_threshold: number = 0.83;
   let simgraph;
   let chunk_coordinates;
   let timeline_data;
+
+  $: keyword_chunks_dict = ((_) => {
+    let res = {};
+    if (!chunk_graph) return res;
+    chunk_graph.nodes.forEach((node) => {
+      node.keywords.forEach((keyword) => {
+        if (!res[keyword]) res[keyword] = [];
+        res[keyword].push(node);
+      });
+    });
+    return res;
+  })(chunk_graph);
 
   onMount(() => {
     fetchData();
@@ -33,6 +45,7 @@
         // report_data = res.reports
         chunk_coordinates = res.topic_tsnes;
         chunk_graph = link_to_graph(res.chunk_links, res.chunk_nodes);
+        console.log({ chunk_graph });
         timeline_data = res.reports;
         keyword_data = {
           keyword_coordinates: res.keyword_coordinates,
@@ -92,34 +105,48 @@
     let weights = {};
     let degree_dict = {};
     let graph_links: any = [];
+    let nodes_dict = {};
+    Object.keys(nodes).forEach((node_id) => {
+      nodes_dict[node_id] = nodes[node_id];
+    });
     // filter links and build weights
     links = links.filter((link) => link[2] > link_threshold);
+    let group_links: any = {};
     links.forEach((link) => {
       const source = link[0];
       const target = link[1];
-      degree_dict[source] = degree_dict[source] ? degree_dict[source] + 1 : 1;
-      degree_dict[target] = degree_dict[target] ? degree_dict[target] + 1 : 1;
-      if (!weights[source]) weights[source] = {};
-      weights[source][target] = link[2];
-      graph_links.push({ source, target });
+      if (nodes_dict[source].topic === nodes_dict[target].topic) {
+        degree_dict[source] = degree_dict[source] ? degree_dict[source] + 1 : 1;
+        degree_dict[target] = degree_dict[target] ? degree_dict[target] + 1 : 1;
+        if (!weights[source]) weights[source] = {};
+        weights[source][target] = link[2];
+        graph_links.push({ source, target });
+        if (!group_links[nodes_dict[source].topic])
+          group_links[nodes_dict[source].topic] = [];
+        group_links[nodes_dict[source].topic].push({ source, target });
+      }
     });
-    // add inner links
+    let group_ccs = {};
+    Object.keys(group_links).forEach(
+      (topic) => (group_ccs[topic] = connected_components(group_links[topic]))
+    );
 
     // group nodes by topic
-    let groups = {};
+    let group_nodes = {};
     Object.keys(nodes).forEach((node_id: string) => {
       // const participant_id = node.split('_')[0]
       const topic = nodes[node_id].topic;
       const degree = degree_dict[node_id] || 0;
       const coordinate = chunk_coordinates[node_id];
-      const emotion = nodes[node_id].emotion;
-      nodes[node_id] = { id: node_id, topic, degree, coordinate, emotion };
-      if (!groups[topic]) groups[topic] = [];
-      groups[topic].push(nodes[node_id]);
+      nodes[node_id].degree = degree;
+      nodes[node_id].coordinate = coordinate;
+      if (!group_nodes[topic]) group_nodes[topic] = [];
+      group_nodes[topic].push(nodes[node_id]);
     });
 
     const graph = {
-      groups: groups,
+      groups: group_nodes,
+      group_ccs: group_ccs,
       // topics: Array.from(topics),
       nodes: Object.keys(nodes).map((node: string) => nodes[node]),
       links: graph_links,
@@ -129,30 +156,107 @@
     return graph;
   }
 
-  function handleReportSelected(e) {
-    const report = e.detail.file_name;
-    fetch(`${server_address}/report/relevant_nodes`, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ report }),
-    })
-      .then((res) => res.json())
-      .then((search_response) => {
-        console.log(search_response);
-        const relevant_nodes = search_response
-          .filter((node) => node[1] > relevancy_threshold)
-          .map((node) => node[0]);
-        simgraph.highlight_nodes(relevant_nodes);
-      });
+  // function handleReportSelected(e) {
+  //   const report = e.detail.file_name;
+  //   fetch(`${server_address}/report/relevant_nodes`, {
+  //     method: "POST",
+  //     headers: {
+  //       Accept: "application/json",
+  //       "Content-Type": "application/json",
+  //     },
+  //     body: JSON.stringify({ report }),
+  //   })
+  //     .then((res) => res.json())
+  //     .then((search_response) => {
+  //       console.log(search_response);
+  //       const relevant_nodes = search_response
+  //         .filter((node) => node[1] > relevancy_threshold)
+  //         .map((node) => node[0]);
+  //       simgraph.highlight_nodes(relevant_nodes);
+  //     });
+  // }
+
+  function connected_components(links) {
+    const bfs = (v, all_pairs, visited) => {
+      let q: any[] = [];
+      let current_group: any[] = [];
+      let i, nextVertex, pair;
+      let length_all_pairs = all_pairs.length;
+      q.push(v);
+      while (q.length > 0) {
+        v = q.shift();
+        if (!visited[v]) {
+          visited[v] = true;
+          current_group.push(v);
+          // go through the input array to find vertices that are
+          // directly adjacent to the current vertex, and put them
+          // onto the queue
+          for (i = 0; i < length_all_pairs; i += 1) {
+            pair = all_pairs[i];
+            if (pair.source === v && !visited[pair.target]) {
+              q.push(pair.target);
+            } else if (pair.target === v && !visited[pair.source]) {
+              q.push(pair.source);
+            }
+          }
+        }
+      }
+      // return everything in the current "group"
+      return current_group;
+    };
+
+    let connected_components: any[] = [];
+    let i, k, length, u, v, src, current_pair;
+    let visited = {};
+
+    // main loop - find any unvisited vertex from the input array and
+    // treat it as the source, then perform a breadth first search from
+    // it. All vertices visited from this search belong to the same group
+    for (i = 0, length = links.length; i < length; i += 1) {
+      current_pair = links[i];
+      u = current_pair.source;
+      v = current_pair.target;
+      src = null;
+      if (!visited[u]) {
+        src = u;
+      } else if (!visited[v]) {
+        src = v;
+      }
+      if (src) {
+        // there is an unvisited vertex in this pair.
+        // perform a breadth first search, and push the resulting
+        // group onto the list of all groups
+        connected_components.push(bfs(src, links, visited));
+      }
+    }
+
+    // show groups
+    return connected_components;
+  }
+
+  function handleChunksSelected(e) {
+    const chunks = e.detail;
+    if (chunks === null) interview_viewer_component.dehighlight_chunks();
+    else interview_viewer_component.highlight_chunks(chunks);
+  }
+
+  function handleKeywordSelected(e) {
+    const keywords = e.detail;
+    console.log(keywords, keyword_data);
+    if (keywords === null) {
+      interview_viewer_component.dehighlight_keywords();
+    } else {
+      const nodes = keywords.map((keyword) => keyword_chunks_dict[keyword]);
+      interview_viewer_component.highlight_keywords(nodes, keywords);
+    }
   }
 </script>
 
-<main class="h-[100vh]">
-  <div class="page flex space-x-4 h-full overflow-hidden">
-    <div class="flex flex-col justify-center items-center flex-1 h-full w-full">
+<main class="h-[100vh] px-1">
+  <div class="page flex space-x-1 h-full">
+    <div
+      class="flex flex-col justify-center items-center flex-1 h-full w-full basis-[70%] shrink-0"
+    >
       <!-- <Search on:search={(e) => searchQuery(e.detail)}></Search> -->
       <div class="w-full h-full">
         <SimGraph
@@ -160,10 +264,12 @@
           topic_data={chunk_graph}
           {interview_data}
           {keyword_data}
+          on:chunks-selected={handleChunksSelected}
+          on:keywords-selected={handleKeywordSelected}
         ></SimGraph>
       </div>
     </div>
-    <div class="interview-viewer-container basis-[30%]">
+    <div class="interview-viewer-container h-full w-full basis-[31%]">
       {#if interview_data != undefined}
         <InterviewViewer
           bind:this={interview_viewer_component}

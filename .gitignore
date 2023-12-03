@@ -7,3 +7,6 @@ Rui
 *.pyc
 .DS_Store
 __pychache__
+*.json
+!package-lock.json
+!package.json
