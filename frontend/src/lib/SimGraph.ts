@@ -5,6 +5,7 @@ import concaveman from "concaveman"
 import  Vector from "./Vector"
 
 export const simgraph = {
+    hoveredHexKeywords: "",
     init(svgId, width, height, paddings, handlers) {
         const self = this
         const svg = d3.select("#" + svgId).attr("viewBox", `0 0 ${width} ${height}`)
@@ -22,8 +23,10 @@ export const simgraph = {
                     d3.selectAll("path.hex-label")
                         .classed("hex-label-highlight", false)
                         .classed("hex-label-not-highlight", false)
-                    handlers.nodesSelected(null)
-                    handlers.keywordsSelected(null)
+                    d3.selectAll("text.topic-label").classed("topic-label-highlight", false)
+                    handlers.nodesSelected(null, null)
+                    handlers.keywordsSelected(null, null)
+                    handlers.emotionSelected(null, null)  
                     self.highlighted_nodes = null
                 }
             })
@@ -39,12 +42,14 @@ export const simgraph = {
         this.xScale_keywords = d3.scaleLinear().domain([0,1]).range([0, this.keyword_region_size.width])
         this.yScale_keywords = d3.scaleLinear().domain([0,1]).range([0, this.keyword_region_size.height])
         this.handlers = handlers
-        console.log(this.handlers)
         this.width = width
         this.height = height
         this.svgId = svgId
+        this.clicked_topic = null
         this.clicked_cc = [null, null]
+        this.clicked_hex = null
         this.highlighted_nodes = null
+        this.hoveredHexKeywords = ""
     },
 
     _update_chunks(groups, group_statistics, emotionColorScale) {
@@ -161,23 +166,38 @@ export const simgraph = {
                     .attr("cx", (d) => bboxCoordinateScaleX(d.coordinate[0]))
                     .attr("cy", (d) => bboxCoordinateScaleY(d.coordinate[1]))
                 group.append("text")
+                    .attr("class", "topic-label")
                     .attr("x", bbox_center[0] - bbox_size/2 + 5)
                     .attr("y", bbox_center[1] - bbox_size/2 - 10)
                     .text(d)
                     .attr("cursor", "pointer")
                     .on("click", function(e, d) {
                         e.preventDefault()
-                        self.clicked_nodes = groups[d]
-                        const node_ids = self.clicked_nodes.map(node => node.id)
-                        const nodes = node_ids.map(node_id => nodes_dict[node_id])
-                        self.handlers.nodesSelected(nodes)
-                        self.highlighted_nodes = nodes
-                        d3.selectAll("circle.node")
-                            .classed("node-highlight", false)
-                            .classed("node-not-highlight", true)
-                            .filter(node => node_ids.includes(node.id))
-                            .classed("node-not-highlight", false)
-                            .classed("node-highlight", true)
+                        d3.selectAll("text.topic-label").classed("topic-label-highlight", false)
+                        if(self.clicked_topic !== d) {
+                            d3.select(this).classed("topic-label-highlight", true)
+                            self.clicked_nodes = groups[d]
+                            const node_ids = self.clicked_nodes.map(node => node.id)
+                            const nodes = node_ids.map(node_id => nodes_dict[node_id])
+                            self.clicked_topic = d
+                            self.clicked_cc = [null, null]
+                            d3.selectAll("path.border").classed("border-highlight", false)
+                            self.handlers.nodesSelected(nodes, d)
+                            self.highlighted_nodes = nodes
+                            d3.selectAll("circle.node")
+                                .classed("node-highlight", false)
+                                .classed("node-not-highlight", true)
+                                .filter(node => node_ids.includes(node.id))
+                                .classed("node-not-highlight", false)
+                                .classed("node-highlight", true)
+                        } else {
+                            self.clicked_topic = null
+                            d3.selectAll("circle.node")
+                                .classed("node-highlight", false)
+                                .classed("node-not-highlight", false)
+                            self.handlers.nodesSelected(null, null)
+                            self.highlighted_nodes = null
+                        }
                     })
                 const node_radius = 5
                 let nodes_dict = {}
@@ -221,19 +241,28 @@ export const simgraph = {
                             .on("click", function(e, d) {
                                 e.preventDefault()
                                 d3.selectAll("path.border").classed("border-highlight", false)
-                                d3.select(this).classed("border-highlight", true)
-                                // d3.select(this).attr("stroke-width", 3).attr("fill", "yellow")
-                                self.clicked_cc = [d.topic, d.index]
-                                const cc_node_ids = group_ccs[d.topic][d.index]
-                                const cc_nodes = cc_node_ids.map(node_id => nodes_dict[node_id])
-                                self.handlers.nodesSelected(cc_nodes)
-                                self.highlighted_nodes = cc_nodes
-                                d3.selectAll("circle.node")
+                                const nodes = d3.selectAll("circle.node")
                                     .classed("node-highlight", false)
                                     .classed("node-not-highlight", true)
-                                    .filter(node => cc_node_ids.includes(node.id))
+                                if(self.clicked_cc[0] === d.topic && self.clicked_cc[1] === d.index) {
+                                    self.clicked_cc = [null, null]
+                                    self.handlers.nodesSelected(null, null)
+                                    nodes.classed("node-highlight", false)
                                     .classed("node-not-highlight", false)
-                                    .classed("node-highlight", true)
+                                }
+                                else {
+                                    self.clicked_cc = [d.topic, d.index]
+                                    self.clicked_topic = null
+                                    d3.selectAll("text.topic-label").classed("topic-label-highlight", false)
+                                    d3.select(this).classed("border-highlight", true)
+                                    const cc_node_ids = group_ccs[d.topic][d.index]
+                                    const cc_nodes = cc_node_ids.map(node_id => nodes_dict[node_id])
+                                    self.handlers.nodesSelected(cc_nodes, d.topic + "(部分)")
+                                    self.highlighted_nodes = cc_nodes
+                                    nodes.filter(node => cc_node_ids.includes(node.id))
+                                        .classed("node-not-highlight", false)
+                                        .classed("node-highlight", true)
+                                }
                             })
                         node_group.raise()
 
@@ -248,13 +277,15 @@ export const simgraph = {
             .radius(20)
             .extent([[0, 0], [this.keyword_region_size.width, this.keyword_region_size.height]])
         const data_bins = hexbin(Object.keys(keyword_data.keyword_coordinates))
-        const scaleRadius = d3.scaleLinear()
-            .domain([0, d3.max(data_bins, d => d.length)])
-            .range([0, hexbin.radius() * Math.SQRT2]);
-        const scaleOpacity = d3.scalePow().exponent(2)
-            .domain([0, d3.max(data_bins, d => d.length)])
-            .range([0, 1]);
-        const scaleColor = d3.scaleSequential([0, d3.max(data_bins, d => d.length)*1.5], d3.interpolateBlues)
+        // const scaleRadius = d3.scaleLinear()
+        //     .domain([0, d3.max(data_bins, d => d.length)])
+        //     .range([0, hexbin.radius() * Math.SQRT2]);
+        // const scaleOpacity = d3.scalePow().exponent(2)
+        //     .domain([0, d3.max(data_bins, d => d.length)])
+        //     .range([0, 1]);
+        const binSumFrequency = (bins) => d3.sum(bins, keyword => keyword_data.keyword_statistics[keyword].frequency)
+        const binMaxFrequency = d3.max(data_bins, binSumFrequency)
+        const scaleColor = d3.scaleSequential([0, Math.sqrt(binMaxFrequency)], d3.interpolateBlues)
         const hex_centers = hexbin.centers()
         const find_closest_hex_index = (x, y) => {
             let min_dist = 100000
@@ -279,42 +310,69 @@ export const simgraph = {
             // .attr("d", d => `M${d.x},${d.y}${hexbin.hexagon(scaleRadius(d.length))}`)
             .attr("d", d => `M${d.x},${d.y}${hexbin.hexagon()}`)
             // .attr("fill", "lightskyblue")
-            .attr("fill", d => scaleColor(d.length))
+            .attr("fill", d => scaleColor(Math.sqrt(binSumFrequency(d))))
             .attr("opacity", 0.8)
             .attr("stroke", "white")
             .attr("stroke-width", 0.5)
             // .attr("opacity", (d) => scaleOpacity(d.length))
             // .attr("filter", (d) => d.length > 5? "url(#drop-shadow-hex)": "none")
             .attr("cursor", "pointer")
+            .on("mousemove", function(e) {
+                d3.select(".tooltip").style("left", (e.clientX + 10) + "px").style("top", (e.clientY - 30) + "px")
+            })
+            .on("mouseover", function(e, d) { 
+                d3.select(this).classed("hex-hover", true).raise()
+                d3.selectAll("text.label").classed("hex-label-hover", false)
+                    .filter(label => label[0] === d[0])
+                    .classed("hex-label-hover", true)
+                // self.hoveredHexKeywords = d
+                d3.select(".tooltip").classed("show-tooltip", true).text(d)
+            })
+            .on("mouseout", function(_, d) { 
+                d3.select(this).classed("hex-hover", false)
+                d3.selectAll("text.label")
+                    .filter(label => label[0] === d[0])
+                    .classed("hex-label-hover", false)
+                // self.hoveredHexKeywords = null
+                d3.select(".tooltip").classed("show-tooltip", false)
+
+            })
             .on("click", function(e, d) {
                 e.preventDefault()
-                d3.selectAll("path.hex")
+                const hexes = d3.selectAll("path.hex")
                     .classed("hex-selected", false)
                     .classed("hex-not-selected", true)
-                d3.select(this).classed("hex-selected", true).classed("hex-not-selected", false).raise()
-                const keywords = d
-                self.handlers.keywordsSelected(keywords)
-                if(self.highlighted_nodes) {
-                    const nodes = d3.selectAll("circle.node-highlight")
-                        .classed("node-not-highlight", true)
-                        .filter(node => node.keywords.some(keyword => keywords.includes(keyword)))
-                        .classed("node-not-highlight", false)
-                        .classed("node-highlight", true)
-                        .data()
-                    console.log(nodes)
-                    self.handlers.nodesSelected(nodes)
-
+                if(self.clicked_hex === d[0]) {
+                    self.clicked_hex = null
+                    self.handlers.keywordsSelected(null, null)
+                    hexes.classed("hex-selected", false)
+                    .classed("hex-not-selected", false)
                 } else {
-                const nodes = d3.selectAll("circle.node")
-                    .classed("node-not-highlight", true)
-                    .classed("node-highlight", false)
-                    .filter(node => node.keywords.some(keyword => keywords.includes(keyword)))
-                    .classed("node-not-highlight", false)
-                    .classed("node-highlight", true)
-                    .data()
-                    console.log(nodes)
-                    self.handlers.nodesSelected(nodes)
+                    self.clicked_hex = d[0]
+                    self.handlers.keywordsSelected(d, d)
+                    d3.select(this).classed("hex-selected", true).classed("hex-not-selected", false).raise()
                 }
+                // if(self.highlighted_nodes) {
+                //     const nodes = d3.selectAll("circle.node-highlight")
+                //         .classed("node-not-highlight", true)
+                //         .filter(node => node.keywords.some(keyword => keywords.includes(keyword)))
+                //         .classed("node-not-highlight", false)
+                //         .classed("node-highlight", true)
+                //         .data()
+                //     console.log(nodes)
+                //     self.handlers.nodesSelected(nodes)
+
+                // } else {
+                // const nodes = d3.selectAll("circle.node")
+                //     .classed("node-not-highlight", true)
+                //     .classed("node-highlight", false)
+                //     .filter(node => node.keywords.some(keyword => keywords.includes(keyword)))
+                //     .classed("node-not-highlight", false)
+                //     .classed("node-highlight", true)
+                //     .data()
+                //     console.log(nodes)
+                //     self.handlers.nodesSelected(nodes)
+                // }
             })
         let hex_labels = new Array(hex_centers.length).fill(null)
         Object.keys(keyword_coordinates)
@@ -337,13 +395,16 @@ export const simgraph = {
             // .data(hex_labels)
             .data(data_bins)
             .join("text")
-            .text(d => d[0] || "")
+            .text(d => wrapChinese(d[0]) || "")
             .attr("class", "label")
             .attr("x", (d) => d.x)
             .attr("y", (d) => d.y)
+            .attr("fill", (d) => {
+                return (Math.sqrt(binSumFrequency(d) / binMaxFrequency)) > 0.65? "white":"black"
+            })
             // .attr("x", (_, i) => hex_centers[i][0])
             // .attr("y", (_, i) => hex_centers[i][1])
-            .attr("opacity", (d) => (d[0] === null? 0 : (keyword_statistics[d[0]].frequency > 5 ? 1 : 0)))
+            .attr("opacity", (d) => (d[0] === null? 0 : (binSumFrequency(d) > 15  ? 1 : 0)))
             .attr("font-size", "0.8rem")
             .attr("text-anchor", "middle")
             .attr("dominant-baseline", "middle")
@@ -662,6 +723,33 @@ export const simgraph = {
             .classed("hex-label-not-highlight", false)
 
     },
+
+    highlight_nodes(nodes) {
+        const chunk_region = d3.select("#" + this.svgId).select("g.chunk_region")
+        chunk_region.selectAll("circle.node")
+            .classed("node-highlight", false)
+            .classed("node-not-highlight", true)
+            .filter(node => nodes?.includes(node))
+            .classed("node-not-highlight", false)
+            .classed("node-highlight", true)
+        this.highlighted_nodes = nodes
+    },
+
+    dehighlight_nodes() {
+        const chunk_region = d3.select("#" + this.svgId).select("g.chunk_region")
+        chunk_region.selectAll("circle.node")
+            .classed("node-highlight", false)
+            .classed("node-not-highlight", false)
+        this.highlighted_nodes = null
+    }
+}
+
+
+function wrapChinese(text) {
+    if(text.length > 2) {
+        text = text.slice(0, 2) + ".."
+    }
+    return text
 }
 
 function force_layout(group, group_nodes, group_links, group_center, group_bbox, nodes, links, nodes_dict, node_radius) {

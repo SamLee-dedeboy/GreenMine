@@ -14,6 +14,7 @@
   let show_chunk: any = [];
   let highlight_chunk: any = [];
   let highlight_chunk_ids: any[] = [];
+  let external_highlights = false;
   let chunk_indexes = {};
   let original_data;
   $: {
@@ -28,7 +29,8 @@
     });
     // data.map((interview) => interview.data.map((_) => false));
   }
-  $: highlighting_chunk = highlight_chunk.flat().some((showing) => showing);
+  $: highlighting_chunk =
+    external_highlights || highlight_chunk.flat().some((showing) => showing);
   $: show_interview = Array.apply(null, Array(data.length)).map(() => false);
   onMount(() => {
     console.log(data, show_chunk);
@@ -56,7 +58,13 @@
   }
 
   export function highlight_chunks(highlight_chunks) {
+    console.log({ highlight_chunks });
     dehighlight_chunks();
+    external_highlights = true;
+    if (!highlight_chunks) {
+      external_highlights = false;
+      highlight_chunks = [];
+    }
     highlight_chunk_ids = highlight_chunks.map((chunk) => chunk.id);
     highlight_chunk_ids.forEach((chunk_id) => {
       const chunk_index = chunk_indexes[chunk_id];
@@ -116,7 +124,7 @@
 
 <div class="w-full h-full overflow-y-scroll">
   <div
-    class="border border-gray rounded shadow-lg m-1 py-2 text-xl font-bold text-center flex items-center justify-center"
+    class="title border border-gray rounded shadow-lg m-1 py-2 text-xl font-bold text-center flex items-center justify-center"
   >
     Interview Contents
   </div>
@@ -348,6 +356,10 @@
     box-shadow: 0px 0px 3px black;
   }
   :global(.keyword-highlighted) {
-    background: yellow;
+    background: #ff8f00;
+    /* font-weight: bold; */
+  }
+  .title {
+    font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   }
 </style>

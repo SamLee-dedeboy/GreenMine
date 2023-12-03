@@ -5,6 +5,7 @@
   import Search from "./lib/Search.svelte";
   import SimGraph from "./lib/SimGraph.svelte";
   import ReportTimeline from "./lib/ReportTimeline.svelte";
+  import Legend from "./lib/Legend.svelte";
 
   const server_address = "http://localhost:5000";
 
@@ -235,12 +236,15 @@
   }
 
   function handleChunksSelected(e) {
+    if (!interview_viewer_component) return;
     const chunks = e.detail;
-    if (chunks === null) interview_viewer_component.dehighlight_chunks();
-    else interview_viewer_component.highlight_chunks(chunks);
+    interview_viewer_component.highlight_chunks(chunks);
+    // if (chunks === null) interview_viewer_component.dehighlight_chunks();
+    // else interview_viewer_component.highlight_chunks(chunks);
   }
 
   function handleKeywordSelected(e) {
+    if (!interview_viewer_component) return;
     const keywords = e.detail;
     console.log(keywords, keyword_data);
     if (keywords === null) {
@@ -258,11 +262,15 @@
       class="flex flex-col justify-center items-center flex-1 h-full w-full basis-[70%] shrink-0"
     >
       <!-- <Search on:search={(e) => searchQuery(e.detail)}></Search> -->
-      <div class="w-full h-full">
+      <div class="w-full h-full relative">
+        <div
+          class="title absolute top-1 left-2 w-fit rounded font-bold text-xl py-4 px-4 text-left shadow bg-sky-100"
+        >
+          The Title
+        </div>
         <SimGraph
           bind:this={simgraph}
           topic_data={chunk_graph}
-          {interview_data}
           {keyword_data}
           on:chunks-selected={handleChunksSelected}
           on:keywords-selected={handleKeywordSelected}
@@ -289,4 +297,10 @@
 </main>
 
 <style>
+  .shadow {
+    box-shadow: 0 0 2px gray;
+  }
+  .title {
+    font-family: BlinkMacSystemFont;
+  }
 </style>
