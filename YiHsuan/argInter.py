@@ -60,22 +60,13 @@ def concise_summarization(summarization):
     return response.choices[0].message.content
 
 def topic_title(summary):
+    messages = []
+
     response = client.chat.completions.create(
         model="gpt-3.5-turbo-1106", 
         response_format={ "type": "json_object" },
-        messages=[
-            {
-                "role": "system", 
-                "content": """
-                Answering the following with JSON format:
-                "標題": 
-                您是一位答疑專家，鑑於以下採訪摘錄，其中有問題與簡要解決方式。請為被採訪者的重要觀點寫出一個合理且相關的中文短語標題使讀者更好理解大概內容。
-                舉例為
-                "人口轉變：現居民多為移居者"
-                """
-            },
-            {"role": "user", "content": summary}
-        ],
+        messages=messages,
+        temperature=0,
     )
     return response.choices[0].message.content
 

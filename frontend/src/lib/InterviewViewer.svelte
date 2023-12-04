@@ -277,7 +277,7 @@
               >
                 {interview.file_name.replaceAll("chunks_", "")}
               </div>
-              <div class="chunk-title flex flex-col gap-y-0.5">
+              <div class="chunk-title grow flex flex-col gap-y-0.5">
                 {#each interview.data as chunk, chunk_index}
                   <!-- title -->
                   <div
@@ -286,6 +286,11 @@
                     id={chunk.id}
                     class={`chunk clickable text-left flex mx-1 flex-auto border border-black rounded`}
                     style={`background: ${chunkColor(chunk)}`}
+                    class:chunk-highlight={highlight_chunk[interview_index][
+                      chunk_index
+                    ]}
+                    class:chunk-not-highlight={highlighting_chunk &&
+                      !highlight_chunk[interview_index][chunk_index]}
                     on:keyup={() =>
                       (show_chunk[interview_index][chunk_index] =
                         !show_chunk[interview_index][chunk_index])}

@@ -217,6 +217,7 @@
   }
 
   function handleEmotionSelected(emotion) {
+    console.log({ emotion }, topic_data.nodes);
     selectedEmotion = emotion;
     if (!emotion) {
       emotion_highlight_chunks = undefined;

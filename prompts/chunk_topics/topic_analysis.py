@@ -11,16 +11,16 @@ def save_json(data, filepath=r'new_data.json'):
 def request_gpt4(messages, response_format=None):
     if response_format == "json":
         response = client.chat.completions.create(
-            model="gpt-4-1106-preview",
+            # model="gpt-4-1106-preview",
+            model="gpt-3.5-turbo-1106",
             messages=messages,
             response_format={ "type": "json_object" },
-            temperature=0
         )
     else:
         response = client.chat.completions.create(
-            model="gpt-4-1106-preview",
+            # model="gpt-4-1106-preview",
+            model="gpt-3.5-turbo-1106",
             messages=messages,
-            temperature=0
         )
     return response.choices[0].message.content
 def get_embedding(text, model="text-embedding-ada-002"):
@@ -42,38 +42,41 @@ def get_embedding(text, model="text-embedding-ada-002"):
 
 import glob
 import json
-# emotion_definitions = open("emotion_definitions.txt").readlines()
-# emotions = list(map(lambda x: x.lower(), ["Happiness", "Sadness", "Fear", "Disgust", "Anger", "Surprise", "Neutral"]))
-emotions = list(map(lambda x: x.lower(), ["Proud", "Resigned", "Angry", "Worried", "Neutral"]))
+topics = ['交通','整體經濟','能源','災害','貿易','政府運作','住屋','醫療','公有土地', '其他']
+# '環境生態'
 
-def emotion_analysis(text):
+def topic_analysis(text):
     messages = [
         {
             "role": "system",
-            "content": """You are a emotion analysis system. 
+            "content": """You are a topic analysis system. 
             You are given a conversation between two people: Interviewer and Interviewee. 
-            What is the overall emotion of the Interviewee?
-            Reply with exactly only one of the following emotions: Proud, Resigned, Angry, Worried, Neutral
-        """
+            The conversation is mostly about the environment, but the user cares more about a specific aspect.
+            What is the focus aspect of the conversation?
+            Reply with exactly only one of the following choices: {}
+            Reply with the following JSON format in Traditional Chinese:
+            {{ "result": aspect (from one of the provided choices) }}
+        """.format(", ".join(topics))
         },
         {
             "role": "user",
             "content": text
         }
     ]
-    emotion = request_gpt4(messages)
-    while emotion.lower() not in emotions:
-        emotion = request_gpt4(messages)
-        print(emotion)
-    return emotion
+    while True:
+        try:
+            response = request_gpt4(messages, response_format="json")
+            topic = json.loads(response)['result']
+            print(topic)
+            if topic in topics:
+                break
+        except:
+            continue
+    return topic
 
 def conversation_to_string(conversation):
     res = ""
     for content in conversation:
-        # if content['speaker'] == '1':
-        #     res += "Interviewer: "
-        # else:
-        #     res += "Interviewee: "
         res += content['speaker'] + ": " + content['content'] + "\n"
     return res
 
@@ -81,13 +84,16 @@ if __name__ == "__main__":
     interview_data_files = glob.glob('chunk_summaries/*.json')
     for interview_data_file in interview_data_files:
         interview_data = json.load(open(interview_data_file))
-        print(interview_data_file)
+        # print(interview_data_file)
+        print(interview_data_file, len(interview_data))
         for chunk in interview_data:
-            if "emotion" in chunk: continue
             conversation = chunk['conversation']
             conversation_str = conversation_to_string(conversation)
-            chunk['emotion'] = emotion_analysis(conversation_str)
-            print(chunk['emotion'])
-            print(conversation)
+            topic = topic_analysis(conversation_str)
+            chunk['topic'] = topic
+            print(topic)
+            # print(conversation)
             print("=====================================")
         save_json(interview_data, interview_data_file)
+
+        # save_json(chunk_summaries, interview_data_file)
