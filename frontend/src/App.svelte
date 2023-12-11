@@ -264,9 +264,10 @@
       <!-- <Search on:search={(e) => searchQuery(e.detail)}></Search> -->
       <div class="w-full h-full relative">
         <div
-          class="title absolute top-1 left-2 w-fit rounded font-bold text-xl py-4 px-4 text-left shadow bg-sky-100"
+          class="title absolute top-1 left-6 w-fit rounded py-4 px-4 text-left text-sky-600"
         >
-          The Title
+          <span>Sea of</span> <br />
+          <span class="title-hidden absolute h-fit mt-[-25px]">Voices</span>
         </div>
         <SimGraph
           bind:this={simgraph}
@@ -301,6 +302,14 @@
     box-shadow: 0 0 2px gray;
   }
   .title {
-    font-family: BlinkMacSystemFont;
+    text-transform: uppercase;
+    filter: blur(0.001em);
+    font-family: Fantasy;
+    font-weight: bold;
+    font-size: 3rem;
+  }
+  .title-hidden {
+    opacity: 0.65;
+    filter: blur(0.02em);
   }
 </style>

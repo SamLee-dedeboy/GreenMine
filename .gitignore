@@ -10,3 +10,5 @@ __pychache__
 *.json
 !package-lock.json
 !package.json
+*.key
+*.pdf
