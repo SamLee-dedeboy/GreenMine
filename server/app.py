@@ -35,6 +35,7 @@ def processData():
 
     for interview_file in glob.glob("../data/result/1203/chunk_summaries/*.json"):
         interview_data = json.load(open(interview_file))
+        interview_file = interview_file.replace("\\", "/")
         file_name = interview_file.split('/')[-1].replace(".json", "")
         participant = file_name.split("_")[0]
         background_topics = file_name.split("_")[1]
@@ -78,6 +79,7 @@ def processData():
     report_embeddings = {}
     for report_file in glob.glob('../data/result/proposal_embeddings/*.json'):
         report_data = json.load(open(report_file))
+        report_file = report_file.replace("\\", "/")
         file_name = report_file.split('/')[-1].replace(".json", "")
         report_embeddings[file_name] = report_data['embedding']
         del report_data['embedding']
