@@ -12,3 +12,4 @@ __pychache__
 !package.json
 *.key
 *.pdf
+*.docx
