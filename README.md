@@ -5,7 +5,7 @@
 cd server/
 python3 -m pip install -r requirements.txt
 ```
-2. Put data files in place. The server reads from `data/result/chunks/v2_1029/*.json`.
+2. Put data files in place.
 
 3. Launching Server:
 ```shell

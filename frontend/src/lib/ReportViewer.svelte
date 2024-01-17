@@ -1,4 +1,6 @@
 <script lang=ts>
+    import { createEventDispatcher } from "svelte";
+    const dispatch = createEventDispatcher();
     export let data: any[];
     let error_files: any[] = []
 
@@ -23,8 +25,11 @@
         "proposer": "提案人",
         "seconder": "附議人",
     } 
+    function showConnection(report) {
+        dispatch("selected", report)
+    }
 </script>
-<div>
+<div class='h-full overflow-scroll'>
     <h1>Report Viewer</h1>
     <div>
         {#each error_files as error_file}
@@ -40,9 +45,12 @@
                 {#if show_report[report_index]}
                     <div class="report-item"> 
                         {#each Object.keys(report.data).sort((a, b) => keys.indexOf(a) - keys.indexOf(b)) as key}
+                            <!-- {#if key !== "embedding"} -->
                             <div class="border rounded {attribute_background[key]}"> {translation[key]} : { report.data[key]} </div>
+                            <!-- {/if} -->
                         {/each}
-                        <button on:click={() => {console.log(report.file_name); error_files = [...error_files, report.file_name]}}> mark as error</button>
+                        <button class="btn" on:click={() => {console.log(report.file_name); error_files = [...error_files, report.file_name]}}> mark as error</button>
+                        <button class="btn" on:click={() => {showConnection(report)}}> show connection</button>
                     </div>
                 {/if}
             </div>

@@ -6,5 +6,9 @@ Rui
 .vscode
 *.pyc
 .DS_Store
-notes
 __pychache__
+*.json
+!package-lock.json
+!package.json
+*.key
+*.pdf
