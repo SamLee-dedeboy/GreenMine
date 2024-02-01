@@ -52,72 +52,72 @@ export const simgraph = {
         this.hoveredHexKeywords = ""
     },
 
-    _update_chunks(groups, group_statistics, emotionColorScale) {
-        console.log(groups)
-        const group_node_sizes = Object.keys(groups).map(group_id => groups[group_id].length)
-        const bbox_min_max_size = [d3.min(group_node_sizes), d3.max(group_node_sizes)]
-        const bboxRadiusScale = d3.scaleLinear().domain(bbox_min_max_size).range([150, 280])
-        const bboxes = radialBboxes(Object.keys(groups), this.width, this.height, {width: 200, height: 200})
-        const chunk_region = d3.select("#" + this.svgId).select("g.chunk_region")
-        chunk_region.selectAll("g.topic")
-            .data(Object.keys(groups))
-            .join("g")
-            .attr("class", "topic")
-            .each(async function(d, i) {
-                const group = d3.select(this)
-                group.selectAll("*").remove()
-                const bbox_size = bboxRadiusScale(groups[d].length)
-                const bbox_center = bboxes[d].center
-                const bbox_origin = [bbox_center[0] - bbox_size/2, bbox_center[1] - bbox_size/2]
-                const bboxCoordinateScaleX = d3.scaleLinear().domain([0, 1]).range([bbox_origin[0], bbox_origin[0] + bbox_size])
-                const bboxCoordinateScaleY = d3.scaleLinear().domain([0, 1]).range([bbox_origin[1], bbox_origin[1] + bbox_size])
-                const defs = group.append("defs")
-                const clipPath = defs.append("clipPath").attr("id", `clip-${i}`)
-                // clip path
-                const bbox = clipPath.append("rect")
-                    .attr("x", -bbox_size/2)
-                    .attr("y", -bbox_size/2)
-                    .attr("width", bbox_size)
-                    .attr("height", bbox_size)
-                    .attr("rx", "5")
-                // label
-                const label = group.append("text")
-                    .attr("x", bbox_center[0])
-                    .attr("y", bbox_center[1])
-                    .text(d)
-                    .attr("font-size", "0.7rem")
-                    .attr("text-anchor", "middle")
-                    .attr("dominant-baseline", "middle")
-                await tick();
-                // emotions
-                console.log({group_statistics}, d)
-                const emotion_counts = group_statistics[d].emotion_counts
-                const total_counts = group_statistics[d].total
-                let angle_offset = 0
-                let emotion_paths: any[] = []
-                Object.keys(emotion_counts).forEach(emotion => {
-                    const counts = emotion_counts[emotion]
-                    const angle = counts/total_counts * Math.PI * 2
-                    const path = d3.arc()({
-                        innerRadius: 45,
-                        outerRadius: (bbox_size/2)*Math.sqrt(2),
-                        startAngle: angle_offset,
-                        endAngle: angle_offset + angle
-                    })
-                    angle_offset += angle;
-                    emotion_paths.push(path)
-                })
-                group.selectAll("path.emotion")
-                    .data(emotion_paths)
-                    .join("path")
-                    .attr("class", "emotion")
-                    .attr("d", d => d)
-                    .attr("transform", `translate(${bbox_center[0]}, ${bbox_center[1]})`)
-                    .attr("fill", (d, i) => emotionColorScale(Object.keys(emotion_counts)[i]))
-                    .attr('opacity', 0.8)
-                    .attr("clip-path", `url(#clip-${i})`)
-            })
-    },
+    // _update_chunks(groups, group_statistics, emotionColorScale) {
+    //     // console.log(groups)
+    //     const group_node_sizes = Object.keys(groups).map(group_id => groups[group_id].length)
+    //     const bbox_min_max_size = [d3.min(group_node_sizes), d3.max(group_node_sizes)]
+    //     const bboxRadiusScale = d3.scaleLinear().domain(bbox_min_max_size).range([150, 280])
+    //     const bboxes = radialBboxes(Object.keys(groups), this.width, this.height, {width: 200, height: 200})
+    //     const chunk_region = d3.select("#" + this.svgId).select("g.chunk_region")
+    //     chunk_region.selectAll("g.topic")
+    //         .data(Object.keys(groups))
+    //         .join("g")
+    //         .attr("class", "topic")
+    //         .each(async function(d, i) {
+    //             const group = d3.select(this)
+    //             group.selectAll("*").remove()
+    //             const bbox_size = bboxRadiusScale(groups[d].length)
+    //             const bbox_center = bboxes[d].center
+    //             const bbox_origin = [bbox_center[0] - bbox_size/2, bbox_center[1] - bbox_size/2]
+    //             const bboxCoordinateScaleX = d3.scaleLinear().domain([0, 1]).range([bbox_origin[0], bbox_origin[0] + bbox_size])
+    //             const bboxCoordinateScaleY = d3.scaleLinear().domain([0, 1]).range([bbox_origin[1], bbox_origin[1] + bbox_size])
+    //             const defs = group.append("defs")
+    //             const clipPath = defs.append("clipPath").attr("id", `clip-${i}`)
+    //             // clip path
+    //             const bbox = clipPath.append("rect")
+    //                 .attr("x", -bbox_size/2)
+    //                 .attr("y", -bbox_size/2)
+    //                 .attr("width", bbox_size)
+    //                 .attr("height", bbox_size)
+    //                 .attr("rx", "5")
+    //             // label
+    //             const label = group.append("text")
+    //                 .attr("x", bbox_center[0])
+    //                 .attr("y", bbox_center[1])
+    //                 .text(d)
+    //                 .attr("font-size", "0.7rem")
+    //                 .attr("text-anchor", "middle")
+    //                 .attr("dominant-baseline", "middle")
+    //             await tick();
+    //             // emotions
+    //             // console.log({group_statistics}, d)
+    //             const emotion_counts = group_statistics[d].emotion_counts
+    //             const total_counts = group_statistics[d].total
+    //             let angle_offset = 0
+    //             let emotion_paths: any[] = []
+    //             Object.keys(emotion_counts).forEach(emotion => {
+    //                 const counts = emotion_counts[emotion]
+    //                 const angle = counts/total_counts * Math.PI * 2
+    //                 const path = d3.arc()({
+    //                     innerRadius: 45,
+    //                     outerRadius: (bbox_size/2)*Math.sqrt(2),
+    //                     startAngle: angle_offset,
+    //                     endAngle: angle_offset + angle
+    //                 })
+    //                 angle_offset += angle;
+    //                 emotion_paths.push(path)
+    //             })
+    //             group.selectAll("path.emotion")
+    //                 .data(emotion_paths)
+    //                 .join("path")
+    //                 .attr("class", "emotion")
+    //                 .attr("d", d => d)
+    //                 .attr("transform", `translate(${bbox_center[0]}, ${bbox_center[1]})`)
+    //                 .attr("fill", (d, i) => emotionColorScale(Object.keys(emotion_counts)[i]))
+    //                 .attr('opacity', 0.8)
+    //                 .attr("clip-path", `url(#clip-${i})`)
+    //         })
+    // },
 
     // using tsne as chunk content
     update_chunks(groups, group_ccs, emotionColorScale) {
@@ -390,7 +390,7 @@ export const simgraph = {
                     hex_labels[closest_hex_index] = keyword
                 }
             })
-        console.log(data_bins)
+        // console.log(data_bins)
         group.select("g.label-group").selectAll("text.label")
             // .data(hex_labels)
             .data(data_bins)
@@ -404,284 +404,284 @@ export const simgraph = {
             })
             // .attr("x", (_, i) => hex_centers[i][0])
             // .attr("y", (_, i) => hex_centers[i][1])
-            .attr("opacity", (d) => (d[0] === null? 0 : (binSumFrequency(d) > 15  ? 1 : 0)))
+            // .attr("opacity", (d) => (d[0] === null? 0 : (binSumFrequency(d) > 15  ? 1 : 0)))
             .attr("font-size", "0.8rem")
             .attr("text-anchor", "middle")
             .attr("dominant-baseline", "middle")
             .attr("pointer-events", "none")
     },
 
-    _update_keywords(keyword_data, scaleRadius) { // deprecated: uses scatterplot
-        console.log(keyword_data)
-        const xScale = this.xScale_keywords
-        const yScale = this.yScale_keywords
-        const group = d3.select("#" + this.svgId).select("g.keyword_region")
-        const keyword_coordinates = keyword_data.keyword_coordinates
-        const keyword_statistics = keyword_data.keyword_statistics
-        group.selectAll("circle.keyword")
-            .data(Object.keys(keyword_coordinates))
-            .join("circle")
-            .attr("class", "keyword")
-            .attr("r", (d) => {console.log(d); return scaleRadius(keyword_statistics[d].frequency)})
-            .attr("cx", d => xScale(keyword_coordinates[d][0]))
-            .attr("cy", d => yScale(keyword_coordinates[d][1]))
-            .attr("fill", "white")
-            .attr("stroke", "black")
-            .attr("stroke-width", 1)
-        group.selectAll("text.label")
-            .data(Object.keys(keyword_coordinates))
-            .join("text")
-            .text(d => d)
-            .attr("class", "label")
-            .attr("x", d => xScale(keyword_coordinates[d][0]))
-            .attr("y", d => yScale(keyword_coordinates[d][1]))
-            .attr("opacity", (d) => keyword_statistics[d].frequency > 10 ? 1 : 0)
-            .attr("font-size", "0.8rem")
-            .attr("text-anchor", "middle")
-            .attr("dominant-baseline", "middle")
-    },
+    // _update_keywords(keyword_data, scaleRadius) { // deprecated: uses scatterplot
+    //     // console.log(keyword_data)
+    //     const xScale = this.xScale_keywords
+    //     const yScale = this.yScale_keywords
+    //     const group = d3.select("#" + this.svgId).select("g.keyword_region")
+    //     const keyword_coordinates = keyword_data.keyword_coordinates
+    //     const keyword_statistics = keyword_data.keyword_statistics
+    //     group.selectAll("circle.keyword")
+    //         .data(Object.keys(keyword_coordinates))
+    //         .join("circle")
+    //         .attr("class", "keyword")
+    //         .attr("r", (d) => {return scaleRadius(keyword_statistics[d].frequency)})  //console.log(d); 
+    //         .attr("cx", d => xScale(keyword_coordinates[d][0]))
+    //         .attr("cy", d => yScale(keyword_coordinates[d][1]))
+    //         .attr("fill", "white")
+    //         .attr("stroke", "black")
+    //         .attr("stroke-width", 1)
+    //     group.selectAll("text.label")
+    //         .data(Object.keys(keyword_coordinates))
+    //         .join("text")
+    //         .text(d => d)
+    //         .attr("class", "label")
+    //         .attr("x", d => xScale(keyword_coordinates[d][0]))
+    //         .attr("y", d => yScale(keyword_coordinates[d][1]))
+    //         .attr("opacity", (d) => keyword_statistics[d].frequency > 10 ? 1 : 0)
+    //         .attr("font-size", "0.8rem")
+    //         .attr("text-anchor", "middle")
+    //         .attr("dominant-baseline", "middle")
+    // },
 
-    update_treemap(svgId, groups, nodes, links, weights, scaleRadius, topicColors) {
-        const tile = d3.treemapSquarify
-        const treemap_data = {
-            name: "root",
-            children: Object.keys(groups).map(group_id => {
-                return {
-                    name: group_id,
-                    value: Math.sqrt(groups[group_id].length),
-                    total: groups[group_id].length
-                }
-            })
-        }
-        const root = d3.treemap()
-            .tile(tile) // e.g., d3.treemapSquarify
-            .size([this.width, this.height])
-            .padding(1)
-            .round(true)
-            (d3.hierarchy(treemap_data)
-                .sum(d => d.value)
-                .sort((a, b) => b.value - a.value));
+    // update_treemap(svgId, groups, nodes, links, weights, scaleRadius, topicColors) {
+    //     const tile = d3.treemapSquarify
+    //     const treemap_data = {
+    //         name: "root",
+    //         children: Object.keys(groups).map(group_id => {
+    //             return {
+    //                 name: group_id,
+    //                 value: Math.sqrt(groups[group_id].length),
+    //                 total: groups[group_id].length
+    //             }
+    //         })
+    //     }
+    //     const root = d3.treemap()
+    //         .tile(tile) // e.g., d3.treemapSquarify
+    //         .size([this.width, this.height])
+    //         .padding(1)
+    //         .round(true)
+    //         (d3.hierarchy(treemap_data)
+    //             .sum(d => d.value)
+    //             .sort((a, b) => b.value - a.value));
 
-        let nodes_dict = {}
-        nodes.forEach(node => {
-            nodes_dict[node.id] = node
-        })
+    //     let nodes_dict = {}
+    //     nodes.forEach(node => {
+    //         nodes_dict[node.id] = node
+    //     })
 
-        console.log(svgId, {groups}, {nodes}, {links}, {weights})
-        const svg = d3.select("#" + svgId)
-        console.log(svg)
-        const svgWidth = svg.attr("viewBox").split(" ")[2]
-        const svgHeight = svg.attr("viewBox").split(" ")[3]
-        const self = this
-        // addOuterLinks(svg, links, nodes_dict)
-        // groups
-        const leaf = svg.selectAll("g.group")
-        .data(root.leaves())
-        .join("g")
-            .attr("class", "group")
-            // .attr("transform", d => `translate(${d.x0},${d.y0})`)
-            .each(function(d) {
-                const group = d3.select(this)
-                const group_id = d.data.name
-                console.log(group_id, topicColors(group_id))
-                // prepare dom
-                group.selectAll("*").remove()
-                const link_group = d3.select(this).append("g").attr("class", "link-group")
-                const node_group = d3.select(this).append("g").attr("class", "node-group")
-                // add bboxes
-                const group_bbox = {
-                    x1: d.x0,
-                    y1: d.y0,
-                    x2: d.x1,
-                    y2: d.y1,
-                    width: d.x1 - d.x0,
-                    height: d.y1 - d.y0,
-                    center: [d.x0 + (d.x1 - d.x0) / 2, d.y0 + (d.y1 - d.y0) / 2]
-                }
-                group.append("rect")
-                    .attr("id", d => (d.name))
-                    // .attr("fill", d => { while (d.depth > 1) d = d.parent; return color(d.data.name); })
-                    .attr("x", group_bbox.x1)
-                    .attr("y", group_bbox.y1)
-                    .attr("fill", "none")
-                    .attr("width", group_bbox.width)
-                    .attr("height", group_bbox.height)
-                    .attr("stroke", "black")
-                    .attr("stroke-width", 1)
-                group.append("text")
-                    .attr("x", group_bbox.x1 + 5)
-                    .attr("y", group_bbox.y1 + 15)
-                    .text(() => d.data.name + " - " + d.data.total)
-                // process data
-                let group_nodes = groups[group_id]
-                group_nodes.forEach(node => {
-                    node.bbox = group_bbox
-                })
-                let group_links = links.filter(link => {
-                    let source, target;
-                    if(link.source.id) source = link.source.id
-                    else source = link.source
-                    if(link.target.id) target = link.target.id
-                    else target = link.target
-                    const source_group = nodes_dict[source].topic
-                    const target_group = nodes_dict[target].topic
-                    // inner outer
-                    if(source_group === group_id && target_group === group_id) link.inner_outer = "inner"
-                    return source_group === group_id && target_group === group_id
-                })
+    //     // console.log(svgId, {groups}, {nodes}, {links}, {weights})
+    //     const svg = d3.select("#" + svgId)
+    //     // console.log(svg)
+    //     const svgWidth = svg.attr("viewBox").split(" ")[2]
+    //     const svgHeight = svg.attr("viewBox").split(" ")[3]
+    //     const self = this
+    //     // addOuterLinks(svg, links, nodes_dict)
+    //     // groups
+    //     const leaf = svg.selectAll("g.group")
+    //     .data(root.leaves())
+    //     .join("g")
+    //         .attr("class", "group")
+    //         // .attr("transform", d => `translate(${d.x0},${d.y0})`)
+    //         .each(function(d) {
+    //             const group = d3.select(this)
+    //             const group_id = d.data.name
+    //             // console.log(group_id, topicColors(group_id))
+    //             // prepare dom
+    //             group.selectAll("*").remove()
+    //             const link_group = d3.select(this).append("g").attr("class", "link-group")
+    //             const node_group = d3.select(this).append("g").attr("class", "node-group")
+    //             // add bboxes
+    //             const group_bbox = {
+    //                 x1: d.x0,
+    //                 y1: d.y0,
+    //                 x2: d.x1,
+    //                 y2: d.y1,
+    //                 width: d.x1 - d.x0,
+    //                 height: d.y1 - d.y0,
+    //                 center: [d.x0 + (d.x1 - d.x0) / 2, d.y0 + (d.y1 - d.y0) / 2]
+    //             }
+    //             group.append("rect")
+    //                 .attr("id", d => (d.name))
+    //                 // .attr("fill", d => { while (d.depth > 1) d = d.parent; return color(d.data.name); })
+    //                 .attr("x", group_bbox.x1)
+    //                 .attr("y", group_bbox.y1)
+    //                 .attr("fill", "none")
+    //                 .attr("width", group_bbox.width)
+    //                 .attr("height", group_bbox.height)
+    //                 .attr("stroke", "black")
+    //                 .attr("stroke-width", 1)
+    //             group.append("text")
+    //                 .attr("x", group_bbox.x1 + 5)
+    //                 .attr("y", group_bbox.y1 + 15)
+    //                 .text(() => d.data.name + " - " + d.data.total)
+    //             // process data
+    //             let group_nodes = groups[group_id]
+    //             group_nodes.forEach(node => {
+    //                 node.bbox = group_bbox
+    //             })
+    //             let group_links = links.filter(link => {
+    //                 let source, target;
+    //                 if(link.source.id) source = link.source.id
+    //                 else source = link.source
+    //                 if(link.target.id) target = link.target.id
+    //                 else target = link.target
+    //                 const source_group = nodes_dict[source].topic
+    //                 const target_group = nodes_dict[target].topic
+    //                 // inner outer
+    //                 if(source_group === group_id && target_group === group_id) link.inner_outer = "inner"
+    //                 return source_group === group_id && target_group === group_id
+    //             })
 
-                // add fake force links
-                group_links = createForceLink(group_nodes, weights)
-                // add nodes
-                const node_radius = 5
-                const nodes_dom = node_group.selectAll("circle")
-                .data(group_nodes)
-                .join("circle")
-                    .attr("class", "node")
-                    .attr("r", node_radius)
-                    // .attr("r", (d) => {return scaleRadius(d.degree)})
-                    .attr("fill", (d) => topicColors(d.topic))
-                    .attr("stroke", "black")
-                    .attr("stroke-width", 1)
-                    .attr("cursor", "pointer")
-                    .attr("cx", d => d.x = d.coordinate[0] * group_bbox.width + group_bbox.x1)
-                    .attr("cy", d => d.y = d.coordinate[1] * group_bbox.height + group_bbox.y1)
-                    // .attr("cx", d => d.x = Math.random() * (group_bbox.x1 + group_bbox.width))
-                    // .attr("cy", d => d.y = Math.random() * (group_bbox.y1 + group_bbox.height))
-                    .on("mouseover", function() { 
-                        d3.select(this).attr("stroke-width", 2)
-                    })
-                    .on("mouseout", function() {
-                        d3.select(this).attr("stroke-width", 1)
-                    })
-                    .on("click", (event, d) => self.handleNodeClick(event, d))
-                    .selection()
-                // add links
-                // const links_dom = link_group.selectAll("line.link")
-                //     .data(group_links.filter(link => link.type==="real"))
-                //     .join("line")
-                //     .attr("class", "link")
-                //     .attr("opacity", 0.5)
-                //     .attr("stroke", "gray")
-                //     .attr("stroke-width", 1)
-                //     .selection()
+    //             // add fake force links
+    //             group_links = createForceLink(group_nodes, weights)
+    //             // add nodes
+    //             const node_radius = 5
+    //             const nodes_dom = node_group.selectAll("circle")
+    //             .data(group_nodes)
+    //             .join("circle")
+    //                 .attr("class", "node")
+    //                 .attr("r", node_radius)
+    //                 // .attr("r", (d) => {return scaleRadius(d.degree)})
+    //                 .attr("fill", (d) => topicColors(d.topic))
+    //                 .attr("stroke", "black")
+    //                 .attr("stroke-width", 1)
+    //                 .attr("cursor", "pointer")
+    //                 .attr("cx", d => d.x = d.coordinate[0] * group_bbox.width + group_bbox.x1)
+    //                 .attr("cy", d => d.y = d.coordinate[1] * group_bbox.height + group_bbox.y1)
+    //                 // .attr("cx", d => d.x = Math.random() * (group_bbox.x1 + group_bbox.width))
+    //                 // .attr("cy", d => d.y = Math.random() * (group_bbox.y1 + group_bbox.height))
+    //                 .on("mouseover", function() { 
+    //                     d3.select(this).attr("stroke-width", 2)
+    //                 })
+    //                 .on("mouseout", function() {
+    //                     d3.select(this).attr("stroke-width", 1)
+    //                 })
+    //                 .on("click", (event, d) => self.handleNodeClick(event, d))
+    //                 .selection()
+    //             // add links
+    //             // const links_dom = link_group.selectAll("line.link")
+    //             //     .data(group_links.filter(link => link.type==="real"))
+    //             //     .join("line")
+    //             //     .attr("class", "link")
+    //             //     .attr("opacity", 0.5)
+    //             //     .attr("stroke", "gray")
+    //             //     .attr("stroke-width", 1)
+    //             //     .selection()
 
-                // force
-                // force_layout(group_nodes, group_links, group_bbox.center, group_bbox, nodes_dom, links_dom, nodes_dict, node_radius)
+    //             // force
+    //             // force_layout(group_nodes, group_links, group_bbox.center, group_bbox, nodes_dom, links_dom, nodes_dict, node_radius)
 
-            })
-    },
+    //         })
+    // },
 
-    update_force(groups, nodes, links, weights, scaleRadius, topicColors, emotionColors) {
-        console.log("update force", {groups}, {nodes}, {links}, {weights})
-        const chunk_region = d3.select("#" + this.svgId).select("g.chunk_region")
-        const group_node_sizes = Object.keys(groups).map(group_id => groups[group_id].length)
-        const bbox_min_max_size = [d3.min(group_node_sizes), d3.max(group_node_sizes)]
-        const bboxRadiusScale = d3.scaleLinear().domain(bbox_min_max_size).range([150, 280])
-        const bboxes = radialBboxes(Object.keys(groups), this.width, this.height, {width: 200, height: 200})
-        let nodes_dict = {}
-        nodes.forEach(node => {
-            nodes_dict[node.id] = node
-        })
-        // groups
-        const topic_groups = chunk_region.selectAll("g.group")
-        .data(Object.keys(groups))
-        .join("g")
-            .attr("class", "group")
-            // .attr("transform", d => `translate(${d.x0},${d.y0})`)
-            .each(function(d) {
-                const group = d3.select(this)
-                const group_id = d
-                // prepare dom
-                group.selectAll("*").remove()
-                const link_group = d3.select(this).append("g").attr("class", "link-group")
-                const node_group = d3.select(this).append("g").attr("class", "node-group")
-                const bbox_size = bboxRadiusScale(groups[d].length)
-                const bbox_center = bboxes[d].center
-                const bbox_origin = [bbox_center[0] - bbox_size/2, bbox_center[1] - bbox_size/2]
-                const bboxCoordinateScaleX = d3.scaleLinear().domain([0, 1]).range([bbox_origin[0], bbox_origin[0] + bbox_size])
-                const bboxCoordinateScaleY = d3.scaleLinear().domain([0, 1]).range([bbox_origin[1], bbox_origin[1] + bbox_size])
-                const bbox = group.append("rect")
-                    .attr("x", bbox_center[0] - bbox_size/2)
-                    .attr("y", bbox_center[1] - bbox_size/2)
-                    .attr("width", bbox_size)
-                    .attr("height", bbox_size)
-                    .attr("fill", "none")
-                    .attr("filter", "url(#drop-shadow-border)")
-                    .attr("stroke", "#c3c3c3")
-                    .attr("stroke-width", 1)
-                    .attr("cursor", "pointer")
-                    .attr("opacity", 0.4)
-                    .attr("rx", "5")
-                group.append("text")
-                    .attr("x", bbox_center[0] - bbox_size/2 + 5)
-                    .attr("y", bbox_center[1] - bbox_size/2 - 10)
-                    .text(d)
-                // process data
-                let group_links = links.filter(link => {
-                    let source, target;
-                    if(link.source.id) source = link.source.id
-                    else source = link.source
-                    if(link.target.id) target = link.target.id
-                    else target = link.target
-                    const source_group = nodes_dict[source].topic
-                    const target_group = nodes_dict[target].topic
-                    // inner outer
-                    if(source_group === group_id && target_group === group_id) link.inner_outer = "inner"
-                    return source_group === group_id && target_group === group_id
-                })
+    // update_force(groups, nodes, links, weights, scaleRadius, topicColors, emotionColors) {
+    //     // console.log("update force", {groups}, {nodes}, {links}, {weights})
+    //     const chunk_region = d3.select("#" + this.svgId).select("g.chunk_region")
+    //     const group_node_sizes = Object.keys(groups).map(group_id => groups[group_id].length)
+    //     const bbox_min_max_size = [d3.min(group_node_sizes), d3.max(group_node_sizes)]
+    //     const bboxRadiusScale = d3.scaleLinear().domain(bbox_min_max_size).range([150, 280])
+    //     const bboxes = radialBboxes(Object.keys(groups), this.width, this.height, {width: 200, height: 200})
+    //     let nodes_dict = {}
+    //     nodes.forEach(node => {
+    //         nodes_dict[node.id] = node
+    //     })
+    //     // groups
+    //     const topic_groups = chunk_region.selectAll("g.group")
+    //     .data(Object.keys(groups))
+    //     .join("g")
+    //         .attr("class", "group")
+    //         // .attr("transform", d => `translate(${d.x0},${d.y0})`)
+    //         .each(function(d) {
+    //             const group = d3.select(this)
+    //             const group_id = d
+    //             // prepare dom
+    //             group.selectAll("*").remove()
+    //             const link_group = d3.select(this).append("g").attr("class", "link-group")
+    //             const node_group = d3.select(this).append("g").attr("class", "node-group")
+    //             const bbox_size = bboxRadiusScale(groups[d].length)
+    //             const bbox_center = bboxes[d].center
+    //             const bbox_origin = [bbox_center[0] - bbox_size/2, bbox_center[1] - bbox_size/2]
+    //             const bboxCoordinateScaleX = d3.scaleLinear().domain([0, 1]).range([bbox_origin[0], bbox_origin[0] + bbox_size])
+    //             const bboxCoordinateScaleY = d3.scaleLinear().domain([0, 1]).range([bbox_origin[1], bbox_origin[1] + bbox_size])
+    //             const bbox = group.append("rect")
+    //                 .attr("x", bbox_center[0] - bbox_size/2)
+    //                 .attr("y", bbox_center[1] - bbox_size/2)
+    //                 .attr("width", bbox_size)
+    //                 .attr("height", bbox_size)
+    //                 .attr("fill", "none")
+    //                 .attr("filter", "url(#drop-shadow-border)")
+    //                 .attr("stroke", "#c3c3c3")
+    //                 .attr("stroke-width", 1)
+    //                 .attr("cursor", "pointer")
+    //                 .attr("opacity", 0.4)
+    //                 .attr("rx", "5")
+    //             group.append("text")
+    //                 .attr("x", bbox_center[0] - bbox_size/2 + 5)
+    //                 .attr("y", bbox_center[1] - bbox_size/2 - 10)
+    //                 .text(d)
+    //             // process data
+    //             let group_links = links.filter(link => {
+    //                 let source, target;
+    //                 if(link.source.id) source = link.source.id
+    //                 else source = link.source
+    //                 if(link.target.id) target = link.target.id
+    //                 else target = link.target
+    //                 const source_group = nodes_dict[source].topic
+    //                 const target_group = nodes_dict[target].topic
+    //                 // inner outer
+    //                 if(source_group === group_id && target_group === group_id) link.inner_outer = "inner"
+    //                 return source_group === group_id && target_group === group_id
+    //             })
 
-                const group_nodes = groups[group_id]
-                // add fake force links
-                group_links = createForceLink(group_nodes, weights)
-                // add nodes
-                const node_radius = 5
-                const nodes_dom = node_group.selectAll("circle")
-                .data(group_nodes)
-                .join("circle")
-                    .attr("class", "node")
-                    .attr("r", node_radius)
-                    // .attr("r", (d) => {return scaleRadius(d.degree)})
-                    // .attr("fill", (d) => topicColors(d.topic))
-                    .attr("fill", (d) => emotionColors(d.emotion))
-                    .attr("stroke", "black")
-                    .attr("stroke-width", 1)
-                    .attr("cursor", "pointer")
-                    .attr("cx", d => d.x = d.coordinate[0] * bbox_size + bbox_origin[0])
-                    .attr("cy", d => d.y = d.coordinate[1] * bbox_size + bbox_origin[1])
-                    // .attr("cx", d => d.x = Math.random() * (group_bbox.x1 + group_bbox.width))
-                    // .attr("cy", d => d.y = Math.random() * (group_bbox.y1 + group_bbox.height))
-                    .on("mouseover", function() { 
-                        d3.select(this).attr("stroke-width", 2)
-                    })
-                    .on("mouseout", function() {
-                        d3.select(this).attr("stroke-width", 1)
-                    })
-                    // .on("click", (event, d) => self.handleNodeClick(event, d))
-                    // .selection()
-                // add links
-                console.log(group_links)
-                const links_dom = link_group.selectAll("line.link")
-                    .data(group_links.filter(link => link.type==="real"))
-                    .join("line")
-                    .attr("class", "link")
-                    .attr("opacity", 0.5)
-                    .attr("stroke", "gray")
-                    .attr("stroke-width", 1)
-                    .selection()
+    //             const group_nodes = groups[group_id]
+    //             // add fake force links
+    //             group_links = createForceLink(group_nodes, weights)
+    //             // add nodes
+    //             const node_radius = 5
+    //             const nodes_dom = node_group.selectAll("circle")
+    //             .data(group_nodes)
+    //             .join("circle")
+    //                 .attr("class", "node")
+    //                 .attr("r", node_radius)
+    //                 // .attr("r", (d) => {return scaleRadius(d.degree)})
+    //                 // .attr("fill", (d) => topicColors(d.topic))
+    //                 .attr("fill", (d) => emotionColors(d.emotion))
+    //                 .attr("stroke", "black")
+    //                 .attr("stroke-width", 1)
+    //                 .attr("cursor", "pointer")
+    //                 .attr("cx", d => d.x = d.coordinate[0] * bbox_size + bbox_origin[0])
+    //                 .attr("cy", d => d.y = d.coordinate[1] * bbox_size + bbox_origin[1])
+    //                 // .attr("cx", d => d.x = Math.random() * (group_bbox.x1 + group_bbox.width))
+    //                 // .attr("cy", d => d.y = Math.random() * (group_bbox.y1 + group_bbox.height))
+    //                 .on("mouseover", function() { 
+    //                     d3.select(this).attr("stroke-width", 2)
+    //                 })
+    //                 .on("mouseout", function() {
+    //                     d3.select(this).attr("stroke-width", 1)
+    //                 })
+    //                 // .on("click", (event, d) => self.handleNodeClick(event, d))
+    //                 // .selection()
+    //             // add links
+    //             // console.log(group_links)
+    //             const links_dom = link_group.selectAll("line.link")
+    //                 .data(group_links.filter(link => link.type==="real"))
+    //                 .join("line")
+    //                 .attr("class", "link")
+    //                 .attr("opacity", 0.5)
+    //                 .attr("stroke", "gray")
+    //                 .attr("stroke-width", 1)
+    //                 .selection()
 
-                const group_bbox = {
-                    x1: bbox_origin[0],
-                    y1: bbox_origin[1],
-                    x2: bbox_origin[0] + bbox_size,
-                    y2: bbox_origin[1] + bbox_size,
-                }
-                // force
-                const group_connected_nodes = group_nodes.filter(node => node.degree > 0)
-                force_layout(group, group_connected_nodes, group_links, bbox_center, group_bbox, nodes_dom, links_dom, nodes_dict, node_radius)
+    //             const group_bbox = {
+    //                 x1: bbox_origin[0],
+    //                 y1: bbox_origin[1],
+    //                 x2: bbox_origin[0] + bbox_size,
+    //                 y2: bbox_origin[1] + bbox_size,
+    //             }
+    //             // force
+    //             const group_connected_nodes = group_nodes.filter(node => node.degree > 0)
+    //             force_layout(group, group_connected_nodes, group_links, bbox_center, group_bbox, nodes_dom, links_dom, nodes_dict, node_radius)
 
-            }) 
-    },
+    //         }) 
+    // },
 
     // highlight_nodes(svgId, node_ids) {
     //     console.log("highlighting nodes")
@@ -753,7 +753,7 @@ function wrapChinese(text) {
 }
 
 function force_layout(group, group_nodes, group_links, group_center, group_bbox, nodes, links, nodes_dict, node_radius) {
-    console.log({group_nodes}, {group_links}, nodes)
+    // console.log({group_nodes}, {group_links}, nodes)
     const forceNode = d3.forceManyBody();
     const forceLink = d3.forceLink(group_links).id(d => d.id).distance((d) => d.weight)
     const simulation = d3.forceSimulation(group_nodes)
@@ -924,7 +924,7 @@ function clip(x, range) {
 }
 
 function radialBboxes(groups, width, height, maxBboxSize) {
-    console.log(groups)
+    // console.log(groups)
     groups[0] = "環境生態"
     groups[7] = "整體經濟"
     const angleScale = d3.scaleBand().domain(groups).range([0, 0+Math.PI * 2])

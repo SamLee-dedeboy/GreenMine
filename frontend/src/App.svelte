@@ -1,11 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import InterviewViewer from "./lib/InterviewViewer.svelte";
-  import ReportViewer from "./lib/ReportViewer.svelte";
-  import Search from "./lib/Search.svelte";
+  // import ReportViewer from "./lib/ReportViewer.svelte";
+  // import Search from "./lib/Search.svelte";
   import SimGraph from "./lib/SimGraph.svelte";
-  import ReportTimeline from "./lib/ReportTimeline.svelte";
-  import Legend from "./lib/Legend.svelte";
+  // import ReportTimeline from "./lib/ReportTimeline.svelte";
+  // import Legend from "./lib/Legend.svelte";
 
   const server_address = "http://localhost:5000";
 
@@ -46,7 +46,7 @@
         // report_data = res.reports
         chunk_coordinates = res.topic_tsnes;
         chunk_graph = link_to_graph(res.chunk_links, res.chunk_nodes);
-        console.log({ chunk_graph });
+        // console.log({ chunk_graph });
         timeline_data = res.reports;
         keyword_data = {
           keyword_coordinates: res.keyword_coordinates,
@@ -56,7 +56,7 @@
   }
 
   async function searchQuery(query) {
-    console.log(query);
+    // console.log(query);
     const type = "chunk";
     fetch(`${server_address}/search/`, {
       method: "POST",
@@ -68,7 +68,7 @@
     })
       .then((res) => res.json())
       .then((search_response) => {
-        console.log(search_response);
+        // console.log(search_response);
         search_response = search_response.filter(
           (response) => response[1] > search_threshold
         );
@@ -153,7 +153,7 @@
       links: graph_links,
       weights: weights,
     };
-    console.log(graph.nodes.length, graph.links.length);
+    // console.log(graph.nodes.length, graph.links.length);
     return graph;
   }
 
@@ -246,7 +246,7 @@
   function handleKeywordSelected(e) {
     if (!interview_viewer_component) return;
     const keywords = e.detail;
-    console.log(keywords, keyword_data);
+    // console.log(keywords, keyword_data);
     if (keywords === null) {
       interview_viewer_component.dehighlight_keywords();
     } else {

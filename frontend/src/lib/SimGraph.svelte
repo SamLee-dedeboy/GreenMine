@@ -52,7 +52,7 @@
   })(selectedKeywords);
 
   $: ((_) => {
-    console.log({ filterClickedKeywords });
+    // console.log({ filterClickedKeywords });
     if (!filterClickedKeywords) selectedKeywords = selectedHexBinKeywords;
     else {
       selectedKeywords = filterClickedKeywords;
@@ -172,7 +172,7 @@
   // }
 
   $: ((_) => {
-    console.log({ highlight_chunks });
+    // console.log({ highlight_chunks });
     dispatch("chunks-selected", highlight_chunks);
     if (!highlight_chunks) {
       simgraph.dehighlight_nodes();
@@ -217,7 +217,7 @@
   }
 
   function handleEmotionSelected(emotion) {
-    console.log({ emotion }, topic_data.nodes);
+    // console.log({ emotion }, topic_data.nodes);
     selectedEmotion = emotion;
     if (!emotion) {
       emotion_highlight_chunks = undefined;
@@ -241,7 +241,7 @@
     if (!l1) return l2;
     if (!l2) return l1;
     const res = l1.filter((value) => l2.includes(value));
-    console.log(l1, l2, res);
+    // console.log(l1, l2, res);
     return res;
   }
 </script>
