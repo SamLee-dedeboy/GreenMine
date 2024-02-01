@@ -33,7 +33,7 @@
     external_highlights || highlight_chunk.flat().some((showing) => showing);
   $: show_interview = Array.apply(null, Array(data.length)).map(() => false);
   onMount(() => {
-    console.log(data, show_chunk);
+    // console.log(data, show_chunk);
     original_data = JSON.parse(JSON.stringify(data));
   });
 
@@ -58,7 +58,7 @@
   }
 
   export function highlight_chunks(highlight_chunks) {
-    console.log({ highlight_chunks });
+    // console.log({ highlight_chunks });
     dehighlight_chunks();
     external_highlights = true;
     if (!highlight_chunks) {
@@ -87,7 +87,7 @@
   }
 
   export function highlight_keywords(keyword_chunks, keywords) {
-    console.log({ keyword_chunks, keywords });
+    // console.log({ keyword_chunks, keywords });
     dehighlight_keywords();
     keyword_chunks = JSON.parse(JSON.stringify(keyword_chunks));
     keyword_chunks.forEach((chunks, keyword_index) => {
@@ -103,7 +103,7 @@
       });
     });
     data_changes += 1;
-    console.log(keyword_chunks);
+    // console.log(keyword_chunks);
   }
 
   export function dehighlight_keywords() {
