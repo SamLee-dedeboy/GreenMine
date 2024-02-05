@@ -248,12 +248,12 @@
 
 <div bind:this={container} class="w-full h-full relative p-2 pt-4">
   <div class="absolute top-5 right-0 w-[150px] h-[150px]">
-    <Legend
+    <!-- <Legend
       bind:selectedEmotion
       on:selectEmotion={(e) => handleEmotionSelected(e.detail)}
-    />
+    /> -->
   </div>
-  <div
+  <!-- <div
     class="absolute flex flex-col text-sm top-[170px] right-1 w-[120px] h-[150px] text-left shadow rounded px-0.5 divide-y divide-black overflow-y-auto"
   >
     <span class="text-base font-bold"> Filter: </span>
@@ -306,13 +306,13 @@
         {/each}
       </div>
     {/if}
-  </div>
+  </div> -->
   <div
     class="tooltip absolute w-fit h-fit pl-0.5 pr-1 py-1 rounded bg-white border border-black opacity-0 pointer-events-none text-xs"
   ></div>
   <svg id={svgId} class="w-full h-full overflow-visible">
     <g class="chunk_region"></g>
-    <g class="keyword_region"></g>
+    <!-- <g class="keyword_region"></g> -->
     <defs>
       <filter id="drop-shadow-hex" x="0" y="0">
         <feOffset result="offOut" in="SourceAlpha" dx="0" dy="3" />

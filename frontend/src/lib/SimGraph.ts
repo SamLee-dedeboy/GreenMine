@@ -273,9 +273,12 @@ export const simgraph = {
     update_keywords(keyword_data, _) {
         const xScale = this.xScale_keywords
         const yScale = this.yScale_keywords
+        // console.log(this.keyword_region_size.width)
         const hexbin = Hexbin().x(d => xScale(keyword_data.keyword_coordinates[d][0])).y(d => yScale(keyword_data.keyword_coordinates[d][1]))
             .radius(20)
             .extent([[0, 0], [this.keyword_region_size.width, this.keyword_region_size.height]])
+
+        console.log(keyword_data.keyword_coordinates)
         const data_bins = hexbin(Object.keys(keyword_data.keyword_coordinates))
         // const scaleRadius = d3.scaleLinear()
         //     .domain([0, d3.max(data_bins, d => d.length)])
@@ -303,6 +306,7 @@ export const simgraph = {
         const keyword_coordinates = keyword_data.keyword_coordinates
         const keyword_statistics = keyword_data.keyword_statistics
         const self = this
+        console.log(data_bins)
         group.select("g.hex-group").selectAll("path.hex")
         .data(data_bins)
         .join("path")

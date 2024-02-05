@@ -4,6 +4,13 @@
   // import ReportViewer from "./lib/ReportViewer.svelte";
   // import Search from "./lib/Search.svelte";
   import SimGraph from "./lib/SimGraph.svelte";
+  import DriverNode from "../../data/result/Sam/Drivers_nodes.json";
+  import PresseureNode from "../../data/result/Sam/Pressures_nodes.json";
+  import StateNode from "../../data/result/Sam/States_nodes.json";
+  import ImpactNode from "../../data/result/Sam/Impacts_nodes.json";
+  import ResponseNode from "../../data/result/Sam/Responses_nodes.json";
+
+  import Varbox from "./lib/Varbox.svelte";
   // import ReportTimeline from "./lib/ReportTimeline.svelte";
   // import Legend from "./lib/Legend.svelte";
 
@@ -18,8 +25,14 @@
   let chunk_graph: any = undefined;
   let link_threshold: number = 0.83;
   let simgraph;
+  let varbox;
   let chunk_coordinates;
   let timeline_data;
+  let drivers: any = { ...DriverNode };
+  let pressures: any = { ...PresseureNode };
+  let states: any = { ...StateNode };
+  let impacts: any = { ...ImpactNode };
+  let responses: any = { ...ResponseNode };
 
   $: keyword_chunks_dict = ((_) => {
     let res = {};
@@ -41,7 +54,7 @@
     fetch(`${server_address}/data/`)
       .then((res) => res.json())
       .then((res) => {
-        console.log({ res });
+        // console.log( "all data: ",{res });
         interview_data = res.interviews;
         // report_data = res.reports
         chunk_coordinates = res.topic_tsnes;
@@ -54,6 +67,9 @@
         };
       });
   }
+
+console.log(DriverNode)
+  
 
   async function searchQuery(query) {
     // console.log(query);
@@ -269,23 +285,37 @@
           <span>Sea of</span> <br />
           <span class="title-hidden absolute h-fit mt-[-25px]">Voices</span>
         </div>
-        <SimGraph
+        <!-- <SimGraph
           bind:this={simgraph}
           topic_data={chunk_graph}
           {keyword_data}
           on:chunks-selected={handleChunksSelected}
           on:keywords-selected={handleKeywordSelected}
-        ></SimGraph>
+        ></SimGraph> -->
+        <Varbox
+        bind:this={varbox}
+        drivers={drivers}
+        pressures={pressures}
+        states={states}
+        impacts={impacts}
+        responses={responses}
+        ></Varbox>
       </div>
     </div>
-    <div class="interview-viewer-container h-full w-full basis-[31%]">
-      {#if interview_data != undefined}
+    <!-- <div class="w-full h-full relative">
+      <Varbox
+      bind:this={varbox}
+      data={drivers}
+      ></Varbox>
+    </div> -->
+    <!-- <div class="interview-viewer-container h-full w-full basis-[31%]"> -->
+      <!-- {#if interview_data != undefined}
         <InterviewViewer
           bind:this={interview_viewer_component}
           data={interview_data}
         ></InterviewViewer>
-      {/if}
-    </div>
+      {/if} -->
+    <!-- </div> -->
     <!-- <div class="flex-1 h-full">
             <div class='w-full h-full'>
                 <ReportTimeline timeline_data={timeline_data}></ReportTimeline>
