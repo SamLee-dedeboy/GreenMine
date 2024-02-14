@@ -9,7 +9,7 @@
   import StateNode from "../../data/result/Sam/States_nodes.json";
   import ImpactNode from "../../data/result/Sam/Impacts_nodes.json";
   import ResponseNode from "../../data/result/Sam/Responses_nodes.json";
-
+  import type { tMention } from "./lib/types";
   import Varbox from "./lib/Varbox.svelte";
   // import ReportTimeline from "./lib/ReportTimeline.svelte";
   // import Legend from "./lib/Legend.svelte";
@@ -56,7 +56,7 @@
       .then((res) => {
         // console.log( "all data: ",{res });
         interview_data = res.interviews;
-        console.log(interview_data)
+        console.log(interview_data);
         // report_data = res.reports
         chunk_coordinates = res.topic_tsnes;
         chunk_graph = link_to_graph(res.chunk_links, res.chunk_nodes);
@@ -68,9 +68,6 @@
         };
       });
   }
-
-
-  
 
   async function searchQuery(query) {
     // console.log(query);
@@ -274,13 +271,12 @@
   // }
 
   function handleVarSelected(e) {
-
-    if(e.detail === null) {interview_viewer_component.highlight_chunks(null)}
-    else
-    {
-      const chunks = e.detail.mentions;
-      interview_viewer_component.highlight_chunks(chunks)
-    };
+    if (e.detail === null) {
+      interview_viewer_component.highlight_chunks(null);
+    } else {
+      const chunks: tMention[] = e.detail;
+      interview_viewer_component.highlight_chunks(chunks);
+    }
   }
 </script>
 
@@ -304,13 +300,13 @@
           on:keywords-selected={handleKeywordSelected}
         ></SimGraph> -->
         <Varbox
-        bind:this={varbox}
-        drivers={drivers}
-        pressures={pressures}
-        states={states}
-        impacts={impacts}
-        responses={responses}
-        on:var-selected={handleVarSelected}
+          bind:this={varbox}
+          {drivers}
+          {pressures}
+          {states}
+          {impacts}
+          {responses}
+          on:var-selected={handleVarSelected}
         ></Varbox>
       </div>
     </div>

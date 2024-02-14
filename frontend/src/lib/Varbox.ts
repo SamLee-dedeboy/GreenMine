@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 import {hexbin as Hexbin} from 'd3-hexbin';
 import {tick} from 'svelte';
+import { scale } from 'svelte/transition';
 // import type  {tVaraible} from './types/variables';
 
 export const varbox = {
@@ -59,6 +60,33 @@ export const varbox = {
        
     },
 
+    updateColorScales(drivers, pressures, states, impacts, responses) {
+        let variables:any[] = [];
+        variables.push(drivers,pressures,states,impacts,responses);
+        // console.log(variables)
+        
+        // Use reduce to find the min and max lengths of mentions arrays
+        let { minLength, maxLength } = variables.reduce((result, item) => {
+            if (item.variable_mentions) {
+            Object.values(item.variable_mentions).forEach((variable:any) => {
+                if (variable.mentions) {
+                const mentionsLength = variable.mentions.length;
+                result.minLength = Math.min(result.minLength, mentionsLength);
+                result.maxLength = Math.max(result.maxLength, mentionsLength);
+                }
+            });
+            }
+            return result;
+        }, { minLength: Infinity, maxLength: -Infinity });
+        const scaleColor = d3.scaleSequential([minLength, maxLength], d3.interpolateBlues)
+        return scaleColor
+    },
+
+    updateRadialBoxes(drivers, pressures, states, impacts, responses) {
+        let groups = ["Drivers","Pressures","States","Impacts","Responses"]
+        const bboxes = radialBboxes(groups,1,1,{width: 1, height: 1})
+    },
+
     update_vars(drivers,pressures,states,impacts,responses){
         let variables:any[] = [];
         variables.push(drivers,pressures,states,impacts,responses);
@@ -86,8 +114,6 @@ export const varbox = {
         for (let i = 0; i < 5; i++) {
             this.drawvars(variables[i],groupclass[i],groups[i],minLength,maxLength,bboxes[groups[i]],regionWidth,regionHeight)
         }
-        
-
     },
 
     drawvars(vars,class_name,group_name,minLength,maxLength,box_coor,regionWidth,regionHeight){
