@@ -56,6 +56,7 @@
       .then((res) => {
         // console.log( "all data: ",{res });
         interview_data = res.interviews;
+        console.log(interview_data)
         // report_data = res.reports
         chunk_coordinates = res.topic_tsnes;
         chunk_graph = link_to_graph(res.chunk_links, res.chunk_nodes);
@@ -68,7 +69,7 @@
       });
   }
 
-console.log(DriverNode)
+
   
 
   async function searchQuery(query) {
@@ -254,30 +255,40 @@ console.log(DriverNode)
   function handleChunksSelected(e) {
     if (!interview_viewer_component) return;
     const chunks = e.detail;
+    console.log(chunks);
     interview_viewer_component.highlight_chunks(chunks);
     // if (chunks === null) interview_viewer_component.dehighlight_chunks();
     // else interview_viewer_component.highlight_chunks(chunks);
   }
 
-  function handleKeywordSelected(e) {
-    if (!interview_viewer_component) return;
-    const keywords = e.detail;
-    // console.log(keywords, keyword_data);
-    if (keywords === null) {
-      interview_viewer_component.dehighlight_keywords();
-    } else {
-      const nodes = keywords.map((keyword) => keyword_chunks_dict[keyword]);
-      interview_viewer_component.highlight_keywords(nodes, keywords);
-    }
+  // function handleKeywordSelected(e) {
+  //   if (!interview_viewer_component) return;
+  //   const keywords = e.detail;
+  //   // console.log(keywords, keyword_data);
+  //   if (keywords === null) {
+  //     interview_viewer_component.dehighlight_keywords();
+  //   } else {
+  //     const nodes = keywords.map((keyword) => keyword_chunks_dict[keyword]);
+  //     interview_viewer_component.highlight_keywords(nodes, keywords);
+  //   }
+  // }
+
+  function handleVarSelected(e) {
+
+    if(e.detail === null) {interview_viewer_component.highlight_chunks(null)}
+    else
+    {
+      const chunks = e.detail.mentions;
+      interview_viewer_component.highlight_chunks(chunks)
+    };
   }
 </script>
 
 <main class="h-[100vh] px-1">
   <div class="page flex space-x-1 h-full">
     <div
-      class="flex flex-col justify-center items-center flex-1 h-full w-full basis-[70%] shrink-0"
+      class="flex flex-col justify-center items-center flex-1 h-full w-[70%]"
     >
-      <!-- <Search on:search={(e) => searchQuery(e.detail)}></Search> -->
       <div class="w-full h-full relative">
         <div
           class="title absolute top-1 left-6 w-fit rounded py-4 px-4 text-left text-sky-600"
@@ -299,23 +310,18 @@ console.log(DriverNode)
         states={states}
         impacts={impacts}
         responses={responses}
+        on:var-selected={handleVarSelected}
         ></Varbox>
       </div>
     </div>
-    <!-- <div class="w-full h-full relative">
-      <Varbox
-      bind:this={varbox}
-      data={drivers}
-      ></Varbox>
-    </div> -->
-    <!-- <div class="interview-viewer-container h-full w-full basis-[31%]"> -->
-      <!-- {#if interview_data != undefined}
+    <div class="interview-viewer-container h-full w-full basis-[31%]">
+      {#if interview_data != undefined}
         <InterviewViewer
           bind:this={interview_viewer_component}
           data={interview_data}
         ></InterviewViewer>
-      {/if} -->
-    <!-- </div> -->
+      {/if}
+    </div>
     <!-- <div class="flex-1 h-full">
             <div class='w-full h-full'>
                 <ReportTimeline timeline_data={timeline_data}></ReportTimeline>

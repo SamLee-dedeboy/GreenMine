@@ -928,7 +928,7 @@ function clip(x, range) {
 }
 
 function radialBboxes(groups, width, height, maxBboxSize) {
-    // console.log(groups)
+    console.log(groups)
     groups[0] = "環境生態"
     groups[7] = "整體經濟"
     const angleScale = d3.scaleBand().domain(groups).range([0, 0+Math.PI * 2])

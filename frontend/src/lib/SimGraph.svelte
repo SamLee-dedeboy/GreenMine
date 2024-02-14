@@ -312,7 +312,7 @@
   ></div>
   <svg id={svgId} class="w-full h-full overflow-visible">
     <g class="chunk_region"></g>
-    <!-- <g class="keyword_region"></g> -->
+    <g class="keyword_region"></g>
     <defs>
       <filter id="drop-shadow-hex" x="0" y="0">
         <feOffset result="offOut" in="SourceAlpha" dx="0" dy="3" />

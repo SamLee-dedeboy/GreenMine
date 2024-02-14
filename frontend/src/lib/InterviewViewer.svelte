@@ -56,7 +56,7 @@
     const color = emotionColorScale(emotion);
     return color;
   }
-
+  ////white -> ${chunkColor(chunk)}
   export function highlight_chunks(highlight_chunks) {
     // console.log({ highlight_chunks });
     dehighlight_chunks();
@@ -65,7 +65,7 @@
       external_highlights = false;
       highlight_chunks = [];
     }
-    highlight_chunk_ids = highlight_chunks.map((chunk) => chunk.id);
+    highlight_chunk_ids = highlight_chunks.map((chunk) => chunk.chunk_id);
     highlight_chunk_ids.forEach((chunk_id) => {
       const chunk_index = chunk_indexes[chunk_id];
       highlight_chunk[chunk_index[0]][chunk_index[1]] = true;
@@ -161,7 +161,7 @@
                     ]}
                     class:chunk-not-highlight={highlighting_chunk &&
                       !highlight_chunk[interview_index][chunk_index]}
-                    style={`background: ${chunkColor(chunk)}`}
+                    style={`background: white`} 
                     on:keyup={() => {
                       show_chunk[interview_index][chunk_index] =
                         !show_chunk[interview_index][chunk_index];
@@ -170,7 +170,7 @@
                       else
                         highlight_chunk[interview_index][chunk_index] =
                           highlight_chunk_ids.includes(chunk.id);
-                    }}
+                    }}   
                     on:click={() => {
                       show_chunk[interview_index][chunk_index] =
                         !show_chunk[interview_index][chunk_index];
@@ -196,7 +196,7 @@
                         tabindex={chunk_index}
                         id={chunk.id}
                         class={`chunk flex clickable mx-1 mt-1 flex-auto rounded shadow text-left`}
-                        style={`background: ${chunkColor(chunk)}`}
+                        style={`background: white`}
                         on:keyup={() => {
                           show_chunk[interview_index][chunk_index] =
                             !show_chunk[interview_index][chunk_index];
@@ -285,7 +285,7 @@
                     tabindex={chunk_index}
                     id={chunk.id}
                     class={`chunk clickable text-left flex mx-1 flex-auto border border-black rounded`}
-                    style={`background: ${chunkColor(chunk)}`}
+                    style={`background: white`}
                     class:chunk-highlight={highlight_chunk[interview_index][
                       chunk_index
                     ]}
