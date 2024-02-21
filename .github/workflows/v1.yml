@@ -25,9 +25,11 @@ jobs:
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url }
     runs-on: ubuntu-latest
     steps:
+      - name: goto frontend
+        run: cd frontend
       - name: Checkout
         uses: actions/checkout@v4
       - name: Set up Node
@@ -35,7 +37,6 @@ jobs:
         with:
           node-version: 18
           cache: 'npm'
-          cache-dependency-path: '**/package-lock.json'
       - name: Install dependencies
         run: npm install
       - name: Build
