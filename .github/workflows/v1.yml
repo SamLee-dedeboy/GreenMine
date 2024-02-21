@@ -29,31 +29,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
+        working-directory: ./frontend
         uses: actions/checkout@v4
-        working-directory: frontend
       - name: Set up Node
+        working-directory: ./frontend
         uses: actions/setup-node@v3
         with:
           node-version: 18
           cache: 'npm'
-        working-directory: frontend
       - name: Install dependencies
+        working-directory: ./frontend
         run: npm install
-        working-directory: frontend
       - name: Build
+        working-directory: ./frontend
         run: npm run build
-        working-directory: frontend
       - name: Setup Pages
+        working-directory: ./frontend
         uses: actions/configure-pages@v3
-        working-directory: frontend
       - name: Upload artifact
+        working-directory: ./frontend
         uses: actions/upload-pages-artifact@v2
-        working-directory: frontend
         with:
           # Upload dist repository
           path: './dist'
-        working-directory: frontend
       - name: Deploy to GitHub Pages
+        working-directory: ./frontend
         id: deployment
         uses: actions/deploy-pages@v2
         working-directory: frontend
