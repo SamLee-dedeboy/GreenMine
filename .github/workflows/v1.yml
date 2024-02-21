@@ -56,4 +56,3 @@ jobs:
         working-directory: ./frontend
         id: deployment
         uses: actions/deploy-pages@v2
-        working-directory: frontend
