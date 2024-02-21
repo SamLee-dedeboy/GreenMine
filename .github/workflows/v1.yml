@@ -25,10 +25,10 @@ jobs:
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: goto frontend
+      - name: Goto frontend
         run: cd frontend
       - name: Checkout
         uses: actions/checkout@v4
