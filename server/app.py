@@ -8,7 +8,7 @@ from collections import defaultdict
 
 app = Flask(__name__)
 CORS(app)
-openai_api_key = open("api_key").read()
+# openai_api_key = open("api_key").read()
 # document_controller = DocumentController(r'../data/result/chunk_embeddings/1103/all_chunks.json', openai_api_key)
 def normalize_weight(links):
     def sigmoid(x): 
