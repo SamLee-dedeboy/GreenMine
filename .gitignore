@@ -27,3 +27,4 @@ prompts/variable_extraction/chunk_summaries/*.json
 prompts/variable_extraction/results/*.json
 prompts/variable_extraction/results/tmp/*.json
 prompts/variable_extraction/variable_definitions/*.json
+v1_data
