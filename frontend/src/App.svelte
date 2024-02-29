@@ -34,6 +34,7 @@
   let impacts: any = { ...ImpactNode };
   let responses: any = { ...ResponseNode };
 
+
   $: keyword_chunks_dict = ((_) => {
     let res = {};
     if (!chunk_graph) return res;
@@ -54,13 +55,13 @@
     fetch(`${server_address}/data/`)
       .then((res) => res.json())
       .then((res) => {
-        // console.log( "all data: ",{res });
+        console.log( "all data: ",{res });
         interview_data = res.interviews;
-        console.log(interview_data);
+        // console.log(interview_data);
         // report_data = res.reports
         chunk_coordinates = res.topic_tsnes;
         chunk_graph = link_to_graph(res.chunk_links, res.chunk_nodes);
-        // console.log({ chunk_graph });
+        console.log({ chunk_coordinates });
         timeline_data = res.reports;
         keyword_data = {
           keyword_coordinates: res.keyword_coordinates,
@@ -271,12 +272,15 @@
   // }
 
   function handleVarSelected(e) {
+    // console.log(e.detail);
     if (e.detail === null) {
       interview_viewer_component.highlight_chunks(null);
+      // summary_interviews = undefined
     } else {
       const chunks: tMention[] = e.detail;
       interview_viewer_component.highlight_chunks(chunks);
     }
+    
   }
 </script>
 
@@ -307,6 +311,7 @@
           {impacts}
           {responses}
           on:var-selected={handleVarSelected}
+          {interview_data}
         ></Varbox>
       </div>
     </div>

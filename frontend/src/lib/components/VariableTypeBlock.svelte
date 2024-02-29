@@ -8,7 +8,7 @@
   export let data: tVariableType;
   export let varColorScale: any;
   onMount(() => {
-    console.log("VariableTypeBlock mounted", data);
+    // console.log("VariableTypeBlock mounted", data);
   });
 
   function getMentionLength(data, variable_name) {
@@ -33,8 +33,10 @@
         style="background-color: {varColorScale(
           getMentionLength(data, variable_name)
         )}"
-        on:click={() =>
-          dispatchEvent("var-selected", data.variable_mentions[variable_name])}
+        on:click={(e) => {
+          e.preventDefault();
+          dispatchEvent("var-selected", data.variable_mentions[variable_name]);
+        }}
         on:keyup={() => {}}
       >
         {variable_name}

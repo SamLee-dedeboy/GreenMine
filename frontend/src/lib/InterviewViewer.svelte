@@ -56,7 +56,7 @@
     const color = emotionColorScale(emotion);
     return color;
   }
-  ////white -> ${chunkColor(chunk)}
+  ////white -> white
   export function highlight_chunks(highlight_chunks) {
     // console.log({ highlight_chunks });
     dehighlight_chunks();

@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import {hexbin as Hexbin} from 'd3-hexbin';
+// import {hexbin as Hexbin} from 'd3-hexbin';
 import {tick} from 'svelte';
 import { scale } from 'svelte/transition';
 // import type  {tVaraible} from './types/variables';
@@ -7,59 +7,226 @@ import { scale } from 'svelte/transition';
 export const varbox = {
     init(svgId, width,height, paddings,handlers){
         const self = this;
-        const svg = d3.select("#"+svgId).attr("viewBox", `0 0 ${width} ${height}`)
-                    .on("click", function(e) {
-                        if(!e.defaultPrevented) {
-                            d3.selectAll("path.hex")
-                                .classed("hex-highlight", false)
-                                .classed("hex-not-highlight", false)
-                            d3.selectAll("text.label")
-                                .classed("hex-label-highlight", false)
-                                .classed("hex-label-not-highlight", false)
-                            handlers.VarSelected(null)
-                        }
-                    });
-        const driver_region = svg.select("g.driver_region")
-        const pressure_region = svg.select("g.pressure_region")
-        const state_region = svg.select("g.state_region")
-        const impact_region = svg.select("g.impact_region")
-        const response_region = svg.select("g.response_region")
+        // const svg = d3.select("#"+svgId).attr("viewBox", `0 0 ${width} ${height}`)
+        //             .on("click", function(e) {
+        //                 if(!e.defaultPrevented) {
+        //                     d3.selectAll("path.hex")
+        //                         .classed("hex-highlight", false)
+        //                         .classed("hex-not-highlight", false)
+        //                     d3.selectAll("text.label")
+        //                         .classed("hex-label-highlight", false)
+        //                         .classed("hex-label-not-highlight", false)
+        //                     handlers.VarSelected(null)
+        //                 }
+        //             });
 
-        driver_region.append("g").attr("class","hex-group")
-        driver_region.append("g").attr("class","label-group")
+        const summary_svg = d3.select("#statistics-"+svgId).attr("width", width/2)
+                                                            .attr("height", height/4)
+                                                            .attr("viewBox", [0, -height/2, width, height])
+                                                            .attr("transform", `translate(${width/4},${height/1.5})`)
 
-        pressure_region.append("g").attr("class","hex-group")
-        pressure_region.append("g").attr("class","label-group")
 
-        state_region.append("g").attr("class","hex-group")
-        state_region.append("g").attr("class","label-group")
 
-        impact_region.append("g").attr("class","hex-group")
-        impact_region.append("g").attr("class","label-group")
 
-        response_region.append("g").attr("class","hex-group")
-        response_region.append("g").attr("class","label-group")
 
-        this.driver_region_size = {
-            width: width - paddings.left - paddings.right,
-            height: height - paddings.top - paddings.bottom
-        }
 
-        // this.xScale_vars = d3.scaleLinear().domain([0,1]).range([0, this.var_region_size.width])
-        // this.yScale_vars = d3.scaleLinear().domain([0,1]).range([0, this.var_region_size.height])
-        // console.log(this)
+
+// Append group for pie chart
+const pieChartGroup = summary_svg.append("g")
+    .attr("class", "pie-chart")
+    // .attr("viewBox", [-pieChartWidth / 2, -svgHeight / 2, pieChartWidth, svgHeight])
+    .attr("transform", `translate(${width}, 0)`); // Position on the left
+
+// Append group for bar chart
+const barChartGroup = summary_svg.append("g")
+    .attr("class", "bar-chart")
+    // .attr("viewBox", [-barChartWidth / 2, -svgHeight / 2, barChartWidth, svgHeight])
+    .attr("transform", `translate(${-width}, ${-height/2})`); // Position on the right
+
+
+        // const driver_region = svg.select("g.driver_region")
+        // const pressure_region = svg.select("g.pressure_region")
+        // const state_region = svg.select("g.state_region")
+        // const impact_region = svg.select("g.impact_region")
+        // const response_region = svg.select("g.response_region")
+
+        // driver_region.append("g").attr("class","hex-group")
+        // driver_region.append("g").attr("class","label-group")
+
+        // pressure_region.append("g").attr("class","hex-group")
+        // pressure_region.append("g").attr("class","label-group")
+
+        // state_region.append("g").attr("class","hex-group")
+        // state_region.append("g").attr("class","label-group")
+
+        // impact_region.append("g").attr("class","hex-group")
+        // impact_region.append("g").attr("class","label-group")
+
+        // response_region.append("g").attr("class","hex-group")
+        // response_region.append("g").attr("class","label-group")
+
+        // this.driver_region_size = {
+        //     width: width - paddings.left - paddings.right,
+        //     height: height - paddings.top - paddings.bottom
+        // }
+
+
 
         this.clicked_hex = null
         this.width = width
         this.height = height
         this.svgId = svgId
         this.handlers = handlers
-
+        this.topicName = ['政府運作','環境運作','住屋','交通','公有土地','醫療','整體經濟','能源','災害','貿易','其他']
+        this.topicEmotion = ['Resigned','Neutral','Worried','Angry','Proud']
 
        
        
     },
+    update_summary(selected_var){
+        console.log(selected_var)
+        // Use reduce to count occurrences of each unique topic
+        const topicCounts = selected_var.reduce((acc, item) => {
+            // Extract the topic value
+            const topic = item.topic;
+            
+            // If the topic already exists in the accumulator, increment its count, otherwise set its count to 1
+            acc[topic] = (acc[topic] || 0) + 1;
+            
+            return acc;
+        }, {});
 
+
+        const topicEmotion = selected_var.reduce((acc, item) => {
+
+            const emotion = item.emotion;
+            // If the topic already exists in the accumulator, increment its count, otherwise set its count to 1
+            acc[emotion] = (acc[emotion] || 0) + 1;
+            
+            return acc;
+        }, {});
+
+
+        const topicsArray = Object.entries(topicCounts).map(([topic_name, count]) => ({ topic_name, count }));
+
+        const topicsArrayEmotion = Object.entries(topicEmotion).map(([emotion_name, count]) => ({ emotion_name, count }));
+
+        // Output the topicsArray
+        console.log(topicsArrayEmotion);
+
+        const group = d3.select("#statistics-model-svg")
+        group.select("g.pie-chart").selectAll("*").remove()
+        const pie_legend = group.append("g").attr("class","pie-legend")
+
+        var margin = 10
+
+        var radius = Math.min(this.width, this.height) / 2 - margin
+
+        var color = d3.scaleOrdinal()
+        .domain(this.topicName)
+        .range(d3.schemeSet3);
+
+        var pie = d3.pie()
+        .value(function(d) {return d.count; })
+
+        var arcGenerator = d3.arc()
+        .innerRadius(0)
+        .outerRadius(radius)
+
+        // // Build the pie chart: Basically, each part of the pie is a path that we build using the arc function.
+        group.select("g.pie-chart")
+        .selectAll('path')
+        .data(pie(topicsArray))
+        .join('path')
+        .attr('d', arcGenerator)
+        .attr('fill', function(d){ console.log(d);return(color(d.data.topic_name)) })
+        .attr("stroke", "black")
+        .style("stroke-width", "2px")
+        .style("opacity", 0.7)
+
+        // Now add the annotation. Use the centroid method to get the best coordinates
+        group.select("g.pie-chart")
+        .selectAll('text')
+        .data(pie(topicsArray))
+        .enter()
+        .append('text')
+        .text(function(d){ return d.data.count})
+        .attr("transform", function(d) { return "translate(" + arcGenerator.centroid(d) + ")";  })
+        .style("text-anchor", "middle")
+        .style("font-size", 50)
+
+        // //legend
+        // pie_legend.selectAll("mydots")
+        // .data(this.topicName)
+        // .enter()
+        // .append("rect")
+        // .attr("x", 1700)
+        // .attr("y", function(d,i){ return -i*50}) 
+        // .attr("width", 50)
+        // .attr("height", 50)
+        // .style("fill", function(d){ return color(d)})
+        
+
+        // // Add one dot in the legend for each name.
+        // pie_legend.selectAll("mylabels")
+        // .data(this.topicName)
+        // .enter()
+        // .append("text")
+        // .attr("x", 1780)
+        // .attr("y", function(d,i){ return -i*50+40}) 
+        // .style("fill", function(d){ return color(d)})
+        // .text(function(d){ return d})
+        // .style("font-weight",600)
+        // .style("font-size",50)
+
+
+
+        // //bar chart
+         // X axis
+        var x = d3.scaleBand()
+        .range([ this.width/2, this.width])
+        .domain(this.topicEmotion)
+        .padding(0.2);
+        
+        group.select("g.bar-chart").selectAll("*").remove()
+        const X = group.select("g.bar-chart").data(topicsArrayEmotion).append("g")
+        .attr("transform", `translate(0,${this.height/1.2 })`)
+        .call(d3.axisBottom(x))
+        .selectAll("text")
+            .attr("transform", "translate(0,0)rotate(-45)")
+            .style("text-anchor", "end")
+            .style("font-size", 50)
+            ;
+
+        // // Add Y axis
+        var y = d3.scaleLinear()
+        .domain([0, d3.max(topicsArrayEmotion, (d) => d.count)])
+        .range([ this.height/1.2, 100]);
+
+        const Y = group.select("g.bar-chart").data(topicsArrayEmotion).append("g")
+        .attr("transform", `translate(${this.width/2},0)`)
+        .call(d3.axisLeft(y).tickFormat(d3.format(",.0f")))
+        .selectAll("text")
+            .style("text-anchor", "end")
+            .style("font-size", 50);
+
+        // // Bars
+        group.select("g.bar-chart").selectAll("mybar")
+        .data(topicsArrayEmotion)
+        .enter()
+        .append("rect")
+            .attr("x", function(d) { return x(d.emotion_name); })
+            .attr("y", function(d) { return y(d.count); })
+            .attr("width", x.bandwidth())
+            .attr("height", function(d) { return y(0)-y(d.count); })
+            .attr("fill", "lightgrey")
+    },
+    clear_summary() {
+        const svg = d3.select("#statistics-model-svg")
+        svg.select("g.pie-chart").selectAll("*").remove()
+        svg.select("g.bar-chart").selectAll("*").remove()
+        
+    },
     updateColorScales(drivers, pressures, states, impacts, responses) {
         let variables:any[] = [];
         variables.push(drivers,pressures,states,impacts,responses);
