@@ -1,6 +1,6 @@
 from openai import OpenAI
 import json
-client = OpenAI(api_key = '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')
+client = OpenAI(api_key)
 
 with open('chunks_N1.json', 'r') as file:
     chunks = json.load(file)
