@@ -56,7 +56,7 @@
     const color = emotionColorScale(emotion);
     return color;
   }
-  ////white -> white
+  ////white -> ${chunkColor(chunk)}
   export function highlight_chunks(highlight_chunks) {
     // console.log({ highlight_chunks });
     dehighlight_chunks();
@@ -161,7 +161,7 @@
                     ]}
                     class:chunk-not-highlight={highlighting_chunk &&
                       !highlight_chunk[interview_index][chunk_index]}
-                    style={`background: white`} 
+                    style={`background:  white`} 
                     on:keyup={() => {
                       show_chunk[interview_index][chunk_index] =
                         !show_chunk[interview_index][chunk_index];
@@ -196,7 +196,7 @@
                         tabindex={chunk_index}
                         id={chunk.id}
                         class={`chunk flex clickable mx-1 mt-1 flex-auto rounded shadow text-left`}
-                        style={`background: white`}
+                        style={`background:  white`}
                         on:keyup={() => {
                           show_chunk[interview_index][chunk_index] =
                             !show_chunk[interview_index][chunk_index];
@@ -285,7 +285,7 @@
                     tabindex={chunk_index}
                     id={chunk.id}
                     class={`chunk clickable text-left flex mx-1 flex-auto border border-black rounded`}
-                    style={`background: white`}
+                    style={`background:  white`}
                     class:chunk-highlight={highlight_chunk[interview_index][
                       chunk_index
                     ]}

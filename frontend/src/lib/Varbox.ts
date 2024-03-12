@@ -2,86 +2,18 @@ import * as d3 from 'd3';
 // import {hexbin as Hexbin} from 'd3-hexbin';
 import {tick} from 'svelte';
 import { scale } from 'svelte/transition';
+
+// import { drivers } from './Varbox.svelte';
 // import type  {tVaraible} from './types/variables';
 
 export const varbox = {
     init(svgId, width,height, paddings,handlers){
-        const self = this;
-        // const svg = d3.select("#"+svgId).attr("viewBox", `0 0 ${width} ${height}`)
-        //             .on("click", function(e) {
-        //                 if(!e.defaultPrevented) {
-        //                     d3.selectAll("path.hex")
-        //                         .classed("hex-highlight", false)
-        //                         .classed("hex-not-highlight", false)
-        //                     d3.selectAll("text.label")
-        //                         .classed("hex-label-highlight", false)
-        //                         .classed("hex-label-not-highlight", false)
-        //                     handlers.VarSelected(null)
-        //                 }
-        //             });
-
-        const summary_svg = d3.select("#statistics-"+svgId).attr("width", width/2)
-                                                            .attr("height", height/4)
-                                                            .attr("viewBox", [0, -height/2, width, height])
-                                                            .attr("transform", `translate(${width/4},${height/1.5})`)
-
-
-
-
-
-
-
-// Append group for pie chart
-const pieChartGroup = summary_svg.append("g")
-    .attr("class", "pie-chart")
-    // .attr("viewBox", [-pieChartWidth / 2, -svgHeight / 2, pieChartWidth, svgHeight])
-    .attr("transform", `translate(${width}, 0)`); // Position on the left
-
-// Append group for bar chart
-const barChartGroup = summary_svg.append("g")
-    .attr("class", "bar-chart")
-    // .attr("viewBox", [-barChartWidth / 2, -svgHeight / 2, barChartWidth, svgHeight])
-    .attr("transform", `translate(${-width}, ${-height/2})`); // Position on the right
-
-
-        // const driver_region = svg.select("g.driver_region")
-        // const pressure_region = svg.select("g.pressure_region")
-        // const state_region = svg.select("g.state_region")
-        // const impact_region = svg.select("g.impact_region")
-        // const response_region = svg.select("g.response_region")
-
-        // driver_region.append("g").attr("class","hex-group")
-        // driver_region.append("g").attr("class","label-group")
-
-        // pressure_region.append("g").attr("class","hex-group")
-        // pressure_region.append("g").attr("class","label-group")
-
-        // state_region.append("g").attr("class","hex-group")
-        // state_region.append("g").attr("class","label-group")
-
-        // impact_region.append("g").attr("class","hex-group")
-        // impact_region.append("g").attr("class","label-group")
-
-        // response_region.append("g").attr("class","hex-group")
-        // response_region.append("g").attr("class","label-group")
-
-        // this.driver_region_size = {
-        //     width: width - paddings.left - paddings.right,
-        //     height: height - paddings.top - paddings.bottom
-        // }
-
-
-
-        this.clicked_hex = null
         this.width = width
         this.height = height
         this.svgId = svgId
         this.handlers = handlers
         this.topicName = ['政府運作','環境運作','住屋','交通','公有土地','醫療','整體經濟','能源','災害','貿易','其他']
         this.topicEmotion = ['Resigned','Neutral','Worried','Angry','Proud']
-
-       
-       
     },
     update_summary(selected_var){
         console.log(selected_var)
@@ -221,16 +153,11 @@ const barChartGroup = summary_svg.append("g")
             .attr("height", function(d) { return y(0)-y(d.count); })
             .attr("fill", "lightgrey")
     },
-    clear_summary() {
-        const svg = d3.select("#statistics-model-svg")
-        svg.select("g.pie-chart").selectAll("*").remove()
-        svg.select("g.bar-chart").selectAll("*").remove()
-        
-    },
+
     updateColorScales(drivers, pressures, states, impacts, responses) {
         let variables:any[] = [];
         variables.push(drivers,pressures,states,impacts,responses);
-        // console.log(variables)
+        console.log(variables)
         
         // Use reduce to find the min and max lengths of mentions arrays
         let { minLength, maxLength } = variables.reduce((result, item) => {
@@ -418,16 +345,217 @@ const barChartGroup = summary_svg.append("g")
 
     },
 
+    calculatePositions(links,drivers,pressures,states,impacts,responses){
+        // console.log({drivers,pressures,states,impacts,responses})
+        const data = {drivers,pressures,states,impacts,responses}
+        const updatedData = addPropertiesToVariables(data); //add frequency properties to each variable
+
+        let maxChunkFrequency = 0;
+        Object.keys(updatedData).forEach(objectType => {
+            const variables = updatedData[objectType].variable_mentions;
+            Object.keys(variables).forEach(variableName => {
+                maxChunkFrequency = Math.max(maxChunkFrequency, variables[variableName].chunk_frequency);
+            });
+        });
+        console.log(updatedData)
+        const svg = d3.select('#line-container');
+        const mergedData = links.map(link => {
+            const source_block = document.getElementById(`${link.source.var_type}-container`);
+            const target_block = document.getElementById(`${link.target.var_type}-container`);
+            const sourceElement = document.getElementById(`${link.source.variable_name}`);
+            const targetElement = document.getElementById(`${link.target.variable_name}`);
+            if(sourceElement === null || targetElement === null || target_block === null || source_block === null){
+                return null
+            }
+            const sourcePosition = {
+                var_type: link.source.var_type,
+                var_name: link.source.variable_name,
+                x: sourceElement.getBoundingClientRect().left + sourceElement.getBoundingClientRect().width / 2,
+                y: sourceElement.getBoundingClientRect().top + sourceElement.getBoundingClientRect().height / 2,
+                // x_right: sourceElement.getBoundingClientRect().left + sourceElement.getBoundingClientRect().width -10,
+                // x_left: sourceElement.getBoundingClientRect().left,
+                y_top: sourceElement.getBoundingClientRect().top,
+                y_bottom: sourceElement.getBoundingClientRect().top + sourceElement.getBoundingClientRect().height,
+                block_x: source_block.getBoundingClientRect().left + source_block.getBoundingClientRect().width / 2,
+                block_y: source_block.getBoundingClientRect().top + source_block.getBoundingClientRect().height / 2,
+                block_y_top: source_block.getBoundingClientRect().top,
+                block_y_bottom: source_block.getBoundingClientRect().top + source_block.getBoundingClientRect().height
+            };
+        
+            const targetPosition = {
+                var_type: link.target.var_type,
+                var_name: link.target.variable_name,
+                x: targetElement.getBoundingClientRect().left + targetElement.getBoundingClientRect().width / 2,
+                y: targetElement.getBoundingClientRect().top + targetElement.getBoundingClientRect().height / 2,
+                // x_right: targetElement.getBoundingClientRect().left + sourceElement.getBoundingClientRect().width,
+                x_left: targetElement.getBoundingClientRect().left,
+                y_top: targetElement.getBoundingClientRect().top,
+                y_bottom: targetElement.getBoundingClientRect().top + sourceElement.getBoundingClientRect().height,
+                block_x: target_block.getBoundingClientRect().left + target_block.getBoundingClientRect().width / 2,
+                block_y: source_block.getBoundingClientRect().top + source_block.getBoundingClientRect().height / 2,
+                block_y_top: source_block.getBoundingClientRect().top,
+                block_y_bottom: source_block.getBoundingClientRect().top + source_block.getBoundingClientRect().height
+            };
+        
+            return { source: sourcePosition, target: targetPosition };
+        }).filter(data => data !== null);
+        
+        // console.log(mergedData);
+
+    
+    // Append a group for the links
+    let linkGroup = svg.append("g")
+        .attr("class", "links");
+    
+    // add arrow markers
+    svg.append('defs').append('marker')
+            .attr('id', 'arrow')
+            .attr('viewBox', '0 -5 10 10') // Example viewBox, adjust as necessary
+            .attr('refX', 5) // Adjust refX and refY to position the arrow correctly relative to the path end
+            .attr('refY', 0)
+            .attr('markerWidth', 5) // Adjust marker size as needed
+            .attr('markerHeight', 5)
+            .attr('orient', 'auto-start-reverse')
+        .append('path')
+            .attr('d', 'M0,-5L10,0L0,5') // Example path for the arrow shape
+            .attr('stroke', 'gray')
+            .attr('fill', 'gray');
+
+    let spacing = 20
+    // Bind data and create paths for each link
+    links = linkGroup.selectAll(".link")
+        .data(mergedData)
+        .enter().append("path")
+        .attr("class", "link")
+        .attr("id",(d)=>`${d.source.var_name}`+"-"+`${d.target.var_name}`)
+        .attr("d", function(d,i) {
+            let middleX1 = d.source.x+ (d.target.x-d.source.x) / 4; // First third
+            let middleX2 = ((d.source.block_x+ d.target.block_x) / 2) ; // Second third
+            let middleX3 = d.target.x- (d.target.x-d.source.x) / 4;  // Third third (same as second for now)
+            let newX_source, newY_source, newX_target, newY_target;
+            // Determine y position for the first point based on source category
+            let middleY1;
+            if (d.source.block_y-d.source.y > 1) {
+                let threshold;
+                if(Math.abs(d.source.y-d.target.y)> spacing){
+                    threshold = (d.source.block_y-d.source.y)*2
+                }
+                else{
+                    threshold = (d.source.block_y-d.source.y)*5
+                }
+                middleY1 = d.source.block_y_top - threshold; // Target is top
+                newX_source = d.source.x;
+                newY_source = d.source.y_top;
+            } else  {
+                let threshold;
+                if(Math.abs(d.source.y-d.target.y)> spacing){
+                    threshold = (d.source.y - d.source.block_y)
+                }
+                else{
+                    threshold = (d.source.y - d.source.block_y)*2.5
+                }
+                middleY1 = d.source.block_y_bottom + threshold; // Target is top
+                newX_source = d.source.x;
+                newY_source = d.source.y_bottom;
+            }
+    
+            // Determine y position for the third point based on target category
+            let middleY3;
+            if (d.target.block_y-d.target.y > 2) {
+                let threshold;
+                if(Math.abs(d.source.y-d.target.y)> spacing){
+                    threshold = (d.target.block_y-d.target.y)*2
+                }
+                else{
+                    threshold = (d.target.block_y-d.target.y)*5
+                }
+                middleY3 = d.target.block_y_top - threshold; // Target is top
+                newX_target = d.target.x_left;
+                newY_target = d.target.y_top;
+            } else  {
+                let threshold;
+                if(Math.abs(d.source.y-d.target.y)> spacing){
+                    threshold = (d.target.y-d.target.block_y)
+                }
+                else{
+                    threshold = (d.target.y-d.target.block_y)*2.5
+                }
+                middleY3 = d.target.block_y_bottom + threshold; // Target is bottom
+                newX_target = d.target.x_left;
+                newY_target = d.target.y_bottom;
+            } 
+    
+            // Calculate y position for the second point (between source and target block_y)
+            let middleY2 = (d.source.block_y + d.target.block_y) / 2 + ((d.target.y>d.target.block_y)? 5*(i):-(5*(i)));
+    
+
+            const path = d3.path();
+            path.moveTo(newX_source, newY_source); // Start at the source
+
+            // Calculate midpoints between the vertex points
+            const midPoint1 = {
+                x: (middleX1 + middleX2) / 2,
+                y: (middleY1 + middleY2) / 2
+            };
+        
+            const midPoint2 = {
+                x: (middleX2 + middleX3) / 2,
+                y: (middleY2 + middleY3) / 2
+            };
+        
+            // Curve to (middleX1, middleY1), descending to midPoint1
+            path.quadraticCurveTo(
+                middleX1, middleY1, // Control point at the first peak
+                midPoint1.x, midPoint1.y // End at the first midpoint
+            );
+        
+            // Curve up to (middleX2, middleY2), then down to midPoint2
+            path.quadraticCurveTo(
+                middleX2, middleY2, // Control point at the valley
+                midPoint2.x, midPoint2.y // End at the second midpoint
+            );
+        
+            // Final curve from midPoint2 to target, peaking at (middleX3, middleY3)
+            path.quadraticCurveTo(
+                middleX3, middleY3, // Control point at the final peak
+                newX_target, newY_target // End at the target
+            );
+        
+            return path.toString();
+        })
+        .attr("cursor", "pointer")
+        .attr("fill", "none")
+        .attr("stroke", "gray")
+        .attr("stroke-width", function(d) {
+            // Find chunk_frequency for source and target
+            const sourceChunkFrequency = updatedData[d.source.var_type].variable_mentions[d.source.var_name].chunk_frequency;
+            const targetChunkFrequency = updatedData[d.target.var_type].variable_mentions[d.target.var_name].chunk_frequency;
+            
+            // Calculate the sum of chunk frequencies
+            const sumChunkFrequencies = sourceChunkFrequency + targetChunkFrequency;
+            
+            // Normalize this sum to get a value suitable for stroke width
+            const normalizedStrokeWidth = 2+(sumChunkFrequencies / (2 * maxChunkFrequency)) * 10; // max width=10
+            
+            return normalizedStrokeWidth;
+        })
+        .attr("opacity", 0.1)
+        .on("mouseover", function(e, d) {
+            d3.select(this).classed("line-hover",true).raise()
+                           .attr("marker-end", "url(#arrow)");
+        })
+        .on("mouseout", function(e, d) {
+            d3.select(this).classed("line-hover",false)
+                            .attr("marker-end", null);
+        })
+
+
+
+    }
+
 
 
 }
-
-// function wrapChinese(text) {
-//     if(text.length > 2) {
-//         text = text.slice(0, 2) + ".."
-//     }
-//     return text
-// }
 
 function radialBboxes(groups, width, height, maxBboxSize) {
     const offset = 234 * Math.PI / 180
@@ -481,28 +609,27 @@ function layoutRectangles(regionWidth, bigRectHeight, rowHeight, rectangles, bbo
         });
         return rectangleCoordinates
 }
-// function shiftCenter(points, bbox_center, hexRadius) {
-//     let minX = Infinity;
-//     let minY = Infinity;
-//     let maxX = -Infinity;
-//     let maxY = -Infinity;
 
-//     for (const [x, y] of points) {
-//         minX = Math.min(minX, x-hexRadius * Math.sqrt(3)/2);
-//         minY = Math.min(minY, y-hexRadius);
-//         maxX = Math.max(maxX, x+hexRadius * Math.sqrt(3)/2);
-//         maxY = Math.max(maxY, y+hexRadius);
-//     }
 
-//     // Calculate the center of the bounding box
-//     const centerX = (minX + maxX) / 2;
-//     const centerY = (minY + maxY) / 2;
 
-//     // Calculate the shift amounts
-//     const shiftX = bbox_center[0] - centerX;
-//     const shiftY = bbox_center[1] - centerY;
-
-//     // Shift all points in the array
-//     const shiftedPoints = points.map(([x, y]) => [x + shiftX, y + shiftY]);
-//     return shiftedPoints
-// }
+function addPropertiesToVariables(data) {
+    Object.keys(data).forEach(objectType => {
+      const variables = data[objectType].variable_mentions;
+      Object.keys(variables).forEach(variableName => {
+        const mentions = variables[variableName].mentions;
+        // Calculate chunk_frequency
+        const chunkFrequency = mentions.length;
+        // Calculate node_frequency
+        const uniqueNodeIds = new Set();
+        mentions.forEach(mention => {
+          const nodeId = mention.chunk_id.split('_')[0];
+          uniqueNodeIds.add(nodeId);
+        });
+        const nodeFrequency = uniqueNodeIds.size;
+        // Add the new properties
+        variables[variableName].chunk_frequency = chunkFrequency;
+        variables[variableName].node_frequency = nodeFrequency;
+      });
+    });
+    return data;
+  }

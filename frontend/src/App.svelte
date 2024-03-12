@@ -61,7 +61,7 @@
         // report_data = res.reports
         chunk_coordinates = res.topic_tsnes;
         chunk_graph = link_to_graph(res.chunk_links, res.chunk_nodes);
-        console.log({ chunk_coordinates });
+        // console.log({ chunk_coordinates });
         timeline_data = res.reports;
         keyword_data = {
           keyword_coordinates: res.keyword_coordinates,
@@ -253,7 +253,7 @@
   function handleChunksSelected(e) {
     if (!interview_viewer_component) return;
     const chunks = e.detail;
-    console.log(chunks);
+    // console.log(chunks);
     interview_viewer_component.highlight_chunks(chunks);
     // if (chunks === null) interview_viewer_component.dehighlight_chunks();
     // else interview_viewer_component.highlight_chunks(chunks);

@@ -24,6 +24,7 @@ export const scattersummary = {
         this.width = width
         this.height = height
         this.svgId = svgId
+        this.node_radius = 7
         // this.handlers = handlers
         this.topicName = ['政府運作','環境生態','住屋','交通','公有土地','醫療','整體經濟','能源','災害','貿易','其他']
         this.emotionName = ['Resigned','Neutral','Worried','Angry','Proud']
@@ -32,7 +33,7 @@ export const scattersummary = {
        
     },
     update_summary(selected_var,attr){
-        console.log({attr})
+        // console.log({attr})
         // console.log({selected_var})
         // attr: topic/emotion
         const Counts = selected_var.reduce((acc, item) => {
@@ -61,54 +62,45 @@ export const scattersummary = {
 
         const count_Array = Object.entries(Counts).map(([property_name, count]) => ({ property_name, count }));
 
-        let edge = 50; //buffer zone
+        let edge = 10; //buffer zone
         let fix_points = generateFixedPoints(attr, this.width, this.height, edge);
-        // console.log({fix_points})
-        const points = ThisArrayMappings[attr].map((property_name, index) => ({
-            property_name: property_name,
-            x: fix_points[index].x,
-            y: fix_points[index].y
-        }));
+        let attr_coordinates = {}
 
-        const coordinatesMap = new Map(points.map(coord => [coord.property_name, { x: coord.x, y: coord.y }]));
-
-        // Add the center position property to each object in emotionArray
-        count_Array.forEach(Obj => {
-            const coordinates = coordinatesMap.get(Obj.property_name);
-            if (coordinates) {
-                Obj["center_position"] = coordinates;
-            }
-        });
-
-
-        const count_Object = count_Array.reduce((acc, element) => {
-            acc[element.property_name] = element;
-            return acc;
-        }, {});
+        ThisArrayMappings[attr].forEach((property_name, index) => (
+            attr_coordinates[property_name] = {x: fix_points[index].x, y: fix_points[index].y}
+        ));
 
     
         
         // draw the dots
         const svg = d3.select("#"+this.svgId)
         svg.select("g.scatter-plot").selectAll("*").remove()
+        // svg.selectAll("circle.fixPoints")
+        //     .data(fix_points)
+        //     .join("circle")
+        //     .attr("cx", d => d.x)
+        //     .attr("cy", d => d.y)
+        //     .attr("r", 10)
+        //     .attr("fill", "lightgrey")
+        //     .attr("class", "fixPoints")
 
-        const simulation = d3.forceSimulation(selected_var)
-                             .force("x", d3.forceX(d => count_Object[d[attr]].center_position.x))
-                             .force("y", d3.forceY(d => count_Object[d[attr]].center_position.y))
-                             .force("collide", d3.forceCollide(5))
-                             .on("tick", ticked);
-
-
-        function ticked() {
-            svg.select("g.scatter-plot").selectAll("*").remove()
-            svg.select("g.scatter-plot").selectAll("mydots")
+        const nodes = svg.select("g.scatter-plot").selectAll("mydots")
                .data(selected_var)
                .join("circle")
-               .attr("r", 3)
-               .attr("cx", d => d.x)
-               .attr("cy", d => d.y)
-               .attr("fill", d => ColorArrayMappings[attr](d[attr]));
-        }
+               .attr("r", this.node_radius)
+               .attr("fill",d => ColorArrayMappings[attr](d[attr]));
+        const self = this
+        const simulation = d3.forceSimulation(selected_var)
+                            //  .force("x", d3.forceX(d => count_Object[d[attr]].center_position.x))
+                            //  .force("y", d3.forceY(d => count_Object[d[attr]].center_position.y))
+                            .force("x", d3.forceX(d => attr_coordinates[d[attr]].x))
+                            .force("y", d3.forceY(d => attr_coordinates[d[attr]].y))
+                             .force("collide", d3.forceCollide(this.node_radius + 1))
+                             .on("tick", () => {
+                                nodes
+                                .attr("cx", d => d.x=clip(d.x, [self.node_radius, self.width - self.node_radius]))
+                                .attr("cy", d => d.y=clip(d.y, [self.node_radius, self.height - self.node_radius]))
+                             });
 
         // svg.select("g.scatter-plot").selectAll("mydots")
         // .data(fix_points)
@@ -118,18 +110,27 @@ export const scattersummary = {
         // .attr("r",3)
         // .attr("fill", "lightgrey")
 
-
+        const mentioned_attr = new Set(selected_var.map(d=>d[attr]))
+        // console.log("Update legend", selected_var.length, mentioned_attr)
+        if(selected_var.length > 0 ) {
         svg.select("g.legend").selectAll("text")
-        .data(count_Array)
-        .join("text")
-        .attr("x",d=>d.center_position.x)
-        .attr("y",d=>d.center_position.y)
-        .text(d=>d.property_name)
-        .style("font-size",10)
-        .attr("opacity",0)
-        .transition(10000)
-        .style("opacity",1)
+            .data(Object.keys(attr_coordinates).filter(d=>mentioned_attr.has(d)))
+            .join("text")
+            .attr("x",d=> attr_coordinates[d].x)
+            .attr("y",d=> attr_coordinates[d].y)
+            .text(d=>d)
+            .attr("font-size",10)
+            .attr("font-weight",600)
+            .attr("text-anchor","middle")
+            .attr("dominant-baseline","middle")
+            .attr("opacity",0)
+            .attr("fill", "currentColor")
+            .transition().duration(1000)
+            .attr("opacity",1)
+        } else {
+            svg.select("g.legend").selectAll("*").remove()
 
+        }
         // //legend
         // pie_legend.selectAll("mydots")
         // .data(this.topicName)
@@ -157,12 +158,13 @@ export const scattersummary = {
 
 
     },
-    clear_summary() {
-        const svg = d3.select("#"+this.svgId)
-        svg.select("g.scatter-plot").selectAll("*").remove()
-        // svg.select("g.legend").selectAll("*").remove()
+    // clear_summary() {
+    //     console.log("Clear summary")
+    //     const svg = d3.select("#"+this.svgId)
+    //     svg.select("g.scatter-plot").selectAll("*").remove()
+    //     svg.select("g.legend").selectAll("*").remove()
         
-    },
+    // },
 
 }
 
@@ -175,53 +177,44 @@ function seededRandom(seed) {
 
 function generateFixedPoints(attr, width, height, buffer) {
     let fixedPoints :any= [];
-    
+    const n = attr == "emotion" ? 5 : 11;
     // // Adjust the width and height to account for the buffer zone
+    const xScale = d3.scaleLinear().domain([0, 1]).range([buffer, width - buffer]);
+    const yScale = d3.scaleLinear().domain([0, 1]).range([buffer, height - buffer]);
+    const offset = 0.3
+    const seedScale = d3.scaleLinear().domain([0, 1]).range([0, 1-2*offset]);
     // const usableWidth = width - 2 * buffer;
     // const usableHeight = height - 2 * buffer;
     
-    // // Calculate the distance between each point
+    // Calculate the distance between each point
     // const deltaX = usableWidth / Math.ceil(Math.sqrt(n));
     // const deltaY = usableHeight / Math.ceil(Math.sqrt(n));
-    
-    // // Generate points uniformly within the box
-    // for (let i = 0; i < n; i++) {
-    //     // Calculate the x and y coordinates of the point
-    //     const x = buffer + (i % Math.ceil(Math.sqrt(n))) * deltaX + Math.random() * deltaX;
-    //     const y = buffer + Math.floor(i / Math.ceil(Math.sqrt(n))) * deltaY + Math.random() * deltaY;
-        
-    //     // Add the point to the list
-    //     fixedPoints.push({ x, y });
-    // }
-    if (attr == "emotion"){
-        fixedPoints = [
-            {x: 251.99277296426192, y: 58.76458708259028},
-            {x: 422.32119162316826, y: 91.8026542912294},
-            {x: 125.38013484631982, y: 134.07778153023523},
-            {x: 335.27233387544004, y: 146.61749055597437},
-            {x: 246.88226198278753, y: 228.49659671479748}
-        ]
-    }
-    if (attr == "topic"){   
-        fixedPoints = [
-            {x: 95.22135189869896, y: 57.83654123027867},
-            {x: 309.79252882756487, y: 71.21495555742831},
-            {x: 449.8715408679984, y: 84.7620667337842},
-            {x: 500.85863252178075, y: 210.71227744231683},
-            {x: 208.08947716142768, y: 128.9392060948348},
-            {x: 55.50182164971436, y: 105.83512564322257},
-            {x: 390.37901925454497, y: 136.7627789238275},
-            {x: 122.71974147982374, y: 200.35052189271838},
-            {x: 198.99945688608588, y: 270.16691673685997},
-            {x: 281.67826814431413, y: 193.96118000686022},
-            {x: 354.37901925454497, y: 230.4473932662158},
-        ]
+    const size = Math.ceil(Math.sqrt(n))
+    const deltaX = 1 / size
+    const deltaY = 1 / size
+    // Generate points uniformly within the box
+    for (let i = 0; i < n; i++) {
+        // Calculate the x and y coordinates of the point
+        // const x = buffer + (i % Math.ceil(Math.sqrt(n))) * deltaX + Math.random() * deltaX;
+        // const y = buffer + Math.floor(i / Math.ceil(Math.sqrt(n))) * deltaY + Math.random() * deltaY;
+        const dx = (i % size) * deltaX + offset * deltaX + seedScale(Math.random()) * deltaX;
+        const dy = Math.ceil(i / size) * deltaY + offset * deltaY+ seedScale(Math.random())* deltaY;
+        // const dx = (i % size) * deltaX 
+        // const dy = Math.ceil(i / size) * deltaY 
+        // console.log(dx,dy)
+        const x = xScale(dx);
+        const y = yScale(dy);
+        // Add the point to the list
+        fixedPoints.push({ x, y });
     }
 
     
     return fixedPoints;
 }
 
+function clip(x, range) {
+    return Math.max(Math.min(x, range[1]), range[0])
+}
 
 
 

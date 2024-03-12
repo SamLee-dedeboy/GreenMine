@@ -8,13 +8,14 @@ export let summary_interviews: any;
 // import { Check, ChevronDown } from '$icons/index.js';
 import { createSelect, melt } from '@melt-ui/svelte';
 import { fade } from 'svelte/transition';
+// import  chevronDown  from "/chevrondown.svg";
 const svgId = "scatter-svg";
 let selectedAttr: string  = "emotion";
 const paddings = {
-left: 300,
-right: 300,
-top: 300,
-bottom: 300,
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
 };
 
 const options = {
@@ -30,6 +31,7 @@ const {
     },
 } = createSelect<string>({
     forceVisible: true,
+    defaultSelected: {value: 'emotion', label: 'emotion'},
     positioning: {
         placement: 'bottom',
         fitViewport: true,
@@ -51,10 +53,10 @@ async function update_summary(summary_interviews,selectedAttr) {
     await tick();
     if (summary_interviews &&  selectedAttr) scattersummary.update_summary(summary_interviews,selectedAttr);
     else {
-        console.log("clearing summary")
-        console.log({summary_interviews})
-        console.log({selectedAttr})
-        scattersummary.clear_summary();
+        // console.log("clearing summary")
+        // console.log({summary_interviews})
+        // console.log({selectedAttr})
+        // scattersummary.clear_summary();
     
     }
 }
@@ -62,23 +64,20 @@ async function update_summary(summary_interviews,selectedAttr) {
 
 </script>
 
-<div id="svg-container">
-    <svg
-        id = {svgId}
-        class="show-summary absolute left-0 right-0 top-0 bottom-0 flex gap-1 flex-wrap border border-gray-300 rounded p-2 text-sm"
-    >
-    </svg>
-    <div class="flex flex-col gap-1 menu">
+<div id="svg-container" class="flex flex-col gap-y-1 outline outline-1 outline-gray-300 items-center">
+    <div class="flex gap-1 menu w-fit items-center py-0.5">
+
         <!-- svelte-ignore a11y-label-has-associated-control - $label contains the 'for' attribute -->
-        <label class="block text-magnum-900" use:melt={$label}>Choose attribute</label>
+        <!-- <label class="block text-magnum-900" use:melt={$label}>Choose attribute</label> -->
         <button
-          class="flex h-10 min-w-[100px] items-center justify-between rounded-lg bg-white px-3 py-2
+          class="flex h-8 min-w-[100px] items-center justify-center rounded-lg bg-white  py-1
         text-magnum-700 shadow transition-opacity hover:opacity-90"
           use:melt={$trigger}
           aria-label="Food"
         >
           {$selectedLabel || 'Select a attribute'}
-          <!-- <ChevronDown class="size-5" /> -->
+        <img src="test.svg" alt="error" class="w-[1rem] h-[1rem]"/>
+        <!-- <ChevronDown class="size-5" /> -->
         </button>
         {#if $open}
           <div
@@ -98,9 +97,10 @@ async function update_summary(summary_interviews,selectedAttr) {
                 </div> -->
                 {#each arr as item}
                   <div
-                    class="relative cursor-pointer rounded-lg py-1 pl-8 pr-4 text-neutral-800
+                    class="relative cursor-pointer rounded-lg py-1  text-neutral-800
                     hover:bg-stone-100 focus:z-10
-                    focus:text-gray-700
+                    focus:text-gray-700 w-full
+                    flex items-center justify-center gap-x-2
                     data-[highlighted]:bg-stone-200 data-[highlighted]:text-gray-900
                     data-[disabled]:opacity-50"
                     use:melt={$option({ value: item, label: item })}
@@ -116,35 +116,41 @@ async function update_summary(summary_interviews,selectedAttr) {
             {/each}
           </div>
         {/if}
-      </div>
+    </div>
+    <svg
+    id = {svgId}
+    class="w-full grow border border-gray-300 rounded p-2 text-sm"
+    viewBox="0 0 500 300"
+    >
+    </svg>
 </div>
 
 
 
 <style>
-#scatter-svg {
+#svg-container {
+    position: absolute;
     width: 35rem;
     height: 20rem;
     left: 50%;
     transform: translateX(-50%);
-    top: 16%;
+    top: 26%;
 }
 
-.menu{
+/* .menu {
     position: absolute;
     left: 50%;
     top: 5%;
     transform: translateX(-50%);
     width: 15rem;
-
 }
-    
+     */
 .check {
-    position: absolute;
-    left: theme(spacing.2);
-    top: 50%;
+    /* position: absolute; */
+    /* left: theme(spacing.2); */
+    /* top: 50%; */
     z-index: theme(zIndex.20);
-    translate: 0 calc(-50% + 1px);
+    /* translate: 0 calc(-50% + 1px); */
     /* color: theme(colors.magnum.500); */
     color: green;
 }
