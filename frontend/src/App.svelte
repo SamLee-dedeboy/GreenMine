@@ -34,6 +34,7 @@
   let impacts: any = { ...ImpactNode };
   let responses: any = { ...ResponseNode };
 
+
   $: keyword_chunks_dict = ((_) => {
     let res = {};
     if (!chunk_graph) return res;
@@ -56,11 +57,11 @@
       .then((res) => {
         // console.log( "all data: ",{res });
         interview_data = res.interviews;
-        console.log(interview_data);
+        // console.log(interview_data);
         // report_data = res.reports
         chunk_coordinates = res.topic_tsnes;
         chunk_graph = link_to_graph(res.chunk_links, res.chunk_nodes);
-        // console.log({ chunk_graph });
+        // console.log({ chunk_coordinates });
         timeline_data = res.reports;
         keyword_data = {
           keyword_coordinates: res.keyword_coordinates,
@@ -252,7 +253,7 @@
   function handleChunksSelected(e) {
     if (!interview_viewer_component) return;
     const chunks = e.detail;
-    console.log(chunks);
+    // console.log(chunks);
     interview_viewer_component.highlight_chunks(chunks);
     // if (chunks === null) interview_viewer_component.dehighlight_chunks();
     // else interview_viewer_component.highlight_chunks(chunks);
@@ -269,14 +270,28 @@
   //     interview_viewer_component.highlight_keywords(nodes, keywords);
   //   }
   // }
-
-  function handleVarSelected(e) {
+  function handleLinkSelected(e) {
+    console.log(e);
     if (e.detail === null) {
       interview_viewer_component.highlight_chunks(null);
+      // summary_interviews = undefined
     } else {
-      const chunks: tMention[] = e.detail;
+      const chunks: tMention[] = e.detail.mentions;
       interview_viewer_component.highlight_chunks(chunks);
     }
+    
+  }
+
+  function handleVarSelected(e) {
+    console.log(e);
+    if (e.detail === null) {
+      interview_viewer_component.highlight_chunks(null);
+      // summary_interviews = undefined
+    } else {
+      const chunks: tMention[] = e.detail.mentions;
+      interview_viewer_component.highlight_chunks(chunks);
+    }
+    
   }
 </script>
 
@@ -307,6 +322,8 @@
           {impacts}
           {responses}
           on:var-selected={handleVarSelected}
+          on:link-selected={handleLinkSelected}
+          {interview_data}
         ></Varbox>
       </div>
     </div>
