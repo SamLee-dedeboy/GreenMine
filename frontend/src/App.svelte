@@ -55,7 +55,7 @@
     fetch(`${server_address}/data/`)
       .then((res) => res.json())
       .then((res) => {
-        console.log( "all data: ",{res });
+        // console.log( "all data: ",{res });
         interview_data = res.interviews;
         // console.log(interview_data);
         // report_data = res.reports
@@ -270,14 +270,25 @@
   //     interview_viewer_component.highlight_keywords(nodes, keywords);
   //   }
   // }
-
-  function handleVarSelected(e) {
-    // console.log(e.detail);
+  function handleLinkSelected(e) {
+    console.log(e);
     if (e.detail === null) {
       interview_viewer_component.highlight_chunks(null);
       // summary_interviews = undefined
     } else {
-      const chunks: tMention[] = e.detail;
+      const chunks: tMention[] = e.detail.mentions;
+      interview_viewer_component.highlight_chunks(chunks);
+    }
+    
+  }
+
+  function handleVarSelected(e) {
+    console.log(e);
+    if (e.detail === null) {
+      interview_viewer_component.highlight_chunks(null);
+      // summary_interviews = undefined
+    } else {
+      const chunks: tMention[] = e.detail.mentions;
       interview_viewer_component.highlight_chunks(chunks);
     }
     
@@ -311,6 +322,7 @@
           {impacts}
           {responses}
           on:var-selected={handleVarSelected}
+          on:link-selected={handleLinkSelected}
           {interview_data}
         ></Varbox>
       </div>

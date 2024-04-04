@@ -130,11 +130,16 @@ async function update_summary(summary_interviews,selectedAttr) {
 <style>
 #svg-container {
     position: absolute;
-    width: 35rem;
+    /* width: 35rem;
+    height: 20rem; */
+    width: 30rem;
     height: 20rem;
-    left: 50%;
+    /* left: 50%;
     transform: translateX(-50%);
-    top: 26%;
+    top: 26%; */
+    left:80%;
+    bottom:5%
+
 }
 
 /* .menu {
