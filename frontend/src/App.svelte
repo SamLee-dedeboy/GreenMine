@@ -4,6 +4,13 @@
   // import ReportViewer from "./lib/ReportViewer.svelte";
   // import Search from "./lib/Search.svelte";
   import SimGraph from "./lib/SimGraph.svelte";
+  import DriverNode from "../../data/result/Sam/Drivers_nodes.json";
+  import PresseureNode from "../../data/result/Sam/Pressures_nodes.json";
+  import StateNode from "../../data/result/Sam/States_nodes.json";
+  import ImpactNode from "../../data/result/Sam/Impacts_nodes.json";
+  import ResponseNode from "../../data/result/Sam/Responses_nodes.json";
+  import type { tMention } from "./lib/types";
+  import Varbox from "./lib/Varbox.svelte";
   // import ReportTimeline from "./lib/ReportTimeline.svelte";
   // import Legend from "./lib/Legend.svelte";
 
@@ -18,8 +25,14 @@
   let chunk_graph: any = undefined;
   let link_threshold: number = 0.83;
   let simgraph;
+  let varbox;
   let chunk_coordinates;
   let timeline_data;
+  let drivers: any = { ...DriverNode };
+  let pressures: any = { ...PresseureNode };
+  let states: any = { ...StateNode };
+  let impacts: any = { ...ImpactNode };
+  let responses: any = { ...ResponseNode };
 
   $: keyword_chunks_dict = ((_) => {
     let res = {};
@@ -41,8 +54,9 @@
     fetch(`${server_address}/data/`)
       .then((res) => res.json())
       .then((res) => {
-        console.log({ res });
+        // console.log( "all data: ",{res });
         interview_data = res.interviews;
+        console.log(interview_data);
         // report_data = res.reports
         chunk_coordinates = res.topic_tsnes;
         chunk_graph = link_to_graph(res.chunk_links, res.chunk_nodes);
@@ -238,20 +252,30 @@
   function handleChunksSelected(e) {
     if (!interview_viewer_component) return;
     const chunks = e.detail;
+    console.log(chunks);
     interview_viewer_component.highlight_chunks(chunks);
     // if (chunks === null) interview_viewer_component.dehighlight_chunks();
     // else interview_viewer_component.highlight_chunks(chunks);
   }
 
-  function handleKeywordSelected(e) {
-    if (!interview_viewer_component) return;
-    const keywords = e.detail;
-    // console.log(keywords, keyword_data);
-    if (keywords === null) {
-      interview_viewer_component.dehighlight_keywords();
+  // function handleKeywordSelected(e) {
+  //   if (!interview_viewer_component) return;
+  //   const keywords = e.detail;
+  //   // console.log(keywords, keyword_data);
+  //   if (keywords === null) {
+  //     interview_viewer_component.dehighlight_keywords();
+  //   } else {
+  //     const nodes = keywords.map((keyword) => keyword_chunks_dict[keyword]);
+  //     interview_viewer_component.highlight_keywords(nodes, keywords);
+  //   }
+  // }
+
+  function handleVarSelected(e) {
+    if (e.detail === null) {
+      interview_viewer_component.highlight_chunks(null);
     } else {
-      const nodes = keywords.map((keyword) => keyword_chunks_dict[keyword]);
-      interview_viewer_component.highlight_keywords(nodes, keywords);
+      const chunks: tMention[] = e.detail;
+      interview_viewer_component.highlight_chunks(chunks);
     }
   }
 </script>
@@ -259,9 +283,8 @@
 <main class="h-[100vh] px-1">
   <div class="page flex space-x-1 h-full">
     <div
-      class="flex flex-col justify-center items-center flex-1 h-full w-full basis-[70%] shrink-0"
+      class="flex flex-col justify-center items-center flex-1 h-full w-[70%]"
     >
-      <!-- <Search on:search={(e) => searchQuery(e.detail)}></Search> -->
       <div class="w-full h-full relative">
         <div
           class="title absolute top-1 left-6 w-fit rounded py-4 px-4 text-left text-sky-600"
@@ -269,13 +292,22 @@
           <span>Sea of</span> <br />
           <span class="title-hidden absolute h-fit mt-[-25px]">Voices</span>
         </div>
-        <SimGraph
+        <!-- <SimGraph
           bind:this={simgraph}
           topic_data={chunk_graph}
           {keyword_data}
           on:chunks-selected={handleChunksSelected}
           on:keywords-selected={handleKeywordSelected}
-        ></SimGraph>
+        ></SimGraph> -->
+        <Varbox
+          bind:this={varbox}
+          {drivers}
+          {pressures}
+          {states}
+          {impacts}
+          {responses}
+          on:var-selected={handleVarSelected}
+        ></Varbox>
       </div>
     </div>
     <div class="interview-viewer-container h-full w-full basis-[31%]">
