@@ -19,8 +19,7 @@
   const svgId = "model-svg";
   const dispatch = createEventDispatcher();
   const handlers = {
-    VarSelected: handleVarSelected,
-    LinkSelected: handleLinkSelected,
+    VarOrLinkSelected: handleVarOrLinkSelected,
   };
   let container;
   let selectedVar: tVariable | undefined = undefined;
@@ -125,15 +124,15 @@
     varbox.update_vars(drivers, pressures, states, impacts, responses,new_links, selected_var_name);
   }
 
-  function handleLinkSelected(e) {
-    // e.preventDefault();
-    const link: string = e;
-    // console.log({ link });
-    selectedVarLink = link;
-    dispatch("link-selected", selectedVarLink);
-  }
+  // function handleLinkSelected(e) {
+  //   // e.preventDefault();
+  //   const link: string = e;
+  //   // console.log({ link });
+  //   selectedVarLink = link;
+  //   dispatch("link-selected", selectedVarLink);
+  // }
 
-  function handleVarSelected(e) {
+  function handleVarOrLinkSelected(e) {
     // e.preventDefault();
     const variable: tVariable = e
     // console.log({ variable });
@@ -184,11 +183,13 @@
   ></div> -->
   <!-- <div class="variable-type-view h-full"> -->
     <svg id={svgId} class="varbox-svg w-full h-full">
+      <g class="link_group"></g>
       <g class="driver_region"></g>
       <g class="pressure_region"></g>
       <g class="state_region"></g>
       <g class="impact_region"></g>
       <g class="response_region"></g>
+      <defs></defs>
     </svg>
     <!-- {#each containers as container}
       <div id={container.container_id} class="absolute">
@@ -234,10 +235,10 @@
   }
   .varbox-svg {
     & .link-highlight {
-      opacity: 1;
+      opacity: 0.6;
     }
     & .link-not-highlight {
-      opacity: 0.1;
+      opacity: 0.05;
     }
     & .line-hover {
     /* stroke: black; */

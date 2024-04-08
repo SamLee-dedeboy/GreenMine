@@ -281,7 +281,7 @@
     }
     
   }
-
+  
   function handleVarSelected(e) {
     console.log(e);
     if (e.detail === null) {
@@ -295,7 +295,7 @@
   }
 </script>
 
-<main class="h-[100vh] px-1">
+<main class="h-full px-1">
   <div class="page flex space-x-1 h-full">
     <div
       class="flex flex-col justify-center items-center flex-1 h-full w-[70%]"
@@ -327,13 +327,18 @@
         ></Varbox>
       </div>
     </div>
-    <div class="interview-viewer-container h-full w-full basis-[31%]">
-      {#if interview_data != undefined}
-        <InterviewViewer
-          bind:this={interview_viewer_component}
-          data={interview_data}
-        ></InterviewViewer>
-      {/if}
+    <div class="h-full w-full basis-[30%]">
+      <div class="gap-y-1 outline outline-1 outline-gray-300" >
+          summary
+      </div>
+      <div class="interview-viewer-container w-full h-full" >
+        {#if interview_data != undefined}
+          <InterviewViewer
+            bind:this={interview_viewer_component}
+            data={interview_data}
+          ></InterviewViewer>
+        {/if}
+      </div>
     </div>
     <!-- <div class="flex-1 h-full">
             <div class='w-full h-full'>
@@ -361,4 +366,9 @@
     opacity: 0.65;
     filter: blur(0.02em);
   }
+  /* .box{
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  } */
 </style>

@@ -14,14 +14,20 @@ export const varbox = {
                 d3.selectAll("rect.box")
                     .classed("box-highlight", false)
                     .classed("box-not-highlight", false)
+                    .transition() 
+                    .duration(250) 
+                    .attr("transform", ""); // Reset transformation on all boxes to remove any previous magnification
                 d3.selectAll("text.label")
                     .classed("box-label-highlight", false)
                     .classed("box-label-not-highlight", false)
                 d3.selectAll("path.link")
-                    .classed("link-highlight", false)
+                    .classed("link-highlight", false)   
                     .classed("link-not-highlight", false)
-                handlers.VarSelected(null)
-                handlers.LinkSelected(null)
+                    .attr("stroke", "gray")
+                    .attr("marker-end", "")
+                handlers.VarOrLinkSelected(null)
+                // d3.selectAll("linearGradient").remove()
+                // d3.selectAll("defs").remove()
             }
         });
         const driver_region = svg.select("g.driver_region")
@@ -29,7 +35,6 @@ export const varbox = {
         const state_region = svg.select("g.state_region")
         const impact_region = svg.select("g.impact_region")
         const response_region = svg.select("g.response_region")
-        svg.append("g").attr('class', 'link-group');
 
         driver_region.append("g").attr("class","box-group")
         driver_region.append("g").attr("class","label-group")
@@ -42,7 +47,7 @@ export const varbox = {
         response_region.append("g").attr("class","box-group")
         response_region.append("g").attr("class","label-group")
 
-        this.clicked_hex = null
+        this.clicked_rect = null
         this.clicked_link = null
         this.width = width
         this.height = height
@@ -50,6 +55,8 @@ export const varbox = {
         this.handlers = handlers
         this.topicName = ['政府運作','環境運作','住屋','交通','公有土地','醫療','整體經濟','能源','災害','貿易','其他']
         this.topicEmotion = ['Resigned','Neutral','Worried','Angry','Proud']
+        // this.group = ['Drivers','Pressures','States','Impacts','Responses']
+        this.scaleColorGroup = d3.scaleOrdinal(['drivers','pressures','states','impacts','responses'], d3.schemeSet2);
     },
 
     updateColorScales(drivers, pressures, states, impacts, responses) {
@@ -160,7 +167,8 @@ export const varbox = {
                 block_x: block_x_s + block_width_s / 2, // Center X of the block
                 block_y: block_y_s + block_height_s / 2, // Center Y of the block
                 block_y_top: block_y_s, // Top edge of the block
-                block_y_bottom: block_y_s + block_height_s // Bottom edge of the block
+                block_y_bottom: block_y_s + block_height_s, // Bottom edge of the block
+                newX_source:0, newY_source:0, 
             };
         
             const targetPosition = {
@@ -175,7 +183,8 @@ export const varbox = {
                 block_x: block_x_t + block_width_t / 2, // Center X of the block
                 block_y: block_y_t + block_height_t / 2, // Center Y of the block
                 block_y_top: block_y_t, // Top edge of the block
-                block_y_bottom: block_y_t + block_height_t // Bottom edge of the block
+                block_y_bottom: block_y_t + block_height_t, // Bottom edge of the block
+                newX_target:0, newY_target:0,
             };
         
             return { source: sourcePosition, target: targetPosition,frequency: link.frequency, mentions: link.mentions};
@@ -185,28 +194,30 @@ export const varbox = {
 
     // console.log(selected_var_name)
     // // Append a group for the links
-    // let linkGroup = svg.select("g.link-group")
     const self = this;
     let spacing = 20
+    
+    // const scaleColor2 = d3.scaleOrdinal(['Drivers','Pressures','States','Impacts','Responses'], d3.schemeSet2);
     // Bind data and create paths for each link
-    svg.select("g.link-group").selectAll(".link")
+    // const defs = svg.select("defs") || svg.append("defs");
+    svg.select("g.link_group").selectAll(".link")
         .data(mergedData)
         .join("path")
         .attr("class", "link")
         .attr("id",(d)=>`${d.source.var_name}`+"-"+`${d.target.var_name}`)
         .attr("d", function(d,i) {
             let middleX1 
-            let newX_source, newY_source, newX_target, newY_target;
+            // let newX_source, newY_source, newX_target, newY_target;
             let middleY1;
             if ((d.source.var_type == "drivers" && d.target.var_type == "pressures")) {
                 let threshold;
                 threshold = Math.abs((d.source.block_y-d.source.y))*3
                 middleX1 = d.source.x+ (d.target.x-d.source.x) / 2; 
                 middleY1 = d.source.block_y_top - threshold; // Target is top
-                newX_source = d.source.x_right;
-                newY_source = d.source.y_top;
-                newX_target = d.target.x_left;
-                newY_target = d.target.y;
+                d.source.newX_source = d.source.x_right;
+                d.source.newY_source = d.source.y;
+                d.target.newX_target = d.target.x_left;
+                d.target.newY_target = d.target.y;
             } 
             if ((d.source.var_type == "pressures" && d.target.var_type == "states")) {
                 // console.log("entering drawing p to s")
@@ -214,70 +225,70 @@ export const varbox = {
                 threshold = Math.abs((d.source.block_y-d.source.y))
                 middleX1 = d.target.x+2*(d.target.x-d.source.x) / 3; 
                 middleY1 = d.source.block_y-(d.source.block_y- d.target.block_y)/4; // Target is top
-                newX_source = d.source.x_right;
-                newY_source = d.source.y_bottom;
-                newX_target = d.target.x_right;
-                newY_target = d.target.y;
+                d.source.newX_source = d.source.x_right;
+                d.source.newY_source = d.source.y;
+                d.target.newX_target = d.target.x_right;
+                d.target.newY_target = d.target.y;
             } 
             else if ((d.source.var_type == "states" && d.target.var_type == "impacts")) {
                 let threshold;
                 threshold = Math.abs((d.source.block_y-d.source.y))*2
                 middleX1 = d.target.x+ Math.abs(d.target.x-d.source.x); 
                 middleY1 = d.source.block_y_bottom + threshold; // Target is top
-                newX_source = d.source.x_left;
-                newY_source = d.source.y_bottom;
-                newX_target = d.target.x_right;
-                newY_target = d.target.y;
+                d.source.newX_source = d.source.x_left;
+                d.source.newY_source = d.source.y;
+                d.target.newX_target = d.target.x_right;
+                d.target.newY_target = d.target.y;
             } 
             if ((d.source.var_type == "impacts" && d.target.var_type == "responses")) {
                 let threshold;
                 threshold = Math.abs((d.source.block_y-d.source.y))*2
                 middleX1 = d.source.x+ (d.target.x-d.source.x) /1.5; 
                 middleY1 = d.source.block_y + threshold; // Target is top
-                newX_source = d.source.x_left;
-                newY_source = d.source.y_top;
-                newX_target = d.target.x_right;
-                newY_target = d.target.y;
+                d.source.newX_source = d.source.x_left;
+                d.source.newY_source = d.source.y;
+                d.target.newX_target = d.target.x_right;
+                d.target.newY_target = d.target.y;
             } 
             else if ((d.source.var_type == "responses" && d.target.var_type == "drivers")) {
                 let threshold;
                 threshold = Math.abs((d.source.block_y-d.source.y))
                 middleX1 = d.target.x- Math.abs(d.target.x-d.source.x)*1.5; 
                 middleY1 = d.source.block_y-(d.source.block_y- d.target.block_y)/2; // Target is top
-                newX_source = d.source.x_left;
-                newY_source = d.source.y_top;
-                newX_target = d.target.x_left;
-                newY_target = d.target.y;
+                d.source.newX_source = d.source.x_left;
+                d.source.newY_source = d.source.y;
+                d.target.newX_target = d.target.x_left;
+                d.target.newY_target = d.target.y;
             } 
             else if ((d.source.var_type == "responses" && d.target.var_type == "states")){
                 let threshold;
                 threshold = Math.abs((d.source.block_y-d.source.y))*2
                 middleX1 = d.source.x+ (d.target.x-d.source.x) / 2; 
                 middleY1 = d.source.block_y_top - threshold; // Target is top
-                newX_source = d.source.x_right;
-                newY_source = d.source.y_top;
-                newX_target = d.target.x_left;
-                newY_target = d.target.y_top;
+                d.source.newX_source = d.source.x_right;
+                d.source.newY_source = d.source.y;
+                d.target.newX_target = d.target.x_left;
+                d.target.newY_target = d.target.y;
             }
             else if ((d.source.var_type == "responses" && d.target.var_type == "pressures")){
                 let threshold;
                 threshold = Math.abs((d.source.block_y-d.source.y))*2
                 middleX1 = d.source.x+ (d.target.x-d.source.x) / 2; 
                 middleY1 = d.source.block_y - threshold; // Target is top
-                newX_source = d.source.x_right;
-                newY_source = d.source.y_top;
-                newX_target = d.target.x_left;
-                newY_target = d.target.y;
+                d.source.newX_source = d.source.x_right;
+                d.source.newY_source = d.source.y;
+                d.target.newX_target = d.target.x_left;
+                d.target.newY_target = d.target.y;
             }
 
             const path = d3.path();
-            path.moveTo(newX_source, newY_source); // Start at the source
+            path.moveTo(d.source.newX_source, d.source.newY_source); // Start at the source
 
         
             // Curve to (middleX1, middleY1), descending to midPoint1
             path.quadraticCurveTo(
                 middleX1, middleY1, // Control point at the first peak
-                newX_target, newY_target // End at the first midpoint
+                d.target.newX_target, d.target.newY_target // End at the first midpoint
             );
         
         
@@ -289,8 +300,9 @@ export const varbox = {
         // .attr("stroke",d=> scaleColor(d.frequency))
         .attr("stroke", "gray")
         .attr("stroke-width", function(d) {
-            const widthSacle = d3.scaleLinear().domain([frequencyList.minFrequency, frequencyList.maxFrequency]).range([2, 10])
+            const widthSacle = d3.scaleLinear().domain([frequencyList.minFrequency, frequencyList.maxFrequency]).range([2, 15])
             return widthSacle(d.frequency);
+            // return 2
         })
         .attr("opacity", 0.1)
         .on("mouseover", function(e, d) {
@@ -312,11 +324,14 @@ export const varbox = {
         .on("click", function(e, d) {
             console.log(d)
             e.preventDefault()
+
             const links = d3.selectAll("path.link")
             .classed("link-highlight", false)
             .classed("link-not-highlight", true)
+            .attr("stroke", "gray")
+            .attr("marker-end", "")
 
-            const hexas = d3.selectAll("rect.box")
+            const rects = d3.selectAll("rect.box")
             .classed("box-highlight", false)
             .classed("box-not-highlight", true)
 
@@ -327,15 +342,23 @@ export const varbox = {
 
             if(self.clicked_link === d){
                 self.clicked_link = null
-                self.handlers.LinkSelected(null)
+                self.handlers.VarOrLinkSelected(null)
             }
             else{
                 self.clicked_link = d
-                self.handlers.LinkSelected(d)
-                // links.classed("link-highlight", false).classed("link-not-highlight", true)
+                self.handlers.VarOrLinkSelected(d)
                 d3.select(this).classed("link-highlight", true).classed("link-not-highlight", false).raise()
+                .attr("stroke", function(d){
+                    const svg = d3.select("#"+self.svgId)                    
+                    return createOrUpdateGradient(svg, d,self)
+                })
+                // .attr("marker-mid", `url(#${arrowId})`)
+                .attr("marker-end", d=> {
+                    const svg = d3.select("#"+self.svgId)
+                    return createArrow(svg,d,self)
+                });
 
-                hexas
+                rects
                 .filter(box_data => box_data.variable_name === d.source.var_name || box_data.variable_name === d.target.var_name)
                 .classed("box-highlight", true)
                 .classed("box-not-highlight", false).raise()
@@ -349,8 +372,10 @@ export const varbox = {
     },
 
     drawvars(vars,class_name,group_name,frequencyList,box_coor,regionWidth,regionHeight,links){
-        console.log("Draw vars")
+        console.log(vars)
         
+
+
         interface VariableMention {
             variable_name: string;
             mentions: any[];
@@ -367,8 +392,7 @@ export const varbox = {
         }));
 
         const self = this;
-        // const xScale = this.xScale_vars
-        // const yScale = this.yScale_vars
+
         // let MapRows = 3;
         // let  MapColumns = (VarsNum/MapRows)+1;
 
@@ -380,7 +404,20 @@ export const varbox = {
         // console.log(HexwithVar)
         let max = Math.max(frequencyList.maxLength, frequencyList.maxFrequency);
         let min = Math.min(frequencyList.minLength, frequencyList.minFrequency);
+
+
+        let minMentions = Infinity;
+        let maxMentions = -Infinity;
+
+        // Iterate over each variable to find the min and max length of mentions
+        Object.values(vars.variable_mentions).forEach((variable:any) => {
+            const length = variable.mentions.length;
+            if (length < minMentions) minMentions = length;
+            if (length > maxMentions) maxMentions = length;
+        });
+        // console.log(minMentions,maxMentions)
         const scaleColor = d3.scaleSequential([min, max], d3.interpolateBlues)
+        const scaleColorGroup = d3.scaleLinear().domain([minMentions, maxMentions]).range(["#f7f7f7", self.scaleColorGroup(group_name.toLowerCase())]);
 
         const group = d3.select("#"+this.svgId).select("g."+class_name)
         group.select("g.box-group").append("rect")
@@ -393,9 +430,10 @@ export const varbox = {
         .attr("fill", "none")
         .attr("stroke", "#cdcdcd")
         .attr("stroke-width", 1)
-        .attr("opacity", "1") //do not show the bounding box
+        .attr("opacity", "0") //do not show the bounding box
         .attr("rx", "5")
 
+        
         group.select("g.box-group").append("text")
         .attr("class", "bbox-label")
         .attr("x", bbox_center[0])
@@ -405,9 +443,10 @@ export const varbox = {
         .text(group_name)
         .attr("font-family","serif")
         .attr("font-style", "italic")
-        .attr("font-size", "2rem")
+        .attr("font-size", "3rem")
         .attr("font-weight", "bold")    
         .attr("fill", "#636363")
+        .attr("fill",self.scaleColorGroup(group_name.toLowerCase()))
         .attr("opacity", "0.8")
 
         group.select("g.box-group").selectAll("rect.box")
@@ -426,7 +465,8 @@ export const varbox = {
         .attr("rx", "5")
         .attr("fill", function(d) {
             if (d.frequency !== 0) {
-                return scaleColor(d.frequency);
+                return scaleColorGroup(d.frequency);
+                // return scaleColor(d.frequency);
             } else {
                 return "#cdcdcd";
             }
@@ -443,37 +483,68 @@ export const varbox = {
         .on("click", function(e, d) {
             // console.log(d)
             e.preventDefault()
-            const hexas = d3.selectAll("rect.box")
+
+            d3.selectAll("rect.box")
+            .transition() 
+            .duration(250) 
+            .attr("transform", ""); // Reset transformation on all boxes to remove any previous magnification
+    
+
+            const rects = d3.selectAll("rect.box")
             .classed("box-highlight", false)
-            .classed("box-not-highlight", true)
-            // console.log(hexas.nodes())
+            .classed("box-not-highlight", true).raise()
             const labels = d3.selectAll("text.label")
             .classed("box-label-highlight", false)
             .classed("box-label-not-highlight", true)
             
 
             // style changing after select a variable, including the links and labels
-            if(self.clicked_hex === d) {
-                self.clicked_hex = null
-                self.handlers.VarSelected(null)
+            if(self.clicked_rect === d) {
+                self.clicked_rect = null
+                self.handlers.VarOrLinkSelected(null)
                 d3.selectAll(".link")
                 .classed("link-highlight", false)
                 .classed("link-not-highlight", true)
-                // hexas.classed("box-highlight", false).classed("box-not-highlight", false)
+                // rects.classed("box-highlight", false).classed("box-not-highlight", false)
                 // labels.classed("box-label-highlight", false).classed("box-label-not-highlight", false)
             }else{
                 // console.log(d)
-                self.clicked_hex = d
+                self.clicked_rect = d
                 
-                self.handlers.VarSelected(d)
+                self.handlers.VarOrLinkSelected(d)
                 d3.select(this).classed("box-highlight", true).classed("box-not-highlight", false).raise()
+                .transition()
+                .duration(250)
+                .attr("transform", function() {
+                    const bbox = this.getBBox(); // Get bounding box of the element, which gives you its height, width, and position
+                    const scale = 1.2; // Define your scale factor
+                    // Calculate the center of the box
+                    const centerX = bbox.x + bbox.width / 2;
+                    const centerY = bbox.y + bbox.height / 2;
+                    // Scale about the center of the box
+                    return `translate(${centerX * (1 - scale)}, ${centerY * (1 - scale)}) scale(${scale})`;
+                });
                 labels.filter(label_data => d.variable_name === label_data.variable_name).classed("box-label-highlight", true).classed("box-label-not-highlight", false).raise()
+                
                 d3.selectAll(".link")
                 .classed("link-highlight", false)
                 .classed("link-not-highlight", true)
+                .attr("stroke", "gray")
+                .attr("marker-end", "")
                 .filter(link_data => link_data.source.var_name === d.variable_name || link_data.target.var_name === d.variable_name)
                 .classed("link-highlight", true)
                 .classed("link-not-highlight", false).raise()
+                .attr("stroke", function(link_data){
+                    // console.log(link_data)
+                    const svg = d3.select("#"+self.svgId)                    
+                    return createOrUpdateGradient(svg, link_data,self);
+
+                    }
+                )
+                .attr("marker-end", d=> {
+                    const svg = d3.select("#"+self.svgId)
+                    return createArrow(svg,d,self)
+                });
                 
             }
         })
@@ -487,8 +558,8 @@ export const varbox = {
         .attr("x", (d) => d.x+ d.width/2 )
         .attr("y", (d) => d.y+ d.height/2)
         .attr("fill", (d) => {
-            // return "black"
-            return (d.frequency) > 140? "white":"black"
+            return "black"
+            // return (d.frequency) > 140? "white":"black"
         })
         .attr("font-size", "0.8rem")
         .attr("text-anchor", "middle")
@@ -506,11 +577,11 @@ function radialBboxes(groups, width, height, maxBboxSize) {
     const angleScale = d3.scaleBand().domain(groups).range([offset, offset+Math.PI * 2])
     let bboxes = {}
     const a = width/2 - maxBboxSize.width/2
-    const b = height/2 - maxBboxSize.height/2
+    const b = height/2.5 - maxBboxSize.height/2.5
     groups.forEach((group, index) => {
-        const scalefactor = 0.8
+        const scalefactor = 0.9
         const angle = angleScale(group)
-        const r = (a*b)/Math.sqrt(Math.pow(b*Math.cos(angle), 2) + Math.pow(a*Math.sin(angle), 2))*0.8
+        const r = (a*b)/Math.sqrt(Math.pow(b*Math.cos(angle), 2) + Math.pow(a*Math.sin(angle), 2))*scalefactor
         const x = width / 2 + r * Math.cos(angle)
         const y = height / 2 + r * Math.sin(angle)
         bboxes[group] = {
@@ -644,3 +715,58 @@ function addPropertiesToVariables(data) {
     });
     return data;
   }
+
+function createOrUpdateGradient(svg, link_data,self) {
+    const gradientId = `gradient-${link_data.source.var_name}-${link_data.target.var_name}`;
+
+    // Attempt to select an existing gradient
+    let gradient = svg.select(`#${gradientId}`);
+
+    // If the gradient does not exist, create it
+    if (gradient.empty()) {
+        console.log("Creating gradient", gradientId);
+        gradient = svg.select('defs').append("linearGradient")
+            .attr("id", gradientId)
+            .attr("gradientUnits", "userSpaceOnUse")
+            .attr("x1", link_data.source.newX_source)
+            .attr("y1", link_data.source.newY_source)
+            .attr("x2", link_data.target.newX_target)
+            .attr("y2", link_data.target.newY_target)
+            .selectAll("stop")
+            .data([
+                {offset: "0%", color: self.scaleColorGroup(link_data.source.var_type)},
+                {offset: "100%", color: self.scaleColorGroup(link_data.target.var_type)}
+            ])
+            .enter().append("stop")
+            .attr("offset", d => d.offset)
+            .attr("stop-color", d => d.color);
+    }
+
+    return `url(#${gradientId})`;
+}
+
+
+function createArrow(svg,d,self){
+    const arrowId = `arrow-${d.source.var_name}-${d.target.var_name}`
+    let arrow = svg.select(`#${arrowId}`);
+    if(arrow.empty()){
+        svg.select('defs')
+        .append('marker')
+        .attr('id', arrowId)
+        .attr('viewBox', [0, 0, 10, 10])
+        .attr('refX', 5)
+        .attr('refY', 5)
+        .attr('markerWidth', 4)
+        .attr('markerHeight', 4)
+        .attr('orient', 'auto-start-reverse')
+        .append('path')
+        .attr('d', d3.line()([[0, 0], [10, 5], [0, 10]]))
+        .attr('fill',self.scaleColorGroup(d.target.var_type));
+        // .attr('fill', 'gray')
+    }
+
+    return `url(#${arrowId})`
+}
+
+
+

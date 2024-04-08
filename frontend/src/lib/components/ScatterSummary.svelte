@@ -65,6 +65,7 @@ async function update_summary(summary_interviews,selectedAttr) {
 </script>
 
 <div id="svg-container" class="flex flex-col gap-y-1 outline outline-1 outline-gray-300 items-center">
+    
     <div class="flex gap-1 menu w-fit items-center py-0.5">
 
         <!-- svelte-ignore a11y-label-has-associated-control - $label contains the 'for' attribute -->
