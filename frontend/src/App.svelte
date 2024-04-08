@@ -1,14 +1,14 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import InterviewViewer from "./lib/InterviewViewer.svelte";
+  import InterviewViewer from "lib/InterviewViewer.svelte";
   import type {
     tMention,
     tVariableType,
     tTranscript,
     tLink,
     tServerData,
-  } from "./lib/types";
-  import Varbox from "./lib/Varbox.svelte";
+  } from "lib/types";
+  import Varbox from "lib/Varbox.svelte";
 
   const server_address = "http://localhost:5000";
 

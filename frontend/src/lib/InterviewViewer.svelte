@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { emotionColorScale } from "./constants/Colors";
+  import { emotionColorScale } from "lib/constants/Colors";
   export let data: any[];
   const speaker_title = {
     1: "Host",

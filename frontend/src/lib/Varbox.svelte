@@ -1,10 +1,9 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import { varbox } from "./Varbox";
+  import { varbox } from "lib/Varbox";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
-  import type { tVariableType, tVariable, tLink } from "./types";
-  import type { tTranscript } from "./types/transcript";
+  import type { tVariableType, tVariable, tLink, tTranscript } from "./types";
   export let drivers: tVariableType;
   export let pressures: tVariableType;
   export let states: tVariableType;
