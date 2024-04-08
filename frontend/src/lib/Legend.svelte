@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { emotions, emotionColorScale } from "./Colors";
+  import { emotions, emotionColorScale } from "./constants/Colors";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let selectedEmotion: string | undefined = undefined;

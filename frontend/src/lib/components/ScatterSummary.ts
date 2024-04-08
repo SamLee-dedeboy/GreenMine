@@ -2,7 +2,7 @@ import * as d3 from 'd3';
 import {hexbin as Hexbin} from 'd3-hexbin';
 import {tick} from 'svelte';
 import { scale } from 'svelte/transition';
-import { emotionColorScale } from "../Colors";
+import { emotionColorScale } from "../constants/Colors";
 // import type  {tVaraible} from './types/variables';
 
 export const scattersummary = {

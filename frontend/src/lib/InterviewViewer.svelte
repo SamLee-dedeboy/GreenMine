@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { emotionColorScale } from "./Colors";
+  import { emotionColorScale } from "./constants/Colors";
   export let data: any[];
   const speaker_title = {
     1: "Host",
@@ -161,7 +161,7 @@
                     ]}
                     class:chunk-not-highlight={highlighting_chunk &&
                       !highlight_chunk[interview_index][chunk_index]}
-                    style={`background:  white`} 
+                    style={`background:  white`}
                     on:keyup={() => {
                       show_chunk[interview_index][chunk_index] =
                         !show_chunk[interview_index][chunk_index];
@@ -170,7 +170,7 @@
                       else
                         highlight_chunk[interview_index][chunk_index] =
                           highlight_chunk_ids.includes(chunk.id);
-                    }}   
+                    }}
                     on:click={() => {
                       show_chunk[interview_index][chunk_index] =
                         !show_chunk[interview_index][chunk_index];
