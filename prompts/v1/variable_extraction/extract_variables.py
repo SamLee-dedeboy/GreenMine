@@ -105,16 +105,16 @@ def node_extraction_prompt_factory(paragraph, var_type_def, definition_dict, var
     messages = [
         {
             "role":"system",
-            "content":""" You are a {var_type} variables extraction system that extracts nodes from a monologue.
+            "content":""" You are a variables identification system.
+            The user wants you to identify if there are any {var_type} in the monologue.
             A {var_type} is defined as: {var_type_def}.
-            You will be given a monologue, which is about a person who is talking about their life.
-            The user is interested in the {var_type} mentioned in the monoglogue, which includes the following objects:
-            {var_definitions}
+            It may include the following objects: {var_definitions}
             The user will give you a monologue in Chinese.
             You will need to identify the objects that are related to the monologue.
             All object names must match one of the {var_num} objects in this list: {var_list}.
             DO NOT MAKE UP OBJECTS NOT IN THE LIST.
             Note that some object might not be mentioned in the monologue.
+            If the monologue does not mention any object, reply with an empty list.
             Please provide output in JSON format as follows:
             {{
                 "objects": [] (objects from the object list)
@@ -128,26 +128,7 @@ def node_extraction_prompt_factory(paragraph, var_type_def, definition_dict, var
         },
     ]
     return messages
-    # pprint(messages)
-    try:
-        response = request_gpt4(messages, response_format="json")
-        nodes_object = json.loads(response)['objects']
-        nodes_object = list(filter(lambda object: object in var_list, nodes_object))
-        print(nodes_object)
-        result = []
-        # res["conversation_id"] = conversation_id
-        for object in nodes_object:
-            result.append({
-                "variable": object,
-                "chunk_id": chunk_id,
-                "mentions": []
-            })
-        return result
-    except Exception as e:
-        print(e)
-        return generate_nodes(paragraph, var_type_def, definition_dict, var_type, chunk_id)
-
-# def extract_mentions(sentences, extracted_var):
+   
 def mention_extraction_prompt_factory(sentences, extracted_var):
     sentences_str = "" 
     for index, sentence in enumerate(sentences):
@@ -156,7 +137,7 @@ def mention_extraction_prompt_factory(sentences, extracted_var):
         {
             "role": "system",
             "content": """You are a mention extraction system that extracts mentions from a monologue.
-            The user will give you a monologue in Chinese and a keyword in English.
+            The user will give you a monologue and a keyword in Chinese.
             You need to extract the sentences that contain the keyword from the monologue.
             Note that the keyword may not be directly matched in the monologue, instead, it could be a synonym or a related word, or if the sentence is talking in relevant context.
             Reply with the following JSON format:
@@ -171,15 +152,7 @@ def mention_extraction_prompt_factory(sentences, extracted_var):
         }
     ]
     return messages
-    try:
-        response = request_gpt4(messages, response_format="json")
-        response_json = json.loads(response)['mentions']
-    except Exception as e:
-        print(e)
-        return extract_mentions(sentences, extracted_var)
-    # print(sentences_str)
-    # print(extracted_var, response_json)
-    return response_json
+   
 
 def extract_nodes():
     from collections import defaultdict

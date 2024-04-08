@@ -7,7 +7,7 @@ import { scale } from 'svelte/transition';
 import type  {tVariable} from './types/variables';
 
 export const varbox = {
-    init(svgId, width,height, paddings,handlers){
+    init(svgId, width,height, paddings, handlers){
         const svg = d3.select("#"+svgId).attr("viewBox", `0 0 ${width} ${height}`)
         .on("click", function(e) {
             if(!e.defaultPrevented) {

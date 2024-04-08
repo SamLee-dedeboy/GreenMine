@@ -3,6 +3,8 @@ from openai import OpenAI
 import concurrent 
 from tqdm import tqdm
 import glob
+from openai import RateLimitError
+import time
 
 indicator_combinations = [("Drivers", "Pressures"), ("Pressures", "States"), ("States", "Impacts"), ("Impacts", "Responses"), ("Responses", "Drivers"), ("Responses", "Pressures"), ("Responses", "States")]
 
@@ -22,21 +24,22 @@ def combine_chunks(nodes_data, formatted_chunks):
                 formatted_chunks[chunk_id]["var_mentions"][indicator].append(var)
     # print(formatted_chunks)
 
-api_key = open("api_key").read()
+api_key = open("openai_api_key").read()
 client=OpenAI(api_key=api_key)
 
-def get_chunk_content(chunk_id):
+def get_chunk_content(chunk_id, chunk_dict):
     chunk_content = ""
-    chunk_id_parts = chunk_id.split("_")
-    file_name = chunk_id_parts[0]+"_"+chunk_id_parts[1]+".json"
-    chunk_index = int(chunk_id_parts[2])
-    with open('./data/chunk_summaries/' + file_name, 'r') as file:
-        chunk = json.load(file)[chunk_index]
+    # chunk_id_parts = chunk_id.split("_")
+    # file_name = chunk_id_parts[0]+"_"+chunk_id_parts[1]+".json"
+    # chunk_index = int(chunk_id_parts[2])
+    # with open('tmp/chunk_nodes_w_mentions/' + file_name, 'r') as file:
+    #     chunk = json.load(file)[chunk_index]
+    chunk = chunk_dict[chunk_id]
     for conversation in chunk["conversation"]:
         if conversation["speaker"]==1:
-            chunk_content += "interviewer: " 
+            chunk_content += "Interviewer: " 
         else:
-            chunk_content += "interviewee: "
+            chunk_content += "Interviewee: "
         chunk_content += conversation["content"] + "\n"
     return chunk_content
 
@@ -48,25 +51,33 @@ def combination(vars1, vars2):
     return combs
 
 def get_variable_definitions(indicator, var):
-    with open('./data/variable_definitions/'+indicator+'_variables.json', 'r') as file:
+    print(indicator, var)
+    with open('variable_definitions/'+indicator+'_variables.json', 'r') as file:
         vars_def = json.load(file)
     return vars_def[var]
 
 def request_chatgpt(client, messages, model='gpt-3.5-turbo-0125', format=None):
-    if format == "json":
-        response = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            response_format={ "type": "json_object" },
-            temperature=0
-        )
-    else:
-        response = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            temperature=0
-        )
-    return response.choices[0].message.content
+    try:
+        if format == "json":
+            response = client.chat.completions.create(
+                # model="gpt-4-1106-preview",
+                model = model,
+                messages=messages,
+                response_format={ "type": "json_object" },
+                temperature=0.5,
+            )
+        else:
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=0.5,
+            )
+        return response.choices[0].message.content
+    except RateLimitError as e:
+        print("RateLimitError")
+        print(e)
+        time.sleep(5)
+        return request_chatgpt(client, messages, model, format)
 
 def multithread_prompts(client, prompts, model="gpt-3.5-turbo-0125", response_format=None):
     l = len(prompts)
@@ -105,14 +116,14 @@ def find_relationships_chunk_prompts_factory(chunk_content, comb, indicator1, in
                 ]
     return messages
 
-def find_vars_relationships(chunks):
+def find_vars_relationships(chunks, chunk_dict):
     relationships_prompts = []
     metadata_list = []
     for chunk_id in chunks:
         for indicator1, indicator2 in indicator_combinations:
             if indicator1 in chunks[chunk_id]["var_mentions"] and indicator2 in chunks[chunk_id]["var_mentions"]:
                 # get chunk content
-                chunk_content = get_chunk_content(chunk_id)
+                chunk_content = get_chunk_content(chunk_id, chunk_dict)
                 vars1 = chunks[chunk_id]["var_mentions"][indicator1]
                 vars2 = chunks[chunk_id]["var_mentions"][indicator2]
                 # get combinations of lists vars1 and vars2
@@ -127,15 +138,17 @@ def find_vars_relationships(chunks):
                 # connections = multithread_prompts(client, relationships_prompts, model="gpt-3.5-turbo-0125", response_format="json")
                 # print(connections) # a list of json objects
                 # return 
-    # print(len(relationships_prompts))
-    relationships_prompts = relationships_prompts[:100]
-    metadata_list = metadata_list[:100]
+    # relationships_prompts = relationships_prompts[:50]
+    # metadata_list = metadata_list[:50]
     connections = multithread_prompts(client, relationships_prompts, model="gpt-3.5-turbo-0125", response_format="json")
     results = []
     for response, metadata in zip(connections, metadata_list):
         # print(response)
         # print(metadata)
-        response = json.loads(response)
+        try:
+            response = json.loads(response)
+        except:
+            response = "error"
         # filter unuseful responses
         if response["relationship"] == "No": continue
         results.append({
@@ -147,22 +160,24 @@ def find_vars_relationships(chunks):
             "response": response
         })
     # save to json
-    with open('data/connections.json', 'w') as outfile:
+    with open('tmp/connections.json', 'w') as outfile:
         json.dump(results, outfile, indent=4)
     
 # sortedChunks = json.load(open('./data/sorted_chunks.json', 'r'))
 # find_vars_relationships(sortedChunks)
 
 def main():
-    nodes_files = glob.glob('./data/nodes/*.json')
+    nodes_files = glob.glob('tmp/nodes/*.json')
     combined_chunks = {}
     for nodes_file in nodes_files:
         nodes_data = json.load(open(nodes_file))
         combine_chunks(nodes_data, combined_chunks)
+    chunks = json.load(open("tmp/chunk_nodes_w_mentions_filtered.json", 'r'))
+    chunk_dict = { chunk['id']: chunk for chunk in chunks}
     # convert combined_chunks to json
     # with open('data/combined_chunks.json', 'w') as outfile:
     #     json.dump(combined_chunks, outfile, indent=4)
-    find_vars_relationships(combined_chunks)
+    find_vars_relationships(combined_chunks, chunk_dict)
 
 # def main():
 #     data = json.load(open("data.json"))

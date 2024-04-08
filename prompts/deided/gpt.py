@@ -3,25 +3,32 @@ from tqdm import tqdm
 import copy
 from pprint import pprint
 import tiktoken
-
+from openai import RateLimitError
+import time
 def request_chatgpt_gpt4(client, messages, format=None):
     model = 'gpt-3.5-turbo-0125'
     # model="gpt-4-1106-preview"
-    if format == "json":
-        response = client.chat.completions.create(
-            # model="gpt-4-1106-preview",
-            model = model,
-            messages=messages,
-            response_format={ "type": "json_object" },
-            temperature=0.5,
-        )
-    else:
-        response = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            temperature=0.5,
-        )
-    return response.choices[0].message.content
+    try:
+        if format == "json":
+            response = client.chat.completions.create(
+                # model="gpt-4-1106-preview",
+                model = model,
+                messages=messages,
+                response_format={ "type": "json_object" },
+                temperature=0.5,
+            )
+        else:
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=0.5,
+            )
+        return response.choices[0].message.content
+    except RateLimitError as e:
+        print("RateLimitError")
+        print(e)
+        time.sleep(5)
+        return request_chatgpt_gpt4(client, messages, format)
 
 def get_embedding(client, text, model="text-embedding-3-small"):
     enc = tiktoken.encoding_for_model(model)
