@@ -3,6 +3,7 @@ import * as d3 from 'd3';
 import {tick} from 'svelte';
 import { scale } from 'svelte/transition';
 
+import * as Constants from "./constants"
 // import { drivers } from './Varbox.svelte';
 import type  {tVariable} from './types/variables';
 
