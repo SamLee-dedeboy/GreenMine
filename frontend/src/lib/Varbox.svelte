@@ -16,8 +16,7 @@
   const svgId = "model-svg";
 
   const handlers = {
-    VarSelected: handleVarSelected,
-    LinkSelected: handleLinkSelected,
+    VarOrLinkSelected: handleVarOrLinkSelected,
   };
   let container;
   let selectedVar: tVariable | undefined = undefined;
@@ -115,14 +114,10 @@
     return result;
   }
 
-  function handleLinkSelected(e) {
-    const link: string = e;
-    selectedVarLink = link;
-    dispatch("link-selected", selectedVarLink);
-  }
-
-  function handleVarSelected(e) {
+  function handleVarOrLinkSelected(e) {
+    // e.preventDefault();
     const variable: tVariable = e;
+    // console.log({ variable });
     selectedVar = variable;
     dispatch("var-selected", selectedVar); // for App.svelte to hightlight the chunks
 
@@ -154,11 +149,13 @@
 
 <div bind:this={container} class="container w-full h-full relative">
   <svg id={svgId} class="varbox-svg w-full h-full">
+    <g class="link_group"></g>
     <g class="driver_region"></g>
     <g class="pressure_region"></g>
     <g class="state_region"></g>
     <g class="impact_region"></g>
     <g class="response_region"></g>
+    <defs></defs>
   </svg>
 </div>
 
@@ -168,10 +165,10 @@
   }
   .varbox-svg {
     & .link-highlight {
-      opacity: 1;
+      opacity: 0.6;
     }
     & .link-not-highlight {
-      opacity: 0.1;
+      opacity: 0.05;
     }
     & .line-hover {
       /* stroke: black; */
