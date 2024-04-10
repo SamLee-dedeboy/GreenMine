@@ -122,7 +122,7 @@
   }
 </script>
 
-<div class="w-full h-full overflow-y-scroll">
+<div class="absolute top-0 bottom-0 left-0 right-0 overflow-y-scroll">
   <div
     class="title border border-gray rounded shadow-lg m-1 py-2 text-xl font-bold text-center flex items-center justify-center"
   >

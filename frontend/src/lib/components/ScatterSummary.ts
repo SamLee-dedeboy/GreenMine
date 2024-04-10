@@ -7,94 +7,58 @@ import type { tChunk } from 'lib/types';
 import * as Constants from "lib/constants"
 // import type  {tVaraible} from './types/variables';
 
-export const scattersummary = {
-    init(svgId, width,height, paddings){
-        const self = this;
-        const emotion_svg = d3.select("#"+svgId.emotion)
-                            // .attr("width", width).attr("height", height)
-                            // .attr("transform", `translate(500,200)`)
-
-        emotion_svg.append("g")
-            .attr("class", "scatter-plot")
-        emotion_svg.append("g")
-            .attr("class", "legend")
-
-        const topic_svg = d3.select("#"+svgId.topic)
-        topic_svg.append("g")
-        .attr("class", "scatter-plot")
-        topic_svg.append("g")
-        .attr("class", "legend")
-
-
-
+export class ScatterSummary  {
+    width: number;
+    height: number;
+    svgId: string;
+    node_radius: number;
+    colorScale: any;
+    categories: string[];
+    constructor(svgId, width,height, paddings, colorScale, categories ){
+        this.svgId = svgId
         this.width = width
         this.height = height
-        this.svgId = svgId
         this.node_radius = 7
-        // this.handlers = handlers
-        this.topicName = Constants.topicname
-        this.emotionName = Constants.emotionname
+        this.colorScale = colorScale
+        this.categories = categories    
+    }
 
-       
-       
-    },
+    init() {
+        const svg = d3.select(`#${this.svgId}`)
+        svg.append("g")
+            .attr("class", "scatter-plot")
+        svg.append("g")
+            .attr("class", "legend")
+    }
 
-    update_summary(selected_var:any[],attrs:string[]){
-        for(let i=0;i<attrs.length;i++){
-            this.draw(selected_var,attrs[i])
-        }
+    update_summary(selected_var:tChunk[],attr:string){
+        this.draw(selected_var,attr)
 
-    },
-    draw(selected_var,attr){
+    }
+    draw(selected_var: tChunk[],attr: string){
         console.log({attr})
         console.log(selected_var)
-        // attr: topic/emotion
-        const Counts = selected_var.reduce((acc, item) => {
-            const property = item[attr];
-            acc[property] = (acc[property] || 0) + 1;
-            
-            return acc;
-        }, {});
-        const ThisArrayMappings = {
-            emotion: Constants.emotionname,
-            topic: Constants.topicname,
-            // Add more options as needed
-          };
-        const topicColorScale = d3.scaleOrdinal()
-          .domain(ThisArrayMappings[attr])
-          .range(Constants.categoricalColors);
-    
-        const ColorArrayMappings = {
-            emotion: emotionColorScale,
-            topic: topicColorScale
-            // Add more options as needed
-        }
-          
-    
-    
-        console.log(Counts)
-        const count_Array = Object.entries(Counts).map(([property_name, count]) => ({ property_name, count }));
     
         let edge = 10; //buffer zone
-        let fix_points = generateFixedPoints(attr, this.width, this.height, edge);
+        let fix_points = generateFixedPoints(this.categories.length, this.width, this.height, edge);
         console.log(fix_points)
+
         let attr_coordinates = {}
-    
-        ThisArrayMappings[attr].forEach((property_name, index) => (
+        this.categories.forEach((property_name, index) => (
             attr_coordinates[property_name] = {x: fix_points[index].x, y: fix_points[index].y}
         ));
-    
-    
         console.log(attr_coordinates)
+
         // draw the dots
-        const svg = d3.select("#"+this.svgId[attr])
+        const svg = d3.select("#"+this.svgId)
         svg.select("g.scatter-plot").selectAll("*").remove()
         // runSimulation(svg,attr,ColorArrayMappings,attr_coordinates,selected_var,this.node_radius,this.width,this.height)
         const nodes = svg.select("g.scatter-plot").selectAll("mydots")
                .data(selected_var)
                .join("circle")
                .attr("r", this.node_radius)
-               .attr("fill",d => ColorArrayMappings[attr](d[attr]));
+               .attr("fill", d => this.colorScale(d[attr]))
+            //    .attr("fill",d => ColorArrayMappings[attr](d[attr]));
         const self = this
         const simulation = d3.forceSimulation(selected_var)
                             //  .force("x", d3.forceX(d => count_Object[d[attr]].center_position.x))
@@ -125,7 +89,7 @@ export const scattersummary = {
             .attr("x",d=> attr_coordinates[d].x)
             .attr("y",d=> attr_coordinates[d].y)
             .text(d=>d)
-            .attr("font-size",10)
+            .attr("font-size","1rem")
             .attr("font-weight",600)
             .attr("text-anchor","middle")
             .attr("dominant-baseline","middle")
@@ -197,9 +161,8 @@ function seededRandom(seed) {
 }
 
 
-function generateFixedPoints(attr, width, height, buffer) {
+function generateFixedPoints(n, width, height, buffer) {
     let fixedPoints :any= [];
-    const n = attr == "emotion" ? 5 : 14;
     // // Adjust the width and height to account for the buffer zone
     const xScale = d3.scaleLinear().domain([0, 1]).range([buffer, width - buffer]);
     const yScale = d3.scaleLinear().domain([0, 1]).range([buffer, height - buffer]);

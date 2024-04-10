@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import InterviewViewer from "lib/InterviewViewer.svelte";
-  import Summaryview from "lib/components/ScatterSummary.svelte"
+  import Summaryview from "lib/components/ScatterSummary.svelte";
   import type {
     tMention,
     tVariableType,
@@ -9,9 +9,7 @@
     tLink,
     tServerData,
     tVariable,
-
-    tChunk
-
+    tChunk,
   } from "lib/types";
   import Varbox from "lib/Varbox.svelte";
 
@@ -50,7 +48,6 @@
       });
   }
 
-
   function handleVarOrLinkSelected(e) {
     // console.log(e.detail);
     if (e.detail === null) {
@@ -58,34 +55,36 @@
     } else {
       const chunks = e.detail.mentions;
       interview_viewer_component.highlight_chunks(chunks);
-      console.log(interview_data)
-      const flattenedInterviewData= interview_data.flatMap(item => item.data);
-      console.log(chunks)
+      console.log(interview_data);
+      const flattenedInterviewData = interview_data.flatMap(
+        (item) => item.data
+      );
+      console.log(chunks);
       const enhanceChunks = (chunks: any[]): any[] => {
-        return chunks.map(chunk => {
-          const match = flattenedInterviewData.find(item => item.id === chunk.chunk_id);
+        return chunks
+          .map((chunk) => {
+            const match = flattenedInterviewData.find(
+              (item) => item.id === chunk.chunk_id
+            );
 
-          if (match) {
-            return {
-              id: chunk.chunk_id,
-              conversation: chunk.conversation,
-              emotion: match.emotion,
-              title: match.title,
-              topic: match.topic,
-              raw_keywords: match.raw_keywords,
-            };
-          } else {
-            console.error(`No match found for chunk_id: ${chunk.chunk_id}`);
-            return null;
-          }
-        }).filter(chunk => chunk !== null);
+            if (match) {
+              return {
+                id: chunk.chunk_id,
+                conversation: chunk.conversation,
+                emotion: match.emotion,
+                title: match.title,
+                topic: match.topic,
+                raw_keywords: match.raw_keywords,
+              };
+            } else {
+              console.error(`No match found for chunk_id: ${chunk.chunk_id}`);
+              return null;
+            }
+          })
+          .filter((chunk) => chunk !== null);
       };
 
       summary_interviews = enhanceChunks(chunks);
-     
-
-    
-     
     }
   }
 </script>
@@ -119,14 +118,11 @@
         {/if}
       </div>
     </div>
-    <div class="h-full w-full basis-[30%]">
-      <div class="gap-y-1 outline outline-1 outline-gray-300">
-        <Summaryview
-          {summary_interviews}
-          id="statistics"
-        />
+    <div class="h-full w-full basis-[30%] flex flex-col">
+      <div class="gap-y-1">
+        <Summaryview {summary_interviews} id="statistics" />
       </div>
-      <div class="interview-viewer-container w-full h-full">
+      <div class="interview-viewer-container w-full grow relative">
         {#if data_loading}
           <div>Data Loading...</div>
         {:else}
