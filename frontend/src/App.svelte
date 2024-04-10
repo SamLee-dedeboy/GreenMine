@@ -1,12 +1,17 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import InterviewViewer from "lib/InterviewViewer.svelte";
+  import Summaryview from "lib/components/ScatterSummary.svelte"
   import type {
     tMention,
     tVariableType,
     tTranscript,
     tLink,
     tServerData,
+    tVariable,
+
+    tChunk
+
   } from "lib/types";
   import Varbox from "lib/Varbox.svelte";
 
@@ -21,6 +26,7 @@
   let impacts: tVariableType;
   let responses: tVariableType;
   let links: tLink[];
+  let summary_interviews: tChunk[] = [];
 
   let data_loading: boolean = true;
 
@@ -32,7 +38,7 @@
     fetch(`${server_address}/data/`)
       .then((res) => res.json())
       .then((res: tServerData) => {
-        console.log({ res });
+        // console.log({ res });
         interview_data = res.interviews;
         drivers = res.driver_nodes;
         pressures = res.pressure_nodes;
@@ -44,23 +50,42 @@
       });
   }
 
-  function handleLinkSelected(e) {
-    console.log(e);
-    if (e.detail === null) {
-      interview_viewer_component.highlight_chunks(null);
-    } else {
-      const chunks: tMention[] = e.detail.mentions;
-      interview_viewer_component.highlight_chunks(chunks);
-    }
-  }
 
-  function handleVarSelected(e) {
-    console.log(e);
+  function handleVarOrLinkSelected(e) {
+    // console.log(e.detail);
     if (e.detail === null) {
       interview_viewer_component.highlight_chunks(null);
     } else {
-      const chunks: tMention[] = e.detail.mentions;
+      const chunks = e.detail.mentions;
       interview_viewer_component.highlight_chunks(chunks);
+      console.log(interview_data)
+      const flattenedInterviewData= interview_data.flatMap(item => item.data);
+      console.log(chunks)
+      const enhanceChunks = (chunks: any[]): any[] => {
+        return chunks.map(chunk => {
+          const match = flattenedInterviewData.find(item => item.id === chunk.chunk_id);
+
+          if (match) {
+            return {
+              id: chunk.chunk_id,
+              conversation: chunk.conversation,
+              emotion: match.emotion,
+              title: match.title,
+              topic: match.topic,
+              raw_keywords: match.raw_keywords,
+            };
+          } else {
+            console.error(`No match found for chunk_id: ${chunk.chunk_id}`);
+            return null;
+          }
+        }).filter(chunk => chunk !== null);
+      };
+
+      summary_interviews = enhanceChunks(chunks);
+     
+
+    
+     
     }
   }
 </script>
@@ -88,15 +113,19 @@
             {impacts}
             {responses}
             {links}
-            on:var-selected={handleVarSelected}
-            on:link-selected={handleLinkSelected}
+            on:var-selected={handleVarOrLinkSelected}
             {interview_data}
           ></Varbox>
         {/if}
       </div>
     </div>
     <div class="h-full w-full basis-[30%]">
-      <div class="gap-y-1 outline outline-1 outline-gray-300">summary</div>
+      <div class="gap-y-1 outline outline-1 outline-gray-300">
+        <Summaryview
+          {summary_interviews}
+          id="statistics"
+        />
+      </div>
       <div class="interview-viewer-container w-full h-full">
         {#if data_loading}
           <div>Data Loading...</div>

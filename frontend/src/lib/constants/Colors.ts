@@ -25,6 +25,12 @@ export const categoricalColors = [
     "#fdbf6f",
   ];
 
+export const groups = ['drivers','pressures','states','impacts','responses'];
+export const groupColors = d3
+.scaleOrdinal()
+.domain(groups)
+.range(d3.schemeSet2)
+
 export const emotions = ["Proud", "Resigned", "Angry", "Worried", "Neutral"];
 export const emotionColorScale = d3
     .scaleOrdinal()

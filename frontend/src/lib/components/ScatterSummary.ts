@@ -3,21 +3,27 @@ import {hexbin as Hexbin} from 'd3-hexbin';
 import {tick} from 'svelte';
 import { scale } from 'svelte/transition';
 import { emotionColorScale } from "../constants/Colors";
+import type { tChunk } from 'lib/types';
+import * as Constants from "lib/constants"
 // import type  {tVaraible} from './types/variables';
 
 export const scattersummary = {
     init(svgId, width,height, paddings){
         const self = this;
-        const summary_svg = d3.select("#"+svgId)
+        const emotion_svg = d3.select("#"+svgId.emotion)
                             // .attr("width", width).attr("height", height)
                             // .attr("transform", `translate(500,200)`)
 
-        const Scatter_group = summary_svg.append("g")
+        emotion_svg.append("g")
             .attr("class", "scatter-plot")
-
-
-        const Legend_group = summary_svg.append("g")
+        emotion_svg.append("g")
             .attr("class", "legend")
+
+        const topic_svg = d3.select("#"+svgId.topic)
+        topic_svg.append("g")
+        .attr("class", "scatter-plot")
+        topic_svg.append("g")
+        .attr("class", "legend")
 
 
 
@@ -26,15 +32,22 @@ export const scattersummary = {
         this.svgId = svgId
         this.node_radius = 7
         // this.handlers = handlers
-        this.topicName = ['政府運作','環境生態','住屋','交通','公有土地','醫療','整體經濟','能源','災害','貿易','其他']
-        this.emotionName = ['Resigned','Neutral','Worried','Angry','Proud']
+        this.topicName = Constants.topicname
+        this.emotionName = Constants.emotionname
 
        
        
     },
-    update_summary(selected_var,attr){
-        // console.log({attr})
-        // console.log({selected_var})
+
+    update_summary(selected_var:any[],attrs:string[]){
+        for(let i=0;i<attrs.length;i++){
+            this.draw(selected_var,attrs[i])
+        }
+
+    },
+    draw(selected_var,attr){
+        console.log({attr})
+        console.log(selected_var)
         // attr: topic/emotion
         const Counts = selected_var.reduce((acc, item) => {
             const property = item[attr];
@@ -43,47 +56,40 @@ export const scattersummary = {
             return acc;
         }, {});
         const ThisArrayMappings = {
-            emotion: this.emotionName,
-            topic: this.topicName,
+            emotion: Constants.emotionname,
+            topic: Constants.topicname,
             // Add more options as needed
           };
         const topicColorScale = d3.scaleOrdinal()
           .domain(ThisArrayMappings[attr])
-          .range(d3.schemePaired);
-
+          .range(Constants.categoricalColors);
+    
         const ColorArrayMappings = {
             emotion: emotionColorScale,
             topic: topicColorScale
             // Add more options as needed
         }
           
-
-
-
+    
+    
+        console.log(Counts)
         const count_Array = Object.entries(Counts).map(([property_name, count]) => ({ property_name, count }));
-
+    
         let edge = 10; //buffer zone
         let fix_points = generateFixedPoints(attr, this.width, this.height, edge);
+        console.log(fix_points)
         let attr_coordinates = {}
-
+    
         ThisArrayMappings[attr].forEach((property_name, index) => (
             attr_coordinates[property_name] = {x: fix_points[index].x, y: fix_points[index].y}
         ));
-
     
-        
+    
+        console.log(attr_coordinates)
         // draw the dots
-        const svg = d3.select("#"+this.svgId)
+        const svg = d3.select("#"+this.svgId[attr])
         svg.select("g.scatter-plot").selectAll("*").remove()
-        // svg.selectAll("circle.fixPoints")
-        //     .data(fix_points)
-        //     .join("circle")
-        //     .attr("cx", d => d.x)
-        //     .attr("cy", d => d.y)
-        //     .attr("r", 10)
-        //     .attr("fill", "lightgrey")
-        //     .attr("class", "fixPoints")
-
+        // runSimulation(svg,attr,ColorArrayMappings,attr_coordinates,selected_var,this.node_radius,this.width,this.height)
         const nodes = svg.select("g.scatter-plot").selectAll("mydots")
                .data(selected_var)
                .join("circle")
@@ -93,25 +99,25 @@ export const scattersummary = {
         const simulation = d3.forceSimulation(selected_var)
                             //  .force("x", d3.forceX(d => count_Object[d[attr]].center_position.x))
                             //  .force("y", d3.forceY(d => count_Object[d[attr]].center_position.y))
-                            .force("x", d3.forceX(d => attr_coordinates[d[attr]].x))
-                            .force("y", d3.forceY(d => attr_coordinates[d[attr]].y))
-                             .force("collide", d3.forceCollide(this.node_radius + 1))
+                            .force("x", d3.forceX(d => attr_coordinates[d[attr]].x).strength(0.1))
+                            .force("y", d3.forceY(d => attr_coordinates[d[attr]].y).strength(0.1))
+                             .force("collide", d3.forceCollide(() => this.node_radius + 1))
                              .on("tick", () => {
                                 nodes
                                 .attr("cx", d => d.x=clip(d.x, [self.node_radius, self.width - self.node_radius]))
                                 .attr("cy", d => d.y=clip(d.y, [self.node_radius, self.height - self.node_radius]))
                              });
-
+    
         // svg.select("g.scatter-plot").selectAll("mydots")
         // .data(fix_points)
         // .join("circle")
         // .attr("cx",d=>d.x)
         // .attr("cy",d=>d.y)
-        // .attr("r",3)
+        // .attr("r",10)
         // .attr("fill", "lightgrey")
-
+    
         const mentioned_attr = new Set(selected_var.map(d=>d[attr]))
-        // console.log("Update legend", selected_var.length, mentioned_attr)
+        console.log("Update legend", selected_var.length, mentioned_attr)
         if(selected_var.length > 0 ) {
         svg.select("g.legend").selectAll("text")
             .data(Object.keys(attr_coordinates).filter(d=>mentioned_attr.has(d)))
@@ -129,7 +135,7 @@ export const scattersummary = {
             .attr("opacity",1)
         } else {
             svg.select("g.legend").selectAll("*").remove()
-
+    
         }
         // //legend
         // pie_legend.selectAll("mydots")
@@ -142,7 +148,7 @@ export const scattersummary = {
         // .attr("height", 50)
         // .style("fill", function(d){ return color(d)})
         
-
+    
         // // Add one dot in the legend for each name.
         // pie_legend.selectAll("mylabels")
         // .data(this.topicName)
@@ -154,10 +160,7 @@ export const scattersummary = {
         // .text(function(d){ return d})
         // .style("font-weight",600)
         // .style("font-size",50)
-
-
-
-    },
+    }
     // clear_summary() {
     //     console.log("Clear summary")
     //     const svg = d3.select("#"+this.svgId)
@@ -168,6 +171,25 @@ export const scattersummary = {
 
 }
 
+function runSimulation(svg,attr,ColorArrayMappings,attr_coordinates,selected_var,node_radius,width,height){
+    const nodes = svg.select("g.scatter-plot").selectAll("mydots")
+    .data(selected_var)
+    .join("circle")
+    .attr("r", node_radius)
+    .attr("fill",d => ColorArrayMappings[attr](d[attr]));
+    // const self = this
+    const simulation = d3.forceSimulation(selected_var)
+                    //  .force("x", d3.forceX(d => count_Object[d[attr]].center_position.x))
+                    //  .force("y", d3.forceY(d => count_Object[d[attr]].center_position.y))
+                    .force("x", d3.forceX(d => attr_coordinates[d[attr]].x).strength(0.1))
+                    .force("y", d3.forceY(d => attr_coordinates[d[attr]].y).strength(0.1))
+                    .force("collide", d3.forceCollide(() => node_radius + 1))
+                    .on("tick", () => {
+                        nodes
+                        .attr("cx", d => d.x=clip(d.x, [node_radius, width - node_radius]))
+                        .attr("cy", d => d.y=clip(d.y, [node_radius, height - node_radius]))
+                    });
+}
 
 function seededRandom(seed) {
     let x = Math.sin(seed++) * 10000;
@@ -177,7 +199,7 @@ function seededRandom(seed) {
 
 function generateFixedPoints(attr, width, height, buffer) {
     let fixedPoints :any= [];
-    const n = attr == "emotion" ? 5 : 11;
+    const n = attr == "emotion" ? 5 : 14;
     // // Adjust the width and height to account for the buffer zone
     const xScale = d3.scaleLinear().domain([0, 1]).range([buffer, width - buffer]);
     const yScale = d3.scaleLinear().domain([0, 1]).range([buffer, height - buffer]);
@@ -212,9 +234,12 @@ function generateFixedPoints(attr, width, height, buffer) {
     return fixedPoints;
 }
 
-function clip(x, range) {
-    return Math.max(Math.min(x, range[1]), range[0])
-}
+function clip(value, [min, max]) {
+    if(isNaN(value)){
+        return min
+    }
+    return Math.max(min, Math.min(max, value));
+  }
 
 
 

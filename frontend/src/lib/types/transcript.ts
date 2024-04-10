@@ -15,3 +15,10 @@ export type tConversation = {
     speaker: number
     content: string
 }
+
+export type tChunkNew = {
+    id:string;
+    conversation:tConversation[];
+    emotion: string;
+    topic:string;
+}

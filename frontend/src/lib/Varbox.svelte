@@ -3,7 +3,7 @@
   import { varbox } from "lib/Varbox";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
-  import type { tVariableType, tVariable, tLink, tTranscript } from "./types";
+  import type { tVariableType, tVariable, tLink, tTranscript, tNewLink } from "./types";
   export let drivers: tVariableType;
   export let pressures: tVariableType;
   export let states: tVariableType;
@@ -11,7 +11,7 @@
   export let responses: tVariableType;
   export let links: tLink[];
   export let interview_data: tTranscript[];
-  const new_links = transformData(links);
+  const new_links:tNewLink[] = transformData(links);
   const svgId = "model-svg";
 
   const handlers = {
@@ -19,8 +19,7 @@
   };
   let container;
   let selectedVar: tVariable | undefined = undefined;
-  let selectedVarLink: string | undefined = undefined;
-  $: selectedVarName = selectedVar?.variable_name;
+  // $: selectedVarName = selectedVar?.variable_name;
   const paddings = {
     left: 300,
     right: 300,
@@ -46,7 +45,7 @@
       impacts,
       responses,
       new_links,
-      selectedVarName
+      // selectedVarName
     );
   });
 
@@ -56,8 +55,8 @@
     states: tVariableType,
     impacts: tVariableType,
     responses: tVariableType,
-    new_links: tLink[],
-    selected_var_name: string | undefined
+    new_links: tNewLink[],
+    // selected_var_name: string | undefined
   ) {
     await tick();
     if (drivers && pressures && states && impacts && responses && new_links)
@@ -68,12 +67,12 @@
         impacts,
         responses,
         new_links,
-        selected_var_name
+        // selected_var_name
       );
   }
 
   function transformData(data: tLink[]) {
-    console.log({ data });
+    // console.log({ data });
     const linksMap = new Map();
     data.forEach((item) => {
       const source = {

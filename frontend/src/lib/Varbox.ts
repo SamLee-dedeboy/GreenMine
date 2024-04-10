@@ -1,11 +1,9 @@
 import * as d3 from 'd3';
-// import {hexbin as Hexbin} from 'd3-hexbin';
-import {tick} from 'svelte';
-import { scale } from 'svelte/transition';
-
+// import {tick} from 'svelte';
+// import { scale } from 'svelte/transition';
+import type  {tVariable,tVariableType,tMention, tNewLink, tRectangle, tRectObject, tLinkObject} from './types/variables';
 import * as Constants from "./constants"
-// import { drivers } from './Varbox.svelte';
-import type  {tVariable} from './types/variables';
+import {groupColors} from './constants/Colors';
 
 export const varbox = {
     init(svgId, width,height, paddings, handlers){
@@ -54,76 +52,49 @@ export const varbox = {
         this.height = height
         this.svgId = svgId
         this.handlers = handlers
-        this.topicName = ['政府運作','環境運作','住屋','交通','公有土地','醫療','整體經濟','能源','災害','貿易','其他']
-        this.topicEmotion = ['Resigned','Neutral','Worried','Angry','Proud']
-        // this.group = ['Drivers','Pressures','States','Impacts','Responses']
-        this.scaleColorGroup = d3.scaleOrdinal(['drivers','pressures','states','impacts','responses'], d3.schemeSet2);
+        // this.topicName = Constants.topicname
+        // this.topicEmotion = Constants.emotionname
+        this.GroupColor = groupColors
     },
 
-    updateColorScales(drivers, pressures, states, impacts, responses) {
-        let variables:any[] = [];
+    // updateColorScales(drivers, pressures, states, impacts, responses) {
+    //     let variables:any[] = [];
+    //     variables.push(drivers,pressures,states,impacts,responses);
+    //     // console.log(variables)
+        
+    //     // Use reduce to find the min and max lengths of mentions arrays
+    //     let { minLength, maxLength } = variables.reduce((result, item) => {
+    //         if (item.variable_mentions) {
+    //         Object.values(item.variable_mentions).forEach((variable:any) => {
+    //             if (variable.mentions) {
+    //             const mentionsLength = variable.mentions.length;
+    //             result.minLength = Math.min(result.minLength, mentionsLength);
+    //             result.maxLength = Math.max(result.maxLength, mentionsLength);
+    //             }
+    //         });
+    //         }
+    //         return result;
+    //     }, { minLength: Infinity, maxLength: -Infinity });
+    //     const scaleColor = d3.scaleSequential([minLength, maxLength], d3.interpolateBlues)
+    //     return scaleColor
+    // },
+
+    // updateRadialBoxes(drivers, pressures, states, impacts, responses) {
+    //     let groups = ["Drivers","Pressures","States","Impacts","Responses"]
+    //     const bboxes = radialBboxes(groups,1,1,{width: 1, height: 1})
+    // },
+
+    update_vars(drivers:tVariableType,pressures: tVariableType,states: tVariableType,impacts: tVariableType,responses: tVariableType,new_links:tNewLink[]){
+        let variables:tVariableType[] = [];
         variables.push(drivers,pressures,states,impacts,responses);
-        // console.log(variables)
-        
-        // Use reduce to find the min and max lengths of mentions arrays
-        let { minLength, maxLength } = variables.reduce((result, item) => {
-            if (item.variable_mentions) {
-            Object.values(item.variable_mentions).forEach((variable:any) => {
-                if (variable.mentions) {
-                const mentionsLength = variable.mentions.length;
-                result.minLength = Math.min(result.minLength, mentionsLength);
-                result.maxLength = Math.max(result.maxLength, mentionsLength);
-                }
-            });
-            }
-            return result;
-        }, { minLength: Infinity, maxLength: -Infinity });
-        const scaleColor = d3.scaleSequential([minLength, maxLength], d3.interpolateBlues)
-        return scaleColor
-    },
-
-    updateRadialBoxes(drivers, pressures, states, impacts, responses) {
-        let groups = ["Drivers","Pressures","States","Impacts","Responses"]
-        const bboxes = radialBboxes(groups,1,1,{width: 1, height: 1})
-    },
-
-    update_vars(drivers,pressures,states,impacts,responses,new_links, selected_var_name){
-        let variables:any[] = [];
-        variables.push(drivers,pressures,states,impacts,responses);
-        
-        // Use reduce to find the min and max lengths of mentions arrays
-        let { minLength, maxLength } = variables.reduce((result, item) => {
-            if (item.variable_mentions) {
-            Object.values(item.variable_mentions).forEach((variable:any) => {
-                if (variable.mentions) {
-                const mentionsLength = variable.mentions.length;
-                result.minLength = Math.min(result.minLength, mentionsLength);
-                result.maxLength = Math.max(result.maxLength, mentionsLength);
-                }
-            });
-            }
-            return result;
-        }, { minLength: Infinity, maxLength: -Infinity });
-
-        const maxFrequency = new_links.reduce((max, link) => Math.max(max, link.frequency), 0);
-        const minFrequency = new_links.reduce((min, link) => Math.min(min, link.frequency), Infinity);
-
-        const frequencyList = {
-            minLength: minLength,
-            maxLength: maxLength,
-            minFrequency: minFrequency,
-            maxFrequency: maxFrequency
-        };
-        
-
+        const frequencyList = calculateFrequencyList(variables,new_links) // includes variables frequency and link frequency among all groups
         
         let regionWidth = this.width/4;
         let regionHeight = this.height/6;
-        let groups = ["Drivers","Pressures","States","Impacts","Responses"]
-        const bboxes = radialBboxes(groups,this.width,this.height,{width: regionWidth, height: regionHeight})
-        let groupclass = ["driver_region","pressure_region","state_region","impact_region","response_region"]
+        const bboxes = radialBboxes(Constants.groupname,this.width,this.height,{width: regionWidth, height: regionHeight})
+        // console.log(bboxes)
         for (let i = 0; i < 5; i++) {
-            this.drawvars(variables[i],groupclass[i],groups[i],frequencyList,bboxes[groups[i]],regionWidth,regionHeight)
+            this.drawvars(variables[i],Constants.groupclass[i],Constants.groupname[i],bboxes[Constants.groupname[i]],regionWidth,regionHeight)
         }
         const svg = d3.select("#"+this.svgId)
         const mergedData = new_links.map(link => {
@@ -194,21 +165,17 @@ export const varbox = {
         // console.log(mergedData);
 
     // console.log(selected_var_name)
-    // // Append a group for the links
     const self = this;
     let spacing = 20
     
-    // const scaleColor2 = d3.scaleOrdinal(['Drivers','Pressures','States','Impacts','Responses'], d3.schemeSet2);
-    // Bind data and create paths for each link
-    // const defs = svg.select("defs") || svg.append("defs");
+    
     svg.select("g.link_group").selectAll(".link")
         .data(mergedData)
         .join("path")
         .attr("class", "link")
-        .attr("id",(d)=>`${d.source.var_name}`+"-"+`${d.target.var_name}`)
-        .attr("d", function(d,i) {
+        .attr("id",(d: tLinkObject)=>`${d.source.var_name}`+"-"+`${d.target.var_name}`)
+        .attr("d", function(d: tLinkObject,i) {
             let middleX1 
-            // let newX_source, newY_source, newX_target, newY_target;
             let middleY1;
             if ((d.source.var_type == "drivers" && d.target.var_type == "pressures")) {
                 let threshold;
@@ -300,13 +267,12 @@ export const varbox = {
         // .attr("stroke", "url(#grad)")
         // .attr("stroke",d=> scaleColor(d.frequency))
         .attr("stroke", "gray")
-        .attr("stroke-width", function(d) {
-            const widthSacle = d3.scaleLinear().domain([frequencyList.minFrequency, frequencyList.maxFrequency]).range([2, 15])
+        .attr("stroke-width", function(d: tLinkObject) {
+            const widthSacle = d3.scaleLinear().domain([frequencyList.minLinkFrequency, frequencyList.maxLinkFrequency]).range([2, 15])
             return widthSacle(d.frequency);
-            // return 2
         })
         .attr("opacity", 0.1)
-        .on("mouseover", function(e, d) {
+        .on("mouseover", function(e, d: tLinkObject) {
             d3.select(this).classed("line-hover",true)
             d3.select(this.parentNode) // this refers to the path element, and parentNode is the SVG or a <g> element containing it
             .append("text")
@@ -321,7 +287,7 @@ export const varbox = {
             d3.select(this).classed("line-hover",false)
             d3.selectAll(".link-frequency-text").remove();
         })
-        .on("click", function(e, d) {
+        .on("click", function(e, d: tLinkObject) {
             console.log(d)
             e.preventDefault()
 
@@ -348,48 +314,42 @@ export const varbox = {
                 self.clicked_link = d
                 self.handlers.VarOrLinkSelected(d)
                 d3.select(this).classed("link-highlight", true).classed("link-not-highlight", false).raise()
-                .attr("stroke", function(d){
+                .attr("stroke", (d:tLinkObject) => {
                     const svg = d3.select("#"+self.svgId)                    
                     return createOrUpdateGradient(svg, d,self)
                 })
                 // .attr("marker-mid", `url(#${arrowId})`)
-                .attr("marker-end", d=> {
+                .attr("marker-end", (d:tLinkObject) => {
                     const svg = d3.select("#"+self.svgId)
                     return createArrow(svg,d,self)
                 });
 
                 rects
-                .filter(box_data => box_data.variable_name === d.source.var_name || box_data.variable_name === d.target.var_name)
+                .filter((box_data:tRectObject) => box_data.variable_name === d.source.var_name || box_data.variable_name === d.target.var_name)
                 .classed("box-highlight", true)
                 .classed("box-not-highlight", false).raise()
 
                 labels
-                .filter(label_data => label_data.variable_name === d.source.var_name || label_data.variable_name === d.target.var_name)
+                .filter((label_data:tRectObject) => label_data.variable_name === d.source.var_name || label_data.variable_name === d.target.var_name)
                 .classed("box-label-highlight", true)
                 .classed("box-label-not-highlight", false).raise()
             }
         })
     },
 
-    drawvars(vars,class_name,group_name,frequencyList,box_coor,regionWidth,regionHeight,links){
-        console.log(vars)
-        
-
-
-        interface VariableMention {
-            variable_name: string;
-            mentions: any[];
-          }
+    drawvars(vars:tVariableType,class_name:string,group_name:string,box_coor,regionWidth:number,regionHeight:number){
+        // console.log(vars)
 
         const rectheight = 30;
 
-        const rectangles = Object.values(vars.variable_mentions as Record<string, VariableMention>)
+        const rectangles = Object.values(vars.variable_mentions as Record<string, tVariable>)
         .sort((a, b) => b.mentions.length - a.mentions.length) // Sorting in descending order by mentions length
         .map(variable => ({
             name: variable.variable_name,
-            width: (variable.variable_name.length) * 20, // Calculate width based on name length
-            height: rectheight, // Use the predefined or calculated height
+            width: (variable.variable_name.length) * 20, 
+            height: rectheight, 
         }));
+
 
         const self = this;
 
@@ -398,26 +358,25 @@ export const varbox = {
 
         const bbox_center = box_coor.center
         const bbox_origin = [bbox_center[0] - regionWidth/2, bbox_center[1] - regionHeight/2]
-        const rectangleCoordinates = layoutRectangles(regionWidth, regionHeight, 30, rectangles, bbox_origin);
-        // Execute the function
-        const HexwithVar = combineData(vars,rectangleCoordinates);
-        // console.log(HexwithVar)
-        let max = Math.max(frequencyList.maxLength, frequencyList.maxFrequency);
-        let min = Math.min(frequencyList.minLength, frequencyList.minFrequency);
+        const rectangleCoordinates = layoutRectangles(regionWidth, regionHeight, rectheight, rectangles, bbox_origin);
+        const RectwithVar = combineData(vars,rectangleCoordinates); //return as an object
 
+        // min and max frequency for all variables 
+        // let max = Math.max(frequencyList.maxLength, frequencyList.maxFrequency); ???
+        // let min = Math.min(frequencyList.minLength, frequencyList.minFrequency); ???
+        // const scaleColor = d3.scaleSequential([min, max], d3.interpolateBlues)
 
+        // min and max frequency for each group
         let minMentions = Infinity;
         let maxMentions = -Infinity;
 
-        // Iterate over each variable to find the min and max length of mentions
-        Object.values(vars.variable_mentions).forEach((variable:any) => {
+        Object.values(vars.variable_mentions).forEach((variable:tVariable) => {
             const length = variable.mentions.length;
             if (length < minMentions) minMentions = length;
             if (length > maxMentions) maxMentions = length;
         });
-        // console.log(minMentions,maxMentions)
-        const scaleColor = d3.scaleSequential([min, max], d3.interpolateBlues)
-        const scaleColorGroup = d3.scaleLinear().domain([minMentions, maxMentions]).range(["#f7f7f7", self.scaleColorGroup(group_name.toLowerCase())]);
+        
+        const scaleGroupColor = d3.scaleLinear().domain([minMentions, maxMentions]).range(["#f7f7f7", self.GroupColor(group_name.toLowerCase())]);
 
         const group = d3.select("#"+this.svgId).select("g."+class_name)
         group.select("g.box-group").append("rect")
@@ -446,26 +405,26 @@ export const varbox = {
         .attr("font-size", "3rem")
         .attr("font-weight", "bold")    
         .attr("fill", "#636363")
-        .attr("fill",self.scaleColorGroup(group_name.toLowerCase()))
+        .attr("fill",self.GroupColor(group_name.toLowerCase()))
         .attr("opacity", "0.8")
 
         group.select("g.box-group").selectAll("rect.box")
-        .data(HexwithVar)
+        .data(RectwithVar)
         .join("rect")
         .attr("class", "box")
-        .attr("id", (d) => d.variable_name)
-        .attr("x", (d) => d.x)
-        .attr("y", (d) => d.y)
-        .attr("width", function(d) {
+        .attr("id", (d: tRectObject) => d.variable_name)
+        .attr("x", (d: tRectObject) => d.x)
+        .attr("y", (d: tRectObject) => d.y)
+        .attr("width", function(d: tRectObject) {
             return ((d.variable_name).length)*20; //20px per character
         })
         .attr("height", rectheight)
         .attr("stroke", "white")
         .attr("stroke-width", "1px")
         .attr("rx", "5")
-        .attr("fill", function(d) {
+        .attr("fill", function(d: tRectObject) {
             if (d.frequency !== 0) {
-                return scaleColorGroup(d.frequency);
+                return scaleGroupColor(d.frequency);
                 // return scaleColor(d.frequency);
             } else {
                 return "#cdcdcd";
@@ -480,7 +439,7 @@ export const varbox = {
             d3.select(this).classed("box-hover", false)
 
         })
-        .on("click", function(e, d) {
+        .on("click", function(e, d: tRectObject) {
             // console.log(d)
             e.preventDefault()
 
@@ -524,24 +483,24 @@ export const varbox = {
                     // Scale about the center of the box
                     return `translate(${centerX * (1 - scale)}, ${centerY * (1 - scale)}) scale(${scale})`;
                 });
-                labels.filter(label_data => d.variable_name === label_data.variable_name).classed("box-label-highlight", true).classed("box-label-not-highlight", false).raise()
+                labels.filter((label_data:tRectObject) => d.variable_name === label_data.variable_name).classed("box-label-highlight", true).classed("box-label-not-highlight", false).raise()
                 
                 d3.selectAll(".link")
                 .classed("link-highlight", false)
                 .classed("link-not-highlight", true)
                 .attr("stroke", "gray")
                 .attr("marker-end", "")
-                .filter(link_data => link_data.source.var_name === d.variable_name || link_data.target.var_name === d.variable_name)
+                .filter((link_data:tLinkObject) => link_data.source.var_name === d.variable_name || link_data.target.var_name === d.variable_name)
                 .classed("link-highlight", true)
                 .classed("link-not-highlight", false).raise()
-                .attr("stroke", function(link_data){
+                .attr("stroke", (link_data:tLinkObject)=> {
                     // console.log(link_data)
                     const svg = d3.select("#"+self.svgId)                    
                     return createOrUpdateGradient(svg, link_data,self);
 
                     }
                 )
-                .attr("marker-end", d=> {
+                .attr("marker-end", (d: tLinkObject)=> {
                     const svg = d3.select("#"+self.svgId)
                     return createArrow(svg,d,self)
                 });
@@ -551,12 +510,12 @@ export const varbox = {
 
 
         group.select("g.label-group").selectAll("text.label")
-        .data(HexwithVar)
+        .data(RectwithVar)
         .join("text")
-        .text(d => d.variable_name)
+        .text((d:tRectObject) => d.variable_name)
         .attr("class", "label")
-        .attr("x", (d) => d.x+ d.width/2 )
-        .attr("y", (d) => d.y+ d.height/2)
+        .attr("x", (d: tRectObject) => d.x+ d.width/2 )
+        .attr("y", (d: tRectObject) => d.y+ d.height/2)
         .attr("fill", (d) => {
             return "black"
             // return (d.frequency) > 140? "white":"black"
@@ -590,27 +549,28 @@ function radialBboxes(groups, width, height, maxBboxSize) {
     })
     return bboxes
 }
-function layoutRectangles(regionWidth, bigRectHeight, rowHeight, rectangles, bbox_origin) {
+function layoutRectangles(regionWidth:number, regionHeight:number, rectheight:number, rectangles:tRectangle[], bbox_origin:number[])
+:[number, number, number, number, string][] {
     let padding = 10;
     let xStart = padding; // Start x-coordinate, will be updated for center alignment
     let y = padding;
     let rowMaxHeight = 0;
 
-    const rectangleCoordinates = [];
+    const rectangleCoordinates: [number, number, number, number, string][]  = [];
 
     // Function to reset for a new row
-    function newRow() {
+    function newRow(): void{
         y += rowMaxHeight + padding;
         rowMaxHeight = 0;
     }
 
     // Function to calculate row width (helper function)
-    function calculateRowWidth(rectangles) {
+    function calculateRowWidth(rectangles:tRectangle[]):number {
         return rectangles.reduce((acc, rect) => acc + rect.width + padding, 0) - padding; // Minus padding to adjust for extra padding at the end
     }
 
     // Temp array to hold rectangles for current row, to calculate total width for centering
-    let tempRowRectangles = [];
+    let tempRowRectangles:tRectangle[] = [];
 
     rectangles.forEach(rect => {
         if (xStart + calculateRowWidth(tempRowRectangles) + rect.width + padding > regionWidth) {
@@ -684,16 +644,21 @@ function layoutRectangles(regionWidth, bigRectHeight, rowHeight, rectangles, bbo
 //         return rectangleCoordinates
 // }
 
-function combineData(vars,rectangles) {
+function combineData(
+    vars: tVariableType,
+    rectangles: [number, number, number, number, string][]
+  ): tRectObject[] {
     return rectangles.map(rect => {
-        const [x, y, width, height, variable_name] = rect;
-        const mentions = vars.variable_mentions[variable_name]?.mentions || [];
-        const frequency = vars.variable_mentions[variable_name]?.mentions?.length || 0;
-        return {
-            x, y, width, height, variable_name, mentions, frequency
-        };
+      const [x, y, width, height, variable_name] = rect;
+      const variable = vars.variable_mentions[variable_name];
+      const mentions = variable?.mentions || [];
+      const frequency = mentions.length; 
+  
+      return {
+        x, y, width, height, variable_name, mentions, frequency
+      };
     });
-}
+  }
 
 
 //add chunk frequency and node frequency to each variable
@@ -716,7 +681,7 @@ function addPropertiesToVariables(data) {
     return data;
   }
 
-function createOrUpdateGradient(svg, link_data,self) {
+function createOrUpdateGradient(svg, link_data:tLinkObject,self) {
     const gradientId = `gradient-${link_data.source.var_name}-${link_data.target.var_name}`;
 
     // Attempt to select an existing gradient
@@ -724,7 +689,7 @@ function createOrUpdateGradient(svg, link_data,self) {
 
     // If the gradient does not exist, create it
     if (gradient.empty()) {
-        console.log("Creating gradient", gradientId);
+        // console.log("Creating gradient", gradientId);
         gradient = svg.select('defs').append("linearGradient")
             .attr("id", gradientId)
             .attr("gradientUnits", "userSpaceOnUse")
@@ -734,8 +699,8 @@ function createOrUpdateGradient(svg, link_data,self) {
             .attr("y2", link_data.target.newY_target)
             .selectAll("stop")
             .data([
-                {offset: "0%", color: self.scaleColorGroup(link_data.source.var_type)},
-                {offset: "100%", color: self.scaleColorGroup(link_data.target.var_type)}
+                {offset: "0%", color: self.GroupColor(link_data.source.var_type)},
+                {offset: "100%", color: self.GroupColor(link_data.target.var_type)}
             ])
             .enter().append("stop")
             .attr("offset", d => d.offset)
@@ -746,7 +711,7 @@ function createOrUpdateGradient(svg, link_data,self) {
 }
 
 
-function createArrow(svg,d,self){
+function createArrow(svg,d: tLinkObject,self){
     const arrowId = `arrow-${d.source.var_name}-${d.target.var_name}`
     let arrow = svg.select(`#${arrowId}`);
     if(arrow.empty()){
@@ -761,11 +726,39 @@ function createArrow(svg,d,self){
         .attr('orient', 'auto-start-reverse')
         .append('path')
         .attr('d', d3.line()([[0, 0], [10, 5], [0, 10]]))
-        .attr('fill',self.scaleColorGroup(d.target.var_type));
+        .attr('fill',self.GroupColor(d.target.var_type));
         // .attr('fill', 'gray')
     }
 
     return `url(#${arrowId})`
+}
+
+// includes variables frequency and link frequency among all groups
+function calculateFrequencyList(variables:any[],new_links:tNewLink[]){
+    // let { minLength, maxLength } = variables.reduce((result, item) => {
+    //     if (item.variable_mentions) {
+    //     Object.values(item.variable_mentions).forEach((variable:any) => {
+    //         if (variable.mentions) {
+    //         const mentionsLength = variable.mentions.length;
+    //         result.minLength = Math.min(result.minLength, mentionsLength);
+    //         result.maxLength = Math.max(result.maxLength, mentionsLength);
+    //         }
+    //     });
+    //     }
+    //     return result;
+    // }, { minLength: Infinity, maxLength: -Infinity });
+
+    const maxLinkFrequency = new_links.reduce((max, link) => Math.max(max, link.frequency), 0);
+    const minLinkFrequency = new_links.reduce((min, link) => Math.min(min, link.frequency), Infinity);
+
+    const frequencyList = {
+        // minLength: minLength,
+        // maxLength: maxLength,
+        minLinkFrequency: minLinkFrequency,
+        maxLinkFrequency: maxLinkFrequency
+    };
+
+    return frequencyList;
 }
 
 
