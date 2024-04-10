@@ -24,7 +24,7 @@
   let impacts: tVariableType;
   let responses: tVariableType;
   let links: tLink[];
-  let summary_interviews: tChunk[] = [];
+  let summary_interviews: tChunk[] | undefined = undefined;
 
   let data_loading: boolean = true;
 

@@ -1,4 +1,5 @@
 import * as d3 from "d3"
+import { topicname } from ".";
 
 export const categoricalColors = [
     "#8dd3c7",
@@ -31,7 +32,7 @@ export const groupColors = d3
 .domain(groups)
 .range(d3.schemeSet2)
 
-export const emotions = ["Proud", "Resigned", "Angry", "Worried", "Neutral"];
+export const emotions = ["proud", "resigned", "angry", "worried", "neutral"];
 export const emotionColorScale = d3
     .scaleOrdinal()
     .domain(emotions)
@@ -42,6 +43,10 @@ export const emotionColorScale = d3
       "#fbd4f7", // worried
       "#eeeeee", // neutral
     ]);
+export const topicColorScale = d3
+      .scaleOrdinal()
+      .domain(topicname)
+      .range(categoricalColors)
 
 // export const emotionColorScale = d3
 //     .scaleOrdinal()

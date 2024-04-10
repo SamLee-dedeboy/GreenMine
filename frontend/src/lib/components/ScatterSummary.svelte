@@ -45,10 +45,7 @@
     width,
     height,
     paddings,
-    d3
-      .scaleOrdinal()
-      .domain(Constants.emotionname)
-      .range(Constants.categoricalColors),
+    Constants.topicColorScale,
     Constants.topicname
   );
 
@@ -72,8 +69,22 @@
     await tick();
     console.log({ summary_interviews });
     if (summary_interviews) {
-      emotion_scatter.update_summary(summary_interviews, "emotion");
-      topic_scatter.update_summary(summary_interviews, "topic");
+      const emotion_data = summary_interviews.map((d) => {
+        return {
+          attr: d.emotion,
+          x: 0,
+          y: 0,
+        };
+      });
+      const topic_data = summary_interviews.map((d) => {
+        return {
+          attr: d.topic,
+          x: 0,
+          y: 0,
+        };
+      });
+      emotion_scatter.draw(emotion_data);
+      topic_scatter.draw(topic_data);
     } else {
       // console.log("clearing summary")
       // console.log({summary_interviews})

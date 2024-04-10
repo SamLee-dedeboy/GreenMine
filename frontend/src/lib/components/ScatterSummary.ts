@@ -31,13 +31,7 @@ export class ScatterSummary  {
             .attr("class", "legend")
     }
 
-    update_summary(selected_var:tChunk[],attr:string){
-        this.draw(selected_var,attr)
-
-    }
-    draw(selected_var: tChunk[],attr: string){
-        console.log({attr})
-        console.log(selected_var)
+    draw(node_data: any[]){
     
         let edge = 10; //buffer zone
         let fix_points = generateFixedPoints(this.categories.length, this.width, this.height, edge);
@@ -47,31 +41,39 @@ export class ScatterSummary  {
         this.categories.forEach((property_name, index) => (
             attr_coordinates[property_name] = {x: fix_points[index].x, y: fix_points[index].y}
         ));
-        console.log(attr_coordinates)
-
+        console.log({attr_coordinates}, {node_data})
         // draw the dots
         const svg = d3.select("#"+this.svgId)
-        svg.select("g.scatter-plot").selectAll("*").remove()
+
+        // svg.select("g.scatter-plot").selectAll("*").remove()
         // runSimulation(svg,attr,ColorArrayMappings,attr_coordinates,selected_var,this.node_radius,this.width,this.height)
-        const nodes = svg.select("g.scatter-plot").selectAll("mydots")
-               .data(selected_var)
+        const nodes = svg.select("g.scatter-plot").selectAll(".node")
+               .data(node_data)
                .join("circle")
+               .attr("class", "node")
                .attr("r", this.node_radius)
-               .attr("fill", d => this.colorScale(d[attr]))
+               .attr("cx", d => d.x=attr_coordinates[d.attr].x)
+               .attr("cy", d => d.y=attr_coordinates[d.attr].y)
+               .attr("fill", d => {
+                return this.colorScale(d.attr)
+               })
             //    .attr("fill",d => ColorArrayMappings[attr](d[attr]));
         const self = this
-        const simulation = d3.forceSimulation(selected_var)
+        console.log(svg.node())
+        const simulation = d3.forceSimulation(node_data)
                             //  .force("x", d3.forceX(d => count_Object[d[attr]].center_position.x))
                             //  .force("y", d3.forceY(d => count_Object[d[attr]].center_position.y))
-                            .force("x", d3.forceX(d => attr_coordinates[d[attr]].x).strength(0.1))
-                            .force("y", d3.forceY(d => attr_coordinates[d[attr]].y).strength(0.1))
-                             .force("collide", d3.forceCollide(() => this.node_radius + 1))
-                             .on("tick", () => {
-                                nodes
-                                .attr("cx", d => d.x=clip(d.x, [self.node_radius, self.width - self.node_radius]))
-                                .attr("cy", d => d.y=clip(d.y, [self.node_radius, self.height - self.node_radius]))
-                             });
-    
+                            .force("x", d3.forceX(d => { return attr_coordinates[d.attr].x }))
+                            .force("y", d3.forceY(d => attr_coordinates[d.attr].y))
+                            .alphaMin(0.01)
+                            .force("collide", d3.forceCollide(self.node_radius))
+                            .on("tick", () => {
+                            const tick_nodes = svg.selectAll("circle.node")
+                            .attr("cx", d => d.x=d.x)
+                            .attr("cy", d => d.y=d.y)
+                            // .attr("cx", d => d.x=clip(d.x, [self.node_radius, self.width - self.node_radius]))
+                            // .attr("cy", d => d.y=clip(d.y, [self.node_radius, self.height - self.node_radius]))
+                            });
         // svg.select("g.scatter-plot").selectAll("mydots")
         // .data(fix_points)
         // .join("circle")
@@ -80,11 +82,9 @@ export class ScatterSummary  {
         // .attr("r",10)
         // .attr("fill", "lightgrey")
     
-        const mentioned_attr = new Set(selected_var.map(d=>d[attr]))
-        console.log("Update legend", selected_var.length, mentioned_attr)
-        if(selected_var.length > 0 ) {
+        if(node_data.length > 0 ) {
         svg.select("g.legend").selectAll("text")
-            .data(Object.keys(attr_coordinates).filter(d=>mentioned_attr.has(d)))
+            .data(Object.keys(attr_coordinates).filter(d=>this.categories.includes(d)))
             .join("text")
             .attr("x",d=> attr_coordinates[d].x)
             .attr("y",d=> attr_coordinates[d].y)
