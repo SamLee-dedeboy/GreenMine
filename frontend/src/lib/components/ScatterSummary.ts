@@ -35,18 +35,16 @@ export class ScatterSummary  {
     
         let edge = 10; //buffer zone
         let fix_points = generateFixedPoints(this.categories.length, this.width, this.height, edge);
-        console.log(fix_points)
+        // console.log(fix_points)
 
         let attr_coordinates = {}
         this.categories.forEach((property_name, index) => (
             attr_coordinates[property_name] = {x: fix_points[index].x, y: fix_points[index].y}
         ));
-        console.log({attr_coordinates}, {node_data})
+        // console.log({attr_coordinates}, {node_data})
         // draw the dots
         const svg = d3.select("#"+this.svgId)
-
-        // svg.select("g.scatter-plot").selectAll("*").remove()
-        // runSimulation(svg,attr,ColorArrayMappings,attr_coordinates,selected_var,this.node_radius,this.width,this.height)
+        
         const nodes = svg.select("g.scatter-plot").selectAll(".node")
                .data(node_data)
                .join("circle")
@@ -57,9 +55,9 @@ export class ScatterSummary  {
                .attr("fill", d => {
                 return this.colorScale(d.attr)
                })
-            //    .attr("fill",d => ColorArrayMappings[attr](d[attr]));
+               .attr("stroke","black")
         const self = this
-        console.log(svg.node())
+        // console.log(svg.node())
         const simulation = d3.forceSimulation(node_data)
                             //  .force("x", d3.forceX(d => count_Object[d[attr]].center_position.x))
                             //  .force("y", d3.forceY(d => count_Object[d[attr]].center_position.y))
@@ -68,11 +66,11 @@ export class ScatterSummary  {
                             .alphaMin(0.01)
                             .force("collide", d3.forceCollide(self.node_radius))
                             .on("tick", () => {
-                            const tick_nodes = svg.selectAll("circle.node")
-                            .attr("cx", d => d.x=d.x)
-                            .attr("cy", d => d.y=d.y)
-                            // .attr("cx", d => d.x=clip(d.x, [self.node_radius, self.width - self.node_radius]))
-                            // .attr("cy", d => d.y=clip(d.y, [self.node_radius, self.height - self.node_radius]))
+                                const tick_nodes = svg.selectAll("circle.node")
+                                .attr("cx", d => d.x=d.x)
+                                .attr("cy", d => d.y=d.y)
+                                // .attr("cx", d => d.x=clip(d.x, [self.node_radius, self.width - self.node_radius]))
+                                // .attr("cy", d => d.y=clip(d.y, [self.node_radius, self.height - self.node_radius]))
                             });
         // svg.select("g.scatter-plot").selectAll("mydots")
         // .data(fix_points)
@@ -82,77 +80,47 @@ export class ScatterSummary  {
         // .attr("r",10)
         // .attr("fill", "lightgrey")
     
-        if(node_data.length > 0 ) {
-        svg.select("g.legend").selectAll("text")
-            .data(Object.keys(attr_coordinates).filter(d=>this.categories.includes(d)))
-            .join("text")
-            .attr("x",d=> attr_coordinates[d].x)
-            .attr("y",d=> attr_coordinates[d].y)
-            .text(d=>d)
-            .attr("font-size","1rem")
-            .attr("font-weight",600)
-            .attr("text-anchor","middle")
-            .attr("dominant-baseline","middle")
-            .attr("opacity",0)
-            .attr("fill", "currentColor")
-            .transition().duration(1000)
-            .attr("opacity",1)
-        } else {
-            svg.select("g.legend").selectAll("*").remove()
-    
+        // if(node_data.length > 0 ) {
+        // svg.select("g.legend").selectAll("text")
+        //     .data(Object.keys(attr_coordinates).filter(d=>this.categories.includes(d)))
+        //     .join("text")
+        //     .attr("x",d=> attr_coordinates[d].x)
+        //     .attr("y",d=> attr_coordinates[d].y)
+        //     .text(d=>d)
+        //     .attr("font-size","1rem")
+        //     .attr("font-weight",600)
+        //     .attr("text-anchor","middle")
+        //     .attr("dominant-baseline","middle")
+        //     .attr("opacity",0)
+        //     .attr("fill", "currentColor")
+        //     .transition().duration(1000)
+        //     .attr("opacity",1)
+        // } else {
+        //     svg.select("g.legend").selectAll("*").remove()
+        // }
+
+        //legend
+        console.log(node_data.length)
+        if(this.svgId == "scatter-svg-emotion") {
+            drawLegend(svg,Constants.emotionname,Constants.emotionColorScale)
         }
-        // //legend
-        // pie_legend.selectAll("mydots")
-        // .data(this.topicName)
-        // .enter()
-        // .append("rect")
-        // .attr("x", 1700)
-        // .attr("y", function(d,i){ return -i*50}) 
-        // .attr("width", 50)
-        // .attr("height", 50)
-        // .style("fill", function(d){ return color(d)})
+        else if(this.svgId == "scatter-svg-topic"){
+            drawLegend(svg,Constants.topicname,Constants.topicColorScale)
+        }
+        if(node_data.length == 0){
+            svg.select("g.legend").selectAll("*").remove()
+        }
         
-    
-        // // Add one dot in the legend for each name.
-        // pie_legend.selectAll("mylabels")
-        // .data(this.topicName)
-        // .enter()
-        // .append("text")
-        // .attr("x", 1780)
-        // .attr("y", function(d,i){ return -i*50+40}) 
-        // .style("fill", function(d){ return color(d)})
-        // .text(function(d){ return d})
-        // .style("font-weight",600)
-        // .style("font-size",50)
+
     }
-    // clear_summary() {
-    //     console.log("Clear summary")
-    //     const svg = d3.select("#"+this.svgId)
-    //     svg.select("g.scatter-plot").selectAll("*").remove()
-    //     svg.select("g.legend").selectAll("*").remove()
+    clear_summary() {
+        console.log("Clear summary")
+        const svg = d3.select("#"+this.svgId)
+        svg.select("g.scatter-plot").selectAll("*").remove()
+        svg.select("g.legend").selectAll("*").remove()
         
-    // },
+    }
 
-}
-
-function runSimulation(svg,attr,ColorArrayMappings,attr_coordinates,selected_var,node_radius,width,height){
-    const nodes = svg.select("g.scatter-plot").selectAll("mydots")
-    .data(selected_var)
-    .join("circle")
-    .attr("r", node_radius)
-    .attr("fill",d => ColorArrayMappings[attr](d[attr]));
-    // const self = this
-    const simulation = d3.forceSimulation(selected_var)
-                    //  .force("x", d3.forceX(d => count_Object[d[attr]].center_position.x))
-                    //  .force("y", d3.forceY(d => count_Object[d[attr]].center_position.y))
-                    .force("x", d3.forceX(d => attr_coordinates[d[attr]].x).strength(0.1))
-                    .force("y", d3.forceY(d => attr_coordinates[d[attr]].y).strength(0.1))
-                    .force("collide", d3.forceCollide(() => node_radius + 1))
-                    .on("tick", () => {
-                        nodes
-                        .attr("cx", d => d.x=clip(d.x, [node_radius, width - node_radius]))
-                        .attr("cy", d => d.y=clip(d.y, [node_radius, height - node_radius]))
-                    });
 }
 
 function seededRandom(seed) {
@@ -160,12 +128,44 @@ function seededRandom(seed) {
     return x - Math.floor(x);
 }
 
+function drawLegend(svg,name,color){
+    const startX = 400; // Starting X position for the first column
+    const startY = 10;  // Starting Y position
+    const columnWidth = 70; // Horizontal space between columns
+    const rowHeight = 20;  // Vertical space between rows
+    const maxPerRow = 1 // Max columns per row
+    const textOffsetX = 15; // Horizontal offset for text to align it next to the rectangle
+    const textOffsetY = 10; // Vertical offset to align text with the center of the rectangles
+
+    // Rectangles
+    svg.select("g.legend").selectAll("myrects")
+        .data(name)
+        .enter()
+        .append("rect")
+        .attr("x", (d, i) => startX + (i % maxPerRow) * columnWidth)
+        .attr("y", (d, i) => startY + Math.floor(i / maxPerRow) * rowHeight)
+        .attr("width", 10)
+        .attr("height", 10)
+        .style("fill", d => color(d));
+
+    // Text Labels
+    svg.select("g.legend").selectAll("mylabels")
+        .data(name)
+        .enter()
+        .append("text")
+        .attr("x", (d, i) => startX + (i % maxPerRow) * columnWidth + textOffsetX)
+        .attr("y", (d, i) => startY + Math.floor(i / maxPerRow) * rowHeight + textOffsetY) // Adjusting y to align text with the center of the rectangles
+        .style("fill", "black") // Assuming all texts are black
+        .text(d => d)
+        .style("font-weight", 600)
+        .style("font-size", "14px");
+}
 
 function generateFixedPoints(n, width, height, buffer) {
     let fixedPoints :any= [];
     // // Adjust the width and height to account for the buffer zone
     const xScale = d3.scaleLinear().domain([0, 1]).range([buffer, width - buffer]);
-    const yScale = d3.scaleLinear().domain([0, 1]).range([buffer, height - buffer]);
+    const yScale = d3.scaleLinear().domain([0, 1]).range([buffer, (height - (buffer))]);
     const offset = 0.3
     const seedScale = d3.scaleLinear().domain([0, 1]).range([0, 1-2*offset]);
     // const usableWidth = width - 2 * buffer;

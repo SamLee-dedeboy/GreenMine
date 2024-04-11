@@ -31,13 +31,13 @@
   $: if (width && height) varbox.init(svgId, width, height, paddings, handlers);
 
   onMount(() => {
-    document
-      .querySelector(".variable-type-view")
-      ?.addEventListener("click", (e) => {
-        if (e.defaultPrevented) return;
-        selectedVar = undefined;
-        dispatch("var-selected", undefined); // for App.svelte to de-hightlight the chunks
-      });
+    // document
+      // .querySelector(".variable-type-view")
+      // ?.addEventListener("click", (e) => {
+      //   if (e.defaultPrevented) return;
+      //   selectedVar = undefined;
+      //   dispatch("var-selected", undefined); // for App.svelte to de-hightlight the chunks
+      // });
     update_vars(
       drivers,
       pressures,
