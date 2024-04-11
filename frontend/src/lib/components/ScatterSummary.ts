@@ -29,14 +29,7 @@ export class ScatterSummary  {
             .attr("class", "scatter-plot")
         svg.append("g")
             .attr("class", "legend")
-        if(this.svgId == "scatter-svg-emotion") {
-            drawLegend(svg,Constants.emotionname,Constants.emotionColorScale, Constants.emotionname)
-        }
-        else if(this.svgId == "scatter-svg-topic"){
-            drawLegend(svg,Constants.topicname,Constants.topicColorScale, Constants.topicname)
-        }
-        
-
+        drawLegend(svg,this.categories,this.colorScale, this.categories)
     }
 
     draw(node_data: any[]){
@@ -108,12 +101,12 @@ export class ScatterSummary  {
         // }
         
         //legend
-        const all_attrs = Object.keys(attr_coordinates)
-        const appeared_attrs = Array.from(new Set(node_data.map(d=>d.attr)))
-        drawLegend(svg,all_attrs,this.colorScale, appeared_attrs)
-
         if(node_data.length == 0){
             svg.select("g.legend").selectAll("*").remove()
+        }
+        else{
+            const appeared_attrs = Array.from(new Set(node_data.map(d=>d.attr)))
+            drawLegend(svg,this.categories,this.colorScale, appeared_attrs)
         }
     
     }

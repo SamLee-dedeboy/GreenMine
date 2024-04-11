@@ -400,6 +400,7 @@ export const varbox = {
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "middle")
         .text(group_name)
+        .attr("pointer-events","none")
         .attr("font-family","serif")
         .attr("font-style", "italic")
         .attr("font-size", "3rem")
@@ -463,9 +464,9 @@ export const varbox = {
                 self.handlers.VarOrLinkSelected(null)
                 d3.selectAll(".link")
                 .classed("link-highlight", false)
-                .classed("link-not-highlight", true)
-                // rects.classed("box-highlight", false).classed("box-not-highlight", false)
-                // labels.classed("box-label-highlight", false).classed("box-label-not-highlight", false)
+                .classed("link-not-highlight", false)
+                rects.classed("box-highlight", false).classed("box-not-highlight", false)
+                labels.classed("box-label-highlight", false).classed("box-label-not-highlight", false)
             }else{
                 // console.log(d)
                 self.clicked_rect = d
@@ -474,15 +475,15 @@ export const varbox = {
                 d3.select(this).classed("box-highlight", true).classed("box-not-highlight", false).raise()
                 .transition()
                 .duration(250)
-                .attr("transform", function() {
-                    const bbox = this.getBBox(); // Get bounding box of the element, which gives you its height, width, and position
-                    const scale = 1.2; // Define your scale factor
-                    // Calculate the center of the box
-                    const centerX = bbox.x + bbox.width / 2;
-                    const centerY = bbox.y + bbox.height / 2;
-                    // Scale about the center of the box
-                    return `translate(${centerX * (1 - scale)}, ${centerY * (1 - scale)}) scale(${scale})`;
-                });
+                // .attr("transform", function() {
+                //     const bbox = this.getBBox(); // Get bounding box of the element, which gives you its height, width, and position
+                //     const scale = 1.2; // Define your scale factor
+                //     // Calculate the center of the box
+                //     const centerX = bbox.x + bbox.width / 2;
+                //     const centerY = bbox.y + bbox.height / 2;
+                //     // Scale about the center of the box
+                //     return `translate(${centerX * (1 - scale)}, ${centerY * (1 - scale)}) scale(${scale})`;
+                // });
                 labels.filter((label_data:tRectObject) => d.variable_name === label_data.variable_name).classed("box-label-highlight", true).classed("box-label-not-highlight", false).raise()
                 
                 d3.selectAll(".link")
