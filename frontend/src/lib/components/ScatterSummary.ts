@@ -29,6 +29,14 @@ export class ScatterSummary  {
             .attr("class", "scatter-plot")
         svg.append("g")
             .attr("class", "legend")
+        if(this.svgId == "scatter-svg-emotion") {
+            drawLegend(svg,Constants.emotionname,Constants.emotionColorScale, Constants.emotionname)
+        }
+        else if(this.svgId == "scatter-svg-topic"){
+            drawLegend(svg,Constants.topicname,Constants.topicColorScale, Constants.topicname)
+        }
+        
+
     }
 
     draw(node_data: any[]){
