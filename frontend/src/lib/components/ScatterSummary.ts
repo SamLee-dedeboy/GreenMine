@@ -29,6 +29,14 @@ export class ScatterSummary  {
             .attr("class", "scatter-plot")
         svg.append("g")
             .attr("class", "legend")
+        if(this.svgId == "scatter-svg-emotion") {
+            drawLegend(svg,Constants.emotionname,Constants.emotionColorScale, Constants.emotionname)
+        }
+        else if(this.svgId == "scatter-svg-topic"){
+            drawLegend(svg,Constants.topicname,Constants.topicColorScale, Constants.topicname)
+        }
+        
+
     }
 
     draw(node_data: any[]){
@@ -100,7 +108,6 @@ export class ScatterSummary  {
         // }
 
         //legend
-        console.log(node_data.length)
         if(this.svgId == "scatter-svg-emotion") {
             const appeared_attrs = Array.from(new Set(node_data.map(d=>d.attr)))
             drawLegend(svg,Constants.emotionname,Constants.emotionColorScale, appeared_attrs)
@@ -112,8 +119,7 @@ export class ScatterSummary  {
         if(node_data.length == 0){
             svg.select("g.legend").selectAll("*").remove()
         }
-        
-
+        console.log(node_data.length)
     }
     clear_summary() {
         console.log("Clear summary")
@@ -131,6 +137,7 @@ function seededRandom(seed) {
 }
 
 function drawLegend(svg,name,color, appeared_attrs: string[] ){
+    console.log("draw legend")
     const startX = 400; // Starting X position for the first column
     const startY = 10;  // Starting Y position
     const columnWidth = 70; // Horizontal space between columns
@@ -140,10 +147,10 @@ function drawLegend(svg,name,color, appeared_attrs: string[] ){
     const textOffsetY = 10; // Vertical offset to align text with the center of the rectangles
 
     // Rectangles
-    svg.select("g.legend").selectAll("myrects")
+    svg.select("g.legend").selectAll(".myrect")
         .data(name)
-        .enter()
-        .append("rect")
+        .join("rect")
+        .attr("class", "myrect")
         .attr("x", (d, i) => startX + (i % maxPerRow) * columnWidth)
         .attr("y", (d, i) => startY + Math.floor(i / maxPerRow) * rowHeight)
         .attr("width", 10)
@@ -151,10 +158,10 @@ function drawLegend(svg,name,color, appeared_attrs: string[] ){
         .style("fill", d => color(d));
 
     // Text Labels
-    svg.select("g.legend").selectAll("mylabels")
+    svg.select("g.legend").selectAll(".mylabels")
         .data(name)
-        .enter()
-        .append("text")
+        .join("text")
+        .attr('class', 'mylabels')
         .attr("x", (d, i) => startX + (i % maxPerRow) * columnWidth + textOffsetX)
         .attr("y", (d, i) => startY + Math.floor(i / maxPerRow) * rowHeight + textOffsetY) // Adjusting y to align text with the center of the rectangles
         .style("fill", "black") // Assuming all texts are black
