@@ -222,13 +222,13 @@
               >
                 {interview.file_name.replaceAll("chunks_", "")}
               </div>
-              <div class="grow flex flex-wrap ml-1 gap-x-0.5 gap-y-0.5">
+              <div class="grow flex flex-wrap ml-1 gap-x-1 gap-y-1">
                 {#each interview.data as chunk, chunk_index}
                   <div
                     role="button"
                     tabindex={chunk_index}
                     id={chunk.id}
-                    class={`chunk clickable text-center w-[1.5rem] border border-black rounded`}
+                    class={`chunk clickable text-center w-[1.5rem] outline outline-1 outline-zinc-300 rounded`}
                     class:chunk-highlight={highlight_chunk[interview_index][
                       chunk_index
                     ]}
@@ -438,7 +438,7 @@
     @apply bg-green-100 outline outline-1 outline-green-200;
   }
   :global(.chunk-highlight) {
-    border-width: 2px;
+    @apply outline-2 outline-black;
     box-shadow: 0px 1px 3px black;
   }
   :global(.chunk-not-highlight) {

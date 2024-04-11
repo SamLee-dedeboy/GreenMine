@@ -25,7 +25,7 @@
   @apply bg-white border rounded w-fit transition-colors hover:bg-sky-500/70;
 }
 .clickable {
-  @apply cursor-pointer hover:shadow-[0_1px_3px_black] hover:border-2;
+  @apply cursor-pointer hover:shadow-[0_1px_3px_black] hover:outline-2 hover:outline-black;
 }
 .hoverable {
   @apply hover:fill-gray-300;
