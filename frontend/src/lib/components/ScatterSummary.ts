@@ -102,10 +102,12 @@ export class ScatterSummary  {
         //legend
         console.log(node_data.length)
         if(this.svgId == "scatter-svg-emotion") {
-            drawLegend(svg,Constants.emotionname,Constants.emotionColorScale)
+            const appeared_attrs = Array.from(new Set(node_data.map(d=>d.attr)))
+            drawLegend(svg,Constants.emotionname,Constants.emotionColorScale, appeared_attrs)
         }
         else if(this.svgId == "scatter-svg-topic"){
-            drawLegend(svg,Constants.topicname,Constants.topicColorScale)
+            const appeared_attrs = Array.from(new Set(node_data.map(d=>d.attr)))
+            drawLegend(svg,Constants.topicname,Constants.topicColorScale, appeared_attrs)
         }
         if(node_data.length == 0){
             svg.select("g.legend").selectAll("*").remove()
@@ -128,7 +130,7 @@ function seededRandom(seed) {
     return x - Math.floor(x);
 }
 
-function drawLegend(svg,name,color){
+function drawLegend(svg,name,color, appeared_attrs: string[] ){
     const startX = 400; // Starting X position for the first column
     const startY = 10;  // Starting Y position
     const columnWidth = 70; // Horizontal space between columns
@@ -157,7 +159,8 @@ function drawLegend(svg,name,color){
         .attr("y", (d, i) => startY + Math.floor(i / maxPerRow) * rowHeight + textOffsetY) // Adjusting y to align text with the center of the rectangles
         .style("fill", "black") // Assuming all texts are black
         .text(d => d)
-        .style("font-weight", 600)
+        .style("font-weight", (d)=> appeared_attrs.includes(d) ? 600 : 300)
+        .attr("opacity", (d)=> appeared_attrs.includes(d) ? 1 : 0.3)
         .style("font-size", "14px");
 }
 
