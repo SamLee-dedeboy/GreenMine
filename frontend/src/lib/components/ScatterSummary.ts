@@ -98,22 +98,16 @@ export class ScatterSummary  {
         // } else {
         //     svg.select("g.legend").selectAll("*").remove()
         // }
-
+        
         //legend
-        console.log(node_data.length)
-        if(this.svgId == "scatter-svg-emotion") {
-            const appeared_attrs = Array.from(new Set(node_data.map(d=>d.attr)))
-            drawLegend(svg,Constants.emotionname,Constants.emotionColorScale, appeared_attrs)
-        }
-        else if(this.svgId == "scatter-svg-topic"){
-            const appeared_attrs = Array.from(new Set(node_data.map(d=>d.attr)))
-            drawLegend(svg,Constants.topicname,Constants.topicColorScale, appeared_attrs)
-        }
+        const all_attrs = Object.keys(attr_coordinates)
+        const appeared_attrs = Array.from(new Set(node_data.map(d=>d.attr)))
+        drawLegend(svg,all_attrs,this.colorScale, appeared_attrs)
+
         if(node_data.length == 0){
             svg.select("g.legend").selectAll("*").remove()
         }
-        
-
+    
     }
     clear_summary() {
         console.log("Clear summary")
@@ -130,7 +124,7 @@ function seededRandom(seed) {
     return x - Math.floor(x);
 }
 
-function drawLegend(svg,name,color, appeared_attrs: string[] ){
+function drawLegend(svg,name:string[],color, appeared_attrs: string[] ){
     const startX = 400; // Starting X position for the first column
     const startY = 10;  // Starting Y position
     const columnWidth = 70; // Horizontal space between columns
@@ -140,10 +134,10 @@ function drawLegend(svg,name,color, appeared_attrs: string[] ){
     const textOffsetY = 10; // Vertical offset to align text with the center of the rectangles
 
     // Rectangles
-    svg.select("g.legend").selectAll("myrects")
+    svg.select("g.legend").selectAll(".legendrect")
         .data(name)
-        .enter()
-        .append("rect")
+        .join("rect")
+        .attr("class","legendrect")
         .attr("x", (d, i) => startX + (i % maxPerRow) * columnWidth)
         .attr("y", (d, i) => startY + Math.floor(i / maxPerRow) * rowHeight)
         .attr("width", 10)
@@ -151,13 +145,13 @@ function drawLegend(svg,name,color, appeared_attrs: string[] ){
         .style("fill", d => color(d));
 
     // Text Labels
-    svg.select("g.legend").selectAll("mylabels")
+    svg.select("g.legend").selectAll(".legendtext")
         .data(name)
-        .enter()
-        .append("text")
+        .join("text")
+        .attr("class","legendtext")
         .attr("x", (d, i) => startX + (i % maxPerRow) * columnWidth + textOffsetX)
         .attr("y", (d, i) => startY + Math.floor(i / maxPerRow) * rowHeight + textOffsetY) // Adjusting y to align text with the center of the rectangles
-        .style("fill", "black") // Assuming all texts are black
+        .style("fill", "black")
         .text(d => d)
         .style("font-weight", (d)=> appeared_attrs.includes(d) ? 600 : 300)
         .attr("opacity", (d)=> appeared_attrs.includes(d) ? 1 : 0.3)
@@ -168,7 +162,7 @@ function generateFixedPoints(n, width, height, buffer) {
     let fixedPoints :any= [];
     // // Adjust the width and height to account for the buffer zone
     const xScale = d3.scaleLinear().domain([0, 1]).range([buffer, width - buffer]);
-    const yScale = d3.scaleLinear().domain([0, 1]).range([buffer, (height - (buffer))]);
+    const yScale = d3.scaleLinear().domain([0, 1]).range([buffer, height - buffer]);
     const offset = 0.3
     const seedScale = d3.scaleLinear().domain([0, 1]).range([0, 1-2*offset]);
     // const usableWidth = width - 2 * buffer;
