@@ -18,6 +18,8 @@
   export let id: string;
   export let summary_interviews: tChunk[] | undefined = undefined;
 
+  let emotion_hidden = true;
+  let topic_hidden = true;
   const svgId = {
     emotion: "scatter-svg-emotion",
     topic: "scatter-svg-topic",
@@ -94,21 +96,37 @@
   }
 </script>
 
-<div class="flex gap-x-1">
+<div class="flex flex-col gap-x-1">
   <div id="svg-container-emotion" class="flex-1 flex flex-col px-0.5">
-    <div class="summary-header">Emotions</div>
+    <div
+      role="button"
+      tabindex="0"
+      class="summary-header select-none hover:bg-gray-300"
+      on:click={() => (emotion_hidden = !emotion_hidden)}
+      on:keyup={() => {}}
+    >
+      Emotions
+    </div>
     <svg
       id={svgId.emotion}
-      class="w-full border border-gray-300 rounded p-2 text-sm"
+      class={`${emotion_hidden ? "hidden" : ""} w-full border border-gray-300 rounded p-2 text-sm`}
       viewBox="0 0 500 300"
     >
     </svg>
   </div>
   <div id="svg-container-topic" class="flex-1 flex flex-col px-0.5">
-    <div class="summary-header">Topics</div>
+    <div
+      role="button"
+      tabindex="0"
+      class="summary-header select-none hover:bg-gray-300"
+      on:click={() => (topic_hidden = !topic_hidden)}
+      on:keyup={() => {}}
+    >
+      Topics
+    </div>
     <svg
       id={svgId.topic}
-      class="w-full border border-gray-300 rounded p-2 text-sm"
+      class={`${topic_hidden ? "hidden" : ""} w-full border border-gray-300 rounded p-2 text-sm`}
       viewBox="0 0 500 300"
     >
     </svg>

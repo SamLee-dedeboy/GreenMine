@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { emotionColorScale } from "lib/constants/Colors";
+  import { emotionColorScale, topicColorScale } from "lib/constants/Colors";
+  import { colorBy } from "lib/store";
   export let data: any[];
   const speaker_title = {
     1: "Host",
@@ -10,6 +11,7 @@
     1: "bg-gray-100",
     0: "bg-lime-100",
   };
+  $: colorScale = $colorBy === "emotion" ? emotionColorScale : topicColorScale;
   let data_changes = 0;
   let show_chunk: any = [];
   let highlight_chunk: any = [];
@@ -124,9 +126,34 @@
 
 <div class="absolute top-0 bottom-0 left-0 right-0 overflow-y-scroll">
   <div
-    class="title border border-gray rounded shadow-lg m-1 py-2 text-xl font-bold text-center flex items-center justify-center"
+    class="title border border-gray rounded shadow-lg m-1 py-2 text-center flex items-center justify-center relative"
   >
-    Interview Contents
+    <span class="text-xl font-bold"> Interview Contents </span>
+    <div class="absolute right-2 top-0 bototm-0 flex text-[0.8rem] text-left">
+      <span>Color By:</span>
+      <div class="flex flex-col ml-1">
+        <div
+          role="button"
+          tabindex="0"
+          class="px-1 hover:bg-green-200 text-center"
+          class:selected={$colorBy == "emotion"}
+          on:click={() => ($colorBy = "emotion")}
+          on:keyup={() => {}}
+        >
+          emotion
+        </div>
+        <div
+          role="button"
+          tabindex="-1"
+          class="px-1 hover:bg-green-200 text-center"
+          class:selected={$colorBy == "topic"}
+          on:click={() => ($colorBy = "topic")}
+          on:keyup={() => {}}
+        >
+          topic
+        </div>
+      </div>
+    </div>
   </div>
   {#key data_changes}
     <div
@@ -161,7 +188,7 @@
                     ]}
                     class:chunk-not-highlight={highlighting_chunk &&
                       !highlight_chunk[interview_index][chunk_index]}
-                    style={`background:  white`}
+                    style={`background:  ${colorScale(chunk[$colorBy])}`}
                     on:keyup={() => {
                       show_chunk[interview_index][chunk_index] =
                         !show_chunk[interview_index][chunk_index];
@@ -196,7 +223,7 @@
                         tabindex={chunk_index}
                         id={chunk.id}
                         class={`chunk flex clickable mx-1 mt-1 flex-auto rounded shadow text-left`}
-                        style={`background:  white`}
+                        style={`background: white`}
                         on:keyup={() => {
                           show_chunk[interview_index][chunk_index] =
                             !show_chunk[interview_index][chunk_index];
@@ -349,7 +376,10 @@
   {/key}
 </div>
 
-<style>
+<style lang="postcss">
+  .selected {
+    @apply bg-green-100 outline outline-1 outline-green-200;
+  }
   :global(.chunk-highlight) {
     border-width: 2px;
     box-shadow: 0px 1px 3px black;
