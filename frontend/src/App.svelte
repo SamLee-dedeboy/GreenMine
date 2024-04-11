@@ -49,17 +49,18 @@
   }
 
   function handleVarOrLinkSelected(e) {
-    // console.log(e.detail);
+    //deselect var/link
     if (e.detail === null) {
-      interview_viewer_component.highlight_chunks(null);
+      interview_viewer_component.highlight_chunks(null); //dehighlight chunks
+      summary_interviews = [] //clear summary view
     } else {
       const chunks = e.detail.mentions;
       interview_viewer_component.highlight_chunks(chunks);
-      console.log(interview_data);
+      // console.log(interview_data);
       const flattenedInterviewData = interview_data.flatMap(
         (item) => item.data
       );
-      console.log(chunks);
+      // console.log(chunks);
       const enhanceChunks = (chunks: any[]): any[] => {
         return chunks
           .map((chunk) => {

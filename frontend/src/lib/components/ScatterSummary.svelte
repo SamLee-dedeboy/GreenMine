@@ -30,7 +30,7 @@
     top: 0,
     bottom: 0,
   };
-  const width = 500;
+  const width = 380;
   const height = 300;
   let emotion_scatter = new ScatterSummary(
     svgId.emotion,
@@ -50,24 +50,17 @@
   );
 
   $: update_summary(summary_interviews);
-  // $:update_summary(summary_interviews,"emotion")
 
   onMount(() => {
     // scattersummary.init(svgId.topic, width, height, paddings,"topic");
     emotion_scatter.init();
     topic_scatter.init();
-    // document
-    //   .querySelector(".container")
-    //   ?.addEventListener("click", (e) => {
-    //     if (e.defaultPrevented) return;
-    //     summary_interviews = [];
 
-    //   });
   });
 
   async function update_summary(summary_interviews: tChunk[] | undefined) {
     await tick();
-    console.log({ summary_interviews });
+    // console.log({ summary_interviews });
     if (summary_interviews) {
       const emotion_data = summary_interviews.map((d) => {
         return {
@@ -86,10 +79,6 @@
       emotion_scatter.draw(emotion_data);
       topic_scatter.draw(topic_data);
     } else {
-      // console.log("clearing summary")
-      // console.log({summary_interviews})
-      // console.log({selectedAttr})
-      // scattersummary.clear_summary();
     }
   }
 </script>
@@ -120,16 +109,5 @@
     @apply border border-gray-200 rounded shadow m-1 text-xl font-bold text-center flex items-center justify-center;
     font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   }
-  #svg-container {
-    /* position: absolute; */
-    /* width: 35rem;
-    height: 20rem; */
-    /* width: 30rem;
-    height: 20rem; */
-    /* left: 50%;
-    transform: translateX(-50%);
-    top: 26%; */
-    /* left:80%;
-    bottom:5% */
-  }
+
 </style>
