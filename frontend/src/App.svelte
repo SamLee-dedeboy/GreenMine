@@ -36,7 +36,7 @@
     fetch(`${server_address}/data/`)
       .then((res) => res.json())
       .then((res: tServerData) => {
-        // console.log({ res });
+        console.log({ res });
         interview_data = res.interviews;
         drivers = res.driver_nodes;
         pressures = res.pressure_nodes;
@@ -52,9 +52,10 @@
     //deselect var/link
     if (e.detail === null) {
       interview_viewer_component.highlight_chunks(null); //dehighlight chunks
-      summary_interviews = [] //clear summary view
+      summary_interviews = []; //clear summary view
     } else {
-      const chunks = e.detail.mentions;
+      const chunks: tMention[] = e.detail.mentions;
+      console.log({ chunks });
       interview_viewer_component.highlight_chunks(chunks);
       // console.log(interview_data);
       const flattenedInterviewData = interview_data.flatMap(

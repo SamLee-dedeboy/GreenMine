@@ -94,7 +94,7 @@ export const varbox = {
         const frequencyList = calculateFrequencyList(variables,new_links) // includes variables frequency and link frequency among all groups
         
         let regionWidth = this.width/4;
-        let regionHeight = this.height/6;
+        let regionHeight = this.height/5;
         const bboxes = radialBboxes(Constants.groupname,this.width,this.height,{width: regionWidth, height: regionHeight})
         // console.log(bboxes)
         for (let i = 0; i < 5; i++) {

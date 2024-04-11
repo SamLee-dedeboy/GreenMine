@@ -3,7 +3,13 @@
   import { varbox } from "lib/Varbox";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
-  import type { tVariableType, tVariable, tLink, tTranscript, tNewLink } from "./types";
+  import type {
+    tVariableType,
+    tVariable,
+    tLink,
+    tTranscript,
+    tNewLink,
+  } from "./types";
   export let drivers: tVariableType;
   export let pressures: tVariableType;
   export let states: tVariableType;
@@ -11,7 +17,7 @@
   export let responses: tVariableType;
   export let links: tLink[];
   export let interview_data: tTranscript[];
-  const new_links:tNewLink[] = transformData(links);
+  const new_links: tNewLink[] = transformData(links);
   const svgId = "model-svg";
 
   const handlers = {
@@ -32,19 +38,19 @@
 
   onMount(() => {
     // document
-      // .querySelector(".variable-type-view")
-      // ?.addEventListener("click", (e) => {
-      //   if (e.defaultPrevented) return;
-      //   selectedVar = undefined;
-      //   dispatch("var-selected", undefined); // for App.svelte to de-hightlight the chunks
-      // });
+    // .querySelector(".variable-type-view")
+    // ?.addEventListener("click", (e) => {
+    //   if (e.defaultPrevented) return;
+    //   selectedVar = undefined;
+    //   dispatch("var-selected", undefined); // for App.svelte to de-hightlight the chunks
+    // });
     update_vars(
       drivers,
       pressures,
       states,
       impacts,
       responses,
-      new_links,
+      new_links
       // selectedVarName
     );
   });
@@ -55,7 +61,7 @@
     states: tVariableType,
     impacts: tVariableType,
     responses: tVariableType,
-    new_links: tNewLink[],
+    new_links: tNewLink[]
     // selected_var_name: string | undefined
   ) {
     await tick();
@@ -66,7 +72,7 @@
         states,
         impacts,
         responses,
-        new_links,
+        new_links
         // selected_var_name
       );
   }
@@ -92,14 +98,19 @@
         );
         if (!chunkIdExists) {
           // If the chunk_id is not already included, add it to the mentions
-          mapEntry.mentions.push({ chunk_id: item.chunk_id });
+          mapEntry.mentions.push({
+            chunk_id: item.chunk_id,
+            evidence: item.response.evidence,
+          });
         }
       } else {
         // If the key doesn't exist, initialize it with the current chunk_id in mentions
         linksMap.set(key, {
           source,
           target,
-          mentions: [{ chunk_id: item.chunk_id }],
+          mentions: [
+            { chunk_id: item.chunk_id, evidence: item.response.evidence },
+          ],
         });
       }
     });
@@ -117,31 +128,32 @@
     const variable: tVariable = e;
     // console.log({ variable });
     selectedVar = variable;
+    console.log({ selectedVar });
     dispatch("var-selected", selectedVar); // for App.svelte to hightlight the chunks
 
-    if (variable) {
-      const chunks = variable.mentions;
-      let temp: any = [];
-      // console.log({interview_data})
-      chunks.forEach((selected) => {
-        interview_data.forEach((data) => {
-          data.data.forEach((all_chunks) => {
-            if (all_chunks.id === selected.chunk_id) {
-              const topic = all_chunks.topic;
-              const emotion = all_chunks.emotion;
+    // if (variable) {
+    //   const chunks = variable.mentions;
+    //   let temp: any = [];
+    //   // console.log({interview_data})
+    //   chunks.forEach((selected) => {
+    //     interview_data.forEach((data) => {
+    //       data.data.forEach((all_chunks) => {
+    //         if (all_chunks.id === selected.chunk_id) {
+    //           const topic = all_chunks.topic;
+    //           const emotion = all_chunks.emotion;
 
-              const modifiedObject = {
-                ...selected,
-                topic,
-                emotion,
-              };
+    //           const modifiedObject = {
+    //             ...selected,
+    //             topic,
+    //             emotion,
+    //           };
 
-              temp.push(modifiedObject);
-            }
-          });
-        });
-      });
-    }
+    //           temp.push(modifiedObject);
+    //         }
+    //       });
+    //     });
+    //   });
+    // }
   }
 </script>
 

@@ -2,7 +2,8 @@
   import { onMount } from "svelte";
   import { emotionColorScale, topicColorScale } from "lib/constants/Colors";
   import { colorBy } from "lib/store";
-  export let data: any[];
+  import type { tMention, tTranscript } from "lib/types";
+  export let data: tTranscript[];
   const speaker_title = {
     1: "Host",
     0: "Guest",
@@ -16,6 +17,7 @@
   let show_chunk: any = [];
   let highlight_chunk: any = [];
   let highlight_chunk_ids: any[] = [];
+  let highlight_messages = {};
   let external_highlights = false;
   let chunk_indexes = {};
   let original_data;
@@ -37,7 +39,15 @@
   onMount(() => {
     // console.log(data, show_chunk);
     original_data = JSON.parse(JSON.stringify(data));
+    init_highlight_messages();
   });
+  function init_highlight_messages() {
+    data.forEach((interview, interview_index) => {
+      interview.data.forEach((chunk, chunk_index) => {
+        highlight_messages[chunk.id] = chunk.conversation.map(() => false);
+      });
+    });
+  }
 
   //   export function highlight_chunks(relevance_count_tree) {
   //     console.log(relevance_count_tree);
@@ -59,9 +69,11 @@
     return color;
   }
   ////white -> ${chunkColor(chunk)}
-  export function highlight_chunks(highlight_chunks) {
+  export function highlight_chunks(highlight_chunks: tMention[]) {
+    console.log({ highlight_chunks });
     // console.log({ highlight_chunks });
     dehighlight_chunks();
+    init_highlight_messages();
     external_highlights = true;
     if (!highlight_chunks) {
       external_highlights = false;
@@ -72,7 +84,41 @@
       const chunk_index = chunk_indexes[chunk_id];
       highlight_chunk[chunk_index[0]][chunk_index[1]] = true;
     });
+    if (highlight_chunks.length > 0)
+      if (highlight_chunks[0].conversation_ids) {
+        highlight_conversations(highlight_chunks);
+      } else {
+        highlight_evidence(highlight_chunks);
+      }
     return;
+  }
+  function highlight_conversations(highlight_chunks: tMention[]) {
+    highlight_chunks.forEach((chunk) => {
+      const chunk_id = chunk.chunk_id;
+      chunk.conversation_ids!.forEach((message_id) => {
+        highlight_messages[chunk_id][message_id] = true;
+      });
+    });
+  }
+
+  function highlight_evidence(highlight_chunks: tMention[]) {
+    data.forEach((interview) => {
+      interview.data.forEach((chunk) => {
+        // check if chunk is in highlight_chunks
+        const index = highlight_chunks.findIndex(
+          (highlight_chunk) => highlight_chunk.chunk_id === chunk.id
+        );
+        if (index === -1) return;
+        chunk.conversation.forEach((message, message_index) => {
+          if (
+            highlight_chunks[index].evidence?.some((evidence_message) =>
+              message.content.includes(evidence_message)
+            )
+          )
+            highlight_messages[chunk.id][message_index] = true;
+        });
+      });
+    });
   }
 
   export function dehighlight_chunks() {
@@ -268,20 +314,28 @@
                               !show_chunk[interview_index][chunk_index])}
                         />
                         <div class="grow">
-                          {#each chunk.conversation as message, message_index}
-                            <div
-                              class="interview-message border-b p-1 border-l border-black border-dashed {speaker_background[
-                                message.speaker
-                              ]}"
-                            >
-                              <div class="interview-message-speaker font-bold">
-                                {speaker_title[message.speaker]}:
+                          {#key highlight_messages}
+                            {#each chunk.conversation as message, message_index}
+                              <div
+                                class="interview-message {highlight_messages[
+                                  chunk.id
+                                ][message_index]
+                                  ? 'highlighted_message'
+                                  : ''} border-b p-1 border-l border-black border-dashed {speaker_background[
+                                  message.speaker
+                                ]}"
+                              >
+                                <div
+                                  class="interview-message-speaker font-bold"
+                                >
+                                  {speaker_title[message.speaker]}:
+                                </div>
+                                <div class="interview-message-content">
+                                  {@html message.content}
+                                </div>
                               </div>
-                              <div class="interview-message-content">
-                                {@html message.content}
-                              </div>
-                            </div>
-                          {/each}
+                            {/each}
+                          {/key}
                         </div>
                       </div>
                     </div>
@@ -354,6 +408,9 @@
                             class="interview-message border-b p-1 border-l border-black border-dashed {speaker_background[
                               message.speaker
                             ]}"
+                            class:highlighted_message={highlight_messages[
+                              chunk.id
+                            ][message_index]}
                           >
                             <div class="interview-message-speaker font-bold">
                               {speaker_title[message.speaker]}:
@@ -396,5 +453,8 @@
   }
   .title {
     font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  }
+  .highlighted_message {
+    background: #ff8f00;
   }
 </style>
