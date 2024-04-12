@@ -56,7 +56,7 @@ export class ScatterSummary  {
                .attr("fill", d => {
                 return this.colorScale(d.attr)
                })
-               .attr("stroke","black")
+               .attr("stroke","#a3a3a3")
         const self = this
         // console.log(svg.node())
         const simulation = d3.forceSimulation(node_data)
@@ -65,7 +65,7 @@ export class ScatterSummary  {
                             .force("x", d3.forceX(d => { return attr_coordinates[d.attr].x }))
                             .force("y", d3.forceY(d => attr_coordinates[d.attr].y))
                             .alphaMin(0.01)
-                            .force("collide", d3.forceCollide(self.node_radius))
+                            .force("collide", d3.forceCollide(self.node_radius+1))
                             .on("tick", () => {
                                 const tick_nodes = svg.selectAll("circle.node")
                                 .attr("cx", d => d.x=d.x)
