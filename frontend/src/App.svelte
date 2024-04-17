@@ -36,28 +36,29 @@
   fetch(`${server_address}/data/`)
     .then((res) => res.json())
     .then((res: tServerData) => {
-      console.log({ res });
+      // console.log({ res });
       interview_data = res.interviews;
       links = res.links;
       data_loading = false;
       // new_d = res.driver_types;
       // console.log({ new_d });
       // Process each group of variables to add factor_type
-      drivers = integrateTypes(res.driver_nodes, res.driver_types);
-      pressures = integrateTypes(res.pressure_nodes, res.pressure_types);
-      states = integrateTypes(res.state_nodes, res.state_types);
-      impacts = integrateTypes(res.impact_nodes, res.impact_types);
-      responses = integrateTypes(res.response_nodes, res.response_types);
-      // console.log({ drivers, pressures, states, impacts, responses });
+      drivers = integrateTypes(res.driver_nodes, res.driver_defs);
+      pressures = integrateTypes(res.pressure_nodes, res.pressure_defs);
+      states = integrateTypes(res.state_nodes, res.state_defs);
+      impacts = integrateTypes(res.impact_nodes, res.impact_defs);
+      responses = integrateTypes(res.response_nodes, res.response_defs);
+      console.log({ drivers, pressures, states, impacts, responses });
     });
 }
 
-function integrateTypes(variableTypeData: tVariableType, typesData: { [key: string]: { factor_type: string } }): tVariableType {
+function integrateTypes(variableTypeData: tVariableType, defsData: { [key: string]: { definition: string, factor_type: string } }): tVariableType {
   const variable_mentions = Object.keys(variableTypeData.variable_mentions).reduce((acc, key) => {
     const variable = variableTypeData.variable_mentions[key];
     acc[key] = {
       ...variable,
-      factor_type: typesData[key]?.factor_type || 'unknown' // Merge factor type into each variable
+      definition: defsData[key]?.definition || 'unknown', // Merge definition into each variable
+      factor_type: defsData[key]?.factor_type || 'unknown' // Merge factor type into each variable
     };
     return acc;
   }, {} as { [key: string]: tVariable });

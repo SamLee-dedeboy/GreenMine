@@ -42,12 +42,11 @@ def test():
 
 @app.route("/data/") #read local data0
 def get_data():
-    driver_types = json.load(open(relative_path(dirname, 'data/v2/variable_definitions/Drivers_variables_type.json')))  
-    # driver_types = json.load(open(relative_path(dirname, 'data/v2/variable_definitions/Drivers_variables_new.json'), encoding='utf-8'))
-    pressure_types = json.load(open(relative_path(dirname, 'data/v2/variable_definitions/Pressures_variables_type.json'))) 
-    state_types = json.load(open(relative_path(dirname, 'data/v2/variable_definitions/States_variables_type.json')))
-    impact_types = json.load(open(relative_path(dirname, 'data/v2/variable_definitions/Impacts_variables_type.json')))
-    response_types = json.load(open(relative_path(dirname, 'data/v2/variable_definitions/Responses_variables_type.json')))
+    driver_defs = json.load(open(relative_path(dirname, 'data/v2/variable_definitions/Drivers_variables_def.json'), encoding='utf-8'))
+    pressure_defs = json.load(open(relative_path(dirname, 'data/v2/variable_definitions/Pressures_variables_def.json'), encoding='utf-8')) 
+    state_defs = json.load(open(relative_path(dirname, 'data/v2/variable_definitions/States_variables_def.json'), encoding='utf-8'))
+    impact_defs = json.load(open(relative_path(dirname, 'data/v2/variable_definitions/Impacts_variables_def.json'), encoding='utf-8'))
+    response_defs = json.load(open(relative_path(dirname, 'data/v2/variable_definitions/Responses_variables_def.json'), encoding='utf-8'))
     driver_nodes = json.load(open(relative_path(dirname, 'data/v2/nodes/Drivers_nodes.json')))
     pressure_nodes = json.load(open(relative_path(dirname, 'data/v2/nodes/Pressures_nodes.json')))
     state_nodes = json.load(open(relative_path(dirname, 'data/v2/nodes/States_nodes.json')))
@@ -66,9 +65,9 @@ def get_data():
         "impact_nodes": impact_nodes,
         "response_nodes": response_nodes,
         "links": links,
-        "driver_types":driver_types,
-        "pressure_types":pressure_types,
-        "state_types":state_types,
-        "impact_types":impact_types,
-        "response_types":response_types
+        "driver_defs":driver_defs,
+        "pressure_defs":pressure_defs,
+        "state_defs":state_defs,
+        "impact_defs":impact_defs,
+        "response_defs":response_defs
     }

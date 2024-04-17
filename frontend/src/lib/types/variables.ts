@@ -6,6 +6,7 @@ export type tVariableType = {
 export type tVariable = {
   variable_name: string;
   mentions: tMention[];
+  definition: string;
   factor_type: string; // Added factor type
 };
 
