@@ -101,13 +101,9 @@ export class ScatterSummary  {
         // }
         
         //legend
-        if(node_data.length == 0){
-            svg.select("g.legend").selectAll("*").remove()
-        }
-        else{
-            const appeared_attrs = Array.from(new Set(node_data.map(d=>d.attr)))
-            drawLegend(svg,this.categories,this.colorScale, appeared_attrs)
-        }
+
+        const appeared_attrs = Array.from(new Set(node_data.map(d=>d.attr)))
+        drawLegend(svg,this.categories,this.colorScale, appeared_attrs)
     
     }
     clear_summary() {

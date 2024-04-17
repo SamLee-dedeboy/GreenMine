@@ -8,9 +8,20 @@ import {groupColors} from './constants/Colors';
 
 export const varbox = {
     init(svgId, width,height, paddings, handlers){
+        this.clicked_rect = null
+        this.clicked_link = null
+        this.width = width
+        this.height = height
+        this.svgId = svgId
+        this.handlers = handlers
+        const self = this
+        // this.topicName = Constants.topicname
+        // this.topicEmotion = Constants.emotionname
+        this.GroupColor = groupColors
         const svg = d3.select("#"+svgId).attr("viewBox", `0 0 ${width} ${height}`)
         .on("click", function(e) {
             if(!e.defaultPrevented) {
+                console.log("remove all highlights")
                 d3.selectAll("rect.box")
                     .classed("box-highlight", false)
                     .classed("box-not-highlight", false)
@@ -26,6 +37,8 @@ export const varbox = {
                     .attr("stroke", "gray")
                     .attr("marker-end", "")
                 handlers.VarOrLinkSelected(null)
+                self.clicked_link = null
+                self.clicked_rect = null
                 // d3.selectAll("linearGradient").remove()
                 // d3.selectAll("defs").remove()
             }
@@ -47,15 +60,6 @@ export const varbox = {
         response_region.append("g").attr("class","box-group")
         response_region.append("g").attr("class","label-group")
 
-        this.clicked_rect = null
-        this.clicked_link = null
-        this.width = width
-        this.height = height
-        this.svgId = svgId
-        this.handlers = handlers
-        // this.topicName = Constants.topicname
-        // this.topicEmotion = Constants.emotionname
-        this.GroupColor = groupColors
     },
 
     // updateColorScales(drivers, pressures, states, impacts, responses) {

@@ -72,9 +72,10 @@ function integrateTypes(variableTypeData: tVariableType, typesData: { [key: stri
     //deselect var/link
     if (e.detail === null) {
       interview_viewer_component.highlight_chunks(null); //dehighlight chunks
-      summary_interviews = [] //clear summary view
+      summary_interviews = []; //clear summary view
     } else {
-      const chunks = e.detail.mentions;
+      const chunks: tMention[] = e.detail.mentions;
+      console.log({ chunks });
       interview_viewer_component.highlight_chunks(chunks);
       // console.log(interview_data);
       const flattenedInterviewData = interview_data.flatMap(

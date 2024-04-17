@@ -11,7 +11,8 @@ export type tVariable = {
 
 export type tMention = {
   chunk_id: string;
-  conversation_ids: number[]
+  conversation_ids?: number[]
+  evidence?: string[]
 }
 
 export type tLink = {
@@ -29,7 +30,7 @@ export type tLink = {
 // for links after reformatting
 export type tNewLink = {
   frequency: number;
-  mentions: Mention[];
+  mentions: tMention[];
   source: VariableInfo;
   target: VariableInfo;
 };
