@@ -5,7 +5,8 @@ export type tVariableType = {
 
 export type tVariable = {
   variable_name: string;
-  mentions: tMention[]
+  mentions: tMention[];
+  factor_type: string; // Added factor type
 };
 
 export type tMention = {
@@ -59,6 +60,7 @@ export type tRectObject = {
   height: number;
   variable_name: string;
   mentions: tMention[];
+  factor_type: string;
   frequency: number;
 };
 
