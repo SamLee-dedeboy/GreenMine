@@ -417,7 +417,7 @@ export const varbox = {
         
         group.select("g.box-group").append("image")
         .attr("xlink:href",function(){
-            return group_name === "Drivers" ? "/social.svg" : (group_name === "Pressures" ? "" : "/ecological.svg")
+            return group_name === "Drivers" ? "social.svg" : (group_name === "Pressures" ? "" : "ecological.svg")
         })
         .attr("x", bbox_center[0]+group_name.length*12)
         .attr("y", bbox_center[1] - regionHeight/2 -28)
@@ -565,9 +565,9 @@ export const varbox = {
             .append("image")
             .attr("xlink:href", function(d: tRectObject) {
                 if (d.factor_type === "social") {
-                    return "/social.svg"; // path to the first type of icon
+                    return "social.svg"; // path to the first type of icon
                 } else {
-                    return "/ecological.svg"; // path to the second type of icon
+                    return "ecological.svg"; // path to the second type of icon
                 }
             })
             .attr("x", function(d: tRectObject) {
