@@ -14,8 +14,8 @@
   import Varbox from "lib/Varbox.svelte";
   import BrowserBlockingPage from "lib/views/BrowserBlockingPage.svelte";
 
-  // const server_address = "http://localhost:5000";
-  export const server_address = "http://infovis.cs.ucdavis.edu/lyudao/api";
+  const server_address = "http://localhost:5000";
+  // export const server_address = "http://infovis.cs.ucdavis.edu/lyudao/api";
 
   let interview_data: tTranscript[];
   let interview_viewer_component;
