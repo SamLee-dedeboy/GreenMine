@@ -12,8 +12,10 @@
     tChunk,
   } from "lib/types";
   import Varbox from "lib/Varbox.svelte";
+  import BrowserBlockingPage from "lib/views/BrowserBlockingPage.svelte";
 
-  const server_address = "http://localhost:5000";
+  // const server_address = "http://localhost:5000";
+  export const server_address = "http://infovis.cs.ucdavis.edu/lyudao/api";
 
   let interview_data: tTranscript[];
   let interview_viewer_component;
@@ -28,46 +30,63 @@
   let new_d: any;
   let data_loading: boolean = true;
 
-  onMount(() => {
+  let fetch_success = false;
+  onMount(async () => {
+    await fetchTest();
     fetchData();
   });
+  function fetchTest() {
+    // fetch data from backend
+    fetch(server_address + "/test/").then((res) => {
+      console.log({ res });
+      fetch_success = res.ok;
+    });
+  }
 
   function fetchData() {
-  fetch(`${server_address}/data/`)
-    .then((res) => res.json())
-    .then((res: tServerData) => {
-      // console.log({ res });
-      interview_data = res.interviews;
-      links = res.links;
-      data_loading = false;
-      // new_d = res.driver_types;
-      // console.log({ new_d });
-      // Process each group of variables to add factor_type
-      drivers = integrateTypes(res.driver_nodes, res.driver_defs);
-      pressures = integrateTypes(res.pressure_nodes, res.pressure_defs);
-      states = integrateTypes(res.state_nodes, res.state_defs);
-      impacts = integrateTypes(res.impact_nodes, res.impact_defs);
-      responses = integrateTypes(res.response_nodes, res.response_defs);
-      console.log({ drivers, pressures, states, impacts, responses });
-    });
-}
+    fetch(`${server_address}/data/`)
+      .then((res) => res.json())
+      .then((res: tServerData) => {
+        // console.log({ res });
+        interview_data = res.interviews;
+        links = res.links;
+        data_loading = false;
+        // new_d = res.driver_types;
+        // console.log({ new_d });
+        // Process each group of variables to add factor_type
+        drivers = integrateTypes(res.driver_nodes, res.driver_defs);
+        pressures = integrateTypes(res.pressure_nodes, res.pressure_defs);
+        states = integrateTypes(res.state_nodes, res.state_defs);
+        impacts = integrateTypes(res.impact_nodes, res.impact_defs);
+        responses = integrateTypes(res.response_nodes, res.response_defs);
+        console.log({ drivers, pressures, states, impacts, responses });
+      });
+  }
 
-function integrateTypes(variableTypeData: tVariableType, defsData: { [key: string]: { definition: string, factor_type: string } }): tVariableType {
-  const variable_mentions = Object.keys(variableTypeData.variable_mentions).reduce((acc, key) => {
-    const variable = variableTypeData.variable_mentions[key];
-    acc[key] = {
-      ...variable,
-      definition: defsData[key]?.definition || 'unknown', // Merge definition into each variable
-      factor_type: defsData[key]?.factor_type || 'unknown' // Merge factor type into each variable
+  function integrateTypes(
+    variableTypeData: tVariableType,
+    defsData: { [key: string]: { definition: string; factor_type: string } }
+  ): tVariableType {
+    const variable_mentions = Object.keys(
+      variableTypeData.variable_mentions
+    ).reduce(
+      (acc, key) => {
+        const variable = variableTypeData.variable_mentions[key];
+        acc[key] = {
+          ...variable,
+          definition: defsData[key]?.definition || "unknown", // Merge definition into each variable
+          factor_type: defsData[key]?.factor_type || "unknown", // Merge factor type into each variable
+        };
+        return acc;
+      },
+      {} as { [key: string]: tVariable }
+    );
+
+    return {
+      variable_type: variableTypeData.variable_type,
+      variable_mentions,
     };
-    return acc;
-  }, {} as { [key: string]: tVariable });
-
-  return {
-    variable_type: variableTypeData.variable_type,
-    variable_mentions
-  };
-}
+  }
 
   function handleVarOrLinkSelected(e) {
     //deselect var/link
@@ -113,50 +132,54 @@ function integrateTypes(variableTypeData: tVariableType, defsData: { [key: strin
 </script>
 
 <main class="h-full px-1">
-  <div class="page flex space-x-1 h-full">
-    <div
-      class="flex flex-col justify-center items-center flex-1 h-full w-[70%]"
-    >
-      <div class="w-full h-full relative">
-        <div
-          class="title absolute top-1 left-6 w-fit rounded py-4 px-4 text-left text-sky-600"
-        >
-          <span>Sea of</span> <br />
-          <span class="title-hidden absolute h-fit mt-[-25px]">Voices</span>
+  {#if !fetch_success}
+    <BrowserBlockingPage />
+  {:else}
+    <div class="page flex space-x-1 h-full">
+      <div
+        class="flex flex-col justify-center items-center flex-1 h-full w-[70%]"
+      >
+        <div class="w-full h-full relative">
+          <div
+            class="title absolute top-1 left-6 w-fit rounded py-4 px-4 text-left text-sky-600"
+          >
+            <span>Sea of</span> <br />
+            <span class="title-hidden absolute h-fit mt-[-25px]">Voices</span>
+          </div>
+          {#if data_loading}
+            <div>Data Loading...</div>
+          {:else}
+            <Varbox
+              bind:this={varbox}
+              {drivers}
+              {pressures}
+              {states}
+              {impacts}
+              {responses}
+              {links}
+              on:var-selected={handleVarOrLinkSelected}
+              {interview_data}
+            ></Varbox>
+          {/if}
         </div>
-        {#if data_loading}
-          <div>Data Loading...</div>
-        {:else}
-          <Varbox
-            bind:this={varbox}
-            {drivers}
-            {pressures}
-            {states}
-            {impacts}
-            {responses}
-            {links}
-            on:var-selected={handleVarOrLinkSelected}
-            {interview_data}
-          ></Varbox>
-        {/if}
+      </div>
+      <div class="h-full w-full basis-[30%] flex flex-col">
+        <div class="gap-y-1">
+          <Summaryview {summary_interviews} id="statistics" />
+        </div>
+        <div class="interview-viewer-container w-full grow relative">
+          {#if data_loading}
+            <div>Data Loading...</div>
+          {:else}
+            <InterviewViewer
+              bind:this={interview_viewer_component}
+              data={interview_data}
+            ></InterviewViewer>
+          {/if}
+        </div>
       </div>
     </div>
-    <div class="h-full w-full basis-[30%] flex flex-col">
-      <div class="gap-y-1">
-        <Summaryview {summary_interviews} id="statistics" />
-      </div>
-      <div class="interview-viewer-container w-full grow relative">
-        {#if data_loading}
-          <div>Data Loading...</div>
-        {:else}
-          <InterviewViewer
-            bind:this={interview_viewer_component}
-            data={interview_data}
-          ></InterviewViewer>
-        {/if}
-      </div>
-    </div>
-  </div>
+  {/if}
 </main>
 
 <style>
