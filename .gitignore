@@ -17,3 +17,5 @@ prompts/**/*.json
 .DS_Store
 v1_data
 server/data/**/*.json
+
+node_modules
