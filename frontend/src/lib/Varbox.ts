@@ -4,6 +4,7 @@ import * as d3 from 'd3';
 import type  {tVariable,tVariableType,tMention, tNewLink, tRectangle, tRectObject, tLinkObject} from './types/variables';
 import * as Constants from "./constants"
 import {groupColors} from './constants/Colors';
+// import socialIcon from '../../public/social.svg';
 
 export const varbox = {
     init(svgId, width,height, paddings, handlers){
@@ -93,8 +94,8 @@ export const varbox = {
         variables.push(drivers,pressures,states,impacts,responses);
         const frequencyList = calculateFrequencyList(variables,new_links) // includes variables frequency and link frequency among all groups
         
-        let regionWidth = this.width/4;
-        let regionHeight = this.height/5;
+        let regionWidth = this.width/3.5;
+        let regionHeight = this.height/6;
         const bboxes = radialBboxes(Constants.groupname,this.width,this.height,{width: regionWidth, height: regionHeight})
         // console.log(bboxes)
         for (let i = 0; i < 5; i++) {
@@ -344,13 +345,14 @@ export const varbox = {
     drawvars(vars:tVariableType,class_name:string,group_name:string,box_coor,regionWidth:number,regionHeight:number){
         // console.log(vars)
 
-        const rectheight = 30;
-
+        const rectheight = 35;
+        const iconWidth = 24;
+        const charWidth = 22;
         const rectangles = Object.values(vars.variable_mentions as Record<string, tVariable>)
         .sort((a, b) => b.mentions.length - a.mentions.length) // Sorting in descending order by mentions length
         .map(variable => ({
             name: variable.variable_name,
-            width: (variable.variable_name.length) * 20, 
+            width: (group_name==="Pressures")?(variable.variable_name.length) * charWidth + iconWidth : (variable.variable_name.length) * charWidth, 
             height: rectheight, 
         }));
 
@@ -364,7 +366,6 @@ export const varbox = {
         const bbox_origin = [bbox_center[0] - regionWidth/2, bbox_center[1] - regionHeight/2]
         const rectangleCoordinates = layoutRectangles(regionWidth, regionHeight, rectheight, rectangles, bbox_origin);
         const RectwithVar = combineData(vars,rectangleCoordinates); //return as an object
-
         // min and max frequency for all variables 
         // let max = Math.max(frequencyList.maxLength, frequencyList.maxFrequency); ???
         // let min = Math.min(frequencyList.minLength, frequencyList.minFrequency); ???
@@ -396,7 +397,6 @@ export const varbox = {
         .attr("opacity", "0") //do not show the bounding box
         .attr("rx", "5")
 
-        
         group.select("g.box-group").append("text")
         .attr("class", "bbox-label")
         .attr("x", bbox_center[0])
@@ -413,6 +413,17 @@ export const varbox = {
         .attr("fill",self.GroupColor(group_name.toLowerCase()))
         .attr("opacity", "0.8")
 
+
+        
+        group.select("g.box-group").append("image")
+        .attr("xlink:href",function(){
+            return group_name === "Drivers" ? "/social.svg" : (group_name === "Pressures" ? "" : "/ecological.svg")
+        })
+        .attr("x", bbox_center[0]+group_name.length*12)
+        .attr("y", bbox_center[1] - regionHeight/2 -28)
+        .attr("width", 30)
+        .attr("height", 30)
+
         group.select("g.box-group").selectAll("rect.box")
         .data(RectwithVar)
         .join("rect")
@@ -421,10 +432,17 @@ export const varbox = {
         .attr("x", (d: tRectObject) => d.x)
         .attr("y", (d: tRectObject) => d.y)
         .attr("width", function(d: tRectObject) {
-            return ((d.variable_name).length)*20; //20px per character
+            const textWidth = d.variable_name.length * charWidth; // existing width calculation
+            let width = 0;
+            if(group_name === "Pressures"){
+                width = textWidth + iconWidth; // add icon width to the text width
+            }
+            else{ width = textWidth; }
+            return width // add icon width to the text width
+            
         })
         .attr("height", rectheight)
-        .attr("stroke", "white")
+        .attr("stroke", "#cdcdcd")
         .attr("stroke-width", "1px")
         .attr("rx", "5")
         .attr("fill", function(d: tRectObject) {
@@ -435,6 +453,7 @@ export const varbox = {
                 return "#cdcdcd";
             }
         })
+        .attr("opacity", "0.8")
         .attr("cursor", "pointer")
         .on("mouseover", function(e, d) { 
             d3.select(this).raise().classed("box-hover", true);
@@ -514,22 +533,56 @@ export const varbox = {
         })
 
 
-        group.select("g.label-group").selectAll("text.label")
+        const texts = group.select("g.label-group").selectAll("text.label")
         .data(RectwithVar)
         .join("text")
         .text((d:tRectObject) => d.variable_name)
         .attr("class", "label")
-        .attr("x", (d: tRectObject) => d.x+ d.width/2 )
+        // .attr("x", (d: tRectObject) => d.x+ d.width/2 ) 
+        .attr("x", (d: tRectObject) => { 
+            if(group_name === "Pressures"){
+                return (d.x + d.width/2) - iconWidth/2
+            }
+            else{
+                return d.x + d.width/2
+            }
+            
+        }) // slightly move text to the left within the rectangle
         .attr("y", (d: tRectObject) => d.y+ d.height/2)
-        .attr("fill", (d) => {
-            return "black"
-            // return (d.frequency) > 140? "white":"black"
-        })
-        .attr("font-size", "0.8rem")
+        .attr("fill", "black")
+        .attr("font-size", "1rem")
+        // .attr("font-weight", "bold")   
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "middle")
         .attr("pointer-events", "none")
 
+        
+        if(group_name === "Pressures"){
+            
+            const icons = group.select("g.label-group").selectAll(null)
+            .data(RectwithVar)
+            .enter()
+            .append("image")
+            .attr("xlink:href", function(d: tRectObject) {
+                if (d.factor_type === "social") {
+                    return "/social.svg"; // path to the first type of icon
+                } else {
+                    return "/ecological.svg"; // path to the second type of icon
+                }
+            })
+            .attr("x", function(d: tRectObject) {
+                const textWidth = d.variable_name.length * charWidth;
+                return (d.x + d.width/2) - iconWidth/2 + textWidth/2.5 ; // position icon right after the text
+            })
+            .attr("y", function(d: tRectObject) {
+                return d.y + (rectheight / 2) - 15; // vertically center icon in the rectangle
+            })
+            .attr("width", 24) // icon width
+            .attr("height", 24) // icon height
+            .attr("pointer-events", "none")
+        }
+        
+        
 
         // const updatedData = addPropertiesToVariables(data); //add frequency properties to each variable
 
@@ -657,10 +710,11 @@ function combineData(
       const [x, y, width, height, variable_name] = rect;
       const variable = vars.variable_mentions[variable_name];
       const mentions = variable?.mentions || [];
+      const factor_type = variable?.factor_type;
       const frequency = mentions.length; 
   
       return {
-        x, y, width, height, variable_name, mentions, frequency
+        x, y, width, height, variable_name, mentions,factor_type, frequency
       };
     });
   }

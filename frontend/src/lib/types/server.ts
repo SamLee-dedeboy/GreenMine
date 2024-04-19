@@ -8,6 +8,9 @@ export type tServerData = {
     impact_nodes: tVariableType
     response_nodes: tVariableType
     links: tLink[]
-
-
+    driver_defs:any
+    pressure_defs:any
+    state_defs:any
+    impact_defs:any
+    response_defs:any
 }
