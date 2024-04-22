@@ -97,9 +97,16 @@ export const varbox = {
         let regionWidth = this.width/3.5;
         let regionHeight = this.height/6;
         const bboxes = radialBboxes(Constants.groupname,this.width,this.height,{width: regionWidth, height: regionHeight})
+        const bboxes_sizes = {
+            [Constants.groupname[0]]: [0.25*this.width, 0.2*this.height],
+            [Constants.groupname[1]]: [0.3*this.width, 0.2*this.height],
+            [Constants.groupname[2]]: [0.3*this.width, 0.2*this.height],
+            [Constants.groupname[3]]: [0.4*this.width, 0.2*this.height],
+            [Constants.groupname[4]]: [0.2*this.width, 0.2*this.height],
+        }
         // console.log(bboxes)
         for (let i = 0; i < 5; i++) {
-            this.drawvars(variables[i],Constants.groupclass[i],Constants.groupname[i],bboxes[Constants.groupname[i]],regionWidth,regionHeight)
+            this.drawvars(variables[i],Constants.groupclass[i],Constants.groupname[i],bboxes[Constants.groupname[i]],bboxes_sizes[Constants.groupname[i]][0],bboxes_sizes[Constants.groupname[i]][1])
         }
         const svg = d3.select("#"+this.svgId)
         const mergedData = new_links.map(link => {
