@@ -1,3 +1,6 @@
+export type tDPSIR = {
+  [key: string]: tVariableType
+}
 export type tVariableType = {
   variable_type: string;
   variable_mentions: { [key: string]: tVariable}
@@ -29,7 +32,7 @@ export type tLink = {
 }
 
 // for links after reformatting
-export type tNewLink = {
+export type tVisLink = {
   frequency: number;
   mentions: tMention[];
   source: VariableInfo;

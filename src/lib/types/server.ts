@@ -1,16 +1,22 @@
-import type { tTranscript, tVariableType, tLink } from "."
+import type { tTranscript, tVariableType, tDPSIR, tLink } from "."
 
 export type tServerData = {
     interviews: tTranscript[]
-    driver_nodes: tVariableType
-    pressure_nodes: tVariableType
-    state_nodes: tVariableType
-    impact_nodes: tVariableType
-    response_nodes: tVariableType
+    nodes: tDPSIR,
     links: tLink[]
-    driver_defs:any
-    pressure_defs:any
-    state_defs:any
-    impact_defs:any
-    response_defs:any
+    metadata: tMetadata
+}
+
+export type tVarTypeDef = {
+    [key: string]: {
+        definition: string;
+        factor_type: string;
+    }
+}
+export type tMetadata = {
+    driver: tVarTypeDef
+    pressure: tVarTypeDef
+    state: tVarTypeDef
+    impact: tVarTypeDef
+    response: tVarTypeDef
 }

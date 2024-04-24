@@ -1,33 +1,32 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import InterviewViewer from "lib/InterviewViewer.svelte";
-  import Summaryview from "lib/components/ScatterSummary.svelte";
+  import InterviewViewer from "lib/views/InterviewViewer.svelte";
+  import SummaryView from "lib/components/ScatterSumMary.svelte";
   import type {
     tMention,
     tVariableType,
     tTranscript,
     tLink,
+    tVisLink,
     tServerData,
     tVariable,
     tChunk,
+    tDPSIR,
+    tVarTypeDef,
   } from "lib/types";
-  import Varbox from "lib/Varbox.svelte";
+  import Varbox from "lib/views/Varbox.svelte";
   import BrowserBlockingPage from "lib/views/BrowserBlockingPage.svelte";
+  import * as utils from "lib/utils";
 
-  // const server_address = "http://localhost:5000";
-  export const server_address = "http://infovis.cs.ucdavis.edu/lyudao/api";
+  const server_address = "http://localhost:5000";
+  // export const server_address = "http://infovis.cs.ucdavis.edu/lyudao/api";
 
   let interview_data: tTranscript[];
   let interview_viewer_component;
-  let varbox;
-  let drivers: tVariableType;
-  let pressures: tVariableType;
-  let states: tVariableType;
-  let impacts: tVariableType;
-  let responses: tVariableType;
-  let links: tLink[];
+  let dataset: tServerData;
+  let var_data: tDPSIR = {};
+  let vis_links: tVisLink[];
   let summary_interviews: tChunk[] | undefined = undefined;
-  let new_d: any;
   let data_loading: boolean = true;
 
   let fetch_success = false;
@@ -47,45 +46,18 @@
     fetch(`${server_address}/data/`)
       .then((res) => res.json())
       .then((res: tServerData) => {
-        // console.log({ res });
+        console.log({ res });
+        dataset = res;
         interview_data = res.interviews;
-        links = res.links;
         data_loading = false;
-        // new_d = res.driver_types;
-        // console.log({ new_d });
         // Process each group of variables to add factor_type
-        drivers = integrateTypes(res.driver_nodes, res.driver_defs);
-        pressures = integrateTypes(res.pressure_nodes, res.pressure_defs);
-        states = integrateTypes(res.state_nodes, res.state_defs);
-        impacts = integrateTypes(res.impact_nodes, res.impact_defs);
-        responses = integrateTypes(res.response_nodes, res.response_defs);
-        console.log({ drivers, pressures, states, impacts, responses });
+        Object.keys(res.nodes).forEach((varType: string) => {
+          const nodes: tVariableType = res.nodes[varType];
+          const defs: tVarTypeDef = res.metadata[varType];
+          var_data[varType] = utils.integrateTypes(nodes, defs);
+        });
+        vis_links = utils.link_to_vis_link(res.links);
       });
-  }
-
-  function integrateTypes(
-    variableTypeData: tVariableType,
-    defsData: { [key: string]: { definition: string; factor_type: string } }
-  ): tVariableType {
-    const variable_mentions = Object.keys(
-      variableTypeData.variable_mentions
-    ).reduce(
-      (acc, key) => {
-        const variable = variableTypeData.variable_mentions[key];
-        acc[key] = {
-          ...variable,
-          definition: defsData[key]?.definition || "unknown", // Merge definition into each variable
-          factor_type: defsData[key]?.factor_type || "unknown", // Merge factor type into each variable
-        };
-        return acc;
-      },
-      {} as { [key: string]: tVariable }
-    );
-
-    return {
-      variable_type: variableTypeData.variable_type,
-      variable_mentions,
-    };
   }
 
   function handleVarOrLinkSelected(e) {
@@ -150,22 +122,16 @@
             <div>Data Loading...</div>
           {:else}
             <Varbox
-              bind:this={varbox}
-              {drivers}
-              {pressures}
-              {states}
-              {impacts}
-              {responses}
-              {links}
+              data={var_data}
+              links={vis_links}
               on:var-selected={handleVarOrLinkSelected}
-              {interview_data}
             ></Varbox>
           {/if}
         </div>
       </div>
       <div class="h-full w-full basis-[30%] flex flex-col">
         <div class="gap-y-1">
-          <Summaryview {summary_interviews} id="statistics" />
+          <SummaryView {summary_interviews} id="statistics" />
         </div>
         <div class="interview-viewer-container w-full grow relative">
           {#if data_loading}
@@ -182,10 +148,7 @@
   {/if}
 </main>
 
-<style>
-  .shadow {
-    box-shadow: 0 0 2px gray;
-  }
+<style lang="postcss">
   .title {
     text-transform: uppercase;
     filter: blur(0.001em);

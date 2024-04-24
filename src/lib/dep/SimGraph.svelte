@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { simgraph } from "./SimGraph";
-  import Legend from "./Legend.svelte";
+  import { simgraph } from "../renderers/SimGraph";
+  import Legend from "../Legend.svelte";
   import * as d3 from "d3";
   import { createEventDispatcher } from "svelte";
-  import { categoricalColors, emotionColorScale } from "./constants/Colors";
+  import { categoricalColors, emotionColorScale } from "../constants/Colors";
   const dispatch = createEventDispatcher();
 
   export let topic_data;

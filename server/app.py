@@ -53,21 +53,47 @@ def get_data():
     impact_nodes = json.load(open(relative_path(dirname, 'data/v2/nodes/Impacts_nodes.json')))
     response_nodes = json.load(open(relative_path(dirname, 'data/v2/nodes/Responses_nodes.json')))
     links = json.load(open(relative_path(dirname, 'data/v2/nodes/connections.json')))
+
+    # clean up data keys
+    # nodes
+    driver_nodes = clean_up_nodes(driver_nodes)
+    pressure_nodes = clean_up_nodes(pressure_nodes)
+    state_nodes = clean_up_nodes(state_nodes)
+    impact_nodes = clean_up_nodes(impact_nodes)
+    response_nodes = clean_up_nodes(response_nodes)
+    # links
+    for index, link in enumerate(links):
+        if link['indicator1'].endswith('s'):
+            link['indicator1'] = link['indicator1'][:-1]
+        if link['indicator2'].endswith('s'):
+            link['indicator2'] = link['indicator2'][:-1]
+        links[index] = link
+
     # preprocessing type firt 
 
     interview_data = process_interview(glob.glob(relative_path(dirname, 'data/v2/chunk/chunk_summaries_w_ktte/*.json')))
 
     return {
         "interviews": interview_data,
-        "driver_nodes": driver_nodes,
-        "pressure_nodes": pressure_nodes,
-        "state_nodes": state_nodes,
-        "impact_nodes": impact_nodes,
-        "response_nodes": response_nodes,
+        "nodes": {
+            "driver": driver_nodes,
+            "pressure": pressure_nodes,
+            "state": state_nodes,
+            "impact": impact_nodes,
+            "response": response_nodes
+        },
+        "metadata": {
+            "driver": driver_defs,
+            "pressure": pressure_defs,
+            "state": state_defs,
+            "impact": impact_defs,
+            "response": response_defs
+        },
         "links": links,
-        "driver_defs":driver_defs,
-        "pressure_defs":pressure_defs,
-        "state_defs":state_defs,
-        "impact_defs":impact_defs,
-        "response_defs":response_defs
     }
+
+def clean_up_nodes(node):
+    if node['variable_type'].endswith('s'):
+        node['variable_type'] = node['variable_type'][:-1]
+    node['variable_type'] = node['variable_type'].lower()
+    return node
