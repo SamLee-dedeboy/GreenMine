@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
   import { DPSIR } from "lib/renderers/DPSIR";
+  import Curation from "lib/components/Curation.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   import type {
@@ -42,6 +43,9 @@
 </script>
 
 <div bind:this={container} class="container w-full h-full relative">
+  <div class="absolute right-0 top-1">
+    <Curation />
+  </div>
   <svg id={svgId} class="varbox-svg w-full h-full">
     <defs></defs>
   </svg>
@@ -51,6 +55,7 @@
   .varbox-svg {
     & .link-highlight {
       opacity: 0.6;
+      filter: drop-shadow(2px 3px 2px rgba(0, 0, 0, 0.3));
     }
     & .link-not-highlight {
       opacity: 0.05;
@@ -77,6 +82,9 @@
     }
     & .box-label-not-highlight {
       opacity: 0.5;
+    }
+    & .bbox-label-hover {
+      opacity: 0.2;
     }
   }
 </style>

@@ -356,6 +356,25 @@ export const DPSIR = {
             .attr("opacity", "0") //do not show the bounding box
             .attr("rx", "5")
 
+        group.select("g.box-group").append("rect")
+            .attr("class", "bbox-label-container")
+            .attr("x", bbox_center[0] - (var_type_name.length+1) * 25 / 2)
+            .attr("y", bbox_center[1] - bboxHeight / 2 - 38)
+            .attr("width", (var_type_name.length+1) * 25)
+            .attr("height", 45)
+            .attr("fill", varTypeColorScale(var_type_name))
+            .attr("rx", "0.5%")
+            .attr("opacity", 0)
+            .attr("cursor", "pointer")
+            .on("mouseover", function () {
+                d3.select(this).classed("bbox-label-hover", true)
+            })
+            .on("mouseout", function () {
+                d3.select(this).classed("bbox-label-hover", false)
+            })
+            .on("click", function (e) {
+                console.log("click on bbox")
+            })
         group.select("g.box-group").append("text")
             .attr("class", "bbox-label")
             .attr("x", bbox_center[0])
@@ -366,6 +385,7 @@ export const DPSIR = {
             .attr("text-transform", "capitalize")
             .attr("pointer-events", "none")
             .attr("font-family", "serif")
+            // .attr("font-family", "Montserrat Alternate")
             .attr("font-style", "italic")
             .attr("font-size", "3rem")
             .attr("font-weight", "bold")

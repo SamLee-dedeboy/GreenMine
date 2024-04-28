@@ -14,7 +14,7 @@
     tDPSIR,
     tVarTypeDef,
   } from "lib/types";
-  import Varbox from "lib/views/Varbox.svelte";
+  import DPSIR from "lib/views/DPSIR.svelte";
   import BrowserBlockingPage from "lib/views/BrowserBlockingPage.svelte";
   import * as utils from "lib/utils";
 
@@ -121,11 +121,11 @@
           {#if data_loading}
             <div>Data Loading...</div>
           {:else}
-            <Varbox
+            <DPSIR
               data={var_data}
               links={vis_links}
               on:var-selected={handleVarOrLinkSelected}
-            ></Varbox>
+            ></DPSIR>
           {/if}
         </div>
       </div>
