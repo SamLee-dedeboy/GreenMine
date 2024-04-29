@@ -27,6 +27,7 @@
     update_vars(data, links);
   });
 
+  $: update_vars(data, links);
   async function update_vars(vars: tDPSIR, links: tVisLink[]) {
     await tick();
     console.log(vars, links);

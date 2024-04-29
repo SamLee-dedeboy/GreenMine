@@ -9,7 +9,7 @@ def multithread_prompts(client, prompts, model="gpt-3.5-turbo-0125", response_fo
     l = len(prompts)
     # results = np.zeros(l)
     with tqdm(total=l) as pbar:
-        executor = concurrent.futures.ThreadPoolExecutor(max_workers=len(prompts))
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=100)
         futures = [executor.submit(request_chatgpt_gpt4, client, prompt, model, response_format) for prompt in prompts]
         for _ in concurrent.futures.as_completed(futures):
             pbar.update(1)
@@ -54,14 +54,17 @@ def var_extraction(client, file_path, chunks, var_name, var_definition):
         interviewee_messages_str = "\n".join(interviewee_messages)
         node_extraction_prompts.append(prompts.node_extraction_prompt_factory(interviewee_messages_str, var_name, var_definition))
     # node_extraction_prompts = node_extraction_prompts[:10]
-    responses = multithread_prompts(client, node_extraction_prompts, format="json")
+    responses = multithread_prompts(client, node_extraction_prompts, response_format="json")
     mentioned_responses = [json.loads(res)['mentioned'] for res in responses]
     mentioned_chunks = [chunk for chunk, mentioned in zip(chunks, mentioned_responses) if mentioned == "yes"]
+
+    # evidence extraction
     evidence_prompts = []
     for chunk in mentioned_chunks:
+        interviewee_messages = [message['content'] for message in chunk['conversation'] if str(message['speaker']) == "0"]
         evidence_prompts.append(prompts.mention_extraction_prompt_factory(interviewee_messages, var_name, var_definition))
-    # TODO: add evidence extraction
-    responses = multithread_prompts(client, evidence_prompts, format="json")
+    # evidence_prompts = evidence_prompts[:10]
+    responses = multithread_prompts(client, evidence_prompts, response_format="json")
     evidence_response = [json.loads(res)['mentions'] for res in responses] 
     final_mentions = []
     for chunk, evidence in zip(mentioned_chunks, evidence_response):
@@ -71,7 +74,10 @@ def var_extraction(client, file_path, chunks, var_name, var_definition):
             "conversation_ids": evidence,
         })
     var_type_nodes = json.load(open(file_path))
-    var_type_nodes['variable_mentions'][var_name] = final_mentions
+    var_type_nodes['variable_mentions'][var_name] = {
+        "variable_name": var_name,
+        "mentions": final_mentions
+    }
     save_json(var_type_nodes, file_path)
 
 import json

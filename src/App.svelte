@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, setContext } from "svelte";
   import InterviewViewer from "lib/views/InterviewViewer.svelte";
-  import SummaryView from "lib/components/ScatterSumMary.svelte";
+  import SummaryView from "lib/components/ScatterSummary.svelte";
   import type {
     tMention,
     tVariableType,
@@ -17,9 +17,7 @@
   import DPSIR from "lib/views/DPSIR.svelte";
   import BrowserBlockingPage from "lib/views/BrowserBlockingPage.svelte";
   import * as utils from "lib/utils";
-
-  const server_address = "http://localhost:5000";
-  // export const server_address = "http://infovis.cs.ucdavis.edu/lyudao/api";
+  import { server_address } from "lib/constants";
 
   let interview_data: tTranscript[];
   let interview_viewer_component;
@@ -56,6 +54,8 @@
           const defs: tVarTypeDef = res.metadata[varType];
           var_data[varType] = utils.integrateTypes(nodes, defs);
         });
+        var_data = var_data;
+        console.log({ var_data });
         vis_links = utils.link_to_vis_link(res.links);
       });
   }
@@ -101,6 +101,8 @@
       summary_interviews = enhanceChunks(chunks);
     }
   }
+
+  setContext("fetchData", fetchData);
 </script>
 
 <main class="h-full px-1">

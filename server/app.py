@@ -15,9 +15,9 @@ app = Flask(__name__)
 CORS(app)
 dirname = os.path.dirname(__file__)
 relative_path = lambda dirname, filename: os.path.join(dirname, filename)
-node_data_path = relative_path(dirname, 'data/v2/nodes/')
-chunk_data_path = relative_path(dirname, 'data/v2/chunk/')
-metadata_path = relative_path(dirname, 'data/v2/variable_definitions/')
+node_data_path = relative_path(dirname, 'data/v2/tmp/nodes/')
+chunk_data_path = relative_path(dirname, 'data/v2/tmp/chunk/')
+metadata_path = relative_path(dirname, 'data/v2/tmp/variable_definitions/')
 
 # openai
 openai_api_key = open(relative_path(dirname, "openai_api_key")).read()
@@ -62,9 +62,10 @@ def var_extraction():
     var_name = request.json['var_name']
     var_definition = request.json['var_definition']
     factor_type = request.json['factor_type']
-    DataUtils.local.add_variable(metadata_path + f'{var_type}_variable_def.json', var_name, var_definition, factor_type)
-    GPTUtils.var_extraction(openai_client, node_data_path + f'{var_type}_nodes.json', var_type, var_name, var_definition)
-    return
+    chunks = collect_chunks(glob.glob(chunk_data_path + f'chunk_summaries_w_ktte/*.json'))
+    DataUtils.local.add_variable(metadata_path + f'{var_type}_variables_def.json', var_name, var_definition, factor_type)
+    GPTUtils.var_extraction(openai_client, node_data_path + f'{var_type}_nodes.json', chunks, var_name, var_definition)
+    return "success"
 
 def clean_up_nodes(node):
     if node['variable_type'].endswith('s'):
@@ -94,3 +95,11 @@ def process_interview(filepaths):
             }
         )
     return interviews
+
+def collect_chunks(filepaths):
+    interviews = process_interview(filepaths)
+    chunks = []
+    for interview in interviews:
+        for chunk in interview['data']:
+            chunks.append(chunk)
+    return chunks

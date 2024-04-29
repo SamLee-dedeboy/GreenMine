@@ -1,10 +1,13 @@
 <script lang="ts">
   import { createDialog, melt } from "@melt-ui/svelte";
   import { createEventDispatcher } from "svelte";
+  import { server_address } from "lib/constants";
   const dispatch = createEventDispatcher();
   import { fade } from "svelte/transition";
   import Selection from "lib/components/Selection.svelte";
   import * as Constants from "lib/constants";
+  import { getContext } from "svelte";
+  const fetchData: any = getContext("fetchData");
   let var_type: string | undefined;
   let var_name: string | undefined;
   let var_definition: string | undefined;
@@ -14,6 +17,22 @@
   function handleExtract(e) {
     e.preventDefault();
     console.log({ var_type, var_name, var_definition, factor_type });
+    // fetch data from backend
+    fetch(server_address + "/var_extraction/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        var_type,
+        var_name,
+        var_definition,
+        factor_type,
+      }),
+    }).then((res) => {
+      console.log({ res });
+      fetchData();
+    });
   }
 
   const {
