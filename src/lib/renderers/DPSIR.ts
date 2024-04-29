@@ -3,6 +3,7 @@ import * as d3 from 'd3';
 // import { scale } from 'svelte/transition';
 import type { tVariable, tVariableType, tMention, tDPSIR, tRectangle, tRectObject, tLinkObject, tVisLink } from '../types/variables';
 import * as Constants from "../constants"
+import type { tVarTypeDef } from 'lib/types';
 // import socialIcon from '../../public/social.svg';
 const width = 1300;
 const height = 1000;
@@ -46,8 +47,9 @@ export const DPSIR = {
             const var_type_region = svg.append("g")
                 .attr("class", `${var_type_name}_region`)
                 .attr("transform", `translate(${padding.left}, ${padding.top})`)
-            var_type_region.append("g").attr("class", "box-group")
-            var_type_region.append("g").attr("class", "label-group")
+            var_type_region.append("g").attr("class", "bbox-group")
+            var_type_region.append("g").attr("class", "tag-group")
+            // var_type_region.append("g").attr("class", "label-group")
         })
     },
 
@@ -343,7 +345,7 @@ export const DPSIR = {
 
     drawBbox(var_type_name: string, bbox_center: number[], bboxWidth: number, bboxHeight: number, varTypeColorScale: any) {
         const group = d3.select("#" + this.svgId).select(`.${var_type_name}_region`)
-        group.select("g.box-group").append("rect")
+        group.select("g.bbox-group").append("rect")
             .attr("class", "bbox")
             .attr("id", var_type_name)
             .attr("x", bbox_center[0] - bboxWidth / 2)
@@ -356,7 +358,7 @@ export const DPSIR = {
             .attr("opacity", "0") //do not show the bounding box
             .attr("rx", "5")
 
-        group.select("g.box-group").append("rect")
+        group.select("g.bbox-group").append("rect")
             .attr("class", "bbox-label-container")
             .attr("x", bbox_center[0] - (var_type_name.length+1) * 25 / 2)
             .attr("y", bbox_center[1] - bboxHeight / 2 - 38)
@@ -375,7 +377,7 @@ export const DPSIR = {
             .on("click", function (e) {
                 console.log("click on bbox")
             })
-        group.select("g.box-group").append("text")
+        group.select("g.bbox-group").append("text")
             .attr("class", "bbox-label")
             .attr("x", bbox_center[0])
             .attr("y", bbox_center[1] - bboxHeight / 2 - 10)
@@ -393,7 +395,7 @@ export const DPSIR = {
             .attr("fill", varTypeColorScale(var_type_name))
             .attr("opacity", "0.8")
 
-        group.select("g.box-group").append("image")
+        group.select("g.bbox-group").append("image")
             .attr("xlink:href", function () {
                 return var_type_name === "driver" ? "social.svg" : (var_type_name === "pressure" ? "" : "ecological.svg")
             })
@@ -408,130 +410,150 @@ export const DPSIR = {
         const self = this
         const group = d3.select("#" + this.svgId).select(`.${var_type_name}_region`)
         console.log({rectWithVar})
-        group.select("g.box-group").selectAll("rect.box")
+        group.select("g.tag-group").selectAll("g.tag")
             .data(rectWithVar)
-            .join("rect")
-            .attr("class", "box")
-            .attr("id", (d: tRectObject) => d.variable_name)
-            .attr("x", (d: tRectObject) => d.x)
-            .attr("y", (d: tRectObject) => d.y)
-            .attr("width", (d: tRectObject) => d.width) 
-            .attr("height", d => d.height)
-            .attr("stroke", "#cdcdcd")
-            .attr("stroke-width", "1px")
-            .attr("rx", "5")
-            .attr("fill", function (d: tRectObject) {
-                if (d.frequency !== 0) {
-                    return scaleVarColor(d.frequency);
-                } else {
-                    return "#cdcdcd";
+            .join("g")
+            .attr("class", "tag")
+            .each(function (d: tRectObject) {
+                const tag = d3.select(this)
+                tag.selectAll("*").remove();
+                tag.append("rect")
+                    .attr("class", "box")
+                    .attr("id", d.variable_name)
+                    .attr("x", d.x)
+                    .attr("y", d.y)
+                    .attr("width", d.width) 
+                    .attr("height", d.height)
+                    .attr("stroke", "#cdcdcd")
+                    .attr("stroke-width", "1px")
+                    .attr("rx", "5")
+                    .attr("fill", d.frequency !== 0 ? scaleVarColor(d.frequency) : "#cdcdcd")
+                    .attr("opacity", "0.8")
+                    .attr("cursor", "pointer")
+                    .on("mouseover", function () {
+                        d3.select(this).classed("box-hover", true);
+                        d3.select(this.parentNode).raise()
+                        d3.select(this.parentNode).select(".tooltip").attr("opacity", 1)
+                    })
+                    .on("mouseout", function () {
+                        d3.select(this).classed("box-hover", false)
+                        d3.select(this.parentNode).select(".tooltip").attr("opacity", 0)
+                    })
+                    .on("click", function (e) {
+                        e.preventDefault()
+                        d3.selectAll("rect.box")
+                            .transition()
+                            .duration(250)
+                            .attr("transform", ""); // Reset transformation on all boxes to remove any previous magnification
+
+                        const rects = d3.selectAll("rect.box")
+                            .classed("box-highlight", false)
+                            .classed("box-not-highlight", true).raise()
+                        const labels = d3.selectAll("text.label")
+                            .classed("box-label-highlight", false)
+                            .classed("box-label-not-highlight", true)
+
+                        // style changing after select a variable, including the links and labels
+                        if (self.clicked_rect === d) {
+                            self.clicked_rect = null
+                            self.handlers.VarOrLinkSelected(null)
+                            d3.selectAll(".link")
+                                .classed("link-highlight", false)
+                                .classed("link-not-highlight", false)
+                            rects.classed("box-highlight", false).classed("box-not-highlight", false)
+                            labels.classed("box-label-highlight", false).classed("box-label-not-highlight", false)
+                        } else {
+                            self.clicked_rect = d
+
+                            self.handlers.VarOrLinkSelected(d)
+                            d3.select(this).classed("box-highlight", true).classed("box-not-highlight", false).raise()
+                                .transition()
+                                .duration(250)
+                            // .attr("transform", function() {
+                            //     const bbox = this.getBBox(); // Get bounding box of the element, which gives you its height, width, and position
+                            //     const scale = 1.2; // Define your scale factor
+                            //     // Calculate the center of the box
+                            //     const centerX = bbox.x + bbox.width / 2;
+                            //     const centerY = bbox.y + bbox.height / 2;
+                            //     // Scale about the center of the box
+                            //     return `translate(${centerX * (1 - scale)}, ${centerY * (1 - scale)}) scale(${scale})`;
+                            // });
+                            labels.filter((label_data: tRectObject) => d.variable_name === label_data.variable_name).classed("box-label-highlight", true).classed("box-label-not-highlight", false).raise()
+
+                            d3.selectAll(".link")
+                                .classed("link-highlight", false)
+                                .classed("link-not-highlight", true)
+                                .attr("stroke", "gray")
+                                .attr("marker-end", "")
+                                .filter((link_data: tLinkObject) => link_data.source.var_name === d.variable_name || link_data.target.var_name === d.variable_name)
+                                .classed("link-highlight", true)
+                                .classed("link-not-highlight", false).raise()
+                                .attr("stroke", (link_data: tLinkObject) => {
+                                    const svg = d3.select("#" + self.svgId)
+                                    return createOrUpdateGradient(svg, link_data, self);
+                                })
+                                .attr("marker-end", (d: tLinkObject) => {
+                                    const svg = d3.select("#" + self.svgId)
+                                    return createArrow(svg, d, self)
+                                });
+                        }
+                    })
+                
+                const tagWidth = d.width * 0.7
+                tag.append("text")
+                    .attr("class", "label")
+                    .text(d.variable_name)
+                    .attr("class", "label")
+                    .attr("x", d.x + d.width / 2) // slightly move text to the left within the rectangle
+                    .attr("y", d.y + d.height / 2)
+                    .attr("fill", "black")
+                    .attr("font-size", "1rem")
+                    // .attr("font-weight", "bold")   
+                    .attr("text-anchor", "middle")
+                    .attr("dominant-baseline", "middle")
+                    .attr("pointer-events", "none")
+                    .call(wrap, tagWidth)
+                
+                const icon_size = 20
+                if (var_type_name === "pressure") {
+                    tag.append("image")
+                        .attr("xlink:href", d.factor_type === "social" ? "social.svg" : "ecological.svg")
+                        .attr("x", d.x + d.width - icon_size)
+                        .attr("y", d.y)
+                        .attr("width", icon_size) // icon width
+                        .attr("height", icon_size) // icon height
+                        .attr("pointer-events", "none")
                 }
-            })
-            .attr("opacity", "0.8")
-            .attr("cursor", "pointer")
-            .on("mouseover", function () {
-                d3.select(this).raise().classed("box-hover", true);
-            })
-            .on("mouseout", function () {
-                d3.select(this).classed("box-hover", false)
-            })
-            .on("click", function (e, d: tRectObject) {
-                e.preventDefault()
 
-                d3.selectAll("rect.box")
-                    .transition()
-                    .duration(250)
-                    .attr("transform", ""); // Reset transformation on all boxes to remove any previous magnification
-
-                const rects = d3.selectAll("rect.box")
-                    .classed("box-highlight", false)
-                    .classed("box-not-highlight", true).raise()
-                const labels = d3.selectAll("text.label")
-                    .classed("box-label-highlight", false)
-                    .classed("box-label-not-highlight", true)
-
-                // style changing after select a variable, including the links and labels
-                if (self.clicked_rect === d) {
-                    self.clicked_rect = null
-                    self.handlers.VarOrLinkSelected(null)
-                    d3.selectAll(".link")
-                        .classed("link-highlight", false)
-                        .classed("link-not-highlight", false)
-                    rects.classed("box-highlight", false).classed("box-not-highlight", false)
-                    labels.classed("box-label-highlight", false).classed("box-label-not-highlight", false)
-                } else {
-                    self.clicked_rect = d
-
-                    self.handlers.VarOrLinkSelected(d)
-                    d3.select(this).classed("box-highlight", true).classed("box-not-highlight", false).raise()
-                        .transition()
-                        .duration(250)
-                    // .attr("transform", function() {
-                    //     const bbox = this.getBBox(); // Get bounding box of the element, which gives you its height, width, and position
-                    //     const scale = 1.2; // Define your scale factor
-                    //     // Calculate the center of the box
-                    //     const centerX = bbox.x + bbox.width / 2;
-                    //     const centerY = bbox.y + bbox.height / 2;
-                    //     // Scale about the center of the box
-                    //     return `translate(${centerX * (1 - scale)}, ${centerY * (1 - scale)}) scale(${scale})`;
-                    // });
-                    labels.filter((label_data: tRectObject) => d.variable_name === label_data.variable_name).classed("box-label-highlight", true).classed("box-label-not-highlight", false).raise()
-
-                    d3.selectAll(".link")
-                        .classed("link-highlight", false)
-                        .classed("link-not-highlight", true)
-                        .attr("stroke", "gray")
-                        .attr("marker-end", "")
-                        .filter((link_data: tLinkObject) => link_data.source.var_name === d.variable_name || link_data.target.var_name === d.variable_name)
-                        .classed("link-highlight", true)
-                        .classed("link-not-highlight", false).raise()
-                        .attr("stroke", (link_data: tLinkObject) => {
-                            const svg = d3.select("#" + self.svgId)
-                            return createOrUpdateGradient(svg, link_data, self);
-                        })
-                        .attr("marker-end", (d: tLinkObject) => {
-                            const svg = d3.select("#" + self.svgId)
-                            return createArrow(svg, d, self)
-                        });
-                }
+                // tooltip
+                const charWidth = 10;
+                const charHeight = 25;
+                const tooltip_width = d.width * 1.5
+                const tooltip_height = (Math.round(d.definition.length * charWidth / tooltip_width) + 1) * charHeight
+                const tooltip = tag.append("g").attr("class", "tooltip").attr("opacity", 0).attr("pointer-events", "none")
+                tooltip.append("rect")
+                    .attr("class", "tooltip-box")
+                    .attr("x", d.x + d.width)
+                    .attr("y", d.y)
+                    .attr("width", tooltip_width)
+                    .attr("height", tooltip_height)
+                    .attr("fill", "white")
+                    .attr("stroke", "black")
+                    .attr("stroke-width", 1)
+                    .attr("rx", 5)
+                tooltip.append("text")
+                    .attr("class", "tooltip-text")
+                    .attr("x", d.x + d.width + tooltip_width/2)
+                    .attr("y", d.y + tooltip_height/2)
+                    .text(d.definition)
+                    .attr("font-size", "0.8rem")
+                    .attr("fill", "black")
+                    .attr("pointer-events", "none")
+                    .attr("text-anchor", "middle")
+                    .attr("dominant-baseline", "middle")
+                    .call(wrap, tooltip_width - 10)
             })
 
-        const tagWidth = rectWithVar[0].width * 0.7
-        const texts = group.select("g.label-group").selectAll("text.label")
-            .data(rectWithVar)
-            .join("text")
-            .text((d: tRectObject) => d.variable_name)
-            .attr("class", "label")
-            // .attr("x", (d: tRectObject) => d.x+ d.width/2 ) 
-            .attr("x", (d: tRectObject) => d.x + d.width / 2) // slightly move text to the left within the rectangle
-            .attr("y", (d: tRectObject) => d.y + d.height / 2)
-            .attr("fill", "black")
-            .attr("font-size", "1rem")
-            // .attr("font-weight", "bold")   
-            .attr("text-anchor", "middle")
-            .attr("dominant-baseline", "middle")
-            .attr("pointer-events", "none")
-            .call(wrap, tagWidth)
-
-        const icon_size = 20
-        if (var_type_name === "pressure") {
-            const icons = group.select("g.label-group").selectAll(null)
-                .data(rectWithVar)
-                .enter()
-                .append("image")
-                .attr("xlink:href", function (d: tRectObject) {
-                    if (d.factor_type === "social") {
-                        return "social.svg"; // path to the first type of icon
-                    } else {
-                        return "ecological.svg"; // path to the second type of icon
-                    }
-                })
-                .attr("x", (d: tRectObject) => d.x + d.width - icon_size)
-                .attr("y", (d: tRectObject) => d.y)
-                .attr("width", icon_size) // icon width
-                .attr("height", icon_size) // icon height
-                .attr("pointer-events", "none")
-        }
     }
 }
 
@@ -657,9 +679,10 @@ function combineData(
         const variable = vars.variable_mentions[variable_name];
         const mentions = variable?.mentions || [];
         const factor_type = variable?.factor_type;
+        const definition = variable?.definition;
         const frequency = mentions.length;
         return {
-            x, y, width, height, variable_name, mentions, factor_type, frequency
+            x, y, width, height, variable_name, mentions, factor_type, frequency, definition
         };
     });
 }

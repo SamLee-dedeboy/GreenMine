@@ -67,6 +67,7 @@ export type tRectObject = {
   mentions: tMention[];
   factor_type: string;
   frequency: number;
+  definition: string;
 };
 
 //for d3 drawing
