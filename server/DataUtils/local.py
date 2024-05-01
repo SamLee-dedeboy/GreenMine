@@ -10,3 +10,10 @@ def add_variable(file_path, var_name, var_definition, var_type):
     }
     save_json(cur_def, file_path)
     return cur_def
+def all_definitions(file_paths):
+    all_def_dict = {}
+    for file_path in file_paths:
+        defs = json.load(open(file_path, encoding='utf-8'))
+        for k, v in defs.items():
+            all_def_dict[k] = v
+    return all_def_dict

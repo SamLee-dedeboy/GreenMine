@@ -48,6 +48,7 @@ export function integrateTypes(
     variableTypeData: tVariableType,
     defsData: { [key: string]: { definition: string; factor_type: string } }
   ): tVariableType {
+    console.log(variableTypeData, defsData)
     const variable_mentions = Object.keys(
       variableTypeData.variable_mentions
     ).reduce(

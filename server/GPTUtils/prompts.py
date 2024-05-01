@@ -50,3 +50,27 @@ def mention_extraction_prompt_factory(sentences, extracted_var, var_definition):
         }
     ]
     return messages
+
+def find_relationships_chunk_prompts_factory(chunk_content, comb, var1_def, var2_def):
+    messages = [
+                        {
+                            "role": "system",
+                            "content": """You are an expert to find the relationship between {var1}, and {var2}.
+                            Some examples of {var1} are: {var1_def}
+                            Some examples of {var2} are: {var2_def}
+
+                            You are given a conversation between two people: Interviewer and Interviewee. 
+                            Identify and extract any sentences that explicitly or implicitly discuss a relationship between {var1} and {var2}.
+                            If the conversation cannot indicate the relationship, please respond "No".
+                            Please response in JSON format: 
+                            {{"relationship": "Yes" or "No,
+                              "evidence": string[] (Sentences extracted from the chunk_content)
+                            }} 
+                        """.format(var1=comb[0], var1_def=var1_def, var2=comb[1], var2_def=var2_def)
+                        },
+                        {
+                            "role": "user",
+                            "content": chunk_content
+                        }
+                ]
+    return messages

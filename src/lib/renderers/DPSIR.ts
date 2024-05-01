@@ -448,7 +448,7 @@ export const DPSIR = {
 
                         const rects = d3.selectAll("rect.box")
                             .classed("box-highlight", false)
-                            .classed("box-not-highlight", true).raise()
+                            .classed("box-not-highlight", true)
                         const labels = d3.selectAll("text.label")
                             .classed("box-label-highlight", false)
                             .classed("box-label-not-highlight", true)
