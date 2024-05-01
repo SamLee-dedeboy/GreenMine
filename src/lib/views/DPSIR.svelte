@@ -27,8 +27,11 @@
     update_vars(data, links);
   });
 
+  let trigger_times = 0;
   $: update_vars(data, links);
   async function update_vars(vars: tDPSIR, links: tVisLink[]) {
+    trigger_times += 1;
+    if (trigger_times <= 1) return;
     await tick();
     console.log(vars, links);
     DPSIR.update_vars(vars, links);

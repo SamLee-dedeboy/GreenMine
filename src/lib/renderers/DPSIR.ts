@@ -4,12 +4,14 @@ import * as d3 from 'd3';
 import type { tVariable, tVariableType, tMention, tDPSIR, tRectangle, tRectObject, tLinkObject, tVisLink } from '../types/variables';
 import * as Constants from "../constants"
 import type { tVarTypeDef } from 'lib/types';
+import { space } from 'postcss/lib/list';
 // import socialIcon from '../../public/social.svg';
 const width = 1300;
 const height = 1000;
 const padding = { top: 0, right: 20, bottom: 0, left: 50 };
 export const DPSIR = {
     init(svgId: string, handlers: any) {
+        console.log("init")
         this.clicked_rect = null
         this.clicked_link = null
         this.width = width - padding.left - padding.right
@@ -54,6 +56,7 @@ export const DPSIR = {
     },
 
     update_vars(vars: tDPSIR, links: tVisLink[]) {
+        console.log("update vars")
         this.varTypeColorScale = d3
             .scaleOrdinal()
             .domain(Object.keys(vars))
@@ -70,15 +73,16 @@ export const DPSIR = {
         }
 
         Object.keys(vars).forEach((key) => {
+            console.log(bboxes_sizes, key, bboxes_sizes[key][0])
             this.drawVars(vars[key], bboxes[key], bboxes_sizes[key][0], bboxes_sizes[key][1])
         })
-        this.drawLinks(links)
+        this.drawLinks(links, bboxes)
     },
 
     drawVars(vars: tVariableType, box_coor, bboxWidth: number, bboxHeight: number) {
         const var_type_name = vars.variable_type
         // const rectHeight = 35;
-        const rectWidth = 100;
+        const rectWidth = Math.min(100, bboxWidth / 3.5);
         const charWidth = 15;
         const charHeight = 25;
         const rectangles = Object.values(vars.variable_mentions as Record<string, tVariable>)
@@ -94,7 +98,8 @@ export const DPSIR = {
         const self = this;
         const bbox_center = box_coor.center
         const bbox_origin = [bbox_center[0] - bboxWidth / 2, bbox_center[1] - bboxHeight / 2]
-        const rectangleCoordinates = layoutRectangles(bboxWidth, rectangles, bbox_origin);
+        // const rectangleCoordinates = matrixLayout(bboxWidth, rectangles, bbox_origin);
+        const rectangleCoordinates = squareLayout(bboxWidth, rectangles, bbox_origin);  
         const rectWithVar = combineData(vars, rectangleCoordinates); //return as an object
 
         // min and max frequency for each group
@@ -112,7 +117,7 @@ export const DPSIR = {
         this.drawTags(var_type_name, rectWithVar, scaleVarColor)
     },
 
-    drawLinks(links: tVisLink[]) {
+    drawLinks(links: tVisLink[], bboxes: {[key: string]: {center: [number, number]} }) {
         const frequencyList = calculateFrequencyList(links) // includes variables frequency and link frequency among all groups
         const svg = d3.select("#" + this.svgId)
         const mergedData: (tLinkObject | null)[] = links.map(link => {
@@ -189,7 +194,16 @@ export const DPSIR = {
             .attr("d", function (d: tLinkObject, i) {
                 let middleX1
                 let middleY1;
-                if ((d.source.var_type == "driver" && d.target.var_type == "pressure")) {
+                // inner connections
+                if(d.source.var_type === d.target.var_type) {
+                    middleX1 = bboxes[d.source.var_type].center[0]
+                    middleY1 = bboxes[d.source.var_type].center[1]
+                    d.source.newX_source = d.source.x_right;
+                    d.source.newY_source = d.source.y;
+                    d.target.newX_target = d.target.x_left;
+                    d.target.newY_target = d.target.y;
+                } 
+                else if ((d.source.var_type == "driver" && d.target.var_type == "pressure")) {
                     let threshold;
                     threshold = Math.abs((d.source.block_y - d.source.y)) * 3
                     middleX1 = d.source.x + (d.target.x - d.source.x) / 2;
@@ -198,8 +212,8 @@ export const DPSIR = {
                     d.source.newY_source = d.source.y;
                     d.target.newX_target = d.target.x_left;
                     d.target.newY_target = d.target.y;
-                }
-                if ((d.source.var_type == "pressure" && d.target.var_type == "state")) {
+                } 
+                else if ((d.source.var_type == "pressure" && d.target.var_type == "state")) {
                     let threshold;
                     threshold = Math.abs((d.source.block_y - d.source.y))
                     middleX1 = d.target.x + 1 * (d.target.x - d.source.x) / 3
@@ -218,8 +232,8 @@ export const DPSIR = {
                     d.source.newY_source = d.source.y;
                     d.target.newX_target = d.target.x_right;
                     d.target.newY_target = d.target.y;
-                }
-                if ((d.source.var_type == "impact" && d.target.var_type == "response")) {
+                } 
+                else if ((d.source.var_type == "impact" && d.target.var_type == "response")) {
                     let threshold;
                     threshold = Math.abs((d.source.block_y - d.source.y)) * 2
                     middleX1 = d.source.x + (d.target.x - d.source.x) / 1.5;
@@ -557,10 +571,10 @@ export const DPSIR = {
     }
 }
 
-function radialBboxes(groups, width, height, maxBboxSize) {
+function radialBboxes(groups: string[], width: number, height: number, maxBboxSize: {width: number, height: number}) {
     const offset = 234 * Math.PI / 180
     const angleScale = d3.scaleBand().domain(groups).range([offset, offset + Math.PI * 2])
-    let bboxes = {}
+    let bboxes: {[key:string]: {center: [number, number]}} = {}
     const a = width / 2 - maxBboxSize.width / 2
     const b = height / 2.5 - maxBboxSize.height / 2
     groups.forEach((group, index) => {
@@ -575,7 +589,8 @@ function radialBboxes(groups, width, height, maxBboxSize) {
     })
     return bboxes
 }
-function layoutRectangles(regionWidth: number, rectangles: tRectangle[], bbox_origin: number[])
+
+function matrixLayout(regionWidth: number, rectangles: tRectangle[], bbox_origin: number[])
     : [number, number, number, number, string][] {
     let padding = 10;
     let xStart = padding; // Start x-coordinate, will be updated for center alignment
@@ -635,40 +650,65 @@ function layoutRectangles(regionWidth: number, rectangles: tRectangle[], bbox_or
     return rectangleCoordinates;
 }
 
-// function layoutRectangles(regionWidth, bigRectHeight, rowHeight, rectangles, bbox_origin) {
-//         let padding = 10;
-//         let x = padding;
-//         let y = padding;
-//         let row = 0;
-//         let rowWidth = 0;
-
-//         // console.log(rectangles)
-//         const rectangleCoordinates :any[] = [];
-
-//         rectangles.forEach(rect => {
-//             if (x + rect.width + padding> regionWidth) {
-//                 // Move to the next row
-//                 y += rect.height + padding;
-//                 x = padding;
-//                 row++;
-//                 rowWidth = 0;
-//             }
-//             rectangleCoordinates.push([ x, y, rect.width, rect.height,rect.name]);
-
-//             x += rect.width + padding;
-//             rowWidth += rect.width;
-
-//             if (rowWidth > regionWidth) {
-//                 throw new Error('Cannot fit rectangles within the big rectangle.');
-//             }
-//         });
-//         rectangleCoordinates.forEach((coor) => {
-//             coor[0] += bbox_origin[0];
-//             coor[1] += bbox_origin[1];
-//         });
-//         // console.log(rectangleCoordinates)
-//         return rectangleCoordinates
-// }
+// layout should be like this:
+//   ---
+//  -   -
+//  -   -
+//   ---
+function squareLayout(regionWidth: number, rectangles: tRectangle[], bbox_origin: number[]) {
+    console.log({regionWidth, rectangles, bbox_origin})
+    // assuming rectangles has the same width
+    const rect_width = rectangles[0].width
+    const max_rect_per_row = Math.floor(regionWidth / rect_width)
+    const space_between_rectangles = (regionWidth - max_rect_per_row * rect_width) / (max_rect_per_row - 1)
+    // return value
+    let rectangleCoordinates: [number, number, number, number, string][] = []
+    // first row
+    const first_row_rect_number = max_rect_per_row - 2
+    const first_row_offset_left = (regionWidth - (first_row_rect_number * rect_width + (first_row_rect_number - 1) * space_between_rectangles)) / 2
+    console.log({regionWidth, rect_width, max_rect_per_row, space_between_rectangles, first_row_offset_left})
+    for(let i = 0; i < first_row_rect_number; i++) {
+        rectangleCoordinates.push([
+            bbox_origin[0] + first_row_offset_left + i * (rect_width + space_between_rectangles),
+            bbox_origin[1], 
+            rect_width, 
+            rectangles[i].height, 
+            rectangles[i].name
+        ])
+    }
+    // middle rows
+    const middle_row_number = rectangles.length % 2 === 0 ? (rectangles.length - first_row_rect_number*2)/2 : (rectangles.length - first_row_rect_number*2 - 1) / 2
+    let last_row_max_height = Math.max(...rectangles.slice(0, first_row_rect_number).map(rect => rect.height))
+    for(let i = 0; i < middle_row_number; i++) {
+        rectangleCoordinates.push([
+            bbox_origin[0],
+            bbox_origin[1]+ (i+1)*last_row_max_height,
+            rect_width,
+            rectangles[i + first_row_rect_number].height,
+            rectangles[i + first_row_rect_number].name]
+        )
+        rectangleCoordinates.push([
+            bbox_origin[0] + regionWidth - rect_width,
+            bbox_origin[1]+ (i+1)*last_row_max_height,
+            rect_width,
+            rectangles[i + 1 + first_row_rect_number].height,
+            rectangles[i + 1 + first_row_rect_number].name])
+        last_row_max_height = Math.max(last_row_max_height, rectangles[i + first_row_rect_number].height)
+        last_row_max_height = Math.max(last_row_max_height, rectangles[i + 1 + first_row_rect_number].height)
+    }
+    const last_row_y_offset = rectangleCoordinates[rectangleCoordinates.length - 1][1] + last_row_max_height
+    // last row
+    const last_row_rect_number = rectangles.length - first_row_rect_number - middle_row_number*2
+    const last_row_offset_left = (regionWidth - (last_row_rect_number * rect_width + (last_row_rect_number - 1) * space_between_rectangles)) / 2
+    for(let i = 0; i < last_row_rect_number; i++) {
+        rectangleCoordinates.push([
+            bbox_origin[0] + last_row_offset_left + i * (rect_width + space_between_rectangles),
+            last_row_y_offset,
+            rect_width, 
+            rectangles[i + first_row_rect_number + middle_row_number*2].height, rectangles[i + first_row_rect_number + middle_row_number*2].name])
+    }
+    return rectangleCoordinates;
+}
 
 function combineData(
     vars: tVariableType,
@@ -687,26 +727,6 @@ function combineData(
     });
 }
 
-
-//add chunk frequency and node frequency to each variable
-// function addPropertiesToVariables(data) {
-//     Object.keys(data).forEach(objectType => {
-//         const variables = data[objectType].variable_mentions;
-//         Object.keys(variables).forEach(variableName => {
-//             const mentions = variables[variableName].mentions;
-//             const chunkFrequency = mentions.length;
-//             const uniqueNodeIds = new Set();
-//             mentions.forEach(mention => {
-//                 const nodeId = mention.chunk_id.split('_')[0];
-//                 uniqueNodeIds.add(nodeId);
-//             });
-//             const nodeFrequency = uniqueNodeIds.size;
-//             variables[variableName].chunk_frequency = chunkFrequency;
-//             variables[variableName].node_frequency = nodeFrequency;
-//         });
-//     });
-//     return data;
-// }
 
 function createOrUpdateGradient(svg, link_data: tLinkObject, self) {
     const gradientId = `gradient-${link_data.source.var_name}-${link_data.target.var_name}`;
