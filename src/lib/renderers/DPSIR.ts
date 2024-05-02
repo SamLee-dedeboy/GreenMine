@@ -65,10 +65,10 @@ export const DPSIR = {
         const var_type_names = Constants.var_type_names
         const bboxes = radialBboxes(var_type_names, this.width, this.height, { width: 0, height: this.height/10 })
         const bboxes_sizes = {
-            [var_type_names[0]]: [0.3 * this.width, 0.2 * this.height],
-            [var_type_names[1]]: [0.3 * this.width, 0.2 * this.height],
-            [var_type_names[2]]: [0.2 * this.width, 0.2 * this.height],
-            [var_type_names[3]]: [0.4 * this.width, 0.2 * this.height],
+            [var_type_names[0]]: [0.35 * this.width, 0.2 * this.height],
+            [var_type_names[1]]: [0.35 * this.width, 0.2 * this.height],
+            [var_type_names[2]]: [0.3 * this.width, 0.2 * this.height],
+            [var_type_names[3]]: [0.5 * this.width, 0.2 * this.height],
             [var_type_names[4]]: [0.3 * this.width, 0.2 * this.height],
         }
 
@@ -79,11 +79,11 @@ export const DPSIR = {
         this.drawLinks(links, bboxes)
     },
 
-    drawVars(vars: tVariableType, box_coor, bboxWidth: number, bboxHeight: number) {
+    drawVars(vars: tVariableType, box_coor: {center: [number, number]}, bboxWidth: number, bboxHeight: number) {
         const var_type_name = vars.variable_type
         // const rectHeight = 35;
-        const rectWidth = Math.min(100, bboxWidth / 3.5);
         const charWidth = 15;
+        const rectWidth = charWidth * 7;
         const charHeight = 25;
         const rectangles = Object.values(vars.variable_mentions as Record<string, tVariable>)
             .sort((a, b) => b.mentions.length - a.mentions.length) // Sorting in descending order by mentions length
@@ -99,9 +99,10 @@ export const DPSIR = {
         const bbox_center = box_coor.center
         const bbox_origin = [bbox_center[0] - bboxWidth / 2, bbox_center[1] - bboxHeight / 2]
         // const rectangleCoordinates = matrixLayout(bboxWidth, rectangles, bbox_origin);
+        console.log({bboxWidth, rectangles, bbox_origin})
         const rectangleCoordinates = squareLayout(bboxWidth, rectangles, bbox_origin);  
         const rectWithVar = combineData(vars, rectangleCoordinates); //return as an object
-
+        console.log({rectangleCoordinates, rectWithVar})
         // min and max frequency for each group
         let minMentions = Infinity;
         let maxMentions = -Infinity;
@@ -205,7 +206,7 @@ export const DPSIR = {
                 } 
                 else if ((d.source.var_type == "driver" && d.target.var_type == "pressure")) {
                     let threshold;
-                    threshold = Math.abs((d.source.block_y - d.source.y)) * 3
+                    threshold = Math.abs((d.source.block_y - d.source.y)) * 1.5
                     middleX1 = d.source.x + (d.target.x - d.source.x) / 2;
                     middleY1 = d.source.block_y_top - threshold; // Target is top
                     d.source.newX_source = d.source.x_right;
@@ -367,8 +368,8 @@ export const DPSIR = {
             .attr("width", bboxWidth)
             .attr("height", bboxHeight)
             .attr("fill", "none")
-            .attr("stroke", "#cdcdcd")
-            .attr("stroke-width", 1)
+            .attr("stroke", "black")
+            .attr("stroke-width", 2)
             .attr("opacity", "0") //do not show the bounding box
             .attr("rx", "5")
 
@@ -394,7 +395,7 @@ export const DPSIR = {
         group.select("g.bbox-group").append("text")
             .attr("class", "bbox-label")
             .attr("x", bbox_center[0])
-            .attr("y", bbox_center[1] - bboxHeight / 2 - 10)
+            .attr("y", bbox_center[1] - bboxHeight / 2 - 15)
             .attr("text-anchor", "middle")
             .attr("dominant-baseline", "middle")
             .text(var_type_name.charAt(0).toUpperCase() + var_type_name.slice(1) + "s")
@@ -573,14 +574,29 @@ export const DPSIR = {
 
 function radialBboxes(groups: string[], width: number, height: number, maxBboxSize: {width: number, height: number}) {
     const offset = 234 * Math.PI / 180
-    const angleScale = d3.scaleBand().domain(groups).range([offset, offset + Math.PI * 2])
+    // const angleScale = d3.scaleBand().domain(groups).range([offset, offset + Math.PI * 2])
+    // five groups 
+    const angles = [
+        offset - Math.PI * 2 * 1 / 40,
+        offset + Math.PI * 2 * 1 / 5 + Math.PI * 2 * 1 / 40,
+        offset + Math.PI * 2 * 2 / 5.4,
+        offset + Math.PI * 2 * 3 / 5.1 - Math.PI * 2 * 1 / 60,
+        offset + Math.PI * 2 * 4 / 4.85,
+    ]
+    const scaleFactors = [
+        1.05,
+        1.05,
+        0.8,
+        0.8,
+        0.82,
+    ]
     let bboxes: {[key:string]: {center: [number, number]}} = {}
     const a = width / 2 - maxBboxSize.width / 2
     const b = height / 2.5 - maxBboxSize.height / 2
     groups.forEach((group, index) => {
-        const scalefactor = 0.88
-        const angle = angleScale(group)
-        const r = (a * b) / Math.sqrt(Math.pow(b * Math.cos(angle), 2) + Math.pow(a * Math.sin(angle), 2)) * scalefactor
+        // const angle = angleScale(group)
+        const angle = angles[index]
+        const r = (a * b) / Math.sqrt(Math.pow(b * Math.cos(angle), 2) + Math.pow(a * Math.sin(angle), 2)) * scaleFactors[index]
         const x = width / 2 + r * Math.cos(angle)
         const y = height / 2 + r * Math.sin(angle)
         bboxes[group] = {
@@ -661,12 +677,13 @@ function squareLayout(regionWidth: number, rectangles: tRectangle[], bbox_origin
     const rect_width = rectangles[0].width
     const max_rect_per_row = Math.floor(regionWidth / rect_width)
     const space_between_rectangles = (regionWidth - max_rect_per_row * rect_width) / (max_rect_per_row - 1)
+    const y_offset = 20
     // return value
     let rectangleCoordinates: [number, number, number, number, string][] = []
     // first row
-    const first_row_rect_number = max_rect_per_row - 2
+    const first_row_rect_number = Math.max(1, max_rect_per_row - 2)
     const first_row_offset_left = (regionWidth - (first_row_rect_number * rect_width + (first_row_rect_number - 1) * space_between_rectangles)) / 2
-    console.log({regionWidth, rect_width, max_rect_per_row, space_between_rectangles, first_row_offset_left})
+    console.log({rectangles, regionWidth, rect_width, max_rect_per_row, space_between_rectangles, first_row_offset_left})
     for(let i = 0; i < first_row_rect_number; i++) {
         rectangleCoordinates.push([
             bbox_origin[0] + first_row_offset_left + i * (rect_width + space_between_rectangles),
@@ -679,22 +696,23 @@ function squareLayout(regionWidth: number, rectangles: tRectangle[], bbox_origin
     // middle rows
     const middle_row_number = rectangles.length % 2 === 0 ? (rectangles.length - first_row_rect_number*2)/2 : (rectangles.length - first_row_rect_number*2 - 1) / 2
     let last_row_max_height = Math.max(...rectangles.slice(0, first_row_rect_number).map(rect => rect.height))
+    let accumulative_y_offset = y_offset
     for(let i = 0; i < middle_row_number; i++) {
         rectangleCoordinates.push([
             bbox_origin[0],
-            bbox_origin[1]+ (i+1)*last_row_max_height,
+            bbox_origin[1] + accumulative_y_offset + last_row_max_height ,
             rect_width,
             rectangles[i + first_row_rect_number].height,
             rectangles[i + first_row_rect_number].name]
         )
         rectangleCoordinates.push([
             bbox_origin[0] + regionWidth - rect_width,
-            bbox_origin[1]+ (i+1)*last_row_max_height,
+            bbox_origin[1] + accumulative_y_offset + last_row_max_height,
             rect_width,
             rectangles[i + 1 + first_row_rect_number].height,
             rectangles[i + 1 + first_row_rect_number].name])
-        last_row_max_height = Math.max(last_row_max_height, rectangles[i + first_row_rect_number].height)
-        last_row_max_height = Math.max(last_row_max_height, rectangles[i + 1 + first_row_rect_number].height)
+        accumulative_y_offset += last_row_max_height + y_offset
+        last_row_max_height = Math.max(rectangles[i + first_row_rect_number].height, rectangles[i + 1 + first_row_rect_number].height)
     }
     const last_row_y_offset = rectangleCoordinates[rectangleCoordinates.length - 1][1] + last_row_max_height
     // last row

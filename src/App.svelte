@@ -156,7 +156,7 @@
     filter: blur(0.001em);
     font-family: Fantasy;
     font-weight: bold;
-    font-size: 3rem;
+    font-size: 2rem;
   }
   .title-hidden {
     opacity: 0.65;
