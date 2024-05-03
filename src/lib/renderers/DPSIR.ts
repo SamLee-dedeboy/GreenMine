@@ -64,7 +64,7 @@ export const DPSIR = {
         const bboxes = radialBboxes(var_type_names, this.width, this.height, { width: 0, height: this.height/10 })
         const bboxes_sizes = {
             [var_type_names[0]]: [0.35 * this.width, 0.2 * this.height],
-            [var_type_names[1]]: [0.35 * this.width, 0.2 * this.height],
+            [var_type_names[1]]: [0.45 * this.width, 0.2 * this.height],
             [var_type_names[2]]: [0.3 * this.width, 0.2 * this.height],
             [var_type_names[3]]: [0.5 * this.width, 0.2 * this.height],
             [var_type_names[4]]: [0.3 * this.width, 0.2 * this.height],
@@ -389,8 +389,8 @@ export const DPSIR = {
             })
             .on("click", function (e) {
                 const utility_group = d3.select(this.parentNode).select("g.utility-group")
-                const shown = utility_group.select("g.utility").attr("opacity") === "1"
-                utility_group.selectAll("g.utility")
+                const shown = utility_group.attr("opacity") === 1
+                utility_group
                     .transition()
                     .duration(300)
                     .attr("opacity", shown ? 0 : 1)
@@ -431,6 +431,8 @@ export const DPSIR = {
         const group = d3.select("#" + this.svgId).select(`.${var_type_name}_region`)
         const utility_group = group.select("g.bbox-group").append("g")
             .attr("class", "utility-group")
+            .attr("opacity", 0)
+            .attr("pointer-events", "none")
         const utility_group_origin = [bbox_center[0] + (var_type_name.length+1) * 12, bbox_center[1] - bboxHeight / 2 - 40]
         const self = this
         const width = Math.max(...utilities.map(d => d.length)) * 12
@@ -439,8 +441,6 @@ export const DPSIR = {
             .join("g")
             .attr("class", "utility")
             .attr("transform", `translate(${utility_group_origin[0]}, ${utility_group_origin[1]})`)
-            .attr("opacity", 0)
-            .attr("pointer-events", "none")
             .each(function (d: string, i) {
                 const utility_container = d3.select(this)
                 utility_container.selectAll("*").remove()
@@ -629,11 +629,11 @@ function radialBboxes(groups: string[], width: number, height: number, maxBboxSi
         offset + Math.PI * 2 * 4 / 4.85,
     ]
     const scaleFactors = [
-        1.05,
-        1.05,
-        0.8,
-        0.8,
-        0.82,
+        1.05, // D
+        1.05, // P
+        0.8, // S
+        0.74, // I 
+        0.82, // R
     ]
     let bboxes: {[key:string]: {center: [number, number]}} = {}
     const a = width / 2 - maxBboxSize.width / 2
@@ -721,7 +721,8 @@ function squareLayout(regionWidth: number, rectangles: tRectangle[], bbox_origin
     // assuming rectangles has the same width
     const rect_width = rectangles[0].width
     const max_rect_per_row = Math.floor(regionWidth / rect_width)
-    const space_between_rectangles = (regionWidth - max_rect_per_row * rect_width) / (max_rect_per_row - 1)
+    // const space_between_rectangles = (regionWidth - max_rect_per_row * rect_width) / (max_rect_per_row - 1)
+    const space_between_rectangles = 50
     const y_offset = 20
     // return value
     let rectangleCoordinates: [number, number, number, number, string][] = []
@@ -747,28 +748,29 @@ function squareLayout(regionWidth: number, rectangles: tRectangle[], bbox_origin
             bbox_origin[0],
             bbox_origin[1] + accumulative_y_offset + last_row_max_height ,
             rect_width,
-            rectangles[i + first_row_rect_number].height,
-            rectangles[i + first_row_rect_number].name]
+            rectangles[2*i + first_row_rect_number].height,
+            rectangles[2*i + first_row_rect_number].name]
         )
         rectangleCoordinates.push([
             bbox_origin[0] + regionWidth - rect_width,
             bbox_origin[1] + accumulative_y_offset + last_row_max_height,
             rect_width,
-            rectangles[i + 1 + first_row_rect_number].height,
-            rectangles[i + 1 + first_row_rect_number].name])
+            rectangles[2*i + 1 + first_row_rect_number].height,
+            rectangles[2*i + 1 + first_row_rect_number].name])
         accumulative_y_offset += last_row_max_height + y_offset
-        last_row_max_height = Math.max(rectangles[i + first_row_rect_number].height, rectangles[i + 1 + first_row_rect_number].height)
+        last_row_max_height = Math.max(rectangles[i + first_row_rect_number].height, rectangles[2*i + 1 + first_row_rect_number].height)
     }
-    const last_row_y_offset = rectangleCoordinates[rectangleCoordinates.length - 1][1] + last_row_max_height
+    accumulative_y_offset += last_row_max_height;
     // last row
     const last_row_rect_number = rectangles.length - first_row_rect_number - middle_row_number*2
     const last_row_offset_left = (regionWidth - (last_row_rect_number * rect_width + (last_row_rect_number - 1) * space_between_rectangles)) / 2
     for(let i = 0; i < last_row_rect_number; i++) {
         rectangleCoordinates.push([
             bbox_origin[0] + last_row_offset_left + i * (rect_width + space_between_rectangles),
-            last_row_y_offset,
+            bbox_origin[1] + accumulative_y_offset,
             rect_width, 
-            rectangles[i + first_row_rect_number + middle_row_number*2].height, rectangles[i + first_row_rect_number + middle_row_number*2].name])
+            rectangles[i + first_row_rect_number + middle_row_number*2].height,
+            rectangles[i + first_row_rect_number + middle_row_number*2].name])
     }
     return rectangleCoordinates;
 }
