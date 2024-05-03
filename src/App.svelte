@@ -125,6 +125,7 @@
           {:else}
             <DPSIR
               data={var_data}
+              metadata={dataset.metadata}
               links={vis_links}
               on:var-selected={handleVarOrLinkSelected}
             ></DPSIR>

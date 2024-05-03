@@ -6,6 +6,25 @@ import requests
 from . import prompts
 from openai import RateLimitError, APITimeoutError
 import time
+from pydantic import BaseModel
+from typing import Dict, List
+
+
+class tMessage(BaseModel):
+    speaker: int
+    content: str
+class tChunk(BaseModel):
+    id: str
+    conversation: List[tMessage]
+    raw_keywords: List[str]
+    title: str
+    topic: str
+    emotion: str
+class tVarMention(BaseModel):
+    var_name: str
+    conversation_ids: List[int]
+class tChunkWithVarMentions(tChunk):
+    var_mentions: Dict[str, List[tVarMention]]
 
 def multithread_prompts(client, prompts, model="gpt-3.5-turbo-0125", response_format=None):
     l = len(prompts)
@@ -59,7 +78,15 @@ def get_embedding(client, text, model="text-embedding-3-small"):
         print(e)
         return get_embedding(client, text, model)
 
-def var_extraction(client, node_file_path, link_file_path, chunk_dict, var_name, var_type, var_definition, all_def_dict):
+def var_extraction(
+        client, 
+        node_file_path: str, 
+        link_file_path: str, 
+        chunk_dict: Dict[str, tChunkWithVarMentions], 
+        var_name: str, 
+        var_type: str, 
+        var_definition: str, 
+        all_def_dict: dict):
     node_extraction_prompts = []
     chunks = list(chunk_dict.values())
     for chunk in chunks:
@@ -100,13 +127,20 @@ def var_extraction(client, node_file_path, link_file_path, chunk_dict, var_name,
     save_json(old_connections + new_connections, link_file_path)
 
 
-def connection_extraction(client, chunks, new_var, new_var_type, new_var_def, def_dict):
+def connection_extraction(
+        client, 
+        chunks: List[tChunkWithVarMentions], 
+        new_var: str, 
+        new_var_type: str, 
+        new_var_def: str, 
+        def_dict: dict):
     var_types = ['driver', 'pressure', 'state', 'impact', 'response']
     relationships_prompts = []
     metadata_list = []
     for chunk in chunks:
         for indicator2 in var_types:
             indicator1 = new_var_type
+            print(chunk)
             if indicator1 in chunk["var_mentions"] and indicator2 in chunk["var_mentions"]:
                 # get chunk content
                 chunk_content = messages_to_str(chunk["conversation"])

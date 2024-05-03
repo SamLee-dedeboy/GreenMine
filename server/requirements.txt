@@ -1,2 +1,6 @@
 flask
 flask_cors
+tiktoken
+tqrm
+openai
+pydantic

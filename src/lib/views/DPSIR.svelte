@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
+  import * as d3 from "d3";
   import { DPSIR } from "lib/renderers/DPSIR";
   import Curation from "lib/components/Curation.svelte";
   import { createEventDispatcher } from "svelte";
@@ -10,20 +11,29 @@
     tVariable,
     tLink,
     tVisLink,
+    tMetadata,
   } from "../types";
+  import { varTypeColorScale } from "lib/store";
   export let data: tDPSIR;
+  export let metadata: tMetadata;
   export let links: tVisLink[];
   const svgId = "model-svg";
 
-  const handlers = {
-    VarOrLinkSelected: handleVarOrLinkSelected,
-  };
+  let curation: any;
+  const utilities = ["add", "remove", "edit"];
+
   let container;
   let selectedVar: tVariable | undefined = undefined;
 
   onMount(async () => {
     await tick();
-    DPSIR.init(svgId, handlers);
+    const handlers = {
+      ["VarOrLinkSelected"]: handleVarOrLinkSelected,
+      ["add"]: curation.handleAddVar,
+      ["remove"]: curation.handleRemoveVar,
+      ["edit"]: curation.handleEditVar,
+    };
+    DPSIR.init(svgId, utilities, handlers);
     update_vars(data, links);
   });
 
@@ -34,7 +44,11 @@
     if (trigger_times <= 1) return;
     await tick();
     console.log(vars, links);
-    DPSIR.update_vars(vars, links);
+    $varTypeColorScale = d3
+      .scaleOrdinal()
+      .domain(Object.keys(vars))
+      .range(d3.schemeSet2);
+    DPSIR.update_vars(vars, links, $varTypeColorScale);
   }
 
   function handleVarOrLinkSelected(e) {
@@ -48,7 +62,7 @@
 
 <div bind:this={container} class="container w-full h-full relative">
   <div class="absolute right-0 top-1">
-    <Curation />
+    <Curation bind:this={curation} {metadata} />
   </div>
   <svg id={svgId} class="varbox-svg w-full h-full">
     <defs></defs>

@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 // import {tick} from 'svelte';
 // import { scale } from 'svelte/transition';
-import type { tVariable, tVariableType, tMention, tDPSIR, tRectangle, tRectObject, tLinkObject, tVisLink } from '../types/variables';
+import type { tVariable, tVariableType, tUtilityHandlers, tMention, tDPSIR, tRectangle, tRectObject, tLinkObject, tVisLink } from '../types/variables';
 import * as Constants from "../constants"
 import type { tVarTypeDef } from 'lib/types';
 import { space } from 'postcss/lib/list';
@@ -10,13 +10,14 @@ const width = 1300;
 const height = 1000;
 const padding = { top: 0, right: 20, bottom: 0, left: 50 };
 export const DPSIR = {
-    init(svgId: string, handlers: any) {
+    init(svgId: string, utilities: string[], handlers: tUtilityHandlers) {
         console.log("init")
         this.clicked_rect = null
         this.clicked_link = null
         this.width = width - padding.left - padding.right
         this.height = height - padding.top - padding.bottom
         this.svgId = svgId
+        this.utilities = utilities
         this.handlers = handlers
         this.varTypeColorScale = null
         const self = this
@@ -49,19 +50,16 @@ export const DPSIR = {
             const var_type_region = svg.append("g")
                 .attr("class", `${var_type_name}_region`)
                 .attr("transform", `translate(${padding.left}, ${padding.top})`)
-            var_type_region.append("g").attr("class", "bbox-group")
             var_type_region.append("g").attr("class", "tag-group")
+            var_type_region.append("g").attr("class", "bbox-group")
             // var_type_region.append("g").attr("class", "label-group")
         })
     },
 
-    update_vars(vars: tDPSIR, links: tVisLink[]) {
+    update_vars(vars: tDPSIR, links: tVisLink[], varTypeColorScale: Function) {
         console.log("update vars")
-        this.varTypeColorScale = d3
-            .scaleOrdinal()
-            .domain(Object.keys(vars))
-            .range(d3.schemeSet2)
 
+        this.varTypeColorScale = varTypeColorScale
         const var_type_names = Constants.var_type_names
         const bboxes = radialBboxes(var_type_names, this.width, this.height, { width: 0, height: this.height/10 })
         const bboxes_sizes = {
@@ -390,6 +388,13 @@ export const DPSIR = {
                 d3.select(this).classed("bbox-label-hover", false)
             })
             .on("click", function (e) {
+                const utility_group = d3.select(this.parentNode).select("g.utility-group")
+                const shown = utility_group.select("g.utility").attr("opacity") === "1"
+                utility_group.selectAll("g.utility")
+                    .transition()
+                    .duration(300)
+                    .attr("opacity", shown ? 0 : 1)
+                    .attr("pointer-events", shown? "none" : "all")
                 console.log("click on bbox")
             })
         group.select("g.bbox-group").append("text")
@@ -419,6 +424,47 @@ export const DPSIR = {
             .attr("width", 30)
             .attr("height", 30)
 
+        this.drawUtilities(var_type_name, bbox_center, bboxWidth, bboxHeight, this.utilities)
+    },
+    drawUtilities(var_type_name: string, bbox_center: number[], bboxWidth: number, bboxHeight: number, utilities: string[]) {
+        console.log("draw utilities", utilities)
+        const group = d3.select("#" + this.svgId).select(`.${var_type_name}_region`)
+        const utility_group = group.select("g.bbox-group").append("g")
+            .attr("class", "utility-group")
+        const utility_group_origin = [bbox_center[0] + (var_type_name.length+1) * 12, bbox_center[1] - bboxHeight / 2 - 40]
+        const self = this
+        const width = Math.max(...utilities.map(d => d.length)) * 12
+        utility_group.selectAll("g.utility")
+            .data(utilities)
+            .join("g")
+            .attr("class", "utility")
+            .attr("transform", `translate(${utility_group_origin[0]}, ${utility_group_origin[1]})`)
+            .attr("opacity", 0)
+            .attr("pointer-events", "none")
+            .each(function (d: string, i) {
+                const utility_container = d3.select(this)
+                utility_container.selectAll("*").remove()
+                const height = 20
+                const y_offset = 1
+                const utility_attrs = {
+                    parent: utility_container,
+                    class_name: d,
+                    activated_color: "rgb(187 247 208)",
+                    deactivated_color: "white",
+                    activated_text_color: "black",
+                    deactivated_text_color: "#aaaaaa",
+                    text: d,
+                    x: 5,
+                    y: 5 + i * (height + y_offset),
+                    width: width,
+                    height: height,
+                    onClick: () => {
+                        d3.select(this.parentNode).attr("opacity", 0).attr("pointer-events", "none")
+                        self.handlers[d](var_type_name)
+                    },
+                }
+                add_utility_button(utility_attrs)
+            })
     },
 
     drawTags(var_type_name: string, rectWithVar: tRectObject[], scaleVarColor: any) {
@@ -568,8 +614,7 @@ export const DPSIR = {
                     .attr("dominant-baseline", "middle")
                     .call(wrap, tooltip_width - 10)
             })
-
-    }
+    },
 }
 
 function radialBboxes(groups: string[], width: number, height: number, maxBboxSize: {width: number, height: number}) {
@@ -867,3 +912,94 @@ function wrap(text, width) {
     text.selectAll("tspan").attr("y", +y - em_to_px / 2 * lineHeight * (line_num - 1) )
 });
 }
+
+function add_utility_button({
+    parent,
+    class_name,
+    activated_color,
+    deactivated_color,
+    activated_text_color,
+    deactivated_text_color,
+    text,
+    x,
+    y,
+    width,
+    height,
+    onClick,
+    stateless = true,
+  }) {
+    const utility_button = parent.append("g").attr("class", class_name);
+    const animation_scale_factor = 1.1;
+    utility_button
+      .append("rect")
+      .classed("utility-button", true)
+      .attr("x", x)
+      .attr("y", y)
+      .attr("width", width)
+      .attr("height", height)
+      .attr("fill", deactivated_color)
+      .attr("rx", "0.2%")
+      .attr("stroke", "gray")
+      .attr("cursor", "pointer")
+      .on("mouseover", function () {
+        d3.select(this).attr("stroke-width", 2)
+        if(stateless) return;
+        const activated = d3.select(this).attr("fill") === activated_color;
+        d3.select(this).attr("fill", activated? activated_color: "lightgray");
+      })
+      .on("mouseout", function () {
+        d3.select(this).attr("stroke-width", 1).attr("fill", () => {
+            if(stateless) return deactivated_color;
+            const activated = d3.select(this).attr("fill") === activated_color;
+            return activated ? activated_color : deactivated_color
+        });
+      })
+      .on("click", function () {
+        onClick();
+        const button = d3.select(this);
+        const activated = button.attr("fill") === activated_color;
+        button.attr("fill", activated ? deactivated_color : activated_color);
+        button
+          .transition()
+          .duration(200)
+          .attr("x", function () {
+            return x - (width * (animation_scale_factor - 1)) / 2;
+          })
+          .attr("y", function () {
+            return y - (height * (animation_scale_factor - 1)) / 2;
+          })
+          .attr("width", function () {
+            return width * animation_scale_factor;
+          })
+          .attr("height", function () {
+            return height * animation_scale_factor;
+          })
+          .transition()
+          .duration(100)
+          .attr("x", x)
+          .attr("y", y)
+          .attr("width", width)
+          .attr("height", height)
+          .on("end", () => {
+            console.log({stateless})
+            if (stateless) button.attr("fill", deactivated_color);
+          });
+        if (!stateless) {
+          d3.select(this.parentNode)
+            .select("text")
+            .attr(
+              "fill",
+              activated ? deactivated_text_color : activated_text_color
+            );
+        }
+      });
+    utility_button
+      .append("text")
+      .attr("x", x + width / 2)
+      .attr("y", y + height / 2)
+      .attr("pointer-events", "none")
+      .text(text)
+      .attr("fill", stateless? activated_text_color: deactivated_text_color)
+      .attr("dominant-baseline", "middle")
+      .attr("text-anchor", "middle");
+  }

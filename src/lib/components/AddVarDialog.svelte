@@ -7,8 +7,9 @@
   import Selection from "lib/components/Selection.svelte";
   import * as Constants from "lib/constants";
   import { getContext } from "svelte";
+  export let default_var_type: string = "";
   const fetchData: any = getContext("fetchData");
-  let var_type: string | undefined;
+  let var_type: string = default_var_type;
   let var_name: string | undefined;
   let var_definition: string | undefined;
   let factor_type: string = "social";
@@ -31,6 +32,7 @@
       }),
     }).then((res) => {
       console.log({ res });
+      dispatch("close");
       fetchData();
     });
   }

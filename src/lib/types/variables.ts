@@ -107,3 +107,6 @@ export type tLinkObject = {
   frequency: number;
   mentions: Mention[];
 }
+export type tUtilityHandlers = {
+  [key: string]: Function
+}

@@ -57,8 +57,30 @@ def var_extraction():
     chunk_dict = chunk_w_var_mentions(chunks, all_nodes)
     all_def_dict = DataUtils.local.all_definitions(file_paths=[metadata_path + f'{var_type}_variables_def.json' for var_type in var_types])
     DataUtils.local.add_variable(metadata_path + f'{var_type}_variables_def.json', var_name, var_definition, factor_type)
-    GPTUtils.var_extraction(openai_client, node_data_path + f'{var_type}_nodes.json', node_data_path + "connections.json", chunk_dict, var_name, var_type, var_definition, all_def_dict)
+    GPTUtils.var_extraction(
+        openai_client,
+        node_data_path + f'{var_type}_nodes.json',
+        node_data_path + "connections.json",
+        chunk_dict,
+        var_name,
+        var_type,
+        var_definition,
+        all_def_dict
+    )
     return "success"
+
+@app.route("/curation/remove/", methods=['POST'])
+def remove_var():
+    var_type = request.json['var_type']
+    var_names = request.json['var_names']
+    for var_name in var_names:
+        DataUtils.local.remove_variable(
+            node_file_path=node_data_path + f'{var_type}_nodes.json',
+            def_file_path=metadata_path + f'{var_type}_variables_def.json',
+            link_file_path=node_data_path + "connections.json",
+            var_name=var_name)
+    return "success"
+
 
 # def clean_up_nodes(node):
 #     if node['variable_type'].endswith('s'):
@@ -105,6 +127,8 @@ def collect_nodes(filepaths):
     return all_nodes
 
 def chunk_w_var_mentions(chunks, all_nodes):
+    for chunk in chunks:
+        chunk['var_mentions'] = {}
     chunk_dict = {chunk['id']: chunk for chunk in chunks}
     for node_data in all_nodes:
         var_type = node_data["variable_type"]
@@ -114,7 +138,6 @@ def chunk_w_var_mentions(chunks, all_nodes):
             for mention in mentions:
                 chunk_id = mention['chunk_id']
                 conversation_ids = mention['conversation_ids']
-                if 'var_mentions' not in chunk_dict[chunk_id]: chunk_dict[chunk_id]['var_mentions'] = {}
                 if var_type not in chunk_dict[chunk_id]['var_mentions']: chunk_dict[chunk_id]['var_mentions'][var_type] = []
                 chunk_dict[chunk_id]['var_mentions'][var_type].append({
                     "var_name": var_name,
