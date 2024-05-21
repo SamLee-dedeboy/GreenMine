@@ -71,14 +71,14 @@
       interview_viewer_component.highlight_chunks(chunks);
       // console.log(interview_data);
       const flattenedInterviewData = interview_data.flatMap(
-        (item) => item.data
+        (item) => item.data,
       );
       // console.log(chunks);
       const enhanceChunks = (chunks: any[]): any[] => {
         return chunks
           .map((chunk) => {
             const match = flattenedInterviewData.find(
-              (item) => item.id === chunk.chunk_id
+              (item) => item.id === chunk.chunk_id,
             );
 
             if (match) {
@@ -109,16 +109,16 @@
   {#if !fetch_success}
     <BrowserBlockingPage />
   {:else}
-    <div class="page flex space-x-1 h-full">
+    <div class="page flex h-full space-x-1">
       <div
-        class="flex flex-col justify-center items-center flex-1 h-full w-[70%]"
+        class="flex h-full w-[70%] flex-1 flex-col items-center justify-center"
       >
-        <div class="w-full h-full relative">
+        <div class="relative h-full w-full">
           <div
-            class="title absolute top-1 left-6 w-fit rounded py-4 px-4 text-left text-sky-600"
+            class="title absolute left-6 top-1 w-fit rounded px-4 py-4 text-left text-sky-600"
           >
             <span>Sea of</span> <br />
-            <span class="title-hidden absolute h-fit mt-[-25px]">Voices</span>
+            <span class="title-hidden absolute mt-[-25px] h-fit">Voices</span>
           </div>
           {#if data_loading}
             <div>Data Loading...</div>
@@ -132,11 +132,11 @@
           {/if}
         </div>
       </div>
-      <div class="h-full w-full basis-[30%] flex flex-col">
+      <div class="flex h-full w-full basis-[30%] flex-col">
         <div class="gap-y-1">
           <SummaryView {summary_interviews} id="statistics" />
         </div>
-        <div class="interview-viewer-container w-full grow relative">
+        <div class="interview-viewer-container relative w-full grow">
           {#if data_loading}
             <div>Data Loading...</div>
           {:else}
@@ -157,7 +157,7 @@
     filter: blur(0.001em);
     font-family: Fantasy;
     font-weight: bold;
-    font-size: 2rem;
+    font-size: 3rem;
   }
   .title-hidden {
     opacity: 0.65;

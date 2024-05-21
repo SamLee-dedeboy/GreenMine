@@ -75,17 +75,17 @@
       variable for you. Click save when you're done.
     </p>
     <div class="inputs-container flex flex-col gap-y-2">
-      <div class="flex gap-x-2 items-center font-mono">
+      <div class="flex items-center gap-x-2 font-mono">
         <div>Variable Type:</div>
         <Selection
           options={Constants.var_type_names}
           bind:selected_label={var_type}
         ></Selection>
       </div>
-      <div class="flex gap-x-2 items-center font-mono">
+      <div class="flex items-center gap-x-2 font-mono">
         <div>Variable Name:</div>
         <input
-          class="px-1 text-sm outline outline-1 outline-gray-200 rounded-sm shadow-sm"
+          class="rounded-sm px-1 text-sm shadow-sm outline outline-1 outline-gray-200"
           on:input={(e) => {
             var_name = e.target.value;
           }}
@@ -95,19 +95,19 @@
         <div>Variable Definition:</div>
         <div
           contenteditable
-          class="min-h-[1rem] w-1 grow px-1 text-sm flex flex-wrap break-words outline outline-1 outline-gray-200 rounded-sm shadow-sm"
+          class="flex min-h-[1rem] w-1 grow flex-wrap break-words rounded-sm px-1 text-sm shadow-sm outline outline-1 outline-gray-200"
           on:input={(e) => {
             var_definition = e.target.innerText.trim();
           }}
         ></div>
       </div>
-      <div class="flex gap-x-2 items-center font-mono">
+      <div class="flex items-center gap-x-2 font-mono">
         <div>Factor Type:</div>
         <div class="flex items-center gap-x-2">
           <div
             role="button"
             tabindex="0"
-            class="flex rounded-sm px-1 py-0.5 hover:bg-green-200 gap-x-1"
+            class="flex gap-x-1 rounded-sm px-1 py-0.5 hover:bg-green-200"
             class:selected={factor_type === "social"}
             on:click={(e) => {
               e.preventDefault();
@@ -121,7 +121,7 @@
           <div
             role="button"
             tabindex="0"
-            class="flex rounded-sm px-1 py-0.5 hover:bg-green-200 gap-x-1"
+            class="flex gap-x-1 rounded-sm px-1 py-0.5 hover:bg-green-200"
             class:selected={factor_type === "ecological"}
             on:click={(e) => {
               e.preventDefault();
@@ -139,16 +139,16 @@
       <button
         use:melt={$close}
         class="inline-flex h-8 items-center justify-center rounded-sm
-                    hover:bg-zinc-200
-                    bg-zinc-100 px-4 font-medium leading-none text-zinc-600"
+                    bg-zinc-100
+                    px-4 font-medium leading-none text-zinc-600 hover:bg-zinc-200"
         on:click={() => dispatch("close")}
       >
         Cancel
       </button>
       <button
-        class="inline-flex h-8 items-center justify-center rounded-sm
-                    hover:bg-orange-200
-                    bg-orange-100 px-4 font-medium leading-none text-magnum-900"
+        class="text-magnum-900 inline-flex h-8 items-center justify-center
+                    rounded-sm
+                    bg-orange-100 px-4 font-medium leading-none hover:bg-orange-200"
         class:disabled={!input_valid}
         on:click={(e) => handleExtract(e)}
       >
@@ -158,9 +158,9 @@
     <button
       use:melt={$close}
       aria-label="close"
-      class="absolute right-4 top-4 inline-flex h-6 w-6 appearance-none
-                items-center justify-center rounded-full p-1 text-magnum-800
-                hover:bg-zinc-200 focus:shadow-magnum-400"
+      class="text-magnum-800 focus:shadow-magnum-400 absolute right-4 top-4 inline-flex h-6
+                w-6 appearance-none items-center justify-center rounded-full
+                p-1 hover:bg-zinc-200"
       on:click={() => dispatch("close")}
     >
       <img src="X.svg" alt="x" class="pointer-events-none" />
