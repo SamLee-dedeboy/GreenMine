@@ -3,6 +3,90 @@ from flask import Flask, request
 from flask_cors import CORS
 import json
 import os
+from openai import OpenAI
+# from . import GPTUtils
+# from . import DataUtils
+import GPTUtils
+import DataUtils
+
+
+#init, do not read data
+app = Flask(__name__)
+CORS(app)
+dirname = os.path.dirname(__file__)
+relative_path = lambda dirname, filename: os.path.join(dirname, filename)
+node_data_path = relative_path(dirname, 'data/v2/tmp/nodes/')
+chunk_data_path = relative_path(dirname, 'data/v2/tmp/chunk/')
+metadata_path = relative_path(dirname, 'data/v2/tmp/variable_definitions/')
+
+# openai
+openai_api_key = open(relative_path(dirname, "openai_api_key")).read()
+openai_client=OpenAI(api_key=openai_api_key, timeout=10)
+
+
+var_types = ['driver', 'pressure', 'state', 'impact', 'response']
+@app.route("/test/")
+def test():
+    return "Hello Lyudao"
+
+@app.route("/data/")
+def get_data():
+    nodes = {}
+    metadata = {}
+    for var_type in var_types:
+        nodes[var_type] = json.load(open(node_data_path + f"{var_type}_nodes.json"))
+        metadata[var_type] = json.load(open(metadata_path + f'{var_type}_variables_def.json'))
+    links = json.load(open(node_data_path + 'connections.json'))
+    interview_data = process_interview(glob.glob(chunk_data_path + f'chunk_summaries_w_ktte/*.json'))
+
+    return {
+        "interviews": interview_data,
+        "nodes": nodes,
+        "metadata": metadata,
+        "links": links,
+    }
+
+@app.route("/var_extraction/", methods=['POST'])
+def var_extraction():
+    var_type = request.json['var_type']
+    var_name = request.json['var_name']
+    var_definition = request.json['var_definition']
+    factor_type = request.json['factor_type']
+    chunks = collect_chunks(glob.glob(chunk_data_path + f'chunk_summaries_w_ktte/*.json'))
+    all_nodes = collect_nodes([node_data_path + f'{var_type}_nodes.json' for var_type in var_types])
+    chunk_dict = chunk_w_var_mentions(chunks, all_nodes)
+    all_def_dict = DataUtils.local.all_definitions(file_paths=[metadata_path + f'{var_type}_variables_def.json' for var_type in var_types])
+    DataUtils.local.add_variable(metadata_path + f'{var_type}_variables_def.json', var_name, var_definition, factor_type)
+    GPTUtils.var_extraction(
+        openai_client,
+        node_data_path + f'{var_type}_nodes.json',
+        node_data_path + "connections.json",
+        chunk_dict,
+        var_name,
+        var_type,
+        var_definition,
+        all_def_dict
+    )
+    return "success"
+
+@app.route("/curation/remove/", methods=['POST'])
+def remove_var():
+    var_type = request.json['var_type']
+    var_names = request.json['var_names']
+    for var_name in var_names:
+        DataUtils.local.remove_variable(
+            node_file_path=node_data_path + f'{var_type}_nodes.json',
+            def_file_path=metadata_path + f'{var_type}_variables_def.json',
+            link_file_path=node_data_path + "connections.json",
+            var_name=var_name)
+    return "success"
+
+
+# def clean_up_nodes(node):
+#     if node['variable_type'].endswith('s'):
+#         node['variable_type'] = node['variable_type'][:-1]
+#     node['variable_type'] = node['variable_type'].lower()
+#     return node
 
 def process_interview(filepaths):
     interview_dict = {}
@@ -27,47 +111,36 @@ def process_interview(filepaths):
         )
     return interviews
 
+def collect_chunks(filepaths):
+    interviews = process_interview(filepaths)
+    chunks = []
+    for interview in interviews:
+        for chunk in interview['data']:
+            chunks.append(chunk)
+    return chunks
+def collect_nodes(filepaths):
+    from pprint import pprint
+    all_nodes = []
+    for filepath in filepaths:
+        nodes = json.load(open(filepath))
+        all_nodes.append(nodes)
+    return all_nodes
 
-
-
-#init, do not read data
-app = Flask(__name__)
-CORS(app)
-dirname = os.path.dirname(__file__)
-relative_path = lambda dirname, filename: os.path.join(dirname, filename)
-
-@app.route("/test/")
-def test():
-    return "Hello Lyudao"
-
-@app.route("/data/") #read local data0
-def get_data():
-    driver_defs = json.load(open(relative_path(dirname, 'data/v2/variable_definitions/Drivers_variables_def.json'), encoding='utf-8'))
-    pressure_defs = json.load(open(relative_path(dirname, 'data/v2/variable_definitions/Pressures_variables_def.json'), encoding='utf-8')) 
-    state_defs = json.load(open(relative_path(dirname, 'data/v2/variable_definitions/States_variables_def.json'), encoding='utf-8'))
-    impact_defs = json.load(open(relative_path(dirname, 'data/v2/variable_definitions/Impacts_variables_def.json'), encoding='utf-8'))
-    response_defs = json.load(open(relative_path(dirname, 'data/v2/variable_definitions/Responses_variables_def.json'), encoding='utf-8'))
-    driver_nodes = json.load(open(relative_path(dirname, 'data/v2/nodes/Drivers_nodes.json')))
-    pressure_nodes = json.load(open(relative_path(dirname, 'data/v2/nodes/Pressures_nodes.json')))
-    state_nodes = json.load(open(relative_path(dirname, 'data/v2/nodes/States_nodes.json')))
-    impact_nodes = json.load(open(relative_path(dirname, 'data/v2/nodes/Impacts_nodes.json')))
-    response_nodes = json.load(open(relative_path(dirname, 'data/v2/nodes/Responses_nodes.json')))
-    links = json.load(open(relative_path(dirname, 'data/v2/nodes/connections.json')))
-    # preprocessing type firt 
-
-    interview_data = process_interview(glob.glob(relative_path(dirname, 'data/v2/chunk/chunk_summaries_w_ktte/*.json')))
-
-    return {
-        "interviews": interview_data,
-        "driver_nodes": driver_nodes,
-        "pressure_nodes": pressure_nodes,
-        "state_nodes": state_nodes,
-        "impact_nodes": impact_nodes,
-        "response_nodes": response_nodes,
-        "links": links,
-        "driver_defs":driver_defs,
-        "pressure_defs":pressure_defs,
-        "state_defs":state_defs,
-        "impact_defs":impact_defs,
-        "response_defs":response_defs
-    }
+def chunk_w_var_mentions(chunks, all_nodes):
+    for chunk in chunks:
+        chunk['var_mentions'] = {}
+    chunk_dict = {chunk['id']: chunk for chunk in chunks}
+    for node_data in all_nodes:
+        var_type = node_data["variable_type"]
+        var_mentions = node_data["variable_mentions"]
+        for var_name, mentions in var_mentions.items():
+            mentions = mentions['mentions']
+            for mention in mentions:
+                chunk_id = mention['chunk_id']
+                conversation_ids = mention['conversation_ids']
+                if var_type not in chunk_dict[chunk_id]['var_mentions']: chunk_dict[chunk_id]['var_mentions'][var_type] = []
+                chunk_dict[chunk_id]['var_mentions'][var_type].append({
+                    "var_name": var_name,
+                    "conversation_ids": conversation_ids
+                })
+    return chunk_dict

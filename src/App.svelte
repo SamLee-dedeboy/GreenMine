@@ -1,33 +1,30 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import InterviewViewer from "lib/InterviewViewer.svelte";
-  import Summaryview from "lib/components/ScatterSummary.svelte";
+  import { onMount, setContext } from "svelte";
+  import InterviewViewer from "lib/views/InterviewViewer.svelte";
+  import SummaryView from "lib/components/ScatterSummary.svelte";
   import type {
     tMention,
     tVariableType,
     tTranscript,
     tLink,
+    tVisLink,
     tServerData,
     tVariable,
     tChunk,
+    tDPSIR,
+    tVarTypeDef,
   } from "lib/types";
-  import Varbox from "lib/Varbox.svelte";
+  import DPSIR from "lib/views/DPSIR.svelte";
   import BrowserBlockingPage from "lib/views/BrowserBlockingPage.svelte";
-
-  // const server_address = "http://localhost:5000";
-  export const server_address = "http://infovis.cs.ucdavis.edu/lyudao/api";
+  import * as utils from "lib/utils";
+  import { server_address } from "lib/constants";
 
   let interview_data: tTranscript[];
   let interview_viewer_component;
-  let varbox;
-  let drivers: tVariableType;
-  let pressures: tVariableType;
-  let states: tVariableType;
-  let impacts: tVariableType;
-  let responses: tVariableType;
-  let links: tLink[];
+  let dataset: tServerData;
+  let var_data: tDPSIR = {};
+  let vis_links: tVisLink[];
   let summary_interviews: tChunk[] | undefined = undefined;
-  let new_d: any;
   let data_loading: boolean = true;
 
   let fetch_success = false;
@@ -47,45 +44,20 @@
     fetch(`${server_address}/data/`)
       .then((res) => res.json())
       .then((res: tServerData) => {
-        // console.log({ res });
+        console.log({ res });
+        dataset = res;
         interview_data = res.interviews;
-        links = res.links;
         data_loading = false;
-        // new_d = res.driver_types;
-        // console.log({ new_d });
         // Process each group of variables to add factor_type
-        drivers = integrateTypes(res.driver_nodes, res.driver_defs);
-        pressures = integrateTypes(res.pressure_nodes, res.pressure_defs);
-        states = integrateTypes(res.state_nodes, res.state_defs);
-        impacts = integrateTypes(res.impact_nodes, res.impact_defs);
-        responses = integrateTypes(res.response_nodes, res.response_defs);
-        console.log({ drivers, pressures, states, impacts, responses });
+        Object.keys(res.nodes).forEach((varType: string) => {
+          const nodes: tVariableType = res.nodes[varType];
+          const defs: tVarTypeDef = res.metadata[varType];
+          var_data[varType] = utils.integrateTypes(nodes, defs);
+        });
+        var_data = var_data;
+        console.log({ var_data });
+        vis_links = utils.link_to_vis_link(res.links);
       });
-  }
-
-  function integrateTypes(
-    variableTypeData: tVariableType,
-    defsData: { [key: string]: { definition: string; factor_type: string } }
-  ): tVariableType {
-    const variable_mentions = Object.keys(
-      variableTypeData.variable_mentions
-    ).reduce(
-      (acc, key) => {
-        const variable = variableTypeData.variable_mentions[key];
-        acc[key] = {
-          ...variable,
-          definition: defsData[key]?.definition || "unknown", // Merge definition into each variable
-          factor_type: defsData[key]?.factor_type || "unknown", // Merge factor type into each variable
-        };
-        return acc;
-      },
-      {} as { [key: string]: tVariable }
-    );
-
-    return {
-      variable_type: variableTypeData.variable_type,
-      variable_mentions,
-    };
   }
 
   function handleVarOrLinkSelected(e) {
@@ -99,14 +71,14 @@
       interview_viewer_component.highlight_chunks(chunks);
       // console.log(interview_data);
       const flattenedInterviewData = interview_data.flatMap(
-        (item) => item.data
+        (item) => item.data,
       );
       // console.log(chunks);
       const enhanceChunks = (chunks: any[]): any[] => {
         return chunks
           .map((chunk) => {
             const match = flattenedInterviewData.find(
-              (item) => item.id === chunk.chunk_id
+              (item) => item.id === chunk.chunk_id,
             );
 
             if (match) {
@@ -129,45 +101,42 @@
       summary_interviews = enhanceChunks(chunks);
     }
   }
+
+  setContext("fetchData", fetchData);
 </script>
 
 <main class="h-full px-1">
   {#if !fetch_success}
     <BrowserBlockingPage />
   {:else}
-    <div class="page flex space-x-1 h-full">
+    <div class="page flex h-full space-x-1">
       <div
-        class="flex flex-col justify-center items-center flex-1 h-full w-[70%]"
+        class="flex h-full w-[70%] flex-1 flex-col items-center justify-center"
       >
-        <div class="w-full h-full relative">
+        <div class="relative h-full w-full">
           <div
-            class="title absolute top-1 left-6 w-fit rounded py-4 px-4 text-left text-sky-600"
+            class="title absolute left-6 top-1 w-fit rounded px-4 py-4 text-left text-sky-600"
           >
             <span>Sea of</span> <br />
-            <span class="title-hidden absolute h-fit mt-[-25px]">Voices</span>
+            <span class="title-hidden absolute mt-[-25px] h-fit">Voices</span>
           </div>
           {#if data_loading}
             <div>Data Loading...</div>
           {:else}
-            <Varbox
-              bind:this={varbox}
-              {drivers}
-              {pressures}
-              {states}
-              {impacts}
-              {responses}
-              {links}
+            <DPSIR
+              data={var_data}
+              metadata={dataset.metadata}
+              links={vis_links}
               on:var-selected={handleVarOrLinkSelected}
-              {interview_data}
-            ></Varbox>
+            ></DPSIR>
           {/if}
         </div>
       </div>
-      <div class="h-full w-full basis-[30%] flex flex-col">
+      <div class="flex h-full w-full basis-[30%] flex-col">
         <div class="gap-y-1">
-          <Summaryview {summary_interviews} id="statistics" />
+          <SummaryView {summary_interviews} id="statistics" />
         </div>
-        <div class="interview-viewer-container w-full grow relative">
+        <div class="interview-viewer-container relative w-full grow">
           {#if data_loading}
             <div>Data Loading...</div>
           {:else}
@@ -182,10 +151,7 @@
   {/if}
 </main>
 
-<style>
-  .shadow {
-    box-shadow: 0 0 2px gray;
-  }
+<style lang="postcss">
   .title {
     text-transform: uppercase;
     filter: blur(0.001em);

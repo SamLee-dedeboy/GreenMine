@@ -3,7 +3,7 @@ from tqdm import tqdm
 import copy
 from pprint import pprint
 import tiktoken
-from openai import RateLimitError
+from openai import RateLimitError, APITimeoutError
 import time
 def request_chatgpt_gpt4(client, messages, format=None):
     model = 'gpt-3.5-turbo-0125'
@@ -29,6 +29,11 @@ def request_chatgpt_gpt4(client, messages, format=None):
         print(e)
         time.sleep(5)
         return request_chatgpt_gpt4(client, messages, format)
+    except APITimeoutError as e:
+        print("APITimeoutError")
+        print(messages)
+        time.sleep(5)
+        return request_chatgpt_gpt4(client, messages, model, format)
 
 def get_embedding(client, text, model="text-embedding-3-small"):
     enc = tiktoken.encoding_for_model(model)

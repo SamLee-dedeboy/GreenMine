@@ -3,13 +3,13 @@ from openai import OpenAI
 import concurrent 
 from tqdm import tqdm
 import glob
-from openai import RateLimitError
+from openai import RateLimitError, APITimeoutError
 import time
 
 indicator_combinations = [("Drivers", "Pressures"), ("Pressures", "States"), ("States", "Impacts"), ("Impacts", "Responses"), ("Responses", "Drivers"), ("Responses", "Pressures"), ("Responses", "States")]
 
 def combine_chunks(nodes_data, formatted_chunks):
-    indicator = nodes_data["variable_type"]
+    indicator = nodes_data["variable_type"].lower()[:-1]
     for var in nodes_data["variable_mentions"]:
         for mention in nodes_data["variable_mentions"][var]["mentions"]:
             chunk_id = mention["chunk_id"]
@@ -22,10 +22,10 @@ def combine_chunks(nodes_data, formatted_chunks):
                 if indicator not in formatted_chunks[chunk_id]["var_mentions"]:
                     formatted_chunks[chunk_id]["var_mentions"][indicator]=[]
                 formatted_chunks[chunk_id]["var_mentions"][indicator].append(var)
-    # print(formatted_chunks)
+    print(formatted_chunks)
 
 api_key = open("openai_api_key").read()
-client=OpenAI(api_key=api_key)
+client=OpenAI(api_key=api_key, timeout=10)
 
 def get_chunk_content(chunk_id, chunk_dict):
     chunk_content = ""
@@ -78,6 +78,11 @@ def request_chatgpt(client, messages, model='gpt-3.5-turbo-0125', format=None):
         print(e)
         time.sleep(5)
         return request_chatgpt(client, messages, model, format)
+    except APITimeoutError as e:
+        print("APITimeoutError")
+        print(messages)
+        time.sleep(5)
+        return request_chatgpt(client, messages, model, format)
 
 def multithread_prompts(client, prompts, model="gpt-3.5-turbo-0125", response_format=None):
     l = len(prompts)
@@ -90,9 +95,7 @@ def multithread_prompts(client, prompts, model="gpt-3.5-turbo-0125", response_fo
     concurrent.futures.wait(futures)
     return [future.result() for future in futures]
 
-def find_relationships_chunk_prompts_factory(chunk_content, comb, indicator1, indicator2):
-    var1_def = get_variable_definitions(indicator1, comb[0])
-    var2_def = get_variable_definitions(indicator2, comb[1])
+def find_relationships_chunk_prompts_factory(chunk_content, comb, var1_def, var2_def):
     messages = [
                         {
                             "role": "system",
@@ -117,27 +120,35 @@ def find_relationships_chunk_prompts_factory(chunk_content, comb, indicator1, in
     return messages
 
 def find_vars_relationships(chunks, chunk_dict):
+    indicators = ["driver", "pressure", "state", "impact", "response"]
     relationships_prompts = []
     metadata_list = []
     for chunk_id in chunks:
-        for indicator1, indicator2 in indicator_combinations:
-            if indicator1 in chunks[chunk_id]["var_mentions"] and indicator2 in chunks[chunk_id]["var_mentions"]:
-                # get chunk content
-                chunk_content = get_chunk_content(chunk_id, chunk_dict)
-                vars1 = chunks[chunk_id]["var_mentions"][indicator1]
-                vars2 = chunks[chunk_id]["var_mentions"][indicator2]
-                # get combinations of lists vars1 and vars2
-                comb_vars1_vars2 = combination(vars1, vars2)          
-                # relationships_prompts = [find_relationships_chunk_prompts_factory(chunk_content, comb, indicator1, indicator2) for comb in comb_vars1_vars2]
-                # relationships_prompts += [find_relationships_chunk_prompts_factory(chunk_content, comb, indicator1, indicator2) for comb in comb_vars1_vars2]
-                # metadata_list.append({"chunk_id": chunk_id, "vars1": vars1, "vars2": vars2, "indicator1": indicator1, "indicator2": indicator2})
-                for comb in comb_vars1_vars2:
-                    relationships_prompts.append(find_relationships_chunk_prompts_factory(chunk_content, comb, indicator1, indicator2))
-                    metadata_list.append({"chunk_id": chunk_id, "var1": comb[0], "var2": comb[1], "indicator1": indicator1, "indicator2": indicator2})
-                # print(relationships_prompts)
-                # connections = multithread_prompts(client, relationships_prompts, model="gpt-3.5-turbo-0125", response_format="json")
-                # print(connections) # a list of json objects
-                # return 
+        chunk_content = get_chunk_content(chunk_id, chunk_dict)
+        # inner connections
+        for indicator in indicators:
+            if indicator not in chunks[chunk_id]["var_mentions"]: continue
+            vars = chunks[chunk_id]["var_mentions"][indicator]
+            var_combinations = [[var1, var2] for var1 in vars for var2 in vars if var1 != var2]
+            for comb in var_combinations:
+                var1_def = get_variable_definitions(indicator, comb[0])
+                var2_def = get_variable_definitions(indicator, comb[1])
+                relationships_prompts.append(find_relationships_chunk_prompts_factory(chunk_content, comb, var1_def, var2_def))
+                metadata_list.append({"chunk_id": chunk_id, "var1": comb[0], "var2": comb[1], "indicator1": indicator, "indicator2": indicator})
+        # outer connections
+        # for indicator1, indicator2 in indicator_combinations:
+        #     if indicator1 in chunks[chunk_id]["var_mentions"] and indicator2 in chunks[chunk_id]["var_mentions"]:
+        #         # get chunk content
+        #         chunk_content = get_chunk_content(chunk_id, chunk_dict)
+        #         vars1 = chunks[chunk_id]["var_mentions"][indicator1]
+        #         vars2 = chunks[chunk_id]["var_mentions"][indicator2]
+        #         # get combinations of lists vars1 and vars2
+        #         comb_vars1_vars2 = combination(vars1, vars2)          
+        #         for comb in comb_vars1_vars2:
+                    # var1_def = get_variable_definitions(indicator1, comb[0])
+                    # var2_def = get_variable_definitions(indicator2, comb[1])
+        #             relationships_prompts.append(find_relationships_chunk_prompts_factory(chunk_content, comb, var1_def, var2_def))
+        #             metadata_list.append({"chunk_id": chunk_id, "var1": comb[0], "var2": comb[1], "indicator1": indicator1, "indicator2": indicator2})
     # relationships_prompts = relationships_prompts[:50]
     # metadata_list = metadata_list[:50]
     connections = multithread_prompts(client, relationships_prompts, model="gpt-3.5-turbo-0125", response_format="json")
@@ -159,9 +170,10 @@ def find_vars_relationships(chunks, chunk_dict):
             "indicator2": metadata["indicator2"],
             "response": response
         })
+    return results
     # save to json
-    with open('tmp/connections.json', 'w') as outfile:
-        json.dump(results, outfile, indent=4)
+    # with open('tmp/connections.json', 'w') as outfile:
+    #     json.dump(results, outfile, indent=4)
     
 # sortedChunks = json.load(open('./data/sorted_chunks.json', 'r'))
 # find_vars_relationships(sortedChunks)
@@ -174,10 +186,9 @@ def main():
         combine_chunks(nodes_data, combined_chunks)
     chunks = json.load(open("tmp/chunk_nodes_w_mentions_filtered.json", 'r'))
     chunk_dict = { chunk['id']: chunk for chunk in chunks}
-    # convert combined_chunks to json
-    # with open('data/combined_chunks.json', 'w') as outfile:
-    #     json.dump(combined_chunks, outfile, indent=4)
-    find_vars_relationships(combined_chunks, chunk_dict)
+    connections = find_vars_relationships(combined_chunks, chunk_dict)
+    with open('tmp/inner_connections.json', 'w') as outfile:
+        json.dump(connections, outfile, indent=4)
 
 # def main():
 #     data = json.load(open("data.json"))
