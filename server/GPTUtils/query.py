@@ -114,7 +114,7 @@ def var_extraction(
             "chunk_id": chunk['id'],
             "conversation_ids": evidence,
         })
-    var_type_nodes = json.load(open(node_file_path))
+    var_type_nodes = json.load(open(node_file_path, encoding='utf-8'))
     var_type_nodes['variable_mentions'][var_name] = {
         "variable_name": var_name,
         "mentions": final_mentions
@@ -123,7 +123,7 @@ def var_extraction(
 
     final_mention_chunks = [chunk_dict[mention['chunk_id']] for mention in final_mentions]
     new_connections = connection_extraction(client, final_mention_chunks, var_name, var_type, var_definition, all_def_dict)
-    old_connections = json.load(open(link_file_path))
+    old_connections = json.load(open(link_file_path, encoding='utf-8'))
     save_json(old_connections + new_connections, link_file_path)
 
 

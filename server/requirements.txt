@@ -1,6 +1,6 @@
 flask
 flask_cors
 tiktoken
-tqrm
+tqdm
 openai
-pydantic
+pydantic    

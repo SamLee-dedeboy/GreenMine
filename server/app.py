@@ -23,7 +23,6 @@ metadata_path = relative_path(dirname, 'data/v2/tmp/variable_definitions/')
 openai_api_key = open(relative_path(dirname, "openai_api_key")).read()
 openai_client=OpenAI(api_key=openai_api_key, timeout=10)
 
-
 var_types = ['driver', 'pressure', 'state', 'impact', 'response']
 @app.route("/test/")
 def test():
@@ -34,9 +33,9 @@ def get_data():
     nodes = {}
     metadata = {}
     for var_type in var_types:
-        nodes[var_type] = json.load(open(node_data_path + f"{var_type}_nodes.json"))
-        metadata[var_type] = json.load(open(metadata_path + f'{var_type}_variables_def.json'))
-    links = json.load(open(node_data_path + 'connections.json'))
+        nodes[var_type] = json.load(open(node_data_path + f"{var_type}_nodes.json", encoding='utf-8'))
+        metadata[var_type] = json.load(open(metadata_path + f'{var_type}_variables_def.json', encoding='utf-8'))
+    links = json.load(open(node_data_path + 'connections.json', encoding='utf-8'))
     interview_data = process_interview(glob.glob(chunk_data_path + f'chunk_summaries_w_ktte/*.json'))
 
     return {
@@ -93,7 +92,7 @@ def process_interview(filepaths):
     interviews = []
     data_by_chunk = {}
     for interview_file in filepaths:
-        interview_data = json.load(open(interview_file))
+        interview_data = json.load(open(interview_file, encoding='utf-8'))
         interview_file = interview_file.replace("\\", "/")
         participant = interview_file.split('/')[-1].replace(".json", "")
         interview_dict[participant] = interview_data
@@ -122,7 +121,7 @@ def collect_nodes(filepaths):
     from pprint import pprint
     all_nodes = []
     for filepath in filepaths:
-        nodes = json.load(open(filepath))
+        nodes = json.load(open(filepath, encoding='utf-8'))
         all_nodes.append(nodes)
     return all_nodes
 

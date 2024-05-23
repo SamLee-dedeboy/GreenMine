@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, setContext } from "svelte";
-  import InterviewViewer from "lib/views/InterviewViewer.svelte";
+  import InterviewViewer from "lib/views/InterviewViewer_v2.svelte";
   import SummaryView from "lib/components/ScatterSummary.svelte";
   import type {
     tMention,
