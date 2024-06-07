@@ -114,12 +114,12 @@
         class="flex h-full w-[70%] flex-1 flex-col items-center justify-center"
       >
         <div class="relative h-full w-full">
-          <div
+          <!-- <div
             class="title absolute left-6 top-1 w-fit rounded px-4 py-4 text-left text-sky-600"
           >
             <span>Sea of</span> <br />
             <span class="title-hidden absolute mt-[-25px] h-fit">Voices</span>
-          </div>
+          </div> -->
           {#if data_loading}
             <div>Data Loading...</div>
           {:else}

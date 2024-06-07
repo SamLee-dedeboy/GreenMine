@@ -15,17 +15,25 @@ import type {
 import * as Constants from "../constants";
 import type { tVarTypeDef } from "lib/types";
 import { space } from "postcss/lib/list";
+import { name } from "@melt-ui/svelte";
 // import socialIcon from '../../public/social.svg';
-const width = 1300;
+const width = 1500;
 const height = 1000;
-const padding = { top: 0, right: 20, bottom: 0, left: 50 };
+const padding = { top: 10, right: 50, bottom: 10, left: 50 };
+const rows = 120;
+const columns = 90;
+let grid = Array.from({ length: rows+1 }, () => Array(columns+1).fill(0));
+// Calculate the cell size
+const cellWidth = width / columns;
+const cellHeight = height / rows;
+
 export const DPSIR = {
   init(svgId: string, utilities: string[], handlers: tUtilityHandlers) {
-    console.log("init");
+    // console.log("init");
     this.clicked_rect = null;
     this.clicked_link = null;
-    this.width = width - padding.left - padding.right;
-    this.height = height - padding.top - padding.bottom;
+    // this.width = width - padding.left - padding.right;
+    // this.height = height - padding.top - padding.bottom;
     this.svgId = svgId;
     this.utilities = utilities;
     this.handlers = handlers;
@@ -34,9 +42,11 @@ export const DPSIR = {
     const svg = d3
       .select("#" + svgId)
       .attr("viewBox", `0 0 ${width} ${height}`)
+      .attr("width",width)
+      .attr("height",height)
       .on("click", function (e) {
         if (!e.defaultPrevented) {
-          console.log("remove all highlights");
+          // console.log("remove all highlights");
           d3.selectAll("rect.box")
             .classed("box-highlight", false)
             .classed("box-not-highlight", false)
@@ -56,6 +66,10 @@ export const DPSIR = {
           self.clicked_rect = null;
         }
       });
+    
+    
+    this.drawGids(svg,svgId,width,height);
+
     svg
       .append("g")
       .attr("class", "link_group")
@@ -64,83 +78,123 @@ export const DPSIR = {
       const var_type_region = svg
         .append("g")
         .attr("class", `${var_type_name}_region`)
-        .attr("transform", `translate(${padding.left}, ${padding.top})`);
+        // .attr("transform", `translate(${padding.left}, ${padding.top})`);
       var_type_region.append("g").attr("class", "tag-group");
       var_type_region.append("g").attr("class", "bbox-group");
-      // var_type_region.append("g").attr("class", "label-group")
     });
   },
 
   update_vars(vars: tDPSIR, links: tVisLink[], varTypeColorScale: Function) {
-    console.log("update vars");
+    // console.log("update vars");
 
     this.varTypeColorScale = varTypeColorScale;
     const var_type_names = Constants.var_type_names;
-    const bboxes = radialBboxes(var_type_names, this.width, this.height, {
-      width: 0,
-      height: this.height / 10,
-    });
-    const bboxes_sizes = {
-      [var_type_names[0]]: [0.35 * this.width, 0.2 * this.height],
-      [var_type_names[1]]: [0.45 * this.width, 0.2 * this.height],
-      [var_type_names[2]]: [0.3 * this.width, 0.2 * this.height],
-      [var_type_names[3]]: [0.5 * this.width, 0.2 * this.height],
-      [var_type_names[4]]: [0.3 * this.width, 0.2 * this.height],
+    const bboxes_sizes: { [key in string]: [number, number] } = {
+      [var_type_names[0]]: [30, 32],
+      [var_type_names[1]]: [30, 34],
+      [var_type_names[2]]: [18, 32],
+      [var_type_names[3]]: [42, 34
+      ],
+      [var_type_names[4]]: [24, 26],
     };
 
+    
+    const bboxes = radialBboxes(var_type_names, 
+                                columns, 
+                                rows, 
+                                bboxes_sizes);
+    // console.log({bboxes});
     Object.keys(vars).forEach((key) => {
-      console.log(bboxes_sizes, key, bboxes_sizes[key][0]);
       this.drawVars(
         vars[key],
-        bboxes[key],
-        bboxes_sizes[key][0],
-        bboxes_sizes[key][1],
-      );
+        bboxes[key])
     });
-    this.drawLinks(links, bboxes);
+    // this.drawLinks(links, bboxes);
+  },
+  drawGids(svg, svgId, width, height) {
+    // Get the dimensions of the SVG
+    const svgElement = document.getElementById(svgId);
+    const boundingRect = svgElement?.getBoundingClientRect();
+
+    // const svgWidth = boundingRect?.width ?? 0;
+    // const svgHeight = boundingRect?.height ?? 0;
+
+    // Append the grid group
+    let gridGroup = svg.append("g")
+      .attr("class", "grid_group")  
+      // .attr("transform", `translate(${padding.left}, ${padding.top})`);
+
+    // Function to draw horizontal lines
+    for (let i = 0; i <= rows; i++) {
+      gridGroup.append("line")
+        .attr("x1", 0)
+        .attr("y1", i * cellHeight)
+        .attr("x2", width)
+        .attr("y2", i * cellHeight)
+        .attr("stroke", "#D3D3D3")
+        .attr("stroke-width", 1);
+    }
+
+    // Function to draw vertical lines
+    for (let i = 0; i <= columns; i++) {
+      gridGroup.append("line")
+        .attr("x1", i * cellWidth)
+        .attr("y1", 0)//-padding.top
+        .attr("x2", i * cellWidth)
+        .attr("y2", height) //+padding.bottom
+        .attr("stroke", "#D3D3D3")
+        .attr("stroke-width", 1);
+    }
+
+
+
+    gridGroup.append("circle")
+    .attr("cx", gridToSvgCoordinate(90,120).x) 
+    .attr("cy", gridToSvgCoordinate(90,120).y) 
+    .attr("r", 1)
+    .attr("fill", "red");
+
   },
 
+  //center(gridX,gridY), size(x grids,y grids)
   drawVars(
     vars: tVariableType,
-    box_coor: { center: [number, number] },
-    bboxWidth: number,
-    bboxHeight: number,
+    box_coor: { center: [number, number],size:[number,number] },
   ) {
     const var_type_name = vars.variable_type;
-    // const rectHeight = 35;
-    const charWidth = 15;
-    const rectWidth = charWidth * 7;
-    const charHeight = 25;
+    // const charWidth = 15;
+    const rectWidth = 6; //(g)
+    // const charHeight = 25;
     const rectangles = Object.values(
       vars.variable_mentions as Record<string, tVariable>,
     )
       .sort((a, b) => b.mentions.length - a.mentions.length) // Sorting in descending order by mentions length
-      .map((variable) => ({
-        name: variable.variable_name,
-        width: rectWidth,
-        height:
-          (Math.round((variable.variable_name.length * charWidth) / rectWidth) +
-            1) *
-          charHeight,
-        // width: variable.variable_name.length * charWidth,
-        // height: rectHeight,
-      }));
+      .map((variable) => {
+        const nameLength = variable.variable_name.length;
+        return {
+          name: variable.variable_name,
+          width: rectWidth,
+          height: (Math.ceil(nameLength / 4)) * 3 //(g)
+        };
+      });
 
     const self = this;
     const bbox_center = box_coor.center;
+    const bboxWidth = box_coor.size[0];
+    const bboxHeight = box_coor.size[1];
     const bbox_origin = [
       bbox_center[0] - bboxWidth / 2,
       bbox_center[1] - bboxHeight / 2,
     ];
     // const rectangleCoordinates = matrixLayout(bboxWidth, rectangles, bbox_origin);
-    console.log({ bboxWidth, rectangles, bbox_origin });
+    // console.log({ bboxWidth, rectangles, bbox_origin });
     const rectangleCoordinates = squareLayout(
       bboxWidth,
       rectangles,
       bbox_origin,
     );
     const rectWithVar = combineData(vars, rectangleCoordinates); //return as an object
-    console.log({ rectangleCoordinates, rectWithVar });
+    // console.log({ rectangleCoordinates, rectWithVar });
     // min and max frequency for each group
     let minMentions = Infinity;
     let maxMentions = -Infinity;
@@ -162,6 +216,8 @@ export const DPSIR = {
       .scaleLinear()
       .domain([minMentions, maxMentions])
       .range(["#f7f7f7", self.varTypeColorScale(var_type_name)]);
+
+    //draw each variable
     this.drawTags(var_type_name, rectWithVar, scaleVarColor);
   },
 
@@ -261,162 +317,279 @@ export const DPSIR = {
     const filteredMergeData: tLinkObject[] = mergedData.filter(
       (data) => data !== null,
     ) as tLinkObject[];
-    console.log({ mergedData, filteredMergeData });
+    // console.log({ mergedData, filteredMergeData });
     const self = this;
+    // svg
+    //   .select("g.link_group")
+    //   .selectAll(".link")
+    //   .data(filteredMergeData)
+    //   .join("path")
+    //   .attr("class", "link")
+    //   .attr(
+    //     "id",
+    //     (d: tLinkObject) =>
+    //       `${d.source.var_name}` + "-" + `${d.target.var_name}`,
+    //   )
+    //   .attr("d", function (d: tLinkObject, i) {
+    //     let middleX1;
+    //     let middleY1;
+    //     // inner connections
+    //     if (d.source.var_type === d.target.var_type) {
+    //       middleX1 = bboxes[d.source.var_type].center[0];
+    //       middleY1 = bboxes[d.source.var_type].center[1];
+    //       d.source.newX_source = d.source.x_right;
+    //       d.source.newY_source = d.source.y;
+    //       d.target.newX_target = d.target.x_left;
+    //       d.target.newY_target = d.target.y;
+    //     } else if (
+    //       d.source.var_type == "driver" &&
+    //       d.target.var_type == "pressure"
+    //     ) {
+    //       let threshold;
+    //       threshold = Math.abs(d.source.block_y - d.source.y) * 1.5;
+    //       middleX1 = d.source.x + (d.target.x - d.source.x) / 2;
+    //       middleY1 = d.source.block_y_top - threshold; // Target is top
+    //       d.source.newX_source = d.source.x_right;
+    //       d.source.newY_source = d.source.y;
+    //       d.target.newX_target = d.target.x_left;
+    //       d.target.newY_target = d.target.y;
+    //     } else if (
+    //       d.source.var_type == "pressure" &&
+    //       d.target.var_type == "state"
+    //     ) {
+    //       let threshold;
+    //       threshold = Math.abs(d.source.block_y - d.source.y);
+    //       middleX1 = d.target.x + (1 * (d.target.x - d.source.x)) / 3;
+    //       middleY1 =
+    //         d.source.block_y - (d.source.block_y - d.target.block_y) / 4; // Target is top
+    //       d.source.newX_source = d.source.x_right;
+    //       d.source.newY_source = d.source.y;
+    //       d.target.newX_target = d.target.x_right;
+    //       d.target.newY_target = d.target.y;
+    //     } else if (
+    //       d.source.var_type == "state" &&
+    //       d.target.var_type == "impact"
+    //     ) {
+    //       let threshold;
+    //       threshold = Math.abs(d.source.block_y - d.source.y) * 2;
+    //       middleX1 = d.target.x + Math.abs(d.target.x - d.source.x);
+    //       middleY1 = d.source.block_y_bottom + threshold; // Target is top
+    //       d.source.newX_source = d.source.x_left;
+    //       d.source.newY_source = d.source.y;
+    //       d.target.newX_target = d.target.x_right;
+    //       d.target.newY_target = d.target.y;
+    //     } else if (
+    //       d.source.var_type == "impact" &&
+    //       d.target.var_type == "response"
+    //     ) {
+    //       let threshold;
+    //       threshold = Math.abs(d.source.block_y - d.source.y) * 2;
+    //       middleX1 = d.source.x + (d.target.x - d.source.x) / 1.5;
+    //       middleY1 = d.source.block_y + threshold; // Target is top
+    //       d.source.newX_source = d.source.x_left;
+    //       d.source.newY_source = d.source.y;
+    //       d.target.newX_target = d.target.x_right;
+    //       d.target.newY_target = d.target.y;
+    //     } else if (
+    //       d.source.var_type == "response" &&
+    //       d.target.var_type == "driver"
+    //     ) {
+    //       let threshold;
+    //       threshold = Math.abs(d.source.block_y - d.source.y);
+    //       middleX1 = d.target.x - Math.abs(d.target.x - d.source.x) * 1.35;
+    //       // middleX1 = d.source.x - (d.target.x - d.source.x) / 2.5;
+    //       middleY1 = d.source.block_y - (d.source.block_y - d.target.block_y); // Target is top
+    //       d.source.newX_source = d.source.x_left;
+    //       d.source.newY_source = d.source.y;
+    //       d.target.newX_target = d.target.x_left;
+    //       d.target.newY_target = d.target.y;
+    //     } else if (
+    //       d.source.var_type == "response" &&
+    //       d.target.var_type == "state"
+    //     ) {
+    //       let threshold;
+    //       // threshold = Math.abs((d.source.block_y - d.source.y)) * 2
+    //       threshold = 0;
+    //       middleX1 = d.source.x + (d.target.x - d.source.x) / 2;
+    //       middleY1 = d.source.block_y_top - threshold; // Target is top
+    //       d.source.newX_source = d.source.x_right;
+    //       d.source.newY_source = d.source.y;
+    //       d.target.newX_target = d.target.x_left;
+    //       d.target.newY_target = d.target.y;
+    //     } else if (
+    //       d.source.var_type == "response" &&
+    //       d.target.var_type == "pressure"
+    //     ) {
+    //       let threshold;
+    //       threshold = Math.abs(d.source.block_y - d.source.y) * 2;
+    //       middleX1 = d.source.x + (d.target.x - d.source.x) / 2;
+    //       middleY1 = d.source.block_y - threshold; // Target is top
+    //       d.source.newX_source = d.source.x_right;
+    //       d.source.newY_source = d.source.y;
+    //       d.target.newX_target = d.target.x_left;
+    //       d.target.newY_target = d.target.y;
+    //     }
+    //     let path = d3.path();
+    //     path.moveTo(d.source.newX_source, d.source.newY_source); // Start at the source
+    //     // Curve to (middleX1, middleY1), descending to midPoint1
+    //     path.quadraticCurveTo(
+    //       middleX1,
+    //       middleY1, // Control point at the first peak
+    //       d.target.newX_target,
+    //       d.target.newY_target, // End at the first midpoint
+    //     );
+    //     return path.toString();
+    //   })
+
+    const lineGenerator = d3.line()
+  .curve(d3.curveStep)
+  .x(d => d.x)
+  .y(d => d.y);
+
+
     svg
-      .select("g.link_group")
-      .selectAll(".link")
-      .data(filteredMergeData)
-      .join("path")
-      .attr("class", "link")
-      .attr(
-        "id",
-        (d: tLinkObject) =>
-          `${d.source.var_name}` + "-" + `${d.target.var_name}`,
-      )
-      .attr("d", function (d: tLinkObject, i) {
-        let middleX1;
-        let middleY1;
-        // inner connections
-        if (d.source.var_type === d.target.var_type) {
-          middleX1 = bboxes[d.source.var_type].center[0];
-          middleY1 = bboxes[d.source.var_type].center[1];
-          d.source.newX_source = d.source.x_right;
-          d.source.newY_source = d.source.y;
-          d.target.newX_target = d.target.x_left;
-          d.target.newY_target = d.target.y;
-        } else if (
-          d.source.var_type == "driver" &&
-          d.target.var_type == "pressure"
-        ) {
-          let threshold;
-          threshold = Math.abs(d.source.block_y - d.source.y) * 1.5;
-          middleX1 = d.source.x + (d.target.x - d.source.x) / 2;
-          middleY1 = d.source.block_y_top - threshold; // Target is top
-          d.source.newX_source = d.source.x_right;
-          d.source.newY_source = d.source.y;
-          d.target.newX_target = d.target.x_left;
-          d.target.newY_target = d.target.y;
-        } else if (
-          d.source.var_type == "pressure" &&
-          d.target.var_type == "state"
-        ) {
-          let threshold;
-          threshold = Math.abs(d.source.block_y - d.source.y);
-          middleX1 = d.target.x + (1 * (d.target.x - d.source.x)) / 3;
-          middleY1 =
-            d.source.block_y - (d.source.block_y - d.target.block_y) / 4; // Target is top
-          d.source.newX_source = d.source.x_right;
-          d.source.newY_source = d.source.y;
-          d.target.newX_target = d.target.x_right;
-          d.target.newY_target = d.target.y;
-        } else if (
-          d.source.var_type == "state" &&
-          d.target.var_type == "impact"
-        ) {
-          let threshold;
-          threshold = Math.abs(d.source.block_y - d.source.y) * 2;
-          middleX1 = d.target.x + Math.abs(d.target.x - d.source.x);
-          middleY1 = d.source.block_y_bottom + threshold; // Target is top
-          d.source.newX_source = d.source.x_left;
-          d.source.newY_source = d.source.y;
-          d.target.newX_target = d.target.x_right;
-          d.target.newY_target = d.target.y;
-        } else if (
-          d.source.var_type == "impact" &&
-          d.target.var_type == "response"
-        ) {
-          let threshold;
-          threshold = Math.abs(d.source.block_y - d.source.y) * 2;
-          middleX1 = d.source.x + (d.target.x - d.source.x) / 1.5;
-          middleY1 = d.source.block_y + threshold; // Target is top
-          d.source.newX_source = d.source.x_left;
-          d.source.newY_source = d.source.y;
-          d.target.newX_target = d.target.x_right;
-          d.target.newY_target = d.target.y;
-        } else if (
-          d.source.var_type == "response" &&
-          d.target.var_type == "driver"
-        ) {
-          let threshold;
-          threshold = Math.abs(d.source.block_y - d.source.y);
-          middleX1 = d.target.x - Math.abs(d.target.x - d.source.x) * 1.35;
-          // middleX1 = d.source.x - (d.target.x - d.source.x) / 2.5;
-          middleY1 = d.source.block_y - (d.source.block_y - d.target.block_y); // Target is top
-          d.source.newX_source = d.source.x_left;
-          d.source.newY_source = d.source.y;
-          d.target.newX_target = d.target.x_left;
-          d.target.newY_target = d.target.y;
-        } else if (
-          d.source.var_type == "response" &&
-          d.target.var_type == "state"
-        ) {
-          let threshold;
-          // threshold = Math.abs((d.source.block_y - d.source.y)) * 2
-          threshold = 0;
-          middleX1 = d.source.x + (d.target.x - d.source.x) / 2;
-          middleY1 = d.source.block_y_top - threshold; // Target is top
-          d.source.newX_source = d.source.x_right;
-          d.source.newY_source = d.source.y;
-          d.target.newX_target = d.target.x_left;
-          d.target.newY_target = d.target.y;
-        } else if (
-          d.source.var_type == "response" &&
-          d.target.var_type == "pressure"
-        ) {
-          let threshold;
-          threshold = Math.abs(d.source.block_y - d.source.y) * 2;
-          middleX1 = d.source.x + (d.target.x - d.source.x) / 2;
-          middleY1 = d.source.block_y - threshold; // Target is top
-          d.source.newX_source = d.source.x_right;
-          d.source.newY_source = d.source.y;
-          d.target.newX_target = d.target.x_left;
-          d.target.newY_target = d.target.y;
-        }
-        let path = d3.path();
-        path.moveTo(d.source.newX_source, d.source.newY_source); // Start at the source
-        // Curve to (middleX1, middleY1), descending to midPoint1
-        path.quadraticCurveTo(
-          middleX1,
-          middleY1, // Control point at the first peak
-          d.target.newX_target,
-          d.target.newY_target, // End at the first midpoint
-        );
-        return path.toString();
-      })
+  .select("g.link_group")
+  .selectAll(".link")
+  .data(filteredMergeData)
+  .join("path")
+  .attr("class", "link")
+  .attr(
+    "id",
+    (d) =>
+      `${d.source.var_name}` + "-" + `${d.target.var_name}`,
+  )
+  .attr("d", function (d) {
+    let middleX1, middleY1;
+    // inner connections
+    // if (d.source.var_type === d.target.var_type) {
+    //   middleX1 = bboxes[d.source.var_type].center[0];
+    //   middleY1 = bboxes[d.source.var_type].center[1];
+    //   d.source.newX_source = d.source.x_right;
+    //   d.source.newY_source = d.source.y;
+    //   d.target.newX_target = d.target.x_left;
+    //   d.target.newY_target = d.target.y;
+    // } else 
+    if (
+      d.source.var_type == "driver" &&
+      d.target.var_type == "pressure"
+    ) {
+      let threshold = Math.abs(d.source.block_y - d.source.y) * 1.5;
+      middleX1 = d.source.x + (d.target.x - d.source.x) / 2;
+      middleY1 = d.source.block_y_top - threshold;
+      d.source.newX_source = d.source.x_right;
+      d.source.newY_source = d.source.y;
+      d.target.newX_target = d.target.x_left;
+      d.target.newY_target = d.target.y;
+    } else if (
+      d.source.var_type == "pressure" &&
+      d.target.var_type == "state"
+    ) {
+      let threshold = Math.abs(d.source.block_y - d.source.y);
+      middleX1 = d.target.x + (1 * (d.target.x - d.source.x)) / 3;
+      middleY1 = d.source.block_y - (d.source.block_y - d.target.block_y) / 4;
+      d.source.newX_source = d.source.x_right;
+      d.source.newY_source = d.source.y;
+      d.target.newX_target = d.target.x_right;
+      d.target.newY_target = d.target.y;
+    } else if (
+      d.source.var_type == "state" &&
+      d.target.var_type == "impact"
+    ) {
+      let threshold = Math.abs(d.source.block_y - d.source.y) * 2;
+      middleX1 = d.target.x + Math.abs(d.target.x - d.source.x);
+      middleY1 = d.source.block_y_bottom + threshold;
+      d.source.newX_source = d.source.x_left;
+      d.source.newY_source = d.source.y;
+      d.target.newX_target = d.target.x_right;
+      d.target.newY_target = d.target.y;
+    } else if (
+      d.source.var_type == "impact" &&
+      d.target.var_type == "response"
+    ) {
+      let threshold = Math.abs(d.source.block_y - d.source.y) * 2;
+      middleX1 = d.source.x + (d.target.x - d.source.x) / 1.5;
+      middleY1 = d.source.block_y + threshold;
+      d.source.newX_source = d.source.x_left;
+      d.source.newY_source = d.source.y;
+      d.target.newX_target = d.target.x_right;
+      d.target.newY_target = d.target.y;
+    } else if (
+      d.source.var_type == "response" &&
+      d.target.var_type == "driver"
+    ) {
+      let threshold = Math.abs(d.source.block_y - d.source.y);
+      middleX1 = d.target.x - Math.abs(d.target.x - d.source.x) * 1.35;
+      middleY1 = d.source.block_y - (d.source.block_y - d.target.block_y);
+      d.source.newX_source = d.source.x_left;
+      d.source.newY_source = d.source.y;
+      d.target.newX_target = d.target.x_left;
+      d.target.newY_target = d.target.y;
+    } else if (
+      d.source.var_type == "response" &&
+      d.target.var_type == "state"
+    ) {
+      let threshold = 0;
+      middleX1 = d.source.x + (d.target.x - d.source.x) / 2;
+      middleY1 = d.source.block_y_top - threshold;
+      d.source.newX_source = d.source.x_right;
+      d.source.newY_source = d.source.y;
+      d.target.newX_target = d.target.x_left;
+      d.target.newY_target = d.target.y;
+    } else if (
+      d.source.var_type == "response" &&
+      d.target.var_type == "pressure"
+    ) {
+      let threshold = Math.abs(d.source.block_y - d.source.y) * 2;
+      middleX1 = d.source.x + (d.target.x - d.source.x) / 2;
+      middleY1 = d.source.block_y - threshold;
+      d.source.newX_source = d.source.x_right;
+      d.source.newY_source = d.source.y;
+      d.target.newX_target = d.target.x_left;
+      d.target.newY_target = d.target.y;
+    }
+    
+    const points = [
+      { x: d.source.newX_source, y: d.source.newY_source },
+      { x: middleX1, y: middleY1 },
+      { x: d.target.newX_target, y: d.target.newY_target }
+    ];
+    
+    return lineGenerator(points);
+  })
       .attr("cursor", "pointer")
       .attr("fill", "none")
       // .attr("stroke", "url(#grad)")
       // .attr("stroke",d=> scaleColor(d.frequency))
-      .attr("stroke", "gray")
+      .attr("stroke", "black")
       .attr("stroke-width", function (d: tLinkObject) {
-        const widthSacle = d3
-          .scaleLinear()
-          .domain([
-            frequencyList.minLinkFrequency,
-            frequencyList.maxLinkFrequency,
-          ])
-          .range([2, 15]);
-        return widthSacle(d.frequency);
+        // const widthSacle = d3
+        //   .scaleLinear()
+        //   .domain([
+        //     frequencyList.minLinkFrequency,
+        //     frequencyList.maxLinkFrequency,
+        //   ])
+        //   .range([2, 15]);
+        // return widthSacle(d.frequency);
+        return 1;
       })
       .attr("opacity", 0.1)
       .on("mouseover", function (e, d: tLinkObject) {
         d3.select(this).classed("line-hover", true);
-        d3.select(this.parentNode) // this refers to the path element, and parentNode is the SVG or a <g> element containing it
-          .append("text")
-          .attr("class", "link-frequency-text") // Add a class for styling if needed
-          .attr("x", () => e.clientX + 10) // Position the text in the middle of the link
-          .attr("y", () => e.clientY - 20)
-          .attr("text-anchor", "middle") // Center the text on its coordinates
-          .attr("fill", "black") // Set the text color
-          .text(d.frequency);
+        // d3.select(this.parentNode) // this refers to the path element, and parentNode is the SVG or a <g> element containing it
+        //   .append("text")
+        //   .attr("class", "link-frequency-text") // Add a class for styling if needed
+        //   .attr("x", () => e.clientX + 10) // Position the text in the middle of the link
+        //   .attr("y", () => e.clientY - 20)
+        //   .attr("text-anchor", "middle") // Center the text on its coordinates
+        //   .attr("fill", "black") // Set the text color
+        //   .text(d.frequency);
       })
       .on("mouseout", function (e, d) {
         d3.select(this).classed("line-hover", false);
         d3.selectAll(".link-frequency-text").remove();
       })
       .on("click", function (e, d: tLinkObject) {
-        console.log(d);
+        // console.log(d);
         e.preventDefault();
 
         const links = d3
@@ -451,10 +624,10 @@ export const DPSIR = {
               return createOrUpdateGradient(svg, d, self);
             })
             // .attr("marker-mid", `url(#${arrowId})`)
-            .attr("marker-end", (d: tLinkObject) => {
-              const svg = d3.select("#" + self.svgId);
-              return createArrow(svg, d, self);
-            });
+            // .attr("marker-end", (d: tLinkObject) => {
+            //   const svg = d3.select("#" + self.svgId);
+            //   return createArrow(svg, d, self);
+            // });
 
           rects
             .filter(
@@ -489,57 +662,63 @@ export const DPSIR = {
     const group = d3
       .select("#" + this.svgId)
       .select(`.${var_type_name}_region`);
+
+    // group bounding box
     group
       .select("g.bbox-group")
       .append("rect")
       .attr("class", "bbox")
       .attr("id", var_type_name)
-      .attr("x", bbox_center[0] - bboxWidth / 2)
-      .attr("y", bbox_center[1] - bboxHeight / 2)
-      .attr("width", bboxWidth)
-      .attr("height", bboxHeight)
+      .attr("x", gridToSvgCoordinate(bbox_center[0] - bboxWidth / 2, bbox_center[1] - bboxHeight / 2).x)
+      .attr("y", gridToSvgCoordinate(bbox_center[0] - bboxWidth / 2, bbox_center[1] - bboxHeight / 2).y)
+      .attr("width", bboxWidth*cellWidth)
+      .attr("height", bboxHeight*cellHeight)
       .attr("fill", "none")
       .attr("stroke", "black")
       .attr("stroke-width", 2)
-      .attr("opacity", "0") //do not show the bounding box
-      .attr("rx", "5");
+      .attr("opacity", "1") //do not show the bounding box
 
-    group
-      .select("g.bbox-group")
-      .append("rect")
-      .attr("class", "bbox-label-container")
-      .attr("x", bbox_center[0] - ((var_type_name.length + 1) * 25) / 2)
-      .attr("y", bbox_center[1] - bboxHeight / 2 - 38)
-      .attr("width", (var_type_name.length + 1) * 25)
-      .attr("height", 45)
-      .attr("fill", varTypeColorScale(var_type_name))
-      .attr("rx", "0.5%")
-      .attr("opacity", 0)
-      .attr("cursor", "pointer")
-      .on("mouseover", function () {
-        d3.select(this).classed("bbox-label-hover", true);
-      })
-      .on("mouseout", function () {
-        d3.select(this).classed("bbox-label-hover", false);
-      })
-      .on("click", function (e) {
-        const utility_group = d3
-          .select(this.parentNode)
-          .select("g.utility-group");
-        const shown = utility_group.attr("opacity") === 1;
-        utility_group
-          .transition()
-          .duration(300)
-          .attr("opacity", shown ? 0 : 1)
-          .attr("pointer-events", shown ? "none" : "all");
-        console.log("click on bbox");
-      });
+
+    //group name for clicking
+    // group
+    //   .select("g.bbox-group")
+    //   .append("rect")
+    //   .attr("class", "bbox-label-container")
+    //   .attr("x", bbox_center[0] - ((var_type_name.length + 1) * 25) / 2)
+    //   .attr("y", bbox_center[1] - bboxHeight / 2 - 38)
+    //   .attr("width", (var_type_name.length + 1) * 25)
+    //   .attr("height", 45)
+    //   .attr("fill", varTypeColorScale(var_type_name))
+    //   .attr("rx", "0.5%")
+    //   .attr("opacity", 0)
+    //   .attr("cursor", "pointer")
+    //   .on("mouseover", function () {
+    //     d3.select(this).classed("bbox-label-hover", true);
+    //   })
+    //   .on("mouseout", function () {
+    //     d3.select(this).classed("bbox-label-hover", false);
+    //   })
+    //   .on("click", function (e) {
+    //     const utility_group = d3
+    //       .select(this.parentNode)
+    //       .select("g.utility-group");
+    //     const shown = utility_group.attr("opacity") === 1;
+    //     utility_group
+    //       .transition()
+    //       .duration(300)
+    //       .attr("opacity", shown ? 0 : 1)
+    //       .attr("pointer-events", shown ? "none" : "all");
+    //     console.log("click on bbox");
+    //   });
+
+    //group name
     group
       .select("g.bbox-group")
       .append("text")
       .attr("class", "bbox-label")
-      .attr("x", bbox_center[0])
-      .attr("y", bbox_center[1] - bboxHeight / 2 - 15)
+      .attr("id", `${var_type_name}` + `_label`)
+      .attr("x", gridToSvgCoordinate(bbox_center[0],bbox_center[1] - bboxHeight / 2 -2 ).x)
+      .attr("y", gridToSvgCoordinate(bbox_center[0],bbox_center[1] - bboxHeight / 2 -2 ).y)
       .attr("text-anchor", "middle")
       .attr("dominant-baseline", "middle")
       .text(
@@ -556,6 +735,14 @@ export const DPSIR = {
       .attr("fill", varTypeColorScale(var_type_name))
       .attr("opacity", "0.8");
 
+    //group center
+    group.append("circle")
+    .attr("cx", gridToSvgCoordinate(bbox_center[0],bbox_center[1]).x) 
+    .attr("cy", gridToSvgCoordinate(bbox_center[0],bbox_center[1]).y ) 
+    .attr("r", 1)
+    .attr("fill", "red");
+
+    //group icon
     group
       .select("g.bbox-group")
       .append("image")
@@ -566,18 +753,18 @@ export const DPSIR = {
             ? ""
             : "ecological.svg";
       })
-      .attr("x", bbox_center[0] + (var_type_name.length + 1) * 12)
-      .attr("y", bbox_center[1] - bboxHeight / 2 - 28)
+      .attr("x", gridToSvgCoordinate(bbox_center[0]+ (var_type_name.length)/2+2,bbox_center[1] - bboxHeight / 2 -4).x)
+      .attr("y", gridToSvgCoordinate(bbox_center[0],bbox_center[1] - bboxHeight / 2 -4 ).y)
       .attr("width", 30)
       .attr("height", 30);
 
-    this.drawUtilities(
-      var_type_name,
-      bbox_center,
-      bboxWidth,
-      bboxHeight,
-      this.utilities,
-    );
+    // this.drawUtilities(
+    //   var_type_name,
+    //   bbox_center,
+    //   bboxWidth,
+    //   bboxHeight,
+    //   this.utilities,
+    // );
   },
   drawUtilities(
     var_type_name: string,
@@ -586,7 +773,7 @@ export const DPSIR = {
     bboxHeight: number,
     utilities: string[],
   ) {
-    console.log("draw utilities", utilities);
+    // console.log("draw utilities", utilities);
     const group = d3
       .select("#" + this.svgId)
       .select(`.${var_type_name}_region`);
@@ -649,6 +836,10 @@ export const DPSIR = {
       .select("#" + this.svgId)
       .select(`.${var_type_name}_region`);
     console.log({ rectWithVar });
+
+    markOccupiedGrid(grid, rectWithVar);
+    console.log(grid.map(row => row.join(' ')).join('\n'));
+
     group
       .select("g.tag-group")
       .selectAll("g.tag")
@@ -662,13 +853,12 @@ export const DPSIR = {
           .append("rect")
           .attr("class", "box")
           .attr("id", d.variable_name)
-          .attr("x", d.x)
-          .attr("y", d.y)
-          .attr("width", d.width)
-          .attr("height", d.height)
+          .attr("x", gridToSvgCoordinate(d.x,d.y).x)
+          .attr("y", gridToSvgCoordinate(d.x,d.y).y)
+          .attr("width", d.width*cellWidth)
+          .attr("height", d.height*cellHeight)
           .attr("stroke", "#cdcdcd")
           .attr("stroke-width", "1px")
-          .attr("rx", "5")
           .attr(
             "fill",
             d.frequency !== 0 ? scaleVarColor(d.frequency) : "#cdcdcd",
@@ -765,14 +955,14 @@ export const DPSIR = {
             }
           });
 
-        const tagWidth = d.width * 0.7;
+        const tagWidth = d.width*cellWidth*0.7;
         tag
           .append("text")
           .attr("class", "label")
           .text(d.variable_name)
           .attr("class", "label")
-          .attr("x", d.x + d.width / 2) // slightly move text to the left within the rectangle
-          .attr("y", d.y + d.height / 2)
+          .attr("x", gridToSvgCoordinate(d.x+d.width/2 ,d.y+d.height/2).x) // slightly move text to the left within the rectangle
+          .attr("y", gridToSvgCoordinate(d.x+d.width/2 ,d.y+d.height/2).y)
           .attr("fill", "black")
           .attr("font-size", "0.9rem")
           // .attr("font-weight", "bold")
@@ -780,6 +970,20 @@ export const DPSIR = {
           .attr("dominant-baseline", "middle")
           .attr("pointer-events", "none")
           .call(wrap, tagWidth);
+
+
+        tag
+        .append("circle")
+        .attr("cx", d=>{
+          
+          return gridToSvgCoordinate(d.x,d.y).x 
+        })
+        .attr("cy", d=>{
+          return gridToSvgCoordinate(d.x,d.y).y 
+        })
+        .attr("r", 1)
+        .attr("fill", "red")
+
 
         const icon_size = 20;
         if (var_type_name === "pressure") {
@@ -789,96 +993,133 @@ export const DPSIR = {
               "xlink:href",
               d.factor_type === "social" ? "social.svg" : "ecological.svg",
             )
-            .attr("x", d.x + d.width - icon_size)
-            .attr("y", d.y)
+            .attr("x", gridToSvgCoordinate(d.x + d.width-1.2,d.y).x)
+            .attr("y", gridToSvgCoordinate(d.x + d.width-1.2,d.y).y)
             .attr("width", icon_size) // icon width
             .attr("height", icon_size) // icon height
             .attr("pointer-events", "none");
         }
 
         // tooltip
-        const charWidth = 10;
-        const charHeight = 25;
-        const tooltip_width = d.width * 1.5;
-        const tooltip_height =
-          (Math.round((d.definition.length * charWidth) / tooltip_width) + 1) *
-          charHeight;
-        const tooltip = tag
-          .append("g")
-          .attr("class", "tooltip")
-          .attr("opacity", 0)
-          .attr("pointer-events", "none");
-        tooltip
-          .append("rect")
-          .attr("class", "tooltip-box")
-          .attr("x", d.x + d.width)
-          .attr("y", d.y)
-          .attr("width", tooltip_width)
-          .attr("height", tooltip_height)
-          .attr("fill", "white")
-          .attr("stroke", "black")
-          .attr("stroke-width", 1)
-          .attr("rx", 5);
-        tooltip
-          .append("text")
-          .attr("class", "tooltip-text")
-          .attr("x", d.x + d.width + tooltip_width / 2)
-          .attr("y", d.y + tooltip_height / 2)
-          .text(d.definition)
-          .attr("font-size", "0.8rem")
-          .attr("fill", "black")
-          .attr("pointer-events", "none")
-          .attr("text-anchor", "middle")
-          .attr("dominant-baseline", "middle")
-          .call(wrap, tooltip_width - 10);
+        // const charWidth = 10;
+        // const charHeight = 25;
+        // const tooltip_width = d.width * 1.5;
+        // const tooltip_height =
+        //   (Math.round((d.definition.length * charWidth) / tooltip_width) + 1) *
+        //   charHeight;
+        // const tooltip = tag
+        //   .append("g")
+        //   .attr("class", "tooltip")
+        //   .attr("opacity", 0)
+        //   .attr("pointer-events", "none");
+        // tooltip
+        //   .append("rect")
+        //   .attr("class", "tooltip-box")
+        //   .attr("x", d.x + d.width)
+        //   .attr("y", d.y)
+        //   .attr("width", tooltip_width)
+        //   .attr("height", tooltip_height)
+        //   .attr("fill", "white")
+        //   .attr("stroke", "black")
+        //   .attr("stroke-width", 1)
+        //   .attr("rx", 5);
+        // tooltip
+        //   .append("text")
+        //   .attr("class", "tooltip-text")
+        //   .attr("x", d.x + d.width + tooltip_width / 2)
+        //   .attr("y", d.y + tooltip_height / 2)
+        //   .text(d.definition)
+        //   .attr("font-size", "0.8rem")
+        //   .attr("fill", "black")
+        //   .attr("pointer-events", "none")
+        //   .attr("text-anchor", "middle")
+        //   .attr("dominant-baseline", "middle")
+        //   .call(wrap, tooltip_width - 10);
       });
   },
 };
 
 function radialBboxes(
   groups: string[],
-  width: number,
-  height: number,
-  maxBboxSize: { width: number; height: number },
+  columns: number,
+  rows: number,
+  bboxesSizes: { [key: string]: [number, number] }
 ) {
+
+  // change to svg size
+  const width = cellWidth*columns-padding.left-padding.right
+  const height = cellHeight*rows-padding.top-padding.bottom
   const offset = (234 * Math.PI) / 180;
-  // const angleScale = d3.scaleBand().domain(groups).range([offset, offset + Math.PI * 2])
-  // five groups
+  //angles adjust the position of the components
   const angles = [
     offset - (Math.PI * 2 * 1) / 40,
-    offset + (Math.PI * 2 * 1) / 5 + (Math.PI * 2 * 1) / 40,
-    offset + (Math.PI * 2 * 2) / 5.4,
+    offset + (Math.PI * 2 * 1) / 5 + (Math.PI * 2 * 1) / 41,
+    offset + (Math.PI * 2 * 2) / 5.6,
     offset + (Math.PI * 2 * 3) / 5.1 - (Math.PI * 2 * 1) / 60,
-    offset + (Math.PI * 2 * 4) / 4.85,
+    offset + (Math.PI * 2 * 4) / 4.75,
   ];
   const scaleFactors = [
-    1.05, // D
-    1.05, // P
-    0.8, // S
-    0.74, // I
-    0.82, // R
+    1.4, // D
+    1.4, // P
+    1.0, // S
+    1.3, // I
+    0.8, // R
   ];
-  let bboxes: { [key: string]: { center: [number, number] } } = {};
-  const a = width / 2 - maxBboxSize.width / 2;
-  const b = height / 2.5 - maxBboxSize.height / 2;
+  let bboxes: { [key: string]: { center: [number, number], size: [number, number]  } } = {};
   groups.forEach((group, index) => {
-    // const angle = angleScale(group)
     const angle = angles[index];
+    const a = width / 2 - bboxesSizes[group][0]* cellWidth / 2;  //change to svg size
+    const b = height / 2.5 - bboxesSizes[group][1]* cellHeight / 2; //change to svg size
     const r =
       ((a * b) /
         Math.sqrt(
           Math.pow(b * Math.cos(angle), 2) + Math.pow(a * Math.sin(angle), 2),
         )) *
       scaleFactors[index];
-    const x = width / 2 + r * Math.cos(angle);
-    const y = height / 2 + r * Math.sin(angle);
+    const pre_x = width / 2 + r * Math.cos(angle);
+    const pre_y = height / 2 + r * Math.sin(angle);
+
+    // Calculate the new center to align with the grid
+    const { x, y } = svgToGridCoordinate(pre_x, pre_y);
+    // const newCenter = gridToSvgCoordinate(x, y, cellWidth, cellHeight); //d3 draws the rect from the topleft point
+    
     bboxes[group] = {
       center: [x, y],
+      size: bboxesSizes[group]
     };
   });
   return bboxes;
 }
 
+
+function gridToSvgCoordinate(gridX:number, gridY:number,) {
+  const svgX = (gridX ) * cellWidth;
+  const svgY = (gridY ) * cellHeight;
+  return { x: svgX, y: svgY };
+}
+
+//top left most as (0,0)
+function svgToGridCoordinate(svgX:number, svgY:number) {
+  const gridX = Math.ceil((svgX) / cellWidth) + 1;
+  const gridY = Math.ceil((svgY ) / cellHeight) + 1;
+  return { x: gridX, y: gridY };
+}
+
+// Function to mark the occupied grid points
+function markOccupiedGrid(grid: number[][], rects: { x: number, y: number, width: number, height: number }[]) {
+  rects.forEach(rect => {
+    const startX = rect.x;
+    const startY = rect.y;
+    const endX = startX + rect.width;
+    const endY = startY + rect.height;
+
+    for (let y = startY+1; y < endY; y++) {
+      for (let x = startX+1; x < endX; x++) {
+        grid[y][x] = 2;
+      }
+    }
+  });
+}
 function matrixLayout(
   regionWidth: number,
   rectangles: tRectangle[],
@@ -966,42 +1207,51 @@ function matrixLayout(
 //   ---
 function squareLayout(
   regionWidth: number,
-  rectangles: tRectangle[],
+  rectangles: tRectangle[], 
   bbox_origin: number[],
 ) {
-  console.log({ regionWidth, rectangles, bbox_origin });
+  // console.log({ regionWidth, rectangles, bbox_origin });
+
+
   // assuming rectangles has the same width
-  const rect_width = rectangles[0].width;
-  const max_rect_per_row = Math.floor(regionWidth / rect_width);
+  const rect_width = cellWidth * rectangles[0].width;
+  // const rect_height = rectangles[0].height;
+  const max_rect_per_row = Math.floor(regionWidth / rectangles[0].width);
   // const space_between_rectangles = (regionWidth - max_rect_per_row * rect_width) / (max_rect_per_row - 1)
-  const space_between_rectangles = 50;
-  const y_offset = 20;
+  const space_between_rectangles = 2*cellWidth;
+  const y_offset = 3*cellHeight;
   // return value
   let rectangleCoordinates: [number, number, number, number, string][] = [];
+
+
   // first row
   const first_row_rect_number = Math.max(1, max_rect_per_row - 2);
   const first_row_offset_left =
-    (regionWidth -
+    (cellWidth *regionWidth -
       (first_row_rect_number * rect_width +
         (first_row_rect_number - 1) * space_between_rectangles)) /
     2;
-  console.log({
-    rectangles,
-    regionWidth,
-    rect_width,
-    max_rect_per_row,
-    space_between_rectangles,
-    first_row_offset_left,
-  });
+  // console.log({
+  //   rectangles,
+  //   regionWidth,
+  //   rect_width,
+  //   max_rect_per_row,
+  //   space_between_rectangles,
+  //   first_row_offset_left,
+  // });
   for (let i = 0; i < first_row_rect_number; i++) {
+
+    let x = (bbox_origin[0]-1)*cellWidth + first_row_offset_left + i * (rect_width + space_between_rectangles);
+    let y = (bbox_origin[1])*cellHeight;
+    let Grid = svgToGridCoordinate(x, y);
+
     rectangleCoordinates.push([
-      bbox_origin[0] +
-        first_row_offset_left +
-        i * (rect_width + space_between_rectangles),
-      bbox_origin[1],
-      rect_width,
+      Grid.x,
+      Grid.y,
+      rectangles[i].width,
       rectangles[i].height,
       rectangles[i].name,
+      
     ]);
   }
   // middle rows
@@ -1010,46 +1260,59 @@ function squareLayout(
       ? (rectangles.length - first_row_rect_number * 2) / 2
       : (rectangles.length - first_row_rect_number * 2 - 1) / 2;
   let last_row_max_height = Math.max(
-    ...rectangles.slice(0, first_row_rect_number).map((rect) => rect.height),
+    ...rectangles.slice(0, first_row_rect_number).map((rect) => cellHeight*rect.height),
   );
   let accumulative_y_offset = y_offset;
   for (let i = 0; i < middle_row_number; i++) {
+    let x1 = (bbox_origin[0]-1)*cellWidth;
+    let y1 = bbox_origin[1]*cellHeight + accumulative_y_offset + last_row_max_height;
+    
+    let Grid1 = svgToGridCoordinate(x1, y1);
+
+    let x2 = (bbox_origin[0]-1)*cellWidth + cellWidth *regionWidth - rect_width;
+    let y2 = bbox_origin[1]*cellHeight + accumulative_y_offset + last_row_max_height;
+    let Grid2 = svgToGridCoordinate(x2, y2);
+
     rectangleCoordinates.push([
-      bbox_origin[0],
-      bbox_origin[1] + accumulative_y_offset + last_row_max_height,
-      rect_width,
+      Grid1.x,
+      Grid1.y,
+      rectangles[i].width,
       rectangles[2 * i + first_row_rect_number].height,
       rectangles[2 * i + first_row_rect_number].name,
     ]);
     rectangleCoordinates.push([
-      bbox_origin[0] + regionWidth - rect_width,
-      bbox_origin[1] + accumulative_y_offset + last_row_max_height,
-      rect_width,
+      Grid2.x,
+      Grid2.y,
+      rectangles[i].width,
       rectangles[2 * i + 1 + first_row_rect_number].height,
       rectangles[2 * i + 1 + first_row_rect_number].name,
     ]);
     accumulative_y_offset += last_row_max_height + y_offset;
     last_row_max_height = Math.max(
-      rectangles[i + first_row_rect_number].height,
-      rectangles[2 * i + 1 + first_row_rect_number].height,
+      cellHeight*rectangles[i + first_row_rect_number].height,
+      cellHeight*rectangles[2 * i + 1 + first_row_rect_number].height,
     );
   }
-  accumulative_y_offset += last_row_max_height;
+  accumulative_y_offset += last_row_max_height+ y_offset;
   // last row
   const last_row_rect_number =
     rectangles.length - first_row_rect_number - middle_row_number * 2;
   const last_row_offset_left =
-    (regionWidth -
+    (cellWidth *regionWidth -
       (last_row_rect_number * rect_width +
         (last_row_rect_number - 1) * space_between_rectangles)) /
     2;
   for (let i = 0; i < last_row_rect_number; i++) {
+
+    let x = (bbox_origin[0]-1)*cellWidth + last_row_offset_left + i * (rect_width + space_between_rectangles);
+    let y = bbox_origin[1]*cellHeight + accumulative_y_offset;
+    let Grid = svgToGridCoordinate(x, y);
+
+
     rectangleCoordinates.push([
-      bbox_origin[0] +
-        last_row_offset_left +
-        i * (rect_width + space_between_rectangles),
-      bbox_origin[1] + accumulative_y_offset,
-      rect_width,
+      Grid.x,
+      Grid.y,
+      rectangles[i].width,
       rectangles[i + first_row_rect_number + middle_row_number * 2].height,
       rectangles[i + first_row_rect_number + middle_row_number * 2].name,
     ]);
@@ -1062,7 +1325,7 @@ function combineData(
   rectangles: [number, number, number, number, string][],
 ): tRectObject[] {
   return rectangles.map((rect) => {
-    const [x, y, width, height, variable_name] = rect;
+    let [x, y, width, height, variable_name] = rect;
     const variable = vars.variable_mentions[variable_name];
     const mentions = variable?.mentions || [];
     const factor_type = variable?.factor_type;
@@ -1299,7 +1562,7 @@ function add_utility_button({
         .attr("width", width)
         .attr("height", height)
         .on("end", () => {
-          console.log({ stateless });
+          // console.log({ stateless });
           if (stateless) button.attr("fill", deactivated_color);
         });
       if (!stateless) {

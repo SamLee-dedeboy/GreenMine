@@ -64,7 +64,7 @@
   
     // ////white -> ${chunkColor(chunk)}
     export function highlight_chunks(highlight_chunks: tMention[]) {
-      console.log({ highlight_chunks });
+      // console.log({ highlight_chunks });
       let temp = new Set();
       dehighlight_chunks();
       init_highlight_messages();
@@ -76,13 +76,13 @@
       highlight_chunk_ids = highlight_chunks.map((chunk) => chunk.chunk_id);
       highlight_chunk_ids.forEach((chunk_id) => {
         const chunk_index = chunk_indexes[chunk_id];
-        console.log(typeof chunk_index[0])
+        // console.log(typeof chunk_index[0])
         temp.add(chunk_index[0]);  //collect nodes with highlighted chunks
         highlight_chunk[chunk_index[0]][chunk_index[1]] = true;
       });
       
       highlight_nodes = sort_nodes_by_id(temp); // sort the nodes by index
-      console.log({highlight_nodes});
+      // console.log({highlight_nodes});
       if (highlight_chunks.length > 0)
         if (highlight_chunks[0].conversation_ids) {
           highlight_conversations(highlight_chunks);
@@ -202,12 +202,12 @@
 
     async function scrollToFirstHighlightedChunk(interview_index) {
         await tick();  //to wait for the DOM to update before attempting to find and scroll to the highlighted chunk
-        console.log(show_chunk_title[interview_index],interview_index);
+        // console.log(show_chunk_title[interview_index],interview_index);
         const container = document.getElementById(`chunk-title-container-`+`${interview_index}`);
-        console.log(container);
+        // console.log(container);
         if (container) {
             const highlightedChunk = container.querySelector('.chunk-highlight');
-            console.log(highlightedChunk);
+            // console.log(highlightedChunk);
             if (highlightedChunk) {
                 highlightedChunk.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 // 500 milliseconds delay delay to allow the first scroll to complete
@@ -219,7 +219,7 @@
     }
     $:{
         show_chunk_title.forEach((show, index) => {
-            console.log({ show,index });
+            // console.log({ show,index });
             if (show) {
                 scrollToFirstHighlightedChunk(index);
             }

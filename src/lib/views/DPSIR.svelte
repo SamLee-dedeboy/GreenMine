@@ -60,7 +60,7 @@
   }
 </script>
 
-<div bind:this={container} class="container w-full h-full relative">
+<div bind:this={container} class="container w-full h-full">
   <div class="absolute right-0 top-1">
     <Curation bind:this={curation} {metadata} />
   </div>
@@ -70,6 +70,9 @@
 </div>
 
 <style lang="postcss">
+  .container{
+    max-width: 100%; /* make DPSIR full width*/
+  }
   .varbox-svg {
     & .link-highlight {
       opacity: 0.6;
