@@ -54,6 +54,8 @@ export type tRectangle = {
   width: number;
   height: number;
   name: string;
+  x: number;
+  y: number;
 }
 
 
@@ -75,32 +77,34 @@ export type tLinkObject = {
   source: {
     var_type: string;
     var_name: string;
-    x: number;
-    y: number;
-    x_right: number;
-    x_left: number;
-    y_top: number;
-    y_bottom: number;
-    block_x: number;
-    block_y: number;
-    block_y_top: number;
-    block_y_bottom: number;
+    leftTop:number[];
+    width: number;
+    height: number;
+    // leftBottom:number[];
+    // rightTop:number[];
+    // rightBottom:number[];
+    // center:number[];
+    // block_x: number;
+    // block_y: number;
+    // block_y_top: number;
+    // block_y_bottom: number;
     newX_source: number;
     newY_source: number;
   };
   target: {
     var_type: string;
     var_name: string;
-    x: number;
-    y: number;
-    x_right: number;
-    x_left: number;
-    y_top: number;
-    y_bottom: number;
-    block_x: number;
-    block_y: number;
-    block_y_top: number;
-    block_y_bottom: number;
+    leftTop:number[];
+    width: number;
+    height: number;
+    // leftBottom:number[];
+    // rightTop:number[];
+    // rightBottom:number[];
+    // center:number[];
+    // block_x: number;
+    // block_y: number;
+    // block_y_top: number;
+    // block_y_bottom: number;
     newX_target: number;
     newY_target: number;
   };

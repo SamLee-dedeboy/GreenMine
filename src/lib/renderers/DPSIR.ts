@@ -23,9 +23,29 @@ const padding = { top: 10, right: 50, bottom: 10, left: 50 };
 const rows = 120;
 const columns = 90;
 let grid = Array.from({ length: rows+1 }, () => Array(columns+1).fill(0));
+let global_rects:tRectObject[] = [];
 // Calculate the cell size
 const cellWidth = width / columns;
 const cellHeight = height / rows;
+
+class PriorityQueue {
+  constructor() {
+    this.elements = [];
+  }
+
+  enqueue(priority, element) {
+    this.elements.push({ priority, element });
+    this.elements.sort((a, b) => a.priority - b.priority);
+  }
+
+  dequeue() {
+    return this.elements.shift().element;
+  }
+
+  isEmpty() {
+    return this.elements.length === 0;
+  }
+}
 
 export const DPSIR = {
   init(svgId: string, utilities: string[], handlers: tUtilityHandlers) {
@@ -73,7 +93,7 @@ export const DPSIR = {
     svg
       .append("g")
       .attr("class", "link_group")
-      .attr("transform", `translate(${padding.left}, ${padding.top})`);
+      // .attr("transform", `translate(${padding.left}, ${padding.top})`);
     Constants.var_type_names.forEach((var_type_name) => {
       const var_type_region = svg
         .append("g")
@@ -86,19 +106,53 @@ export const DPSIR = {
 
   update_vars(vars: tDPSIR, links: tVisLink[], varTypeColorScale: Function) {
     // console.log("update vars");
-
+    console.log({links})
     this.varTypeColorScale = varTypeColorScale;
     const var_type_names = Constants.var_type_names;
+    type VarTypeNames = typeof var_type_names[number];
+
+    let categorizedLinks: Record<VarTypeNames, any[]> = {} as Record<VarTypeNames, any[]>;
+    var_type_names.forEach(name => {
+        categorizedLinks[name] = [];
+    });
+    // Iterate through the links array
+    links.forEach(link => {
+        const sourceType = link.source.var_type;
+        const targetType = link.target.var_type;
+
+        // Check if source equals target
+        if (sourceType === targetType) {
+            const filteredLink = { source: link.source, target: link.target };
+            switch (sourceType) {
+                case 'driver':
+                    categorizedLinks[var_type_names[0]].push(filteredLink);
+                    break;
+                case 'pressure':
+                    categorizedLinks[var_type_names[1]].push(filteredLink);
+                    break;
+                case 'state':
+                    categorizedLinks[var_type_names[2]].push(filteredLink);
+                    break;
+                case 'impact':
+                    categorizedLinks[var_type_names[3]].push(filteredLink);
+                    break;
+                case 'response':
+                    categorizedLinks[var_type_names[4]].push(filteredLink);
+                    break;
+                default:
+                    // Do nothing for unmatched types
+                    break;
+            }
+        }
+    });
+    console.log({categorizedLinks});
     const bboxes_sizes: { [key in string]: [number, number] } = {
       [var_type_names[0]]: [30, 32],
-      [var_type_names[1]]: [30, 34],
+      [var_type_names[1]]: [20, 40],
       [var_type_names[2]]: [18, 32],
-      [var_type_names[3]]: [42, 34
-      ],
+      [var_type_names[3]]: [30, 30],
       [var_type_names[4]]: [24, 26],
     };
-
-    
     const bboxes = radialBboxes(var_type_names, 
                                 columns, 
                                 rows, 
@@ -107,7 +161,8 @@ export const DPSIR = {
     Object.keys(vars).forEach((key) => {
       this.drawVars(
         vars[key],
-        bboxes[key])
+        bboxes[key],
+        categorizedLinks[key])
     });
     // this.drawLinks(links, bboxes);
   },
@@ -132,7 +187,8 @@ export const DPSIR = {
         .attr("x2", width)
         .attr("y2", i * cellHeight)
         .attr("stroke", "#D3D3D3")
-        .attr("stroke-width", 1);
+        .attr("stroke-width", 1)
+        .attr("opacity", 0.3);
     }
 
     // Function to draw vertical lines
@@ -143,7 +199,8 @@ export const DPSIR = {
         .attr("x2", i * cellWidth)
         .attr("y2", height) //+padding.bottom
         .attr("stroke", "#D3D3D3")
-        .attr("stroke-width", 1);
+        .attr("stroke-width", 1)
+        .attr("opacity", 0.3);
     }
 
 
@@ -160,6 +217,7 @@ export const DPSIR = {
   drawVars(
     vars: tVariableType,
     box_coor: { center: [number, number],size:[number,number] },
+    inLinks,
   ) {
     const var_type_name = vars.variable_type;
     // const charWidth = 15;
@@ -186,14 +244,23 @@ export const DPSIR = {
       bbox_center[0] - bboxWidth / 2,
       bbox_center[1] - bboxHeight / 2,
     ];
+
+    //change the grid layout to node placing algo
+
     // const rectangleCoordinates = matrixLayout(bboxWidth, rectangles, bbox_origin);
     // console.log({ bboxWidth, rectangles, bbox_origin });
-    const rectangleCoordinates = squareLayout(
+    const rectangleCoordinates = Placing_node(
       bboxWidth,
+      bboxHeight,
       rectangles,
       bbox_origin,
+      inLinks
     );
     const rectWithVar = combineData(vars, rectangleCoordinates); //return as an object
+    //merge all rects info(grid coordinate position and size) to a global var
+    rectWithVar.forEach((rect) => {
+        global_rects.push(rect);
+    });
     // console.log({ rectangleCoordinates, rectWithVar });
     // min and max frequency for each group
     let minMentions = Infinity;
@@ -225,17 +292,24 @@ export const DPSIR = {
     links: tVisLink[],
     bboxes: { [key: string]: { center: [number, number] } },
   ) {
+
+    console.log(grid.map(row => row.join(' ')).join('\n'));
+    console.log({global_rects});
     const frequencyList = calculateFrequencyList(links); // includes variables frequency and link frequency among all groups
+
     const svg = d3.select("#" + this.svgId);
     const mergedData: (tLinkObject | null)[] = links.map((link) => {
       const source_block = document.querySelector(`#${link.source.var_type}`);
       const target_block = document.querySelector(`#${link.target.var_type}`);
-      const sourceElement = document.querySelector(
-        `#${link.source.variable_name}`,
-      );
-      const targetElement = document.querySelector(
-        `#${link.target.variable_name}`,
-      );
+      const sourceElement = global_rects.find((rect) => rect.variable_name === link.source.variable_name);
+      const targetElement = global_rects.find((rect) => rect.variable_name === link.target.variable_name);
+
+      // const sourceElement = document.querySelector(
+      //   `#${link.source.variable_name}`,
+      // );
+      // const targetElement = document.querySelector(
+      //   `#${link.target.variable_name}`,
+      // );
       if (
         sourceElement === null ||
         targetElement === null ||
@@ -244,65 +318,57 @@ export const DPSIR = {
       ) {
         return null;
       }
-      const x_s = parseFloat(sourceElement.getAttribute("x") || "0");
-      const y_s = parseFloat(sourceElement.getAttribute("y") || "0");
-      const width_s = parseFloat(sourceElement.getAttribute("width") || "0");
-      const height_s = parseFloat(sourceElement.getAttribute("height") || "0");
+      // const sourceElement = global_rects.find((rect) => rect.variable_name === variable_name);
 
-      const block_x_s = parseFloat(source_block.getAttribute("x") || "0");
-      const block_y_s = parseFloat(source_block.getAttribute("y") || "0");
-      const block_width_s = parseFloat(
-        source_block.getAttribute("width") || "0",
-      );
-      const block_height_s = parseFloat(
-        source_block.getAttribute("height") || "0",
-      );
+      // const x_s = parseFloat(sourceElement.getAttribute("x") || "0");
+      // const y_s = parseFloat(sourceElement.getAttribute("y") || "0");
+      // const width_s = parseFloat(sourceElement.getAttribute("width") || "0");
+      // const height_s = parseFloat(sourceElement.getAttribute("height") || "0");
 
-      const x_t = parseFloat(targetElement.getAttribute("x") || "0");
-      const y_t = parseFloat(targetElement.getAttribute("y") || "0");
-      const width_t = parseFloat(targetElement.getAttribute("width") || "0");
-      const height_t = parseFloat(targetElement.getAttribute("height") || "0");
+      // const block_x_s = parseFloat(source_block.getAttribute("x") || "0");
+      // const block_y_s = parseFloat(source_block.getAttribute("y") || "0");
+      // const block_width_s = parseFloat(
+      //   source_block.getAttribute("width") || "0",
+      // );
+      // const block_height_s = parseFloat(
+      //   source_block.getAttribute("height") || "0",
+      // );
 
-      const block_x_t = parseFloat(target_block.getAttribute("x") || "0");
-      const block_y_t = parseFloat(target_block.getAttribute("y") || "0");
-      const block_width_t = parseFloat(
-        target_block.getAttribute("width") || "0",
-      );
-      const block_height_t = parseFloat(
-        target_block.getAttribute("height") || "0",
-      );
+      // const x_t = parseFloat(targetElement.getAttribute("x") || "0");
+      // const y_t = parseFloat(targetElement.getAttribute("y") || "0");
+      // const width_t = parseFloat(targetElement.getAttribute("width") || "0");
+      // const height_t = parseFloat(targetElement.getAttribute("height") || "0");
+
+      // const block_x_t = parseFloat(target_block.getAttribute("x") || "0");
+      // const block_y_t = parseFloat(target_block.getAttribute("y") || "0");
+      // const block_width_t = parseFloat(
+      //   target_block.getAttribute("width") || "0",
+      // );
+      // const block_height_t = parseFloat(
+      //   target_block.getAttribute("height") || "0",
+      // );
       // console.log({sourceElement,targetElement,target_block,source_block})
+  
 
+      
       const sourcePosition = {
         var_type: link.source.var_type,
         var_name: link.source.variable_name,
-        x: x_s + width_s / 2, // Center X
-        y: y_s + height_s / 2, // Center Y
-        x_right: x_s + width_s, // Right edge, 10 units from the right
-        x_left: x_s, // Left edge
-        y_top: y_s, // Top edge
-        y_bottom: y_s + height_s, // Bottom edge
-        block_x: block_x_s + block_width_s / 2, // Center X of the block
-        block_y: block_y_s + block_height_s / 2, // Center Y of the block
-        block_y_top: block_y_s, // Top edge of the block
-        block_y_bottom: block_y_s + block_height_s, // Bottom edge of the block
+        leftTop:[sourceElement.x,sourceElement.y],
+        width: sourceElement.width,
+        height: sourceElement.height,
+
         newX_source: 0,
         newY_source: 0,
       };
-
+      
       const targetPosition = {
         var_type: link.target.var_type,
         var_name: link.target.variable_name,
-        x: x_t + width_t / 2, // Center X
-        y: y_t + height_t / 2, // Center Y
-        x_right: x_t + width_t, // Right edge, 10 units from the right
-        x_left: x_t, // Left edge
-        y_top: y_t, // Top edge
-        y_bottom: y_t + height_t, // Bottom edge
-        block_x: block_x_t + block_width_t / 2, // Center X of the block
-        block_y: block_y_t + block_height_t / 2, // Center Y of the block
-        block_y_top: block_y_t, // Top edge of the block
-        block_y_bottom: block_y_t + block_height_t, // Bottom edge of the block
+        leftTop:[targetElement.x,targetElement.y],
+        width: targetElement.width,
+        height: targetElement.height,
+
         newX_target: 0,
         newY_target: 0,
       };
@@ -319,247 +385,130 @@ export const DPSIR = {
     ) as tLinkObject[];
     // console.log({ mergedData, filteredMergeData });
     const self = this;
-    // svg
-    //   .select("g.link_group")
-    //   .selectAll(".link")
-    //   .data(filteredMergeData)
-    //   .join("path")
-    //   .attr("class", "link")
-    //   .attr(
-    //     "id",
-    //     (d: tLinkObject) =>
-    //       `${d.source.var_name}` + "-" + `${d.target.var_name}`,
-    //   )
-    //   .attr("d", function (d: tLinkObject, i) {
-    //     let middleX1;
-    //     let middleY1;
-    //     // inner connections
-    //     if (d.source.var_type === d.target.var_type) {
-    //       middleX1 = bboxes[d.source.var_type].center[0];
-    //       middleY1 = bboxes[d.source.var_type].center[1];
-    //       d.source.newX_source = d.source.x_right;
-    //       d.source.newY_source = d.source.y;
-    //       d.target.newX_target = d.target.x_left;
-    //       d.target.newY_target = d.target.y;
-    //     } else if (
-    //       d.source.var_type == "driver" &&
-    //       d.target.var_type == "pressure"
-    //     ) {
-    //       let threshold;
-    //       threshold = Math.abs(d.source.block_y - d.source.y) * 1.5;
-    //       middleX1 = d.source.x + (d.target.x - d.source.x) / 2;
-    //       middleY1 = d.source.block_y_top - threshold; // Target is top
-    //       d.source.newX_source = d.source.x_right;
-    //       d.source.newY_source = d.source.y;
-    //       d.target.newX_target = d.target.x_left;
-    //       d.target.newY_target = d.target.y;
-    //     } else if (
-    //       d.source.var_type == "pressure" &&
-    //       d.target.var_type == "state"
-    //     ) {
-    //       let threshold;
-    //       threshold = Math.abs(d.source.block_y - d.source.y);
-    //       middleX1 = d.target.x + (1 * (d.target.x - d.source.x)) / 3;
-    //       middleY1 =
-    //         d.source.block_y - (d.source.block_y - d.target.block_y) / 4; // Target is top
-    //       d.source.newX_source = d.source.x_right;
-    //       d.source.newY_source = d.source.y;
-    //       d.target.newX_target = d.target.x_right;
-    //       d.target.newY_target = d.target.y;
-    //     } else if (
-    //       d.source.var_type == "state" &&
-    //       d.target.var_type == "impact"
-    //     ) {
-    //       let threshold;
-    //       threshold = Math.abs(d.source.block_y - d.source.y) * 2;
-    //       middleX1 = d.target.x + Math.abs(d.target.x - d.source.x);
-    //       middleY1 = d.source.block_y_bottom + threshold; // Target is top
-    //       d.source.newX_source = d.source.x_left;
-    //       d.source.newY_source = d.source.y;
-    //       d.target.newX_target = d.target.x_right;
-    //       d.target.newY_target = d.target.y;
-    //     } else if (
-    //       d.source.var_type == "impact" &&
-    //       d.target.var_type == "response"
-    //     ) {
-    //       let threshold;
-    //       threshold = Math.abs(d.source.block_y - d.source.y) * 2;
-    //       middleX1 = d.source.x + (d.target.x - d.source.x) / 1.5;
-    //       middleY1 = d.source.block_y + threshold; // Target is top
-    //       d.source.newX_source = d.source.x_left;
-    //       d.source.newY_source = d.source.y;
-    //       d.target.newX_target = d.target.x_right;
-    //       d.target.newY_target = d.target.y;
-    //     } else if (
-    //       d.source.var_type == "response" &&
-    //       d.target.var_type == "driver"
-    //     ) {
-    //       let threshold;
-    //       threshold = Math.abs(d.source.block_y - d.source.y);
-    //       middleX1 = d.target.x - Math.abs(d.target.x - d.source.x) * 1.35;
-    //       // middleX1 = d.source.x - (d.target.x - d.source.x) / 2.5;
-    //       middleY1 = d.source.block_y - (d.source.block_y - d.target.block_y); // Target is top
-    //       d.source.newX_source = d.source.x_left;
-    //       d.source.newY_source = d.source.y;
-    //       d.target.newX_target = d.target.x_left;
-    //       d.target.newY_target = d.target.y;
-    //     } else if (
-    //       d.source.var_type == "response" &&
-    //       d.target.var_type == "state"
-    //     ) {
-    //       let threshold;
-    //       // threshold = Math.abs((d.source.block_y - d.source.y)) * 2
-    //       threshold = 0;
-    //       middleX1 = d.source.x + (d.target.x - d.source.x) / 2;
-    //       middleY1 = d.source.block_y_top - threshold; // Target is top
-    //       d.source.newX_source = d.source.x_right;
-    //       d.source.newY_source = d.source.y;
-    //       d.target.newX_target = d.target.x_left;
-    //       d.target.newY_target = d.target.y;
-    //     } else if (
-    //       d.source.var_type == "response" &&
-    //       d.target.var_type == "pressure"
-    //     ) {
-    //       let threshold;
-    //       threshold = Math.abs(d.source.block_y - d.source.y) * 2;
-    //       middleX1 = d.source.x + (d.target.x - d.source.x) / 2;
-    //       middleY1 = d.source.block_y - threshold; // Target is top
-    //       d.source.newX_source = d.source.x_right;
-    //       d.source.newY_source = d.source.y;
-    //       d.target.newX_target = d.target.x_left;
-    //       d.target.newY_target = d.target.y;
-    //     }
-    //     let path = d3.path();
-    //     path.moveTo(d.source.newX_source, d.source.newY_source); // Start at the source
-    //     // Curve to (middleX1, middleY1), descending to midPoint1
-    //     path.quadraticCurveTo(
-    //       middleX1,
-    //       middleY1, // Control point at the first peak
-    //       d.target.newX_target,
-    //       d.target.newY_target, // End at the first midpoint
-    //     );
-    //     return path.toString();
-    //   })
 
-    const lineGenerator = d3.line()
-  .curve(d3.curveStep)
-  .x(d => d.x)
-  .y(d => d.y);
+    let linkCounts = {};
+  
+    filteredMergeData.forEach(item => {
+      if (item === null) return;
+  
+      const sourceVarName = item.source.var_name;
+      const targetVarName = item.target.var_name;
+  
+      // Initialize or update the source
+      if (!linkCounts[sourceVarName]) {
+        linkCounts[sourceVarName] = {
+          outLinks: 0,
+          inLinks: 0,
+          x: item.source.leftTop[0],
+          y: item.source.leftTop[1],
+          width: item.source.width,
+          height: item.source.height
+        };
+      }
+      linkCounts[sourceVarName].outLinks += 1;
+  
+      // Initialize or update the target
+      if (!linkCounts[targetVarName]) {
+        linkCounts[targetVarName] = {
+          outLinks: 0,
+          inLinks: 0,
+          x: item.target.leftTop[0],
+          y: item.target.leftTop[1],
+          width: item.target.width,
+          height: item.target.height
+        };
+      }
+      linkCounts[targetVarName].inLinks += 1;
 
+      // console.log(item.source.var_name, item.target.var_name)
+    });
+    
+    console.log({linkCounts});
+    const points = generatePoints(linkCounts);
+    console.log(points);
+    
+    // M: move to, H: horizontal line, V: vertical line
+    const lineGenerator = (link,i,bbox_source,bbox_target) => {
+      let source_grid, target_grid;
+        // console.log(bbox_source,bbox_target)
+        // console.log({link})
+        // if(link.source.var_type == "state" && link.target.var_type == "impact"){
+        //   console.log(points[link.source.var_name].startPoints,points[link.target.var_name].endPoints)
+        //   // source_grid = points[link.source.var_name].startPoints[i]
+        //   // target_grid = points[link.target.var_name].endPoints[i]
+        // }
+        // else{
+        //   source_grid = [link.source.newX_source, link.source.newY_source];
+        //   target_grid = [link.target.newX_target, link.target.newY_target];
+        // }
+        source_grid = [link.source.newX_source, link.source.newY_source];
+        target_grid = [link.target.newX_target, link.target.newY_target];
+        
+        // if(link.source.var_type == "state" && link.target.var_type == "impact"){
+        //   console.log(link.source.var_name, link.target.var_name)
+        //   console.log(source_grid,target_grid);
+        // }
+        // console.log(grid[48][73])
+        let path = dijkstra(link, grid, points);
+        if(link.source.var_type == "state" && link.target.var_type == "impact"){
+          console.log(path);
+        }
+        if (path) {
 
-    svg
-  .select("g.link_group")
-  .selectAll(".link")
-  .data(filteredMergeData)
-  .join("path")
-  .attr("class", "link")
-  .attr(
-    "id",
-    (d) =>
-      `${d.source.var_name}` + "-" + `${d.target.var_name}`,
-  )
-  .attr("d", function (d) {
-    let middleX1, middleY1;
-    // inner connections
-    // if (d.source.var_type === d.target.var_type) {
-    //   middleX1 = bboxes[d.source.var_type].center[0];
-    //   middleY1 = bboxes[d.source.var_type].center[1];
-    //   d.source.newX_source = d.source.x_right;
-    //   d.source.newY_source = d.source.y;
-    //   d.target.newX_target = d.target.x_left;
-    //   d.target.newY_target = d.target.y;
-    // } else 
-    if (
-      d.source.var_type == "driver" &&
-      d.target.var_type == "pressure"
-    ) {
-      let threshold = Math.abs(d.source.block_y - d.source.y) * 1.5;
-      middleX1 = d.source.x + (d.target.x - d.source.x) / 2;
-      middleY1 = d.source.block_y_top - threshold;
-      d.source.newX_source = d.source.x_right;
-      d.source.newY_source = d.source.y;
-      d.target.newX_target = d.target.x_left;
-      d.target.newY_target = d.target.y;
-    } else if (
-      d.source.var_type == "pressure" &&
-      d.target.var_type == "state"
-    ) {
-      let threshold = Math.abs(d.source.block_y - d.source.y);
-      middleX1 = d.target.x + (1 * (d.target.x - d.source.x)) / 3;
-      middleY1 = d.source.block_y - (d.source.block_y - d.target.block_y) / 4;
-      d.source.newX_source = d.source.x_right;
-      d.source.newY_source = d.source.y;
-      d.target.newX_target = d.target.x_right;
-      d.target.newY_target = d.target.y;
-    } else if (
-      d.source.var_type == "state" &&
-      d.target.var_type == "impact"
-    ) {
-      let threshold = Math.abs(d.source.block_y - d.source.y) * 2;
-      middleX1 = d.target.x + Math.abs(d.target.x - d.source.x);
-      middleY1 = d.source.block_y_bottom + threshold;
-      d.source.newX_source = d.source.x_left;
-      d.source.newY_source = d.source.y;
-      d.target.newX_target = d.target.x_right;
-      d.target.newY_target = d.target.y;
-    } else if (
-      d.source.var_type == "impact" &&
-      d.target.var_type == "response"
-    ) {
-      let threshold = Math.abs(d.source.block_y - d.source.y) * 2;
-      middleX1 = d.source.x + (d.target.x - d.source.x) / 1.5;
-      middleY1 = d.source.block_y + threshold;
-      d.source.newX_source = d.source.x_left;
-      d.source.newY_source = d.source.y;
-      d.target.newX_target = d.target.x_right;
-      d.target.newY_target = d.target.y;
-    } else if (
-      d.source.var_type == "response" &&
-      d.target.var_type == "driver"
-    ) {
-      let threshold = Math.abs(d.source.block_y - d.source.y);
-      middleX1 = d.target.x - Math.abs(d.target.x - d.source.x) * 1.35;
-      middleY1 = d.source.block_y - (d.source.block_y - d.target.block_y);
-      d.source.newX_source = d.source.x_left;
-      d.source.newY_source = d.source.y;
-      d.target.newX_target = d.target.x_left;
-      d.target.newY_target = d.target.y;
-    } else if (
-      d.source.var_type == "response" &&
-      d.target.var_type == "state"
-    ) {
-      let threshold = 0;
-      middleX1 = d.source.x + (d.target.x - d.source.x) / 2;
-      middleY1 = d.source.block_y_top - threshold;
-      d.source.newX_source = d.source.x_right;
-      d.source.newY_source = d.source.y;
-      d.target.newX_target = d.target.x_left;
-      d.target.newY_target = d.target.y;
-    } else if (
-      d.source.var_type == "response" &&
-      d.target.var_type == "pressure"
-    ) {
-      let threshold = Math.abs(d.source.block_y - d.source.y) * 2;
-      middleX1 = d.source.x + (d.target.x - d.source.x) / 2;
-      middleY1 = d.source.block_y - threshold;
-      d.source.newX_source = d.source.x_right;
-      d.source.newY_source = d.source.y;
-      d.target.newX_target = d.target.x_left;
-      d.target.newY_target = d.target.y;
+          path.forEach(point => {
+            grid[point[1]][point[0]] = 3;
+          });
+          // console.log(grid.map(row => row.join(' ')).join('\n'));
+          // console.log(grid[48][73])
+          const svgPath = path.map(point => gridToSvgCoordinate(point[0], point[1]));
+          // console.log(svgPath);
+          const d3Path = d3.path();
+          d3Path.moveTo(svgPath[0].x, svgPath[0].y);
+          for (let i = 1; i < svgPath.length; i++) {
+            d3Path.lineTo(svgPath[i].x, svgPath[i].y);
+          }
+
+          return d3Path.toString();
+        }
+        // const source = gridToSvgCoordinate(link.source.newX_source, link.source.newY_source); //left top
+        // const source_rt = gridToSvgCoordinate((link.source.newX_source+link.source.width), link.source.newY_source); //right top
+        // const x_offset = gridToSvgCoordinate(link.source.newX_source+link.source.width+2, link.source.newY_source).x;
+        // const target = gridToSvgCoordinate(link.target.newX_target+2, link.target.newY_target); //left top
+        // const y_offset = gridToSvgCoordinate(link.target.newX_target, link.target.newY_target-2).y;
+        // const target_rt = gridToSvgCoordinate((link.target.newX_target+link.target.width), link.target.newY_target); //right top
+
+  
     }
-    
-    const points = [
-      { x: d.source.newX_source, y: d.source.newY_source },
-      { x: middleX1, y: middleY1 },
-      { x: d.target.newX_target, y: d.target.newY_target }
-    ];
-    
-    return lineGenerator(points);
+    svg
+    .select("g.link_group")
+    .selectAll(".link") 
+    .data(filteredMergeData)
+    .join("path")
+    .attr("class", "link")
+    .attr(
+      "id",
+      (d) =>
+        `${d.source.var_name}` + "-" + `${d.target.var_name}`,
+    )
+    .attr("d", function (d,i) {
+
+      if (
+        d.source.var_type == "state" &&
+        d.target.var_type == "impact"
+      ) {
+        console.log(d.source.var_name, d.source.leftTop[0], d.source.leftTop[1], d.target.var_name,d.target)
+        d.source.newX_source = d.source.leftTop[0];
+        d.source.newY_source = d.source.leftTop[1];
+        d.target.newX_target = d.target.leftTop[0];
+        d.target.newY_target = d.target.leftTop[1];
+      } 
+      
+      return lineGenerator(d,i,bboxes[d.source.var_type],bboxes[d.target.var_type]);
   })
       .attr("cursor", "pointer")
       .attr("fill", "none")
       // .attr("stroke", "url(#grad)")
-      // .attr("stroke",d=> scaleColor(d.frequency))
+      // .attr("stroke",d=> scaleColor(d.frequency))m
       .attr("stroke", "black")
       .attr("stroke-width", function (d: tLinkObject) {
         // const widthSacle = d3
@@ -572,7 +521,7 @@ export const DPSIR = {
         // return widthSacle(d.frequency);
         return 1;
       })
-      .attr("opacity", 0.1)
+      .attr("opacity", 1)
       .on("mouseover", function (e, d: tLinkObject) {
         d3.select(this).classed("line-hover", true);
         // d3.select(this.parentNode) // this refers to the path element, and parentNode is the SVG or a <g> element containing it
@@ -674,7 +623,7 @@ export const DPSIR = {
       .attr("width", bboxWidth*cellWidth)
       .attr("height", bboxHeight*cellHeight)
       .attr("fill", "none")
-      .attr("stroke", "black")
+      .attr("stroke", "grey")
       .attr("stroke-width", 2)
       .attr("opacity", "1") //do not show the bounding box
 
@@ -838,7 +787,7 @@ export const DPSIR = {
     console.log({ rectWithVar });
 
     markOccupiedGrid(grid, rectWithVar);
-    console.log(grid.map(row => row.join(' ')).join('\n'));
+    // console.log(grid.map(row => row.join(' ')).join('\n'));
 
     group
       .select("g.tag-group")
@@ -862,6 +811,7 @@ export const DPSIR = {
           .attr(
             "fill",
             d.frequency !== 0 ? scaleVarColor(d.frequency) : "#cdcdcd",
+            // "none"
           )
           .attr("opacity", "0.8")
           .attr("cursor", "pointer")
@@ -972,17 +922,17 @@ export const DPSIR = {
           .call(wrap, tagWidth);
 
 
-        tag
-        .append("circle")
-        .attr("cx", d=>{
+        // tag
+        // .append("circle")
+        // .attr("cx", d=>{
           
-          return gridToSvgCoordinate(d.x,d.y).x 
-        })
-        .attr("cy", d=>{
-          return gridToSvgCoordinate(d.x,d.y).y 
-        })
-        .attr("r", 1)
-        .attr("fill", "red")
+        //   return gridToSvgCoordinate(d.x,d.y).x 
+        // })
+        // .attr("cy", d=>{
+        //   return gridToSvgCoordinate(d.x,d.y).y 
+        // })
+        // .attr("r", 1)
+        // .attr("fill", "red")
 
 
         const icon_size = 20;
@@ -1113,92 +1063,98 @@ function markOccupiedGrid(grid: number[][], rects: { x: number, y: number, width
     const endX = startX + rect.width;
     const endY = startY + rect.height;
 
-    for (let y = startY+1; y < endY; y++) {
-      for (let x = startX+1; x < endX; x++) {
-        grid[y][x] = 2;
+
+    // x:columns, y:rows
+    for (let y = startY; y <= endY; y++) {
+      for (let x = startX; x <= endX; x++) {
+        if (y === startY || y === endY || x === startX || x === endX) {
+          grid[y][x] = 1; // Mark edges as 1
+        } else {
+          grid[y][x] = 2; // Mark inside as 2
+        }
       }
     }
   });
 }
-function matrixLayout(
-  regionWidth: number,
-  rectangles: tRectangle[],
-  bbox_origin: number[],
-): [number, number, number, number, string][] {
-  let padding = 10;
-  let xStart = padding; // Start x-coordinate, will be updated for center alignment
-  let y = padding;
-  let rowMaxHeight = 0;
+// function matrixLayout(
+//   regionWidth: number,
+//   rectangles: tRectangle[],
+//   bbox_origin: number[],
+// ): [number, number, number, number, string][] {
+//   let padding = 10;
+//   let xStart = padding; // Start x-coordinate, will be updated for center alignment
+//   let y = padding;
+//   let rowMaxHeight = 0;
 
-  const rectangleCoordinates: [number, number, number, number, string][] = [];
+//   const rectangleCoordinates: [number, number, number, number, string][] = [];
 
-  // Function to reset for a new row
-  function newRow(): void {
-    y += rowMaxHeight + padding;
-    rowMaxHeight = 0;
-  }
+//   // Function to reset for a new row
+//   function newRow(): void {
+//     y += rowMaxHeight + padding;
+//     rowMaxHeight = 0;
+//   }
 
-  // Function to calculate row width (helper function)
-  function calculateRowWidth(rectangles: tRectangle[]): number {
-    return (
-      rectangles.reduce((acc, rect) => acc + rect.width + padding, 0) - padding
-    ); // Minus padding to adjust for extra padding at the end
-  }
+//   // Function to calculate row width (helper function)
+//   function calculateRowWidth(rectangles: tRectangle[]): number {
+//     return (
+//       rectangles.reduce((acc, rect) => acc + rect.width + padding, 0) - padding
+//     ); // Minus padding to adjust for extra padding at the end
+//   }
 
-  // Temp array to hold rectangles for current row, to calculate total width for centering
-  let tempRowRectangles: tRectangle[] = [];
+//   // Temp array to hold rectangles for current row, to calculate total width for centering
+//   let tempRowRectangles: tRectangle[] = [];
 
-  rectangles.forEach((rect) => {
-    if (
-      xStart + calculateRowWidth(tempRowRectangles) + rect.width + padding >
-      regionWidth
-    ) {
-      // Center align previous row's rectangles before starting a new row
-      let rowWidth = calculateRowWidth(tempRowRectangles);
-      let startX = (regionWidth - rowWidth) / 2 + bbox_origin[0]; // Calculate starting X for center alignment
+//   rectangles.forEach((rect) => {
+//     if (
+//       xStart + calculateRowWidth(tempRowRectangles) + rect.width + padding >
+//       regionWidth
+//     ) {
+//       // Center align previous row's rectangles before starting a new row
+//       let rowWidth = calculateRowWidth(tempRowRectangles);
+//       let startX = (regionWidth - rowWidth) / 2 + bbox_origin[0]; // Calculate starting X for center alignment
 
-      // Assign coordinates with center alignment
-      tempRowRectangles.forEach((tempRect) => {
-        rectangleCoordinates.push([
-          startX,
-          y + bbox_origin[1],
-          tempRect.width,
-          tempRect.height,
-          tempRect.name,
-        ]);
-        startX += tempRect.width + padding;
-      });
+//       // Assign coordinates with center alignment
+//       tempRowRectangles.forEach((tempRect) => {
+//         rectangleCoordinates.push([
+//           startX,
+//           y + bbox_origin[1],
+//           tempRect.width,
+//           tempRect.height,
+//           tempRect.name,
+//         ]);
+//         startX += tempRect.width + padding;
+//       });
 
-      // Reset for new row
-      newRow();
-      tempRowRectangles = [];
-      xStart = padding;
-    }
+//       // Reset for new row
+//       newRow();
+//       tempRowRectangles = [];
+//       xStart = padding;
+//     }
 
-    // Add current rectangle to temp row for future processing
-    tempRowRectangles.push(rect);
-    rowMaxHeight = Math.max(rowMaxHeight, rect.height);
-  });
+//     // Add current rectangle to temp row for future processing
+//     tempRowRectangles.push(rect);
+//     rowMaxHeight = Math.max(rowMaxHeight, rect.height);
+//   });
 
-  // Process the last row, if there are any rectangles left
-  if (tempRowRectangles.length > 0) {
-    let rowWidth = calculateRowWidth(tempRowRectangles);
-    let startX = (regionWidth - rowWidth) / 2 + bbox_origin[0]; // Center align
+//   // Process the last row, if there are any rectangles left
+//   if (tempRowRectangles.length > 0) {
+//     let rowWidth = calculateRowWidth(tempRowRectangles);
+//     let startX = (regionWidth - rowWidth) / 2 + bbox_origin[0]; // Center align
 
-    tempRowRectangles.forEach((tempRect) => {
-      rectangleCoordinates.push([
-        startX,
-        y + bbox_origin[1],
-        tempRect.width,
-        tempRect.height,
-        tempRect.name,
-      ]);
-      startX += tempRect.width + padding;
-    });
-  }
+//     tempRowRectangles.forEach((tempRect) => {
+//       rectangleCoordinates.push([
+//         startX,
+//         y + bbox_origin[1],
+//         tempRect.width,
+//         tempRect.height,
+//         tempRect.name,
+//       ]);
+//       startX += tempRect.width + padding;
+//     });
+//   }
 
-  return rectangleCoordinates;
-}
+//   return rectangleCoordinates;
+// }
 
 // layout should be like this:
 //   ---
@@ -1207,10 +1163,11 @@ function matrixLayout(
 //   ---
 function squareLayout(
   regionWidth: number,
+  regionHeight: number,
   rectangles: tRectangle[], 
   bbox_origin: number[],
 ) {
-  // console.log({ regionWidth, rectangles, bbox_origin });
+  console.log({ regionWidth, rectangles, bbox_origin });
 
 
   // assuming rectangles has the same width
@@ -1318,6 +1275,427 @@ function squareLayout(
     ]);
   }
   return rectangleCoordinates;
+}
+
+
+function Placing_node(bboxWidth, bboxHeight, rectangles, bbox_origin, inLinks) {
+
+  console.log({inLinks})
+  
+  const numRectangles = rectangles.length;
+  const gridSize = Math.floor(5*Math.sqrt(numRectangles));
+  let grid = Array.from({ length: bboxHeight }, () => Array(bboxWidth).fill(0));
+  let tempInitial = Math.floor(2 * Math.sqrt(numRectangles));
+  const tempMin = 0.2;
+  const iterationCount = 90 * Math.floor(Math.sqrt(numRectangles));
+  const coolingRate = Math.pow(tempMin / tempInitial, 1 / iterationCount);
+  let compactedNodes = rectangles;
+  let visibilityGraph = generateVisibilityGraph(rectangles);
+  let compactionDir = true;
+
+  // Adjust origin
+  const originX = bbox_origin[0];
+  const originY = bbox_origin[1];
+  // console.log({rectangles})
+  // place node randomly and treat them all 1*1 sized
+  rectangles.forEach((rect, index) => {
+    let placed = false;
+    while (!placed) {
+      const x = Math.floor(Math.random() * (bboxWidth - rect.width + 1));
+      const y = Math.floor(Math.random() * (bboxHeight - rect.height + 1));
+
+      if (isPlaceable(grid, x, y, 1, 1)) {
+        placeRectangle(grid, x, y, 1, 1, 1); // Mark the grid as used with 1
+        rect.x = x; // Record the x position
+        rect.y = y; // Record the y position
+        placed = true;
+      }
+    }
+  });
+  
+  // console.log(grid.map(row => row.join(' ')).join('\n'));
+
+
+
+  const neighbors: { [ key: string]: string[] } = {};
+  rectangles.forEach(rect => {
+    neighbors[rect.name] = inLinks
+        .filter(link => link.source.variable_name === rect.name || link.target.variable_name === rect.name)
+        .reduce((acc, link) => {
+            const neighborName = link.source.variable_name === rect.name ? link.target.variable_name : link.source.variable_name;
+            if (!acc.includes(neighborName)) {
+                acc.push(neighborName);
+            }
+            return acc;
+        }, []);
+  });
+  // console.log({neighbors}) 
+  for(let i=0; i<iterationCount/2; i++){
+
+      rectangles.forEach(rect => {
+          const rect_neighbors = neighbors[rect.name] || [];
+          // console.log({rect_neighbors})
+          const medianPositions = neighborsMedian(rectangles,rect.name,rect_neighbors);
+            // const medianPositions = neighborsMedian(rectangles, rect, inLinks);
+            const x = clamp(Math.floor((Math.random() * 2 - 1) * tempInitial + medianPositions.medianX), 0, bboxWidth - rect.width + 1);
+            const y = clamp(Math.floor((Math.random() * 2 - 1) * tempInitial + medianPositions.medianY), 0, bboxHeight - rect.height + 1);
+            // console.log({x,y})
+            const { bestX, bestY  } = findClosestPlace(grid, x, y, 1, 1,rectangles,rect_neighbors, rect.name);
+            // // if the place is different from the current place get from previous interation
+            if (rect.x !== bestX || rect.y !== bestY) {
+              placeRectangle(grid, rect.x!, rect.y!, 1, 1, 0); // Remove from old position
+              placeRectangle(grid, bestX, bestY, 1, 1, 1); // Place at new position
+              rect.x = bestX; //update 
+              rect.y = bestY; //update
+            } else {
+              console.log("change position")
+              // Find the closest occupied node
+              let closestNode = rectangles.find(rect => rect.name === rect.name); ;
+              let minDistance = Infinity;
+      
+              rectangles.forEach(otherRect => {
+                  if (otherRect !== rect && !isPlaceable(grid, otherRect.x, otherRect.y, 1, 1)) {
+                      const distance = Math.abs(rect.x - otherRect.x) + Math.abs(rect.y - otherRect.y);
+                      if (distance < minDistance) {
+                          minDistance = distance;
+                          closestNode = otherRect;
+                      }
+                  }
+              });
+              console.log({closestNode})
+      
+              if (closestNode) {
+                  const originalEdgeLength = calculateTotalEdgeLength(rect.x, rect.y, rectangles, rect_neighbors, rect.name) +
+                                             calculateTotalEdgeLength(closestNode.x, closestNode.y, rectangles, rect_neighbors, closestNode.name);
+                  const swappedEdgeLength = calculateTotalEdgeLength(closestNode.x, closestNode.y, rectangles, rect_neighbors, rect.name) +
+                                            calculateTotalEdgeLength(rect.x, rect.y, rectangles, rect_neighbors, closestNode.name);
+                  const gain = originalEdgeLength - swappedEdgeLength;
+      
+                  if (gain > 0) {
+                      // Remove the original values from the grid
+                      placeRectangle(grid, rect.x, rect.y, 1, 1, 0);
+                      placeRectangle(grid, closestNode.x, closestNode.y, 1, 1, 0);
+
+                      // Swap the nodes
+                      [rect.x, closestNode.x] = [closestNode.x, rect.x];
+                      [rect.y, closestNode.y] = [closestNode.y, rect.y];
+
+                      // Add the new values to the grid
+                      placeRectangle(grid, rect.x, rect.y, 1, 1, 1);
+                      placeRectangle(grid, closestNode.x, closestNode.y, 1, 1, 1);
+                  }
+              }
+          }
+      });
+      visibilityGraph = generateVisibilityGraph(rectangles);
+      if (i % 9 === 0) {
+        compactedNodes = compact(visibilityGraph, inLinks, bboxWidth,bboxHeight, 10,3,compactionDir,false);
+        compactionDir = !compactionDir;
+      }
+      tempInitial *= coolingRate;
+  }
+
+  compact(visibilityGraph, inLinks, bboxWidth,bboxHeight, 10,3,true,true);
+  compact(visibilityGraph, inLinks, bboxWidth,bboxHeight, 10,3,false,true);
+
+
+  
+  // console.log({rectangles})
+  
+  // console.log(visibilityGraph);
+  // const compactedNodes = compact(visibilityGraph, inLinks, bboxWidth,bboxHeight, 10,3,false,false);
+  // console.log(compactedNodes);
+  // console.log(grid.map(row => row.join(' ')).join('\n'));
+
+
+
+
+  let rectangleCoordinates: [number, number, number, number, string][] = [];
+  compactedNodes.forEach(rect => {
+    const x = rect.x+originX;
+    const y = rect.y+originY;
+    const width = rect.width;
+    const height = rect.height;
+    const name = rect.name;
+    rectangleCoordinates.push([x, y, width, height, name]);
+  });
+  return rectangleCoordinates;
+}
+function compact(visibilityGraph, inLinks, bboxWidth,bboxHeight, iterations = 10,alpha=3,compactionDir:boolean,expandFactor:boolean) {
+  const { nodes, edges } = visibilityGraph;
+  // const alpha = 1; // Coefficient to define the minimum space between nodes
+  
+  // Function to calculate the objective value
+  function calculateObjective(nodes) {
+      let objectiveValue = 0;
+      edges.forEach(edge => {
+          const sourceNode = nodes.find(node => node.name === edge.source);
+          const targetNode = nodes.find(node => node.name === edge.target);
+
+          if (sourceNode && targetNode) {
+              const sourceCenterX = sourceNode.x + 0.5 * (compactionDir ? (expandFactor ? sourceNode.width : 1) : (expandFactor ? sourceNode.height : 1));
+              const targetCenterX = targetNode.x + 0.5 * (compactionDir ? (expandFactor ? targetNode.width : 1) : (expandFactor ? targetNode.height : 1));
+              objectiveValue += Math.pow(sourceCenterX - targetCenterX, 2);
+          }
+      });
+      return objectiveValue;
+  }
+
+  // Function to check if constraints are satisfied
+  function areConstraintsSatisfied(nodes) {
+      return inLinks.every(edge => {
+          const sourceNode = nodes.find(node => node.name === edge.source);
+          const targetNode = nodes.find(node => node.name === edge.target);
+
+          if (sourceNode && targetNode) {
+              const sourceEdge = compactionDir ? sourceNode.x + (expandFactor ? sourceNode.width : 1) : sourceNode.y + (expandFactor ? sourceNode.height : 1);
+              const targetEdge = compactionDir ? targetNode.x : targetNode.y;
+              const dij = alpha * (expandFactor ? (compactionDir ? sourceNode.width : sourceNode.height) : 1);
+              return targetEdge - sourceEdge >= dij;
+          }
+          return true;
+      });
+  }
+
+  let bestNodes = nodes; //initialize the best nodes with the original nodes
+  let bestObjective = calculateObjective(nodes); // Calculate the initial objective value
+
+  // Try random positions for a given number of iterations
+  for (let i = 0; i < iterations; i++) {
+      let newNodes = nodes
+
+      newNodes.forEach(node => {
+        if (compactionDir) {
+          node.x = clamp(Math.floor(Math.random() * (bboxWidth - (expandFactor ? node.width : 1) + 1)), 0, bboxWidth - (expandFactor ? node.width : 1));
+        } else {
+            node.y = clamp(Math.floor(Math.random() * (bboxHeight - (expandFactor ? node.height : 1) + 1)), 0, bboxHeight - (expandFactor ? node.height : 1));
+        }
+      });
+
+      if (areConstraintsSatisfied(newNodes)) {
+          const newObjective = calculateObjective(newNodes);
+          if (newObjective < bestObjective) {
+              bestNodes = newNodes;
+              bestObjective = newObjective;
+          }
+      }
+  }
+
+  // Update the positions of the original nodes with the best found positions
+  bestNodes.forEach(bestNode => {
+      const originalNode = nodes.find(node => node.name === bestNode.name);
+      if (originalNode) {
+          if (compactionDir) {
+            originalNode.x = bestNode.x;
+          } else {
+              originalNode.y = bestNode.y;
+          }
+      }
+  });
+
+  return bestNodes;
+}
+function generateVisibilityGraph(rectangles) {
+  const visibilityGraph = {
+      nodes: rectangles,
+      edges: []
+  };
+
+  // Iterate through each rectangle to determine visibility edges
+  for (let i = 0; i < rectangles.length; i++) {
+      const rectA = rectangles[i];
+
+      for (let j = 0; j < rectangles.length; j++) {
+          if (i === j) continue;
+
+          const rectB = rectangles[j];
+
+          // Ensure rectB is to the right of rectA
+          if (rectB.x > rectA.x && isHorizontallyVisible(rectA, rectB, rectangles)) {
+              visibilityGraph.edges.push({
+                  source: rectA.name,
+                  target: rectB.name
+              });
+          }
+      }
+  }
+
+  return visibilityGraph;
+}
+
+function isHorizontallyVisible(rectA, rectB, rectangles) {
+  // Check if a horizontal line segment from the right edge of rectA to the left edge of rectB
+  // intersects any other rectangle
+  const rightEdgeA = rectA.x + rectA.width;
+  const leftEdgeB = rectB.x;
+
+  for (const rect of rectangles) {
+      if (rect === rectA || rect === rectB) continue;
+
+      const rightEdge = rect.x + rect.width;
+      const leftEdge = rect.x;
+
+      if ((leftEdge > rightEdgeA && rightEdge < leftEdgeB) && intersects(rectA.y, rectA.y + rectA.height, rect.y, rect.y + rect.height)) {
+          return false;
+      }
+  }
+
+  return true;
+}
+
+function intersects(a1, a2, b1, b2) {
+  return Math.max(a1, b1) < Math.min(a2, b2);
+}
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
+function MDistance(x1: number, y1: number, x2: number, y2: number): number {
+  return Math.abs(x1 - x2) + Math.abs(y1 - y2);
+}
+function findClosestPlace(grid: number[][], x: number, y: number, width: number, height: number,rectangles, rect_neighbors, rectName: string) {
+  let closestX = x;
+  let closestY = y;
+  let minDistance = Infinity;
+
+  for (let i = 0; i < grid.length; i++) {
+      for (let j = 0; j < grid[i].length; j++) {
+          if (isPlaceable(grid, j, i, width, height)) {
+              const distance = MDistance(x, y, j, i);
+              if (distance < minDistance) {
+                  minDistance = distance; //d
+                  closestX = j;
+                  closestY = i;
+              }
+          }
+      }
+  }
+  // Check all cells within Manhattan distance d + 1 from (x,y)
+  const bestPosition = PositionWithinD1(grid, x, y, minDistance + 1, width, height,rectangles, rect_neighbors,rectName);
+  return bestPosition ;
+}
+
+function PositionWithinD1(grid: number[][], x: number, y: number, maxDistance: number, width: number, height: number,rectangles, rect_neighbors,rectName: string) {
+  let bestX = x;
+  let bestY = y;
+  let minEdgeLength = Infinity;
+
+  for (let i = Math.max(0, y - maxDistance); i < Math.min(grid.length, y + maxDistance + 1); i++) {
+      for (let j = Math.max(0, x - maxDistance); j < Math.min(grid[0].length, x + maxDistance + 1); j++) {
+          if (MDistance(x, y, j, i) <= maxDistance && isPlaceable(grid, j, i, width, height)) {
+              const edgeLength = calculateTotalEdgeLength(j, i, rectangles, rect_neighbors,rectName); // Use the distance function (2)
+              if (edgeLength < minEdgeLength) {
+                  minEdgeLength = edgeLength;
+                  bestX = j;
+                  bestY = i;
+              }
+          }
+      }
+  }
+
+  return {
+    bestX: clamp(bestX, 0, grid.length - 1),
+    bestY: clamp(bestY, 0, grid[0].length - 1)
+  };
+}
+function calculateTotalEdgeLength(x: number, y: number, rectangles, rect_neighbors, rectName:string): number {
+
+  // Find the current rectangle
+  const currentRect = rectangles.find(rect => rect.name === rectName);
+
+  if (!currentRect) return 0;
+  if(! rect_neighbors) return 0;
+
+  // extract neighbor information from global rectangles
+  const neighborRects = rect_neighbors.map(name => rectangles.find(rect => rect.name === name)).filter(Boolean);
+
+  let totalEdgeLength = 0;
+
+  neighborRects.forEach(neighborRect => {
+      const sourceCenterX = x + 0.5 * currentRect.width;
+      const sourceCenterY = y + 0.5 * currentRect.height;
+      const targetCenterX = neighborRect.x + 0.5 * neighborRect.width;
+      const targetCenterY = neighborRect.y + 0.5 * neighborRect.height;
+
+      const euclideanDistance = Math.sqrt(
+          Math.pow(targetCenterX - sourceCenterX, 2) +
+          Math.pow(targetCenterY - sourceCenterY, 2)
+      );
+
+      const alignmentTerm = (1 / 20) * Math.min(
+          Math.abs(targetCenterX - sourceCenterX) / (currentRect.width + neighborRect.width),
+          Math.abs(targetCenterY - sourceCenterY) / (currentRect.height + neighborRect.height)
+      );
+
+      totalEdgeLength += euclideanDistance + alignmentTerm;
+  });
+
+  return totalEdgeLength;
+}
+function neighborsMedian(rectangles, currentRectName, neighbors) {
+    const currentRect = rectangles.find(rect => rect.name === currentRectName); //name,width,height,x,y
+    const neighborRects = neighbors.map(name => rectangles.find(rect => rect.name === name)).filter(Boolean);
+    if (neighbors.length === 0) { // if no neighbors, return the position of the current rectangle
+      return { medianX: currentRect.x!, medianY: currentRect.y! };
+    }
+    const xPositions = neighborRects.map(neighbor => neighbor.x!); //x position of all neighbors
+    const yPositions = neighborRects.map(neighbor => neighbor.y!); //y position of all neighbors
+
+    const medianX = median(xPositions);
+    const medianY = median(yPositions);
+    return { medianX, medianY };
+}
+
+// function neighborsMedian(rectangles, currentRectName, neighbors) {
+//   // Find the current rectangle
+//   const currentRect = rectangles.find(rect => rect.name === currentRectName);
+//   if (!currentRect) return { medianX: 0, medianY: 0 };
+
+//   // Get the neighbors of the current rectangle
+//   const neighborNames = neighbors[currentRectName] || [];
+//   const neighborRects = neighborNames.map(name => rectangles.find(rect => rect.name === name)).filter(Boolean);
+
+//   if (neighborRects.length === 0) {
+//       return { medianX: currentRect.x + 0.5 * currentRect.width, medianY: currentRect.y + 0.5 * currentRect.height };
+//   }
+
+//   // Calculate the centers of the neighbors
+//   const neighborCentersX = neighborRects.map(rect => rect.x + 0.5 * rect.width);
+//   const neighborCentersY = neighborRects.map(rect => rect.y + 0.5 * rect.height);
+
+//   // Calculate the median of the centers
+//   const medianX = median(neighborCentersX);
+//   const medianY = median(neighborCentersY);
+
+//   return { medianX, medianY };
+// }
+
+function median(values) {
+  if (values.length === 0) return 0;
+  values.sort((a, b) => a - b);
+  const half = Math.floor(values.length / 2);
+
+  if (values.length % 2) {
+      return values[half];
+  } else {
+      return (values[half - 1] + values[half]) / 2.0;
+  }
+}
+function isPlaceable(grid, x, y, width, height) {
+  for (let i = y; i < y + height; i++) {
+      for (let j = x; j < x + width; j++) {
+        if (grid[i][j] !== 0) return false;
+      }
+  }
+  return true;
+}
+
+function placeRectangle(grid, x, y, width, height, value: number) {
+  for (let i = y; i < y + height; i++) {
+      for (let j = x; j < x + width; j++) {
+          grid[i][j] = value;
+      }
+  }
 }
 
 function combineData(
@@ -1583,4 +1961,143 @@ function add_utility_button({
     .attr("fill", stateless ? activated_text_color : deactivated_text_color)
     .attr("dominant-baseline", "middle")
     .attr("text-anchor", "middle");
+}
+
+
+function dijkstra(link, grid, points) {
+  // console.log("dijkstra", start, goal);
+
+  let start, goal;
+  if (link.source.var_type == "state" && link.target.var_type == "impact") {
+      start = getNextStartPoint(link.source.var_name, points);
+      goal = getNextEndPoint(link.target.var_name, points);
+  } else {
+      start = [link.source.newX_source, link.source.newY_source];
+      goal = [link.target.newX_target, link.target.newY_target];
+  }
+
+  // console.log({ start, goal });
+
+  const rows = grid.length;
+  const cols = grid[0].length;
+  const openSet = new PriorityQueue();
+  const cameFrom = new Map();
+  const costSoFar = new Map();
+  const directions = [[1, 0], [-1, 0],[0, 1], [0, -1]];
+
+  // Manually set the first point after start
+  const initialPoint = [start[0] - 1, start[1]];
+  if (
+      initialPoint[0] >= 0 &&
+      initialPoint[0] < cols &&
+      initialPoint[1] >= 0 &&
+      initialPoint[1] < rows &&
+      grid[initialPoint[1]][initialPoint[0]] !== 2 
+  ) {
+      openSet.enqueue(1, initialPoint);
+      cameFrom.set(initialPoint.toString(), start);
+      costSoFar.set(initialPoint.toString(), 1);
+  } else {
+      return null; // No valid initial point found
+  }
+
+  costSoFar.set(start.toString(), 0);
+  openSet.enqueue(0, start);
+
+  while (!openSet.isEmpty()) {
+      const current = openSet.dequeue();
+      // console.log({ current });
+
+      if (current[0] === goal[0] && current[1] === goal[1]) {
+          const path = [];
+          let temp = current;
+          while (temp) {
+              path.push(temp);
+              temp = cameFrom.get(temp.toString());
+          }
+          path.reverse();
+          return path;
+      }
+
+      for (const direction of directions) {
+          const neighbor = [current[0] + direction[0], current[1] + direction[1]];
+          const [x, y] = neighbor;
+          
+
+          if (
+              x >= 0 &&
+              x < cols &&
+              y >= 0 &&
+              y < rows &&
+              grid[y][x] !== 2 
+          ) {
+              const newCost = costSoFar.get(current.toString()) + 1;
+
+              if (
+                  !costSoFar.has(neighbor.toString()) ||
+                  newCost < costSoFar.get(neighbor.toString())
+              ) {
+                  costSoFar.set(neighbor.toString(), newCost);
+                  const priority = newCost;
+                  openSet.enqueue(priority, neighbor);
+                  cameFrom.set(neighbor.toString(), current);
+              }
+          }
+      }
+  }
+
+  return null; // No path found
+}
+
+
+function generatePoints(linkCounts) {
+  const result = {};
+
+  for (const varName in linkCounts) {
+    const { outLinks, inLinks, x, y, width, height } = linkCounts[varName];
+
+    const startPoints = [];
+    const endPoints = [];
+
+    let remainingOutLinks = outLinks;
+    for (let i = 0; i <= height && remainingOutLinks > 0; i += 1) {
+      startPoints.push([x , y+i]);
+      remainingOutLinks--;
+    }
+
+    while (remainingOutLinks > 0) {
+      startPoints.push([x, y]); // Assign the left-top point
+      remainingOutLinks--;
+    }
+
+    // Generate end points for inLinks from the right edge
+    let remainingInLinks = inLinks;
+    for (let j = 1; j <= width && remainingInLinks > 0; j += 1) {
+      endPoints.push([x + j, y]);
+      remainingInLinks--;
+    }
+
+    while (remainingInLinks > 0) {
+      endPoints.push([x + width, y]); // Assign the right-bottom point
+      remainingInLinks--;
+    }
+
+    result[varName] = {
+      startPoints,
+      endPoints
+    };
+  }
+
+  return result;
+}
+
+function getNextStartPoint(varName, points) {
+  const pointData = points[varName];
+  // console.log({pointData})
+  return pointData.startPoints.shift();
+}
+
+function getNextEndPoint(varName, points) {
+  const pointData = points[varName];
+  return pointData.endPoints.shift();
 }

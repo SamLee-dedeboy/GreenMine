@@ -76,7 +76,7 @@
   .varbox-svg {
     & .link-highlight {
       opacity: 0.6;
-      filter: drop-shadow(2px 3px 2px rgba(0, 0, 0, 0.3));
+      /* filter: drop-shadow(2px 3px 2px rgba(0, 0, 0, 0.3)); */
     }
     & .link-not-highlight {
       opacity: 0.05;
