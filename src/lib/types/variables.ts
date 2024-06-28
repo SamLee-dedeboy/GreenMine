@@ -54,8 +54,6 @@ export type tRectangle = {
   width: number;
   height: number;
   name: string;
-  x: number;
-  y: number;
 }
 
 

@@ -33,6 +33,7 @@
       ["remove"]: curation.handleRemoveVar,
       ["edit"]: curation.handleEditVar,
     };
+
     DPSIR.init(svgId, utilities, handlers);
     update_vars(data, links);
   });
@@ -92,8 +93,8 @@
     }
     & .box-highlight {
       opacity: 1;
-      stroke: black;
-      stroke-width: 3;
+      /* stroke: black; */
+      /* stroke-width: 3; */
     }
     & .box-not-highlight {
       opacity: 0.5;
