@@ -26,8 +26,8 @@ export const DPSIR = {
     this.width = 1500;
     this.height = 1000;
     this.padding = { top: 10, right: 50, bottom: 10, left: 50 };
-    this.rows = 120;
-    this.columns = 90;
+    this.rows = 240;
+    this.columns = 180;
     this.cellWidth = this.width / this.columns;
     this.cellHeight = this.height / this.rows;
     this.global_rects = [];
@@ -67,16 +67,16 @@ export const DPSIR = {
         }
       });
 
-    this.drawGids(
-      svg,
-      svgId,
-      this.width,
-      this.height,
-      this.cellWidth,
-      this.cellHeight,
-      this.columns,
-      this.rows,
-    );
+    // this.drawGids(
+    //   svg,
+    //   svgId,
+    //   this.width,
+    //   this.height,
+    //   this.cellWidth,
+    //   this.cellHeight,
+    //   this.columns,
+    //   this.rows,
+    // );
 
     svg.append("g").attr("class", "link_group");
     // .attr("transform", `translate(${padding.left}, ${padding.top})`);
@@ -136,11 +136,11 @@ export const DPSIR = {
     });
     console.log({ categorizedLinks });
     const bboxes_sizes: { [key in string]: [number, number] } = {
-      [var_type_names[0]]: [34, 32],
-      [var_type_names[1]]: [30, 34],
-      [var_type_names[2]]: [18, 32],
-      [var_type_names[3]]: [42, 34],
-      [var_type_names[4]]: [24, 26],
+      [var_type_names[0]]: [68, 64],
+      [var_type_names[1]]: [60, 68],
+      [var_type_names[2]]: [36, 64],
+      [var_type_names[3]]: [84, 68],
+      [var_type_names[4]]: [48, 52],
     };
 
     const bboxes = radialBboxes(
@@ -225,7 +225,7 @@ export const DPSIR = {
   ) {
     const var_type_name = vars.variable_type;
     // const charWidth = 15;
-    const rectWidth = 6; //(g)
+    const rectWidth = 12; //(g)
     // const charHeight = 25;
     const rectangles = Object.values(
       vars.variable_mentions as Record<string, tVariable>,
@@ -236,7 +236,7 @@ export const DPSIR = {
         return {
           name: variable.variable_name,
           width: rectWidth,
-          height: Math.ceil(nameLength / 4) * 3, //(g)
+          height: Math.ceil(nameLength / 4) * 6, //(g)
         };
       });
 
@@ -268,7 +268,12 @@ export const DPSIR = {
       cellWidth,
       cellHeight,
     );
-    const rectWithVar = combineData(vars, rectangleCoordinates); //return as an object
+    console.log({ rectangleCoordinates });
+    const rectWithVar = combineData(vars, rectangleCoordinates, global_grid); //return as an object
+    console.log({bbox_origin,bboxWidth,bboxHeight})
+
+
+
     //merge all rects info(grid coordinate position and size) to a global var
     rectWithVar.forEach((rect) => {
       self.global_rects.push(rect);
@@ -284,15 +289,15 @@ export const DPSIR = {
       if (length > maxMentions) maxMentions = length;
     });
 
-    this.drawBbox(
-      var_type_name,
-      bbox_center,
-      bboxWidth,
-      bboxHeight,
-      self.varTypeColorScale,
-      cellWidth,
-      cellHeight,
-    );
+    // this.drawBbox(
+    //   var_type_name,
+    //   bbox_center,
+    //   bboxWidth,
+    //   bboxHeight,
+    //   self.varTypeColorScale,
+    //   cellWidth,
+    //   cellHeight,
+    // );
     const scaleVarColor = d3
       .scaleLinear()
       .domain([minMentions, maxMentions])
@@ -340,23 +345,6 @@ export const DPSIR = {
       ) {
         return undefined;
       }
-      // const block_x_s = parseFloat(source_block.getAttribute("x") || "0");
-      // const block_y_s = parseFloat(source_block.getAttribute("y") || "0");
-      // const block_width_s = parseFloat(
-      //   source_block.getAttribute("width") || "0",
-      // );
-      // const block_height_s = parseFloat(
-      //   source_block.getAttribute("height") || "0",
-      // );
-      // const block_x_t = parseFloat(target_block.getAttribute("x") || "0");
-      // const block_y_t = parseFloat(target_block.getAttribute("y") || "0");
-      // const block_width_t = parseFloat(
-      //   target_block.getAttribute("width") || "0",
-      // );
-      // const block_height_t = parseFloat(
-      //   target_block.getAttribute("height") || "0",
-      // );
-      // console.log({sourceElement,targetElement,target_block,source_block})
 
       const sourcePosition = {
         var_type: link.source.var_type,
@@ -364,6 +352,8 @@ export const DPSIR = {
         leftTop: [sourceElement.x, sourceElement.y],
         width: sourceElement.width,
         height: sourceElement.height,
+        position: sourceElement.position,
+        boundary: sourceElement.boundary,
         newX_source: 0,
         newY_source: 0,
       };
@@ -374,6 +364,8 @@ export const DPSIR = {
         leftTop: [targetElement.x, targetElement.y],
         width: targetElement.width,
         height: targetElement.height,
+        position: targetElement.position,
+        boundary: targetElement.boundary,
         newX_target: 0,
         newY_target: 0,
       };
@@ -397,35 +389,48 @@ export const DPSIR = {
 
       const sourceVarName = item.source.var_name;
       const targetVarName = item.target.var_name;
+      const isInGroup = item.source.var_type === item.target.var_type;
 
       // Initialize or update the source
       if (!linkCounts[sourceVarName]) {
         linkCounts[sourceVarName] = {
-          outLinks: 0,
-          inLinks: 0,
+          InGroup_inLinks: 0,
+          InGroup_outLinks: 0,
+          OutGroup_inLinks: 0,
+          OutGroup_outLinks: 0,
           x: item.source.leftTop[0],
           y: item.source.leftTop[1],
           width: item.source.width,
           height: item.source.height,
+          boundry: item.source.boundary,
+          position: item.source.position,
         };
       }
-      linkCounts[sourceVarName].outLinks += 1;
-
       // Initialize or update the target
       if (!linkCounts[targetVarName]) {
         linkCounts[targetVarName] = {
-          outLinks: 0,
-          inLinks: 0,
+          InGroup_inLinks: 0,
+          InGroup_outLinks: 0,
+          OutGroup_inLinks: 0,
+          OutGroup_outLinks: 0,
           x: item.target.leftTop[0],
           y: item.target.leftTop[1],
           width: item.target.width,
           height: item.target.height,
+          boundry: item.target.boundary,
+          position: item.target.position,
         };
       }
-      linkCounts[targetVarName].inLinks += 1;
+      if (isInGroup) {
+        linkCounts[sourceVarName].InGroup_outLinks += 1;
+        linkCounts[targetVarName].InGroup_inLinks += 1;
+      } else {
+        linkCounts[sourceVarName].OutGroup_outLinks += 1;
+        linkCounts[targetVarName].OutGroup_inLinks += 1;
+      }
     });
 
-    // console.log({linkCounts});
+    console.log({ linkCounts });
     const points = generatePoints(linkCounts);
 
     // M: move to, H: horizontal line, V: vertical line
@@ -436,9 +441,9 @@ export const DPSIR = {
       target_grid = [link.target.newX_target, link.target.newY_target];
 
       let path_points;
-      // if(link.source.var_type == "driver" && link.target.var_type == "pressure") {
-      path_points = pathFinding(link, global_grid, points);
-      // console.log(path_points);
+      // if (link.source.var_type !== link.target.var_type) {
+        path_points = pathFinding(link, global_grid, points);
+        // console.log(path_points);
       // }
 
       if (path_points) {
@@ -736,8 +741,8 @@ export const DPSIR = {
       .attr(
         "x",
         gridToSvgCoordinate(
-          bbox_center[0] + var_type_name.length / 2 + 2,
-          bbox_center[1] - bboxHeight / 2 - 4,
+          bbox_center[0] + var_type_name.length / 2 + 8,
+          bbox_center[1] - bboxHeight / 2 - 7,
           cellWidth,
           cellHeight,
         ).x,
@@ -745,8 +750,8 @@ export const DPSIR = {
       .attr(
         "y",
         gridToSvgCoordinate(
-          bbox_center[0],
-          bbox_center[1] - bboxHeight / 2 - 4,
+          bbox_center[0] + var_type_name.length / 2 + 8,
+          bbox_center[1] - bboxHeight / 2 - 7,
           cellWidth,
           cellHeight,
         ).y,
@@ -835,9 +840,11 @@ export const DPSIR = {
       .select("#" + this.svgId)
       .select(`.${var_type_name}_region`);
     console.log({ rectWithVar });
+    // mark rect with "*" in the grid
+    markOccupiedGrid(global_grid, rectWithVar,"*");
+    
 
-    markOccupiedGrid(global_grid, rectWithVar);
-    // console.log(grid.map(row => row.join(' ')).join('\n'));
+    console.log(global_grid);
 
     group
       .select("g.tag-group")
@@ -1011,7 +1018,7 @@ export const DPSIR = {
             .attr(
               "x",
               gridToSvgCoordinate(
-                d.x + d.width - 1.2,
+                d.x + d.width - 2.4,
                 d.y,
                 cellWidth,
                 cellHeight,
@@ -1020,7 +1027,7 @@ export const DPSIR = {
             .attr(
               "y",
               gridToSvgCoordinate(
-                d.x + d.width - 1.2,
+                d.x + d.width - 2.4,
                 d.y,
                 cellWidth,
                 cellHeight,
@@ -1153,6 +1160,7 @@ function svgToGridCoordinate(
 function markOccupiedGrid(
   global_grid: string[][],
   rects: { x: number; y: number; width: number; height: number }[],
+  symbol,
 ) {
   rects.forEach((rect) => {
     const startX = rect.x;
@@ -1163,11 +1171,11 @@ function markOccupiedGrid(
     // x:columns, y:rows
     for (let y = startY; y <= endY; y++) {
       for (let x = startX; x <= endX; x++) {
-        if (y === startY || y === endY || x === startX || x === endX) {
-          global_grid[x][y] = "*"; // Mark edges as 1
-        } else {
-          global_grid[x][y] = "*"; // Mark inside as 2
-        }
+          if(global_grid[x][y] == "0" || global_grid[x][y] !== "*"){
+              global_grid[x][y] = symbol; 
+          }else{
+            continue; // if the grid is already marked, skip
+          }
       }
     }
   });
@@ -1264,17 +1272,18 @@ function squareLayout(
   cellWidth: number,
   cellHeight: number,
 ) {
-  console.log({ regionWidth, rectangles, bbox_origin });
-
+  // console.log({ regionWidth, rectangles, bbox_origin });
+  console.log({ rectangles });
   // assuming rectangles has the same width
   const rect_width = cellWidth * rectangles[0].width;
   // const rect_height = rectangles[0].height;
   const max_rect_per_row = Math.floor(regionWidth / rectangles[0].width);
   // const space_between_rectangles = (regionWidth - max_rect_per_row * rect_width) / (max_rect_per_row - 1)
-  const space_between_rectangles = 2 * cellWidth;
-  const y_offset = 3 * cellHeight;
+  const space_between_rectangles = 4 * cellWidth;
+  const y_offset = 6 * cellHeight;
   // return value
-  let rectangleCoordinates: [number, number, number, number, string][] = [];
+  let rectangleCoordinates: [number, number, number, number, string, string][] =
+    [];
 
   // first row
   const first_row_rect_number = Math.max(1, max_rect_per_row - 2);
@@ -1305,6 +1314,7 @@ function squareLayout(
       rectangles[i].width,
       rectangles[i].height,
       rectangles[i].name,
+      "top", // top row
     ]);
   }
   // middle rows
@@ -1337,6 +1347,7 @@ function squareLayout(
       rectangles[i].width,
       rectangles[2 * i + first_row_rect_number].height,
       rectangles[2 * i + first_row_rect_number].name,
+      "left",
     ]);
     rectangleCoordinates.push([
       Grid2.x,
@@ -1344,6 +1355,7 @@ function squareLayout(
       rectangles[i].width,
       rectangles[2 * i + 1 + first_row_rect_number].height,
       rectangles[2 * i + 1 + first_row_rect_number].name,
+      "right",
     ]);
     accumulative_y_offset += last_row_max_height + y_offset;
     last_row_max_height = Math.max(
@@ -1374,6 +1386,7 @@ function squareLayout(
       rectangles[i].width,
       rectangles[i + first_row_rect_number + middle_row_number * 2].height,
       rectangles[i + first_row_rect_number + middle_row_number * 2].name,
+      "bottom",
     ]);
   }
   return rectangleCoordinates;
@@ -1381,25 +1394,48 @@ function squareLayout(
 
 function combineData(
   vars: tVariableType,
-  rectangles: [number, number, number, number, string][],
+  rectangles: [number, number, number, number, string, string][],
+  global_grid: string[][],
 ): tRectObject[] {
+  const allX = rectangles.map((rect) => rect[0]);
+  const allY = rectangles.map((rect) => rect[1]);
+  const allYPlusHeight = rectangles.map((rect) => rect[1] + rect[3]);
+
+  const x_value = Array.from(new Set(allX)).sort((a, b) => a - b);
+  const min_x = (vars.variable_type === "response") ? x_value[2] : x_value[1]; // if var type is response, choose the third min value
+  const max_x = Math.max(...allX);
+  const min_y = Math.min(...allYPlusHeight);
+  const max_y = Math.max(...allY);
+  console.log("combine data")
+  // mark boundary for outGroup links with "-" in the grid
+  let boundary_arr: { x: number; y: number; width: number; height: number }[] = []
+  boundary_arr.push({
+    x: min_x,
+    y: min_y,
+    width: max_x - min_x,
+    height: max_y - min_y
+  });
+  markOccupiedGrid(global_grid, boundary_arr,"-");
   return rectangles.map((rect) => {
-    let [x, y, width, height, variable_name] = rect;
+    let [x, y, width, height, variable_name, position] = rect;
     const variable = vars.variable_mentions[variable_name];
     const mentions = variable?.mentions || [];
     const factor_type = variable?.factor_type;
     const definition = variable?.definition;
     const frequency = mentions.length;
+    const boundary = { min_x, max_x, min_y, max_y };
     return {
       x,
       y,
       width,
       height,
       variable_name,
+      position,
       mentions,
       factor_type,
       frequency,
       definition,
+      boundary,
     };
   });
 }
@@ -1661,14 +1697,15 @@ function pathFinding(link, grid: string[][], points) {
       this.h = 0;
     }
   }
-  let start, goal;
-  // if (link.source.var_type == "driver" && link.target.var_type == "pressure") {
-  start = getNextStartPoint(link.source.var_name, points);
-  goal = getNextEndPoint(link.target.var_name, points);
-  // } else {
-  //   start = [link.source.newX_source, link.source.newY_source];
-  //   goal = [link.target.newX_target, link.target.newY_target];
-  // }
+  let start, goal, inGroup = false;
+  if (link.source.var_type == link.target.var_type) {
+    start = getNextStartPoint(link.source.var_name, points, true);
+    goal = getNextEndPoint(link.target.var_name, points, true);
+    inGroup = true;
+  } else {
+    start = getNextStartPoint(link.source.var_name, points, false);
+    goal = getNextEndPoint(link.target.var_name, points, false);
+  }
 
   // console.log({ start, goal });
 
@@ -1704,12 +1741,7 @@ function pathFinding(link, grid: string[][], points) {
 
   while (!openList.isEmpty()) {
     let p = openList.dequeue();
-    if (
-      link.source.var_name == "珊瑚礁狀態" &&
-      link.target.var_name == "休閒價值和機會的損失"
-    ) {
-      // console.log("the node get from q",p)
-    }
+    
     let i = p[0];
     let j = p[1];
     // console.log("i,j",i,j)
@@ -1736,13 +1768,8 @@ function pathFinding(link, grid: string[][], points) {
           let path = tracePath(cellDetails, start, goal);
           foundDest = true;
           return path;
-        } else if (!closedList[ni][nj] && isUnBlocked(grid, ni, nj)) {
-          if (
-            link.source.var_name == "珊瑚礁狀態" &&
-            link.target.var_name == "休閒價值和機會的損失"
-          ) {
-            // console.log("next neighbot",{ni,nj})
-          }
+        } else if (!closedList[ni][nj] && isUnBlocked(grid, ni, nj, inGroup)) {
+          
           // console.log("if the neighbor not in the closed list and is not blocked")
           gNew = cellDetails[i][j].g + 1.0;
           hNew = calculateHValue(ni, nj, goal);
@@ -1758,12 +1785,7 @@ function pathFinding(link, grid: string[][], points) {
             cellDetails[ni][nj].h = hNew;
             cellDetails[ni][nj].parent_i = i;
             cellDetails[ni][nj].parent_j = j;
-            if (
-              link.source.var_name == "珊瑚礁狀態" &&
-              link.target.var_name == "休閒價值和機會的損失"
-            ) {
-              // console.log(cellDetails[ni][nj])
-            }
+            
           }
         }
       }
@@ -1771,6 +1793,7 @@ function pathFinding(link, grid: string[][], points) {
   }
   if (foundDest == false) {
     console.log("Failed to find the destination cell");
+    console.log(link.source.var_name, link.target.var_name, start, goal);
     return null;
   }
 }
@@ -1778,7 +1801,10 @@ function pathFinding(link, grid: string[][], points) {
 function isValid(col, row, rows, cols) {
   return row >= 0 && row < rows && col >= 0 && col < cols;
 }
-function isUnBlocked(grid, col, row) {
+function isUnBlocked(grid, col, row, inGroup) {
+  if (!inGroup) {
+    return grid[col][row] != "*" && grid[col][row] != "-"; //set block for outGroup links
+  }
   return grid[col][row] != "*";
 }
 function isDestination(col, row, dest) {
@@ -1819,61 +1845,365 @@ function tracePath(cellDetails, start, goal) {
 }
 
 function generatePoints(linkCounts) {
-  // const result = {};
-
   const result: {
     [varName: string]: {
-      startPoints: [number, number][];
-      endPoints: [number, number][];
+      inGroup_startPoints: [number, number][];
+      inGroup_endPoints: [number, number][];
+      outGroup_startPoints: [number, number][];
+      outGroup_endPoints: [number, number][];
     };
   } = {};
 
   for (const varName in linkCounts) {
-    const { outLinks, inLinks, x, y, width, height } = linkCounts[varName];
+    const {
+      InGroup_inLinks,
+      InGroup_outLinks,
+      OutGroup_inLinks,
+      OutGroup_outLinks,
+      x,
+      y,
+      width,
+      height,
+      position,
+    } = linkCounts[varName];
 
-    const startPoints: [number, number][] = [];
-    const endPoints: [number, number][] = [];
+    const inGroup_startPoints: [number, number][] = [];
+    const inGroup_endPoints: [number, number][] = [];
+    const outGroup_startPoints: [number, number][] = [];
+    const outGroup_endPoints: [number, number][] = [];
 
-    // Generate end points for inLinks from the left edge
-    let remainingOutLinks = outLinks;
-    for (let i = 0; i <= height && remainingOutLinks > 0; i += 1) {
-      startPoints.push([x, y + i]);
-      remainingOutLinks--;
+    // Helper function to add points based on position
+    const addPoints = (
+      startPoints: [number, number][],
+      endPoints: [number, number][],
+      outLinks: number,
+      inLinks: number,
+      primaryStartX: number,
+      primaryStartY: number,
+      primaryIncrementX: number,
+      primaryIncrementY: number,
+      primaryMaxX: number,
+      primaryMaxY: number,
+      secondaryStartX: number,
+      secondaryStartY: number,
+      secondaryIncrementX: number,
+      secondaryIncrementY: number,
+      secondaryMaxX: number,
+      secondaryMaxY: number,
+    ) => {
+      let remainingOutLinks = outLinks;
+      let usedSecondaryEdge = false;
+      let lastPrimaryPoint = [primaryStartX, primaryStartY];
+      let lastSecondaryPoint = [secondaryStartX, secondaryStartY];
+      // Assign start points for outLinks
+      while (remainingOutLinks > 0) {
+        for (
+          let i = primaryStartX, j = primaryStartY;
+          (primaryIncrementX ? i <= primaryMaxX : j <= primaryMaxY) &&
+          remainingOutLinks > 0;
+          primaryIncrementX
+            ? (i += primaryIncrementX)
+            : (j += primaryIncrementY)
+        ) {
+          startPoints.push([i, j]);
+          lastPrimaryPoint = [i, j];
+          remainingOutLinks--;
+        }
+
+        // If primary edge is used up, use secondary edge
+        if (remainingOutLinks > 0) {
+          usedSecondaryEdge = true;
+          for (
+            let i = secondaryStartX, j = secondaryStartY;
+            (secondaryIncrementX > 0
+              ? i <= secondaryMaxX
+              : i >= secondaryMaxX) &&
+            (secondaryIncrementY > 0
+              ? j <= secondaryMaxY
+              : j >= secondaryMaxY) &&
+            remainingOutLinks > 0;
+            secondaryIncrementX
+              ? (i += secondaryIncrementX)
+              : (j += secondaryIncrementY)
+          ) {
+            startPoints.push([i, j]);
+            lastSecondaryPoint = [i, j];
+            remainingOutLinks--;
+          }
+        }
+      }
+
+      // Assign end points for inLinks
+      let remainingInLinks = inLinks;
+      let i, j;
+
+      if (!usedSecondaryEdge) {
+        // Start from the next point of the last point used by start points on the primary edge
+        [i, j] = lastPrimaryPoint;
+        primaryIncrementX ? (i += primaryIncrementX) : (j += primaryIncrementY);
+      }
+      while (remainingInLinks > 0) {
+        if (!usedSecondaryEdge) {
+          for (
+            ;
+            (primaryIncrementX ? i <= primaryMaxX : j <= primaryMaxY) &&
+            remainingInLinks > 0;
+            primaryIncrementX
+              ? (i += primaryIncrementX)
+              : (j += primaryIncrementY)
+          ) {
+            endPoints.push([i, j]);
+            remainingInLinks--;
+          }
+        }
+
+        if (remainingInLinks > 0) {
+          if (!usedSecondaryEdge) {
+            i = secondaryStartX;
+            j = secondaryStartY;
+          } else if(varName == "規劃"){
+            i = secondaryMaxX + 1;
+            j = secondaryMaxY;
+          } else if(varName == "管理和規範"){
+            i = primaryMaxX + 1;
+            j = secondaryStartY;
+          }else {
+            [i, j] = lastSecondaryPoint;
+            secondaryIncrementX ? (i += secondaryIncrementX) : (j += secondaryIncrementY);
+          }
+
+          for (
+            ;
+            (secondaryIncrementX > 0
+              ? i <= secondaryMaxX
+              : i >= secondaryMaxX) &&
+            (secondaryIncrementY > 0
+              ? j <= secondaryMaxY
+              : j >= secondaryMaxY) &&
+            remainingInLinks > 0;
+            secondaryIncrementX
+              ? (i += secondaryIncrementX)
+              : (j += secondaryIncrementY)
+          ) {
+            endPoints.push([i, j]);
+            remainingInLinks--;
+          }
+        }
+        //those who needs the third edge
+        if (remainingInLinks > 0) {
+          if (varName == "交通運輸") {
+            endPoints.push([primaryStartX - 1, primaryStartY - 1]); //inGroup left edge
+          } else if (
+            varName == "教育和意識" ||
+            varName == "恢復"
+          ) {
+            for (
+              let i = primaryMaxX + 1, j = secondaryStartY;
+              (secondaryIncrementY > 0 ? j <= secondaryMaxY : j >= primaryMaxY) &&
+              remainingInLinks > 0;
+              j += secondaryIncrementY
+            ) {
+              endPoints.push([i, j]);
+              remainingInLinks--;
+            }
+          } else if (varName == "規劃") {
+            for (
+              let i = secondaryStartX, j = primaryMaxY;
+              i <= secondaryMaxX && remainingInLinks > 0;
+              i += secondaryIncrementX
+            ) {
+              endPoints.push([i, j]);
+              remainingInLinks--;
+            }
+          }
+        }
+      }
+    };
+
+    // Set points for inGroup links
+    if (position === "top") {
+      addPoints(
+        inGroup_startPoints,
+        inGroup_endPoints,
+        InGroup_outLinks,
+        InGroup_inLinks,
+        x + 1,
+        y + height,
+        1,
+        0,
+        x + width - 1,
+        y + height, // Primary edge: bottom
+        x + width,
+        y + height,
+        0,
+        -1,
+        x + width,
+        y, // Secondary edge: right
+      );
+    } else if (position === "left") {
+      addPoints(
+        inGroup_startPoints,
+        inGroup_endPoints,
+        InGroup_outLinks,
+        InGroup_inLinks,
+        x + width,
+        y,
+        0,
+        1,
+        x + width,
+        y + height, // Primary edge: right
+        x + width - 1,
+        y + height,
+        -1,
+        0,
+        x + 1,
+        y + height, // Secondary edge: bottom
+      );
+    } else if (position === "right") {
+      addPoints(
+        inGroup_startPoints,
+        inGroup_endPoints,
+        InGroup_outLinks,
+        InGroup_inLinks,
+        x,
+        y,
+        0,
+        1,
+        x,
+        y + height, // Primary edge: left
+        x + 1,
+        y + height,
+        1,
+        0,
+        x + width - 1,
+        y + height, // Secondary edge: bottom
+      );
+    } else if (position === "bottom") {
+      addPoints(
+        inGroup_startPoints,
+        inGroup_endPoints,
+        InGroup_outLinks,
+        InGroup_inLinks,
+        x + 1,
+        y,
+        1,
+        0,
+        x + width - 1,
+        y, // Primary edge: top
+        x + width,
+        y,
+        0,
+        1,
+        x + width,
+        y + height, // Secondary edge: right
+      );
     }
 
-    while (remainingOutLinks > 0) {
-      startPoints.push([x, y]); // Assign the left-top point
-      remainingOutLinks--;
-    }
-
-    // Generate end points for inLinks from the top edge
-    let remainingInLinks = inLinks;
-    for (let j = 1; j <= width && remainingInLinks > 0; j += 1) {
-      endPoints.push([x + j, y]);
-      remainingInLinks--;
-    }
-
-    while (remainingInLinks > 0) {
-      endPoints.push([x + width, y]); // Assign the right-top point
-      remainingInLinks--;
+    // Set points for outGroup links
+    if (position === "top") {
+      addPoints(
+        outGroup_startPoints,
+        outGroup_endPoints,
+        OutGroup_outLinks,
+        OutGroup_inLinks,
+        x + 1,
+        y,
+        1,
+        0,
+        x + width - 1,
+        y, // Primary edge: top )(left to right)
+        x,
+        y,
+        0,
+        1,
+        x,
+        y + height, // Secondary edge: left (top to bottom
+      );
+    } else if (position === "left") {
+      addPoints(
+        outGroup_startPoints,
+        outGroup_endPoints,
+        OutGroup_outLinks,
+        OutGroup_inLinks,
+        x,
+        y,
+        0,
+        1,
+        x,
+        y + height, // Primary edge: left (top to bottom)
+        x + 1,
+        y,
+        1,
+        0,
+        x + width - 1,
+        y, // Secondary edge: top (left to right)
+      );
+    } else if (position === "right") {
+      addPoints(
+        outGroup_startPoints,
+        outGroup_endPoints,
+        OutGroup_outLinks,
+        OutGroup_inLinks,
+        x + width,
+        y,
+        0,
+        1,
+        x + width,
+        y + height, // Primary edge: right (top to bottom)
+        x + width - 1,
+        y,
+        -1,
+        0,
+        x - 1,
+        y, // Secondary edge: top (right to left)
+      );
+    } else if (position === "bottom") {
+      addPoints(
+        outGroup_startPoints,
+        outGroup_endPoints,
+        OutGroup_outLinks,
+        OutGroup_inLinks,
+        x + 1,
+        y + height,
+        1,
+        0,
+        x + width - 1,
+        y + height, // Primary edge: bottom (left to right)
+        x,
+        y + height,
+        0,
+        -1,
+        x,
+        y, // Secondary edge: left (bottom to top)
+      );
     }
 
     result[varName] = {
-      startPoints,
-      endPoints,
+      inGroup_startPoints,
+      inGroup_endPoints,
+      outGroup_startPoints,
+      outGroup_endPoints,
     };
   }
 
   return result;
 }
 
-function getNextStartPoint(varName, points) {
+function getNextStartPoint(varName, points, isSameGroup) {
   const pointData = points[varName];
   // console.log({ pointData });
-  return pointData.startPoints.shift();
+  if (isSameGroup) {
+    return pointData.inGroup_startPoints.shift();
+  } else {
+    return pointData.outGroup_startPoints.shift();
+  }
 }
 
-function getNextEndPoint(varName, points) {
+function getNextEndPoint(varName, points, isSameGroup) {
   const pointData = points[varName];
-  return pointData.endPoints.shift();
+  if (isSameGroup) {
+    return pointData.inGroup_endPoints.shift();
+  } else {
+    return pointData.outGroup_endPoints.shift();
+  }
 }

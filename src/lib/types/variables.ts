@@ -64,10 +64,17 @@ export type tRectObject = {
   width: number;
   height: number;
   variable_name: string;
+  position: string;
   mentions: tMention[];
   factor_type: string;
   frequency: number;
   definition: string;
+  boundary: {
+    min_x: number,
+    max_x: number,
+    min_y: number,
+    max_y: number,
+  },
 };
 
 //for d3 drawing
@@ -78,14 +85,13 @@ export type tLinkObject = {
     leftTop:number[];
     width: number;
     height: number;
-    // leftBottom:number[];
-    // rightTop:number[];
-    // rightBottom:number[];
-    // center:number[];
-    // block_x: number;
-    // block_y: number;
-    // block_y_top: number;
-    // block_y_bottom: number;
+    position: string;
+    boundary: {
+      min_x: number,
+      max_x: number,
+      min_y: number,
+      max_y: number,
+    };
     newX_source: number;
     newY_source: number;
   };
@@ -95,14 +101,13 @@ export type tLinkObject = {
     leftTop:number[];
     width: number;
     height: number;
-    // leftBottom:number[];
-    // rightTop:number[];
-    // rightBottom:number[];
-    // center:number[];
-    // block_x: number;
-    // block_y: number;
-    // block_y_top: number;
-    // block_y_bottom: number;
+    position: string;
+    boundary: {
+      min_x: number,
+      max_x: number,
+      min_y: number,
+      max_y: number,
+    };
     newX_target: number;
     newY_target: number;
   };
