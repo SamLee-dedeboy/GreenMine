@@ -289,15 +289,15 @@ export const DPSIR = {
       if (length > maxMentions) maxMentions = length;
     });
 
-    // this.drawBbox(
-    //   var_type_name,
-    //   bbox_center,
-    //   bboxWidth,
-    //   bboxHeight,
-    //   self.varTypeColorScale,
-    //   cellWidth,
-    //   cellHeight,
-    // );
+    this.drawBbox(
+      var_type_name,
+      bbox_center,
+      bboxWidth,
+      bboxHeight,
+      self.varTypeColorScale,
+      cellWidth,
+      cellHeight,
+    );
     const scaleVarColor = d3
       .scaleLinear()
       .domain([minMentions, maxMentions])
@@ -441,10 +441,10 @@ export const DPSIR = {
       target_grid = [link.target.newX_target, link.target.newY_target];
 
       let path_points;
-      // if (link.source.var_type !== link.target.var_type) {
+      if (link.source.var_type !== link.target.var_type) {
         path_points = pathFinding(link, global_grid, points);
         // console.log(path_points);
-      // }
+      }
 
       if (path_points) {
         const svgPath = path_points.map((point) =>
@@ -601,35 +601,35 @@ export const DPSIR = {
       .select(`.${var_type_name}_region`);
 
     // group bounding box
-    group
-      .select("g.bbox-group")
-      .append("rect")
-      .attr("class", "bbox")
-      .attr("id", var_type_name)
-      .attr(
-        "x",
-        gridToSvgCoordinate(
-          bbox_center[0] - bboxWidth / 2,
-          bbox_center[1] - bboxHeight / 2,
-          cellWidth,
-          cellHeight,
-        ).x,
-      )
-      .attr(
-        "y",
-        gridToSvgCoordinate(
-          bbox_center[0] - bboxWidth / 2,
-          bbox_center[1] - bboxHeight / 2,
-          cellWidth,
-          cellHeight,
-        ).y,
-      )
-      .attr("width", bboxWidth * cellWidth)
-      .attr("height", bboxHeight * cellHeight)
-      .attr("fill", "none")
-      .attr("stroke", "grey")
-      .attr("stroke-width", 2)
-      .attr("opacity", "0.1"); //do not show the bounding box
+    // group
+    //   .select("g.bbox-group")
+    //   .append("rect")
+    //   .attr("class", "bbox")
+    //   .attr("id", var_type_name)
+    //   .attr(
+    //     "x",
+    //     gridToSvgCoordinate(
+    //       bbox_center[0] - bboxWidth / 2,
+    //       bbox_center[1] - bboxHeight / 2,
+    //       cellWidth,
+    //       cellHeight,
+    //     ).x,
+    //   )
+    //   .attr(
+    //     "y",
+    //     gridToSvgCoordinate(
+    //       bbox_center[0] - bboxWidth / 2,
+    //       bbox_center[1] - bboxHeight / 2,
+    //       cellWidth,
+    //       cellHeight,
+    //     ).y,
+    //   )
+    //   .attr("width", bboxWidth * cellWidth)
+    //   .attr("height", bboxHeight * cellHeight)
+    //   .attr("fill", "none")
+    //   .attr("stroke", "grey")
+    //   .attr("stroke-width", 2)
+    //   .attr("opacity", "0.1"); //do not show the bounding box
 
     //group name for clicking
     // group
@@ -1410,10 +1410,10 @@ function combineData(
   // mark boundary for outGroup links with "-" in the grid
   let boundary_arr: { x: number; y: number; width: number; height: number }[] = []
   boundary_arr.push({
-    x: min_x,
-    y: min_y,
-    width: max_x - min_x,
-    height: max_y - min_y
+    x: min_x+1,
+    y: min_y+1,
+    width: max_x - min_x -1,
+    height: max_y - min_y-1
   });
   markOccupiedGrid(global_grid, boundary_arr,"-");
   return rectangles.map((rect) => {
@@ -1765,13 +1765,19 @@ function pathFinding(link, grid: string[][], points) {
           cellDetails[ni][nj].parent_j = j;
           // console.log("The destination cell is found");
           // console.log(cellDetails)
-          let path = tracePath(cellDetails, start, goal);
+          let path = tracePath(cellDetails, start, goal, grid);
           foundDest = true;
           return path;
         } else if (!closedList[ni][nj] && isUnBlocked(grid, ni, nj, inGroup)) {
           
           // console.log("if the neighbor not in the closed list and is not blocked")
-          gNew = cellDetails[i][j].g + 1.0;
+          if((cellDetails[i][j].parent_i == i && i == ni) || (cellDetails[i][j].parent_j == j && j == nj)){
+            gNew = cellDetails[i][j].g + 1.0;
+          }
+          else{
+            gNew = cellDetails[i][j].g + 2; //add the turn cost
+          }
+          // gNew = cellDetails[i][j].g + 1.0;
           hNew = calculateHValue(ni, nj, goal);
           fNew = gNew + hNew;
 
@@ -1787,6 +1793,28 @@ function pathFinding(link, grid: string[][], points) {
             cellDetails[ni][nj].parent_j = j;
             
           }
+
+           // Handle special case for entering a cell marked with '.'
+          // if (grid[ni][nj] === '.') {
+          //   for (const [ddi, ddj] of directions) {
+          //     const nni = ni + ddi;
+          //     const nnj = nj + ddj;
+          //     if (isValid(nni, nnj, rows, cols) && grid[nni][nnj] != "*" && grid[nni][nnj] != ".") {
+          //       gNew = cellDetails[ni][nj].g + 1.0;
+          //       hNew = calculateHValue(nni, nnj, goal);
+          //       fNew = gNew + hNew;
+
+          //       if (cellDetails[nni][nnj].f == Number.MAX_VALUE || cellDetails[nni][nnj].f > fNew) {
+          //         openList.enqueue(fNew, [nni, nnj]);
+          //         cellDetails[nni][nnj].f = fNew;
+          //         cellDetails[nni][nnj].g = gNew;
+          //         cellDetails[nni][nnj].h = hNew;
+          //         cellDetails[nni][nnj].parent_i = ni;
+          //         cellDetails[nni][nnj].parent_j = nj;
+          //       }
+          //     }
+          //   }
+          // }
         }
       }
     }
@@ -1813,7 +1841,7 @@ function isDestination(col, row, dest) {
 function calculateHValue(row, col, dest) {
   return Math.abs(row - dest[1]) + Math.abs(col - dest[0]);
 }
-function tracePath(cellDetails, start, goal) {
+function tracePath(cellDetails, start, goal, grid) {
   // console.log("The Path is ");
   let col = goal[0];
   let row = goal[1];
@@ -1841,6 +1869,11 @@ function tracePath(cellDetails, start, goal) {
   Path.push([start[0], start[1]]);
   Path.reverse();
   // console.log(Path)
+  Path.forEach(point => {
+    if((point[0]!==start[0] || point[1]!==start[1]) && (point[0]!==goal[0] || point[1]!==goal[1])){
+      grid[point[0]][point[1]] = ".";
+    }
+  });
   return Path;
 }
 
