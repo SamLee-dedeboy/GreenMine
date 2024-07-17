@@ -54,6 +54,7 @@ export type tRectangle = {
   width: number;
   height: number;
   name: string;
+  outgroup_degree: number;
 }
 
 
@@ -75,6 +76,7 @@ export type tRectObject = {
     min_y: number,
     max_y: number,
   },
+  degree: number;
 };
 
 //for d3 drawing

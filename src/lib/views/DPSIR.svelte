@@ -44,7 +44,7 @@
     trigger_times += 1;
     if (trigger_times <= 1) return;
     await tick();
-    console.log(vars, links);
+    // console.log(vars, links);
     $varTypeColorScale = d3
       .scaleOrdinal()
       .domain(Object.keys(vars))
@@ -56,7 +56,7 @@
     // e.preventDefault();
     const variable: tVariable = e;
     selectedVar = variable;
-    console.log({ selectedVar });
+    // console.log({ selectedVar });
     dispatch("var-selected", selectedVar); // for App.svelte to hightlight the chunks
   }
 </script>
