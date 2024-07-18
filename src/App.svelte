@@ -136,7 +136,7 @@
   {:else}
     <div class="page flex h-full space-x-1">
       <div
-        class="flex h-full w-[70%] flex-1 flex-col items-center justify-center"
+        class="flex h-full w-[75%] flex-1 flex-col items-center justify-center"
       >
         <div class="relative h-full w-full">
           <div
@@ -169,7 +169,7 @@
           {/if}
         </div>
       </div>
-      <div class="flex h-full w-full basis-[30%] flex-col">
+      <div class="flex h-full w-full basis-[20%] flex-col">
         <div class="gap-y-1">
           <SummaryView {summary_interviews} id="statistics" />
         </div>

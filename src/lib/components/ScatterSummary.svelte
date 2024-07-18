@@ -40,7 +40,7 @@
     height,
     paddings,
     Constants.emotionColorScale,
-    Constants.emotionname
+    Constants.emotionname,
   );
   let topic_scatter = new ScatterSummary(
     svgId.topic,
@@ -48,7 +48,7 @@
     height,
     paddings,
     Constants.topicColorScale,
-    Constants.topicname
+    Constants.topicname,
   );
 
   $: update_summary(summary_interviews);
@@ -57,7 +57,6 @@
     // scattersummary.init(svgId.topic, width, height, paddings,"topic");
     emotion_scatter.init();
     topic_scatter.init();
-
   });
 
   async function update_summary(summary_interviews: tChunk[] | undefined) {
@@ -86,7 +85,7 @@
 </script>
 
 <div class="flex flex-col gap-x-1">
-  <div id="svg-container-emotion" class="flex-1 flex flex-col px-0.5">
+  <div id="svg-container-emotion" class="flex flex-1 flex-col px-0.5">
     <div
       role="button"
       tabindex="0"
@@ -98,12 +97,12 @@
     </div>
     <svg
       id={svgId.emotion}
-      class={`${emotion_hidden ? "hidden" : ""} w-full border border-gray-300 rounded p-2 text-sm`}
+      class={`${emotion_hidden ? "hidden" : ""} w-full rounded border border-gray-300 p-2 text-sm`}
       viewBox="0 0 500 300"
     >
     </svg>
   </div>
-  <div id="svg-container-topic" class="flex-1 flex flex-col px-0.5">
+  <div id="svg-container-topic" class="flex flex-1 flex-col px-0.5">
     <div
       role="button"
       tabindex="0"
@@ -115,7 +114,7 @@
     </div>
     <svg
       id={svgId.topic}
-      class={`${topic_hidden ? "hidden" : ""} w-full border border-gray-300 rounded p-2 text-sm`}
+      class={`${topic_hidden ? "hidden" : ""} w-full rounded border border-gray-300 p-2 text-sm`}
       viewBox="0 0 500 300"
     >
     </svg>
@@ -124,8 +123,7 @@
 
 <style lang="postcss">
   .summary-header {
-    @apply border border-gray-200 rounded shadow m-1 text-xl font-bold text-center flex items-center justify-center;
+    @apply m-1 flex items-center justify-center rounded border border-gray-200 text-center text-lg font-bold shadow;
     font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   }
-
 </style>
