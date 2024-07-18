@@ -2,6 +2,7 @@
   import { onMount, setContext } from "svelte";
   import InterviewViewer from "lib/views/InterviewViewer_v2.svelte";
   import SummaryView from "lib/components/ScatterSummary.svelte";
+  import SimGraph from "lib/v1/SimGraph.svelte";
   import type {
     tMention,
     tVariableType,
@@ -19,18 +20,24 @@
   import * as utils from "lib/utils";
   import { server_address } from "lib/constants";
 
-  let interview_data: tTranscript[];
+  let interview_data: tTranscript[] | undefined = undefined;
   let interview_viewer_component;
-  let dataset: tServerData;
-  let var_data: tDPSIR = {};
-  let vis_links: tVisLink[];
+  let dataset: tServerData | undefined = undefined;
+  let var_data: tDPSIR | undefined = undefined;
+  let vis_links: tVisLink[] | undefined = undefined;
   let summary_interviews: tChunk[] | undefined = undefined;
   let data_loading: boolean = true;
+  let show_dpsir: boolean = true;
+  // v1
+  let keyword_data: any;
+  let chunk_graph: any;
+  let chunk_coordinates: any;
+  // let timeline_data: any;
 
   let fetch_success = false;
   onMount(async () => {
     await fetchTest();
-    fetchData();
+    await fetchData();
   });
   function fetchTest() {
     // fetch data from backend
@@ -52,15 +59,33 @@
         Object.keys(res.nodes).forEach((varType: string) => {
           const nodes: tVariableType = res.nodes[varType];
           const defs: tVarTypeDef = res.metadata[varType];
+          if (!var_data) var_data = {};
           var_data[varType] = utils.integrateTypes(nodes, defs);
         });
         var_data = var_data;
         console.log({ var_data });
         vis_links = utils.link_to_vis_link(res.links);
+
+        // v1
+        // report_data = res.reports
+        chunk_coordinates = res.v1.topic_tsnes;
+        chunk_graph = utils.link_to_graph(
+          res.v1.chunk_links,
+          res.v1.chunk_nodes,
+          0.91,
+          chunk_coordinates,
+        );
+        console.log({ chunk_graph });
+        // timeline_data = res.reports;
+        keyword_data = {
+          keyword_coordinates: res.v1.keyword_coordinates,
+          keyword_statistics: res.v1.keyword_statistics,
+        };
       });
   }
 
   function handleVarOrLinkSelected(e) {
+    if (!interview_data) return;
     //deselect var/link
     if (e.detail === null) {
       interview_viewer_component.highlight_chunks(null); //dehighlight chunks
@@ -114,6 +139,15 @@
         class="flex h-full w-[70%] flex-1 flex-col items-center justify-center"
       >
         <div class="relative h-full w-full">
+          <div
+            tabindex="0"
+            role="button"
+            class="absolute right-1 top-1 z-10"
+            on:click={() => (show_dpsir = !show_dpsir)}
+            on:keyup={() => {}}
+          >
+            Toggle
+          </div>
           <!-- <div
             class="title absolute left-6 top-1 w-fit rounded px-4 py-4 text-left text-sky-600"
           >
@@ -122,13 +156,16 @@
           </div> -->
           {#if data_loading}
             <div>Data Loading...</div>
-          {:else}
+          {/if}
+          {#if show_dpsir}
             <DPSIR
               data={var_data}
-              metadata={dataset.metadata}
+              metadata={dataset?.metadata}
               links={vis_links}
               on:var-selected={handleVarOrLinkSelected}
             ></DPSIR>
+          {:else}
+            <SimGraph topic_data={chunk_graph} {keyword_data}></SimGraph>
           {/if}
         </div>
       </div>

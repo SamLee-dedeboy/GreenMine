@@ -8,7 +8,7 @@ from openai import OpenAI
 # from . import DataUtils
 import GPTUtils
 import DataUtils
-
+from collections import defaultdict
 
 #init, do not read data
 app = Flask(__name__)
@@ -18,7 +18,7 @@ relative_path = lambda dirname, filename: os.path.join(dirname, filename)
 node_data_path = relative_path(dirname, 'data/v2/tmp/nodes/')
 chunk_data_path = relative_path(dirname, 'data/v2/tmp/chunk/')
 metadata_path = relative_path(dirname, 'data/v2/tmp/variable_definitions/')
-
+v1_data_path = relative_path(dirname, 'data/v1/')
 # openai
 openai_api_key = open(relative_path(dirname, "openai_api_key")).read()
 openai_client=OpenAI(api_key=openai_api_key, timeout=10)
@@ -38,11 +38,13 @@ def get_data():
     links = json.load(open(node_data_path + 'connections.json', encoding='utf-8'))
     interview_data = process_interview(glob.glob(chunk_data_path + f'chunk_summaries_w_ktte/*.json'))
 
+    v1_data = get_data_v1(v1_data_path)
     return {
         "interviews": interview_data,
         "nodes": nodes,
         "metadata": metadata,
         "links": links,
+        "v1": v1_data,
     }
 
 @app.route("/var_extraction/", methods=['POST'])
@@ -143,3 +145,82 @@ def chunk_w_var_mentions(chunks, all_nodes):
                     "conversation_ids": conversation_ids
                 })
     return chunk_dict
+
+def get_data_v1(data_path=v1_data_path):
+    interviews, reports, report_embeddings, chunk_links, chunk_nodes, topic_tsnes, keyword_coordinates, keyword_statistics = processData(data_path)
+    res = {
+        'interviews': interviews,
+        # 'reports': reports,
+        'chunk_links': chunk_links,
+        'chunk_nodes': chunk_nodes,
+        'topic_tsnes': topic_tsnes,
+        'keyword_coordinates': keyword_coordinates,
+        'keyword_statistics': keyword_statistics
+    }
+    return res
+    # return json.dumps(res, default=vars)
+
+
+def processData(data_path, reload=False):
+    # interview
+    interview_dict = defaultdict(dict)
+    interviews = []
+    data_by_chunk = {}
+    for interview_file in glob.glob(data_path + "chunk_summaries/*.json"):
+        interview_data = json.load(open(interview_file))
+        interview_file = interview_file.replace("\\", "/")
+        file_name = interview_file.split('/')[-1].replace(".json", "")
+        participant = file_name.split("_")[0]
+        background_topics = file_name.split("_")[1]
+        interview_dict[participant][background_topics] = interview_data
+        # interview_dict[participant] = interview_data
+        for chunk in interview_data:
+            if chunk['topic'] in ['商業', '汙染', '貿易', '農業']:
+                chunk['topic'] = '其他'
+            data_by_chunk[chunk['id']] = chunk
+    interview_dict = dict(sorted(interview_dict.items(), key=lambda x: int(x[0].replace("N", ""))))
+    for participant, interview in interview_dict.items():
+        background = interview['background']
+        topics = interview['topics']
+        whole_interview = background + topics
+        interviews.append(
+            {
+                "file_name": participant,
+                "data": whole_interview
+            }
+        )
+
+    # reports
+    reports = []
+    report_embeddings = {}
+
+    # chunk_graph
+    chunk_links = json.load(open(data_path + "chunk_similarities.json"))
+    chunk_embeddings = json.load(open(data_path + "chunk_embeddings.json"))
+    chunk_nodes = {}
+    for interview in interviews:
+        for chunk in interview['data']:
+            # chunk['keywords'] = chunk['raw_keywords']
+            chunk_nodes[chunk['id']] = chunk
+    # topic tsnes
+    topic_tsnes = json.load(open(data_path + 'chunk_coordinates.json'))
+    # keywords 
+    keyword_coordinates = json.load(open(data_path + 'keyword_coordinates.json'))
+    keyword_statistics = json.load(open(data_path + 'keyword_statistics.json'))
+    # keyword_statistics = {k['keyword']: k for k in keyword_statistics}
+
+    if reload:
+        # chunk graph
+        chunk_links = DataUtils.v1_processing.chunk_cosine_similarity(chunk_embeddings)
+        chunk_links = DataUtils.v1_processing.normalize_weight(chunk_links)
+        # topic tsnes
+        for chunk in chunk_embeddings:
+            chunk['topic'] = data_by_chunk[chunk['id']]['topic']
+        chunks_by_topic = DataUtils.v1_processing.group_by_key(chunk_embeddings, 'topic')
+        topic_tsnes = DataUtils.v1_processing.tsne_by_topic(chunks_by_topic)
+        # keyword
+        keywords = json.load(open(data_path + "keywords.json"))
+        keyword_embeddings = [keyword['embedding'] for keyword in keywords]
+        coordinates = DataUtils.scatter_plot(keyword_embeddings, method="tsne")
+        keyword_coordinates = {k['keyword']: c.tolist() for k, c in zip(keywords, coordinates)}
+    return interviews, reports, report_embeddings, chunk_links, chunk_nodes, topic_tsnes, keyword_coordinates, keyword_statistics

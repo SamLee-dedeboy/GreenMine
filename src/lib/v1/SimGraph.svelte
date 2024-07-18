@@ -1,15 +1,15 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { simgraph } from "../renderers/SimGraph";
-  import Legend from "../Legend.svelte";
+  import Legend from "./Legend.svelte";
   import * as d3 from "d3";
   import { createEventDispatcher } from "svelte";
   import { categoricalColors, emotionColorScale } from "../constants/Colors";
   const dispatch = createEventDispatcher();
 
-  export let topic_data;
+  export let topic_data: any | undefined = undefined;
   // export let interview_data;
-  export let keyword_data;
+  export let keyword_data: any | undefined = undefined;
   let highlight_keywords: string[] | undefined = undefined;
   let container;
   $: hoveredHexKeywords = simgraph.hoveredHexKeywords;
@@ -28,10 +28,9 @@
     top: 300,
     bottom: 300,
   };
-  $: width = container?.clientWidth;
-  $: height = container?.clientHeight;
-  $: if (width && height)
-    simgraph.init(svgId, width, height, paddings, handlers);
+  const width = 1500;
+  const height = 1000;
+  let mounted = false;
   let topic_highlight_chunks = undefined;
   let keyword_highlight_chunks = undefined;
   let emotion_highlight_chunks = undefined;
@@ -45,30 +44,36 @@
       return undefined;
     } else {
       const keyword_chunks = topic_data.nodes.filter((node) =>
-        node.keywords.some((keyword) => selectedKeywords!.includes(keyword))
+        node.keywords.some((keyword) => selectedKeywords!.includes(keyword)),
       );
       return keyword_chunks;
     }
   })(selectedKeywords);
 
-  $: ((_) => {
-    // console.log({ filterClickedKeywords });
-    if (!filterClickedKeywords) selectedKeywords = selectedHexBinKeywords;
-    else {
-      selectedKeywords = filterClickedKeywords;
-    }
-    dispatch("keywords-selected", selectedKeywords);
-  })(filterClickedKeywords);
+  // $: ((_) => {
+  //   // console.log({ filterClickedKeywords });
+  //   if (!filterClickedKeywords) selectedKeywords = selectedHexBinKeywords;
+  //   else {
+  //     selectedKeywords = filterClickedKeywords;
+  //   }
+  //   dispatch("keywords-selected", selectedKeywords);
+  // })(filterClickedKeywords);
 
   $: highlight_chunks = intersection(
     emotion_highlight_chunks,
-    intersection(topic_highlight_chunks, keyword_highlight_chunks)
+    intersection(topic_highlight_chunks, keyword_highlight_chunks),
   );
 
+  // updates
   let selected_links = undefined;
   let scaleRadius = undefined;
   // let topicColorScale = undefined;
   $: if (topic_data) {
+    update_chunks(topic_data);
+  }
+  function update_chunks(topic_data) {
+    if (!topic_data) return;
+    if (!mounted) return;
     // topicColorScale = d3
     //   .scaleOrdinal()
     //   .domain(Object.keys(topic_data.groups))
@@ -104,7 +109,7 @@
     simgraph.update_chunks(
       topic_data.groups,
       topic_data.group_ccs,
-      emotionColorScale
+      emotionColorScale,
     );
     // simgraph.update_force(
     //   topic_data.groups,
@@ -134,9 +139,15 @@
   }
 
   $: if (keyword_data) {
+    update_keywords(keyword_data);
+  }
+  function update_keywords(keyword_data) {
+    if (!keyword_data) return;
+    if (!mounted) return;
+    console.log({ keyword_data });
     const keyword_statistics = keyword_data.keyword_statistics;
     const overall_freqs: number[] = Object.keys(keyword_statistics).map(
-      (keyword) => keyword_statistics[keyword].frequency
+      (keyword) => keyword_statistics[keyword].frequency,
     );
     const overall_min_freq = Math.min(...overall_freqs);
     const overall_max_freq = Math.max(...overall_freqs);
@@ -171,7 +182,10 @@
   //   // simgraph.highlight_links(svgId, selected_links)
   // }
 
-  $: ((_) => {
+  $: if (highlight_chunks) {
+    update_highlight_chunks(highlight_chunks);
+  }
+  function update_highlight_chunks(highlight_chunks) {
     // console.log({ highlight_chunks });
     dispatch("chunks-selected", highlight_chunks);
     if (!highlight_chunks) {
@@ -189,7 +203,15 @@
     });
     highlight_keywords = Array.from(keyword_set);
     simgraph.highlight_keywords(highlight_keywords, keyword_data);
-  })(highlight_chunks);
+  }
+
+  onMount(() => {
+    console.log("init simgraph");
+    simgraph.init(svgId, width, height, paddings, handlers);
+    mounted = true;
+    update_chunks(topic_data);
+    update_keywords(keyword_data);
+  });
 
   function handleNodesSelected(nodes, topic) {
     // dispatch("chunks-selected", nodes);
@@ -224,7 +246,7 @@
       return;
     }
     const emotion_chunks = topic_data.nodes.filter(
-      (node) => node.emotion === emotion
+      (node) => node.emotion === emotion,
     );
     emotion_highlight_chunks = emotion_chunks;
     // highlight_chunks = intersection(highlight_chunks, emotion_chunks);
@@ -246,12 +268,12 @@
   }
 </script>
 
-<div bind:this={container} class="w-full h-full relative p-2 pt-4">
-  <div class="absolute top-5 right-0 w-[150px] h-[150px]">
-    <!-- <Legend
+<div bind:this={container} class="relative h-full w-full p-2 pt-4">
+  <div class="absolute right-0 top-5 h-[150px] w-[150px]">
+    <Legend
       bind:selectedEmotion
       on:selectEmotion={(e) => handleEmotionSelected(e.detail)}
-    /> -->
+    />
   </div>
   <!-- <div
     class="absolute flex flex-col text-sm top-[170px] right-1 w-[120px] h-[150px] text-left shadow rounded px-0.5 divide-y divide-black overflow-y-auto"
@@ -308,9 +330,9 @@
     {/if}
   </div> -->
   <div
-    class="tooltip absolute w-fit h-fit pl-0.5 pr-1 py-1 rounded bg-white border border-black opacity-0 pointer-events-none text-xs"
+    class="tooltip pointer-events-none absolute h-fit w-fit rounded border border-black bg-white py-1 pl-0.5 pr-1 text-xs opacity-0"
   ></div>
-  <svg id={svgId} class="w-full h-full overflow-visible">
+  <svg id={svgId} class="h-full w-full overflow-visible">
     <g class="chunk_region"></g>
     <g class="keyword_region"></g>
     <defs>

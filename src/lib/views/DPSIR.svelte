@@ -14,9 +14,9 @@
     tMetadata,
   } from "../types";
   import { varTypeColorScale } from "lib/store";
-  export let data: tDPSIR;
-  export let metadata: tMetadata;
-  export let links: tVisLink[];
+  export let data: tDPSIR | undefined;
+  export let metadata: tMetadata | undefined;
+  export let links: tVisLink[] | undefined;
   const svgId = "model-svg";
 
   let curation: any;
@@ -25,25 +25,13 @@
   let container;
   let selectedVar: tVariable | undefined = undefined;
 
-  onMount(async () => {
-    await tick();
-    const handlers = {
-      ["VarOrLinkSelected"]: handleVarOrLinkSelected,
-      ["add"]: curation.handleAddVar,
-      ["remove"]: curation.handleRemoveVar,
-      ["edit"]: curation.handleEditVar,
-    };
-
-    DPSIR.init(svgId, utilities, handlers);
-    update_vars(data, links);
-  });
-
-  let trigger_times = 0;
+  // let trigger_times = 0;
   $: update_vars(data, links);
-  async function update_vars(vars: tDPSIR, links: tVisLink[]) {
-    trigger_times += 1;
-    if (trigger_times <= 1) return;
-    await tick();
+  async function update_vars(
+    vars: tDPSIR | undefined,
+    links: tVisLink[] | undefined,
+  ) {
+    if (!vars || !links) return;
     // console.log(vars, links);
     $varTypeColorScale = d3
       .scaleOrdinal()
@@ -51,6 +39,19 @@
       .range(d3.schemeSet2);
     DPSIR.update_vars(vars, links, $varTypeColorScale);
   }
+
+  onMount(async () => {
+    await tick();
+    const handlers = {
+      ["VarOrLinkSelected"]: handleVarOrLinkSelected,
+      // ["add"]: curation.handleAddVar,
+      // ["remove"]: curation.handleRemoveVar,
+      // ["edit"]: curation.handleEditVar,
+    };
+
+    DPSIR.init(svgId, utilities, handlers);
+    update_vars(data, links);
+  });
 
   function handleVarOrLinkSelected(e) {
     // e.preventDefault();
@@ -61,17 +62,17 @@
   }
 </script>
 
-<div bind:this={container} class="container w-full h-full">
-  <div class="absolute right-0 top-1">
+<div bind:this={container} class="container h-full w-full">
+  <!-- <div class="absolute right-0 top-1">
     <Curation bind:this={curation} {metadata} />
-  </div>
-  <svg id={svgId} class="varbox-svg w-full h-full">
+  </div> -->
+  <svg id={svgId} class="varbox-svg h-full w-full">
     <defs></defs>
   </svg>
 </div>
 
 <style lang="postcss">
-  .container{
+  .container {
     max-width: 100%; /* make DPSIR full width*/
   }
   .varbox-svg {

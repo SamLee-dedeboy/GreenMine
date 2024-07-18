@@ -218,13 +218,13 @@ export const DPSIR = {
         this.cellHeight,
       );
     });
-    this.drawLinks(
-      links,
-      bboxes,
-      this.global_grid,
-      this.cellWidth,
-      this.cellHeight,
-    );
+    // this.drawLinks(
+    //   links,
+    //   bboxes,
+    //   this.global_grid,
+    //   this.cellWidth,
+    //   this.cellHeight,
+    // );
   },
   drawGids(svg, svgId, width, height, cellWidth, cellHeight, columns, rows) {
     // console.log(cellWidth, cellHeight);
