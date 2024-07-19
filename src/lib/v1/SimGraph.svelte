@@ -18,7 +18,8 @@
   const svgId = "simgraph-svg";
   const handlers = {
     // nodeClick: handleNodeClick,
-    nodesSelected: handleNodesSelected,
+    // nodesSelected: handleNodesSelected,
+    topicSelected: handleTopicSelected,
     keywordsSelected: handleKeywordSelected,
     emotionSelected: handleEmotionSelected,
   };
@@ -34,21 +35,11 @@
   let topic_highlight_chunks = undefined;
   let keyword_highlight_chunks = undefined;
   let emotion_highlight_chunks = undefined;
+
   let selectedTopic = undefined;
   let selectedKeywords: string[] | undefined = undefined;
-  let selectedHexBinKeywords: string[] | undefined = undefined;
+  // let selectedHexBinKeywords: string[] | undefined = undefined;
   let selectedEmotion = undefined;
-
-  $: keyword_highlight_chunks = ((_) => {
-    if (!selectedKeywords) {
-      return undefined;
-    } else {
-      const keyword_chunks = topic_data.nodes.filter((node) =>
-        node.keywords.some((keyword) => selectedKeywords!.includes(keyword)),
-      );
-      return keyword_chunks;
-    }
-  })(selectedKeywords);
 
   // $: ((_) => {
   //   // console.log({ filterClickedKeywords });
@@ -58,11 +49,6 @@
   //   }
   //   dispatch("keywords-selected", selectedKeywords);
   // })(filterClickedKeywords);
-
-  $: highlight_chunks = intersection(
-    emotion_highlight_chunks,
-    intersection(topic_highlight_chunks, keyword_highlight_chunks),
-  );
 
   // updates
   let selected_links = undefined;
@@ -138,9 +124,7 @@
     // );
   }
 
-  $: if (keyword_data) {
-    update_keywords(keyword_data);
-  }
+  $: update_keywords(keyword_data);
   function update_keywords(keyword_data) {
     if (!keyword_data) return;
     if (!mounted) return;
@@ -182,26 +166,40 @@
   //   // simgraph.highlight_links(svgId, selected_links)
   // }
 
-  $: if (highlight_chunks) {
-    update_highlight_chunks(highlight_chunks);
-  }
-  function update_highlight_chunks(highlight_chunks) {
+  $: update_highlight_chunks(
+    emotion_highlight_chunks,
+    topic_highlight_chunks,
+    keyword_highlight_chunks,
+  );
+  function update_highlight_chunks(
+    emotion_highlight_chunks,
+    topic_highlight_chunks,
+    keyword_highlight_chunks,
+  ) {
+    const highlight_chunks = intersection(
+      emotion_highlight_chunks,
+      intersection(topic_highlight_chunks, keyword_highlight_chunks),
+    );
     // console.log({ highlight_chunks });
-    dispatch("chunks-selected", highlight_chunks);
-    if (!highlight_chunks) {
-      simgraph.dehighlight_nodes();
-      simgraph.dehighlight_keywords();
-      return;
-    }
+    // dispatch("chunks-selected", highlight_chunks);
+    // if (!highlight_chunks) {
+    //   simgraph.dehighlight_nodes();
+    //   simgraph.dehighlight_keywords();
+    //   return;
+    // }
     // update chunks
     simgraph.highlight_nodes(highlight_chunks);
 
     // update keyword hex
-    let keyword_set = new Set<string>();
-    highlight_chunks.forEach((node) => {
-      node.keywords.forEach((keyword) => keyword_set.add(keyword));
-    });
-    highlight_keywords = Array.from(keyword_set);
+    if (!highlight_chunks) {
+      highlight_keywords = undefined;
+    } else {
+      let keyword_set = new Set<string>();
+      highlight_chunks.forEach((node) => {
+        node.keywords.forEach((keyword) => keyword_set.add(keyword));
+      });
+      highlight_keywords = Array.from(keyword_set);
+    }
     simgraph.highlight_keywords(highlight_keywords, keyword_data);
   }
 
@@ -231,9 +229,17 @@
 
   function handleKeywordSelected(keywords) {
     selectedKeywords = keywords;
-    selectedHexBinKeywords = keywords;
+    // selectedHexBinKeywords = keywords;
     filterClickedKeywords = undefined;
-    dispatch("keywords-selected", selectedKeywords);
+    if (!selectedKeywords) {
+      keyword_highlight_chunks = undefined;
+    } else {
+      keyword_highlight_chunks = topic_data.nodes.filter((node) =>
+        node.keywords.some((keyword) => selectedKeywords!.includes(keyword)),
+      );
+    }
+
+    // dispatch("keywords-selected", selectedKeywords);
     // handleNodesSelected(highlight_chunks);
     // simgraph.highlight_nodes(highlight_chunks);
   }
@@ -246,10 +252,19 @@
       return;
     }
     const emotion_chunks = topic_data.nodes.filter(
-      (node) => node.emotion === emotion,
+      (node) => node.emotion.toLowerCase() === emotion,
     );
     emotion_highlight_chunks = emotion_chunks;
     // highlight_chunks = intersection(highlight_chunks, emotion_chunks);
+    // handleNodesSelected(highlight_chunks);
+    // simgraph.highlight_nodes(highlight_chunks);
+  }
+
+  function handleTopicSelected(topic_nodes, topic) {
+    selectedTopic = topic;
+    // console.log({ topic });
+    topic_highlight_chunks = topic_nodes;
+    // highlight_chunks = intersection(highlight_chunks, topic_chunks);
     // handleNodesSelected(highlight_chunks);
     // simgraph.highlight_nodes(highlight_chunks);
   }

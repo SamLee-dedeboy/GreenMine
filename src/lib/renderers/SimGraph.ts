@@ -29,10 +29,14 @@ export const simgraph = {
             "topic-label-highlight",
             false,
           );
-          handlers.nodesSelected(null, null);
+          //   handlers.nodesSelected(null, null);
           handlers.keywordsSelected(null, null);
+          handlers.topicSelected(null, null);
           handlers.emotionSelected(null, null);
-          self.highlighted_nodes = null;
+          //   self.highlighted_nodes = null;
+          self.clicked_topic = null;
+          self.clicked_hex = null;
+          self.clicked_cc = [null, null];
         }
       });
     const topic_region = svg.select("g.topic_region");
@@ -61,7 +65,7 @@ export const simgraph = {
     this.clicked_topic = null;
     this.clicked_cc = [null, null];
     this.clicked_hex = null;
-    this.highlighted_nodes = null;
+    // this.highlighted_nodes = null;
     this.hoveredHexKeywords = "";
   },
 
@@ -199,7 +203,7 @@ export const simgraph = {
           // .attr("r", (d) => {return scaleRadius(d.degree)})
           // .attr("fill", (d) => topicColors(d.topic))
           .attr("fill", (d) => {
-            return emotionColorScale(d.emotion);
+            return emotionColorScale(d.emotion.toLowerCase());
           })
           .attr("stroke", "black")
           .attr("stroke-width", 1)
@@ -227,8 +231,9 @@ export const simgraph = {
               self.clicked_topic = d;
               self.clicked_cc = [null, null];
               d3.selectAll("path.border").classed("border-highlight", false);
-              self.handlers.nodesSelected(nodes, d);
-              self.highlighted_nodes = nodes;
+              //   self.handlers.nodesSelected(nodes, d);
+              self.handlers.topicSelected(nodes, d);
+              //   self.highlighted_nodes = nodes;
               d3.selectAll("circle.node")
                 .classed("node-highlight", false)
                 .classed("node-not-highlight", true)
@@ -240,8 +245,8 @@ export const simgraph = {
               d3.selectAll("circle.node")
                 .classed("node-highlight", false)
                 .classed("node-not-highlight", false);
-              self.handlers.nodesSelected(null, null);
-              self.highlighted_nodes = null;
+              //   self.handlers.nodesSelected(null, null);
+              //   self.highlighted_nodes = null;
             }
           });
         const node_radius = 5;
@@ -323,7 +328,7 @@ export const simgraph = {
                   self.clicked_cc[1] === d.index
                 ) {
                   self.clicked_cc = [null, null];
-                  self.handlers.nodesSelected(null, null);
+                  //   self.handlers.nodesSelected(null, null);
                   nodes
                     .classed("node-highlight", false)
                     .classed("node-not-highlight", false);
@@ -339,8 +344,8 @@ export const simgraph = {
                   const cc_nodes = cc_node_ids.map(
                     (node_id) => nodes_dict[node_id],
                   );
-                  self.handlers.nodesSelected(cc_nodes, d.topic + "(部分)");
-                  self.highlighted_nodes = cc_nodes;
+                  //   self.handlers.nodesSelected(cc_nodes, d.topic + "(部分)");
+                  //   self.highlighted_nodes = cc_nodes;
                   nodes
                     .filter((node) => cc_node_ids.includes(node.id))
                     .classed("node-not-highlight", false)
@@ -814,22 +819,33 @@ export const simgraph = {
     const keyword_region = d3
       .select("#" + this.svgId)
       .select("g.keyword_region");
-    keyword_region
-      .selectAll("path.hex")
-      // .attr("opacity", 0.1)
-      .classed("hex-highlight", false)
-      .classed("hex-not-highlight", true)
-      .filter((d) => d.some((keyword) => keywords.includes(keyword)))
-      .classed("hex-not-highlight", false)
-      .classed("hex-highlight", true);
-    // .attr("opacity", 1)
-    keyword_region
-      .selectAll("text.label")
-      .classed("hex-label-highlight", false)
-      .classed("hex-label-not-highlight", true)
-      .filter((d) => d.some((keyword) => keywords.includes(keyword)))
-      .classed("hex-label-not-highlight", false)
-      .classed("hex-label-highlight", true);
+    if (!keywords) {
+      keyword_region
+        .selectAll("path.hex")
+        .classed("hex-highlight", false)
+        .classed("hex-not-highlight", false);
+      keyword_region
+        .selectAll("text.label")
+        .classed("hex-label-highlight", false)
+        .classed("hex-label-not-highlight", false);
+    } else {
+      keyword_region
+        .selectAll("path.hex")
+        // .attr("opacity", 0.1)
+        .classed("hex-highlight", false)
+        .classed("hex-not-highlight", true)
+        .filter((d) => d.some((keyword) => keywords.includes(keyword)))
+        .classed("hex-not-highlight", false)
+        .classed("hex-highlight", true);
+      // .attr("opacity", 1)
+      keyword_region
+        .selectAll("text.label")
+        .classed("hex-label-highlight", false)
+        .classed("hex-label-not-highlight", true)
+        .filter((d) => d.some((keyword) => keywords.includes(keyword)))
+        .classed("hex-label-not-highlight", false)
+        .classed("hex-label-highlight", true);
+    }
   },
 
   dehighlight_keywords() {
@@ -847,15 +863,23 @@ export const simgraph = {
   },
 
   highlight_nodes(nodes) {
+    console.log({ nodes });
     const chunk_region = d3.select("#" + this.svgId).select("g.chunk_region");
-    chunk_region
-      .selectAll("circle.node")
-      .classed("node-highlight", false)
-      .classed("node-not-highlight", true)
-      .filter((node) => nodes?.includes(node))
-      .classed("node-not-highlight", false)
-      .classed("node-highlight", true);
-    this.highlighted_nodes = nodes;
+    if (!nodes) {
+      chunk_region
+        .selectAll("circle.node")
+        .classed("node-highlight", false)
+        .classed("node-not-highlight", false);
+    } else {
+      chunk_region
+        .selectAll("circle.node")
+        .classed("node-highlight", false)
+        .classed("node-not-highlight", true)
+        .filter((node) => nodes?.includes(node))
+        .classed("node-not-highlight", false)
+        .classed("node-highlight", true);
+    }
+    // this.highlighted_nodes = nodes;
   },
 
   dehighlight_nodes() {
@@ -864,7 +888,7 @@ export const simgraph = {
       .selectAll("circle.node")
       .classed("node-highlight", false)
       .classed("node-not-highlight", false);
-    this.highlighted_nodes = null;
+    // this.highlighted_nodes = null;
   },
 };
 
