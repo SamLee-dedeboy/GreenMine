@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { tick } from "svelte";
+  import { slide } from "svelte/transition";
   import { emotionColorScale, topicColorScale } from "lib/constants/Colors";
   import { colorBy } from "lib/store";
   import type { tMention, tTranscript } from "lib/types";
@@ -274,7 +275,7 @@
               {#if !show_interview[interview_index]}
                 <div class="flex flex-grow flex-col"></div>
               {:else}
-                <div class="flex flex-grow flex-col">
+                <div transition:slide class="flex flex-grow flex-col">
                   <div class="flex items-center justify-between">
                     <div
                       role="button"
@@ -297,6 +298,7 @@
                   </div>
                   {#if show_chunk_title[interview_index]}
                     <div
+                      transition:slide
                       id={`chunk-title-container-${interview_index}`}
                       class="chunk-title mb-1 flex max-h-64 flex-col gap-y-0.5 overflow-y-auto"
                     >
