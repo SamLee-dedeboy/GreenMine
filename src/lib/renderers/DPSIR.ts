@@ -107,85 +107,99 @@ export const DPSIR = {
     const var_type_names = Constants.var_type_names;
     type VarTypeNames = (typeof var_type_names)[number];
 
-    let categorizedLinks: Record<VarTypeNames, Record<string, { inGroup_link: number; outGroup_link: number }>> = {} as Record<
-    VarTypeNames,
-    Record<string, { inGroup_link: number; outGroup_link: number }>
-  >;
-  
-  var_type_names.forEach((name) => {
-    categorizedLinks[name] = {};
-  });
-  
-  Object.keys(vars).forEach(varType => {
-    const type = vars[varType];
-    Object.keys(type.variable_mentions).forEach(varName => {
-      if (!categorizedLinks[varType][varName]) {
-        categorizedLinks[varType][varName] = {
-          inGroup_link: 0,
-          outGroup_link: 0
-        };
-      }
+    let categorizedLinks: Record<
+      VarTypeNames,
+      Record<string, { inGroup_link: number; outGroup_link: number }>
+    > = {} as Record<
+      VarTypeNames,
+      Record<string, { inGroup_link: number; outGroup_link: number }>
+    >;
+
+    var_type_names.forEach((name) => {
+      categorizedLinks[name] = {};
     });
-  });
-  
+
+    Object.keys(vars).forEach((varType) => {
+      const type = vars[varType];
+      Object.keys(type.variable_mentions).forEach((varName) => {
+        if (!categorizedLinks[varType][varName]) {
+          categorizedLinks[varType][varName] = {
+            inGroup_link: 0,
+            outGroup_link: 0,
+          };
+        }
+      });
+    });
 
     links.forEach((link) => {
       const { source, target } = link;
-      const isInGroup = (source.var_type === target.var_type);
+      const isInGroup = source.var_type === target.var_type;
       if (!categorizedLinks[source.var_type][source.variable_name]) {
         categorizedLinks[source.var_type][source.variable_name] = {
           inGroup_link: 0,
-          outGroup_link: 0
+          outGroup_link: 0,
         };
       }
-    
+
       if (!categorizedLinks[target.var_type][target.variable_name]) {
         categorizedLinks[target.var_type][target.variable_name] = {
           inGroup_link: 0,
-          outGroup_link: 0
+          outGroup_link: 0,
         };
       }
-    
-      if(isInGroup){
-        categorizedLinks[source.var_type][source.variable_name].inGroup_link += 1;
-        categorizedLinks[target.var_type][target.variable_name].inGroup_link += 1;
+
+      if (isInGroup) {
+        categorizedLinks[source.var_type][source.variable_name].inGroup_link +=
+          1;
+        categorizedLinks[target.var_type][target.variable_name].inGroup_link +=
+          1;
+      } else {
+        categorizedLinks[source.var_type][source.variable_name].outGroup_link +=
+          1;
+        categorizedLinks[target.var_type][target.variable_name].outGroup_link +=
+          1;
       }
-      else{
-        categorizedLinks[source.var_type][source.variable_name].outGroup_link += 1;
-        categorizedLinks[target.var_type][target.variable_name].outGroup_link += 1;
-      }
-    
     });
 
     console.log({ categorizedLinks });
 
     const varTypeOrder = {
-      'driver-pressure': 1,
-      'pressure-state': 2,
-      'state-impact': 6,
-      'impact-response': 7,
-      'response-driver': 5,
-      'response-pressure': 1,
-      'response-state': 3,
+      "driver-pressure": 1,
+      "pressure-state": 2,
+      "state-impact": 6,
+      "impact-response": 7,
+      "response-driver": 5,
+      "response-pressure": 1,
+      "response-state": 3,
     };
-    
+
     // Function to get the order of the var_type pair
     function getVarTypePairOrder(sourceType, targetType) {
       const pair = `${sourceType}-${targetType}`;
       return varTypeOrder[pair] || 999; // Default order if pair is not found
     }
-    
+
     // Sort the links
     links.sort((a, b) => {
       const aOrder = getVarTypePairOrder(a.source.var_type, a.target.var_type);
       const bOrder = getVarTypePairOrder(b.source.var_type, b.target.var_type);
-      
+
       if (aOrder !== bOrder) {
         return aOrder - bOrder;
       } else {
         // Within the same var_type pair, sort by outGroup_link count of the source variable
-        const aOutGroupLink = (categorizedLinks[a.source.var_type] && categorizedLinks[a.source.var_type][a.source.variable_name]) ? categorizedLinks[a.source.var_type][a.source.variable_name].outGroup_link : 0;
-        const bOutGroupLink = (categorizedLinks[b.source.var_type] && categorizedLinks[b.source.var_type][b.source.variable_name]) ? categorizedLinks[b.source.var_type][b.source.variable_name].outGroup_link : 0;
+        const aOutGroupLink =
+          categorizedLinks[a.source.var_type] &&
+          categorizedLinks[a.source.var_type][a.source.variable_name]
+            ? categorizedLinks[a.source.var_type][a.source.variable_name]
+                .outGroup_link
+            : 0;
+        const bOutGroupLink =
+          categorizedLinks[b.source.var_type] &&
+          categorizedLinks[b.source.var_type][b.source.variable_name]
+            ? categorizedLinks[b.source.var_type][b.source.variable_name]
+                .outGroup_link
+            : 0;
         return bOutGroupLink - aOutGroupLink;
       }
     });
@@ -193,7 +207,7 @@ export const DPSIR = {
     const bboxes_sizes: { [key in string]: [number, number] } = {
       [var_type_names[0]]: [50, 54],
       [var_type_names[1]]: [50, 66],
-      [var_type_names[2]]: [34,36],
+      [var_type_names[2]]: [34, 36],
       [var_type_names[3]]: [56, 78],
       [var_type_names[4]]: [40, 48],
     };
@@ -218,13 +232,13 @@ export const DPSIR = {
         this.cellHeight,
       );
     });
-    // this.drawLinks(
-    //   links,
-    //   bboxes,
-    //   this.global_grid,
-    //   this.cellWidth,
-    //   this.cellHeight,
-    // );
+    this.drawLinks(
+      links,
+      bboxes,
+      this.global_grid,
+      this.cellWidth,
+      this.cellHeight,
+    );
   },
   drawGids(svg, svgId, width, height, cellWidth, cellHeight, columns, rows) {
     // console.log(cellWidth, cellHeight);
@@ -271,7 +285,7 @@ export const DPSIR = {
     cellWidth: number,
     cellHeight: number,
   ) {
-    console.log({linkCount});
+    console.log({ linkCount });
     // console.log(vars);
     const var_type_name = vars.variable_type;
     // const charWidth = 15;
@@ -290,21 +304,24 @@ export const DPSIR = {
     //     };
     //   });
     const rectangles = Object.entries(linkCount)
-            .map(([name, counts]) => ({
-              name,
-              width: rectWidth,
-              height: Math.ceil(name.length/ 5) * 6, // Adjust height calculation as needed
-              outgroup_degree: linkCount[name].outGroup_link,
-            }))
-            .sort((a, b) => linkCount[b.name].outGroup_link - linkCount[a.name].outGroup_link);
+      .map(([name, counts]) => ({
+        name,
+        width: rectWidth,
+        height: Math.ceil(name.length / 5) * 6, // Adjust height calculation as needed
+        outgroup_degree: linkCount[name].outGroup_link,
+      }))
+      .sort(
+        (a, b) =>
+          linkCount[b.name].outGroup_link - linkCount[a.name].outGroup_link,
+      );
 
     // console.log({rectangles});
 
     // Function to switch the positions of two elements in an array
     function switchElementsByName(array, name1, name2) {
-      const index1 = array.findIndex(el => el.name === name1);
-      const index2 = array.findIndex(el => el.name === name2);
-      
+      const index1 = array.findIndex((el) => el.name === name1);
+      const index2 = array.findIndex((el) => el.name === name2);
+
       if (index1 !== -1 && index2 !== -1) {
         const temp = array[index1];
         array[index1] = array[index2];
@@ -315,43 +332,90 @@ export const DPSIR = {
     }
     let updatedRectangles = rectangles;
     // Switch the positions of the elements with the specific names
-    if(var_type_name === "driver"){
-      updatedRectangles = switchElementsByName(rectangles, '漁業', '住房');
-      updatedRectangles = switchElementsByName(rectangles, '旅遊業', '人口');
-      updatedRectangles = switchElementsByName(rectangles, '能源', '交通運輸');
-      updatedRectangles = switchElementsByName(rectangles, '基礎設施發展', '經濟');
-      updatedRectangles = switchElementsByName(rectangles, '沿海發展', '經濟');
-      updatedRectangles = switchElementsByName(rectangles, '交通運輸', '旅遊業');
-    }
-    else if(var_type_name === "pressure"){
-      updatedRectangles = switchElementsByName(rectangles, '土地利用和土地覆蓋變化', '富營養化');
-      updatedRectangles = switchElementsByName(rectangles, '資源消耗', '污染物');
-      updatedRectangles = switchElementsByName(rectangles, '入侵物種', '極端天氣');
-      updatedRectangles = switchElementsByName(rectangles, '污染', '过度捕捞'); 
-      updatedRectangles = switchElementsByName(rectangles, '破壞性捕魚行為', '物理破壞性活動');           
-      updatedRectangles = switchElementsByName(rectangles, '物理破壞性活動', '極端天氣');
-      
-    }
-    else if(var_type_name === "state"){
-      updatedRectangles = switchElementsByName(rectangles, '物理和化學品質', '珊瑚礁狀態');
-    }
-    else if(var_type_name === "impact"){
+    if (var_type_name === "driver") {
+      updatedRectangles = switchElementsByName(rectangles, "漁業", "住房");
+      updatedRectangles = switchElementsByName(rectangles, "旅遊業", "人口");
+      updatedRectangles = switchElementsByName(rectangles, "能源", "交通運輸");
+      updatedRectangles = switchElementsByName(
+        rectangles,
+        "基礎設施發展",
+        "經濟",
+      );
+      updatedRectangles = switchElementsByName(rectangles, "沿海發展", "經濟");
+      updatedRectangles = switchElementsByName(
+        rectangles,
+        "交通運輸",
+        "旅遊業",
+      );
+    } else if (var_type_name === "pressure") {
+      updatedRectangles = switchElementsByName(
+        rectangles,
+        "土地利用和土地覆蓋變化",
+        "富營養化",
+      );
+      updatedRectangles = switchElementsByName(
+        rectangles,
+        "資源消耗",
+        "污染物",
+      );
+      updatedRectangles = switchElementsByName(
+        rectangles,
+        "入侵物種",
+        "極端天氣",
+      );
+      updatedRectangles = switchElementsByName(rectangles, "污染", "过度捕捞");
+      updatedRectangles = switchElementsByName(
+        rectangles,
+        "破壞性捕魚行為",
+        "物理破壞性活動",
+      );
+      updatedRectangles = switchElementsByName(
+        rectangles,
+        "物理破壞性活動",
+        "極端天氣",
+      );
+    } else if (var_type_name === "state") {
+      updatedRectangles = switchElementsByName(
+        rectangles,
+        "物理和化學品質",
+        "珊瑚礁狀態",
+      );
+    } else if (var_type_name === "impact") {
       // updatedRectangles = switchElementsByName(rectangles, '自然棲息地變化', '存在價值的損失');
-      updatedRectangles = switchElementsByName(rectangles, '存在價值的損失', '氣候和大氣調節的損失');
-      updatedRectangles = switchElementsByName(rectangles, '教育機會的損失', '存在價值的損失');
+      updatedRectangles = switchElementsByName(
+        rectangles,
+        "存在價值的損失",
+        "氣候和大氣調節的損失",
+      );
+      updatedRectangles = switchElementsByName(
+        rectangles,
+        "教育機會的損失",
+        "存在價值的損失",
+      );
+    } else if (var_type_name === "response") {
+      updatedRectangles = switchElementsByName(
+        rectangles,
+        "教育和意識",
+        "管理和規範",
+      );
+      updatedRectangles = switchElementsByName(rectangles, "恢復", "規劃");
+      updatedRectangles = switchElementsByName(
+        rectangles,
+        "監測",
+        "管理和規範",
+      );
+      updatedRectangles = switchElementsByName(
+        rectangles,
+        "監測",
+        "設立自然保護區",
+      );
+      updatedRectangles = switchElementsByName(rectangles, "監測", "恢復");
+      updatedRectangles = switchElementsByName(
+        rectangles,
+        "立法",
+        "管理和規範",
+      );
     }
-    else if(var_type_name === "response"){
-      updatedRectangles = switchElementsByName(rectangles, '教育和意識', '管理和規範');
-      updatedRectangles = switchElementsByName(rectangles, '恢復', '規劃');
-      updatedRectangles = switchElementsByName(rectangles, '監測', '管理和規範');
-      updatedRectangles = switchElementsByName(rectangles, '監測', '設立自然保護區');
-      updatedRectangles = switchElementsByName(rectangles, '監測', '恢復');
-      updatedRectangles = switchElementsByName(rectangles, '立法', '管理和規範');
-    }
-   
-
-
-
 
     const self = this;
     const bbox_center = box_coor.center;
@@ -375,24 +439,20 @@ export const DPSIR = {
     // );
     let y_offset = 0;
     let space_between_rectangles = 8;
-    if(var_type_name == "driver"){
-      y_offset = bboxHeight/3;
+    if (var_type_name == "driver") {
+      y_offset = bboxHeight / 3;
       space_between_rectangles = 3;
-    }
-    else if(var_type_name == "pressure"){
-      y_offset = bboxHeight/3;
+    } else if (var_type_name == "pressure") {
+      y_offset = bboxHeight / 3;
       space_between_rectangles = 3;
-    }
-    else if(var_type_name == "state"){
-      y_offset = bboxHeight/2;
+    } else if (var_type_name == "state") {
+      y_offset = bboxHeight / 2;
       space_between_rectangles = 1;
-    }
-    else if(var_type_name == "impact"){
-      y_offset = bboxHeight/20;
+    } else if (var_type_name == "impact") {
+      y_offset = bboxHeight / 20;
       space_between_rectangles = 1;
-    }
-    else if(var_type_name == "response"){
-      y_offset = bboxHeight/1.5;
+    } else if (var_type_name == "response") {
+      y_offset = bboxHeight / 1.5;
       space_between_rectangles = 7;
     }
 
@@ -405,13 +465,11 @@ export const DPSIR = {
       cellWidth,
       cellHeight,
       y_offset,
-      space_between_rectangles
+      space_between_rectangles,
     );
     console.log({ rectangleCoordinates });
     const rectWithVar = combineData(vars, rectangleCoordinates, global_grid); //return as an object
     // console.log({bbox_origin,bboxWidth,bboxHeight})
-
-
 
     //merge all rects info(grid coordinate position and size) to a global var
     rectWithVar.forEach((rect) => {
@@ -540,8 +598,8 @@ export const DPSIR = {
       // Initialize or update the source
       if (!linkCounts[sourceVarName]) {
         linkCounts[sourceVarName] = {
-          InGroup_links:0,
-          OutGroup_links:0,
+          InGroup_links: 0,
+          OutGroup_links: 0,
           InGroup_inLinks: 0,
           InGroup_outLinks: 0,
           OutGroup_inLinks: 0,
@@ -557,8 +615,8 @@ export const DPSIR = {
       // Initialize or update the target
       if (!linkCounts[targetVarName]) {
         linkCounts[targetVarName] = {
-          InGroup_links:0,
-          OutGroup_links:0,
+          InGroup_links: 0,
+          OutGroup_links: 0,
           InGroup_inLinks: 0,
           InGroup_outLinks: 0,
           OutGroup_inLinks: 0,
@@ -596,7 +654,7 @@ export const DPSIR = {
 
       let path_points;
       // if ((link.source.var_type  == "impact" || link.target.var_type == "impact")) {
-      if ((link.source.var_type  !== link.target.var_type )) {
+      if (link.source.var_type !== link.target.var_type) {
         path_points = pathFinding(link, global_grid, points);
         // console.log(path_points);
       }
@@ -608,53 +666,47 @@ export const DPSIR = {
 
         const d3Path = d3.path();
         d3Path.moveTo(svgPath[0].x, svgPath[0].y);
-        if(link.source.var_type == link.target.var_type){
+        if (link.source.var_type == link.target.var_type) {
           d3Path.quadraticCurveTo(
-            gridToSvgCoordinate(bboxes[link.source.var_type].center[0], bboxes[link.source.var_type].center[1], cellWidth, cellHeight).x,
-            gridToSvgCoordinate(bboxes[link.source.var_type].center[0], bboxes[link.source.var_type].center[1], cellWidth, cellHeight).y,
+            gridToSvgCoordinate(
+              bboxes[link.source.var_type].center[0],
+              bboxes[link.source.var_type].center[1],
+              cellWidth,
+              cellHeight,
+            ).x,
+            gridToSvgCoordinate(
+              bboxes[link.source.var_type].center[0],
+              bboxes[link.source.var_type].center[1],
+              cellWidth,
+              cellHeight,
+            ).y,
             svgPath[1].x,
             svgPath[1].y,
           );
-        }
-        else{
+        } else {
           for (let i = 1; i < svgPath.length; i++) {
             d3Path.lineTo(svgPath[i].x, svgPath[i].y);
           }
         }
-      
+
         return d3Path.toString();
       }
     };
-    const index_of_test = filteredMergeData.map((d) => d.source.var_name + "-" + d.target.var_name).indexOf("自然棲息地變化-恢復");
-    svg
+    const index_of_test = filteredMergeData
+      .map((d) => d.source.var_name + "-" + d.target.var_name)
+      .indexOf("自然棲息地變化-恢復");
+    const link_paths = svg
       .select("g.link_group")
       .selectAll(".link")
       .data(filteredMergeData)
       .join("path")
       .attr("class", "link")
       .attr("id", (d) => `${d.source.var_name}` + "-" + `${d.target.var_name}`)
-      .attr("d", function (d, i) {
-        
-        // if (i === index_of_test) {
-        //   console.log(global_grid[73][143], global_grid[74][143], global_grid[75][143], global_grid[74][142], global_grid[74][144] )
-        // }
-        // if(i > index_of_test) return ""
-        d.source.newX_source = d.source.leftTop[0];
-        d.source.newY_source = d.source.leftTop[1];
-        d.target.newX_target = d.target.leftTop[0];
-        d.target.newY_target = d.target.leftTop[1];
-        return lineGenerator(
-          d,
-          i,
-          bboxes[d.source.var_type],
-          bboxes[d.target.var_type],
-        );
-      })
       .attr("cursor", "pointer")
       .attr("fill", "none")
       // .attr("stroke", "url(#grad)")
       // .attr("stroke",d=> scaleColor(d.frequency))
-      .attr("stroke", d =>{
+      .attr("stroke", (d) => {
         // return this.varTypeColorScale(d.source.var_type);
         return "gray";
       })
@@ -670,21 +722,21 @@ export const DPSIR = {
         return 1;
       })
       .attr("opacity", (d) => {
-        if(d.source.var_type == d.target.var_type ){
+        if (d.source.var_type == d.target.var_type) {
           return 0.2;
-        }
-        else{
+        } else {
           return 0.5;
         }
         // return 1;
       })
       .on("mouseover", function (e, d: tLinkObject) {
-        d3.select(this).classed("line-hover", true)
-                      .attr("stroke", (d: tLinkObject) => {
-                        // const svg = d3.select("#" + self.svgId);
-                        // return createOrUpdateGradient(svg, d, self);
-                        return self.varTypeColorScale(d.source.var_type);
-                      });
+        d3.select(this)
+          .classed("line-hover", true)
+          .attr("stroke", (d: tLinkObject) => {
+            // const svg = d3.select("#" + self.svgId);
+            // return createOrUpdateGradient(svg, d, self);
+            return self.varTypeColorScale(d.source.var_type);
+          });
         // d3.select(this.parentNode) // this refers to the path element, and parentNode is the SVG or a <g> element containing it
         //   .append("text")
         //   .attr("class", "link-frequency-text") // Add a class for styling if needed
@@ -695,11 +747,11 @@ export const DPSIR = {
         //   .text(d.frequency);
       })
       .on("mouseout", function (e, d) {
-        d3.select(this).classed("line-hover", false)
-        .attr("stroke", (d: tLinkObject) => {
-          
-          return "gray";
-        });;
+        d3.select(this)
+          .classed("line-hover", false)
+          .attr("stroke", (d: tLinkObject) => {
+            return "gray";
+          });
         d3.selectAll(".link-frequency-text").remove();
       })
       .on("click", function (e, d: tLinkObject) {
@@ -765,6 +817,28 @@ export const DPSIR = {
             .raise();
         }
       });
+
+    // draw links with animation
+    let next_path_index = 0;
+    const t = d3.timer(() => {
+      const next_path = link_paths.filter((d, i) => i === next_path_index);
+      next_path
+        .transition()
+        .duration(0)
+        .attr("d", function (d, i) {
+          return lineGenerator(
+            d,
+            i,
+            bboxes[d.source.var_type],
+            bboxes[d.target.var_type],
+          );
+        });
+      next_path_index++;
+      if (next_path_index >= link_paths.size()) {
+        console.log("done");
+        t.stop();
+      }
+    });
   },
 
   drawBbox(
@@ -1022,8 +1096,7 @@ export const DPSIR = {
       .select(`.${var_type_name}_region`);
     // console.log({ rectWithVar });
     // mark rect with "*" in the grid
-    markOccupiedGrid(global_grid, rectWithVar,"*");
-    
+    markOccupiedGrid(global_grid, rectWithVar, "*");
 
     // console.log(global_grid);
 
@@ -1279,7 +1352,7 @@ function radialBboxes(
     offset + (Math.PI * 2 * 1) / 4.4 + (Math.PI * 2 * 1) / 28,
     offset + (Math.PI * 2 * 2) / 5.5,
     offset + (Math.PI * 2 * 3) / 5.9 - (Math.PI * 2 * 1) / 40,
-    offset + (Math.PI * 2 * 4) / 5.4
+    offset + (Math.PI * 2 * 4) / 5.4,
   ];
   const scaleFactors = [
     1.5, // D
@@ -1353,11 +1426,11 @@ function markOccupiedGrid(
     // x:columns, y:rows
     for (let y = startY; y <= endY; y++) {
       for (let x = startX; x <= endX; x++) {
-          if(global_grid[x][y] == "0000" || global_grid[x][y] !== "*"){
-              global_grid[x][y] = symbol; 
-          }else{
-            continue; // if the grid is already marked, skip
-          }
+        if (global_grid[x][y] == "0000" || global_grid[x][y] !== "*") {
+          global_grid[x][y] = symbol;
+        } else {
+          continue; // if the grid is already marked, skip
+        }
       }
     }
   });
@@ -1467,25 +1540,33 @@ function squareLayout(
   // const space_between_rectangles = (regionWidth - max_rect_per_row * rect_width) / (max_rect_per_row - 1)
   let first_row_space = space * cellWidth;
   let second_space_between_rectangles = space * cellWidth;
-  if (varname == "response"){ //resoonses
-    first_row_space = 10*cellWidth;
-    }
+  if (varname == "response") {
+    //resoonses
+    first_row_space = 10 * cellWidth;
+  }
   // console.log({regionHeight})
   // const y_offset = (rectangles.length == 12)? regionHeight/10: regionHeight / 8;
-  
+
   // return value
-  let rectangleCoordinates: [number, number, number, number, string, string, number][] =
-    [];
+  let rectangleCoordinates: [
+    number,
+    number,
+    number,
+    number,
+    string,
+    string,
+    number,
+  ][] = [];
 
   // first row
   let first_row_rect_number = Math.max(2, max_rect_per_row - 2);
-  if (varname == "impact"){
-    first_row_rect_number = Math.max(3, max_rect_per_row - 3);  
+  if (varname == "impact") {
+    first_row_rect_number = Math.max(3, max_rect_per_row - 3);
   }
   let middle_row_number =
-  rectangles.length % 2 === 0
-    ? (rectangles.length - first_row_rect_number * 2) / 2
-    : (rectangles.length - first_row_rect_number * 2 - 1) / 2;
+    rectangles.length % 2 === 0
+      ? (rectangles.length - first_row_rect_number * 2) / 2
+      : (rectangles.length - first_row_rect_number * 2 - 1) / 2;
   let last_row_rect_number =
     rectangles.length - first_row_rect_number - middle_row_number * 2;
   let first_row_offset_left =
@@ -1530,18 +1611,16 @@ function squareLayout(
       .slice(0, first_row_rect_number)
       .map((rect) => cellHeight * rect.height),
   );
-  let accumulative_y_offset = y_offset+ last_row_max_height;
+  let accumulative_y_offset = y_offset + last_row_max_height;
   for (let i = 0; i < middle_row_number; i++) {
     let x1 = (bbox_origin[0] - 1) * cellWidth;
-    let y1 =
-      bbox_origin[1] * cellHeight + accumulative_y_offset;
+    let y1 = bbox_origin[1] * cellHeight + accumulative_y_offset;
 
     let Grid1 = svgToGridCoordinate(x1, y1, cellWidth, cellHeight);
 
     let x2 =
       (bbox_origin[0] - 1) * cellWidth + cellWidth * regionWidth - rect_width;
-    let y2 =
-      bbox_origin[1] * cellHeight + accumulative_y_offset;
+    let y2 = bbox_origin[1] * cellHeight + accumulative_y_offset;
     let Grid2 = svgToGridCoordinate(x2, y2, cellWidth, cellHeight);
 
     rectangleCoordinates.push([
@@ -1562,7 +1641,7 @@ function squareLayout(
       "right",
       rectangles[2 * i + 1 + first_row_rect_number].outgroup_degree,
     ]);
-    
+
     last_row_max_height = Math.max(
       cellHeight * rectangles[2 * i + first_row_rect_number].height,
       cellHeight * rectangles[2 * i + 1 + first_row_rect_number].height,
@@ -1595,7 +1674,8 @@ function squareLayout(
       rectangles[i + first_row_rect_number + middle_row_number * 2].height,
       rectangles[i + first_row_rect_number + middle_row_number * 2].name,
       "bottom",
-      rectangles[i + first_row_rect_number + middle_row_number * 2].outgroup_degree,
+      rectangles[i + first_row_rect_number + middle_row_number * 2]
+        .outgroup_degree,
     ]);
   }
   return rectangleCoordinates;
@@ -1612,27 +1692,27 @@ function combineData(
   const allYPlusHeight = rectangles.map((rect) => rect[1] + rect[3]);
 
   const x_value = Array.from(new Set(allX)).sort((a, b) => a - b);
-  const min_x = (vars.variable_type === "response") ? x_value[2] : x_value[1]; // if var type is response, choose the third min value
+  const min_x = vars.variable_type === "response" ? x_value[2] : x_value[1]; // if var type is response, choose the third min value
   const max_x = Math.max(...allX);
   const min_y = Math.min(...allYPlusHeight);
   const max_y = Math.max(...allY);
   // console.log("combine data")
   // mark boundary for outGroup links with "-" in the grid
-  let boundary_arr: { x: number; y: number; width: number; height: number }[] = []
+  let boundary_arr: { x: number; y: number; width: number; height: number }[] =
+    [];
   boundary_arr.push({
-    x: min_x+1,
-    y: min_y+1,
-    width: max_x - min_x -1,
-    height: max_y - min_y-1
+    x: min_x + 1,
+    y: min_y + 1,
+    width: max_x - min_x - 1,
+    height: max_y - min_y - 1,
   });
-  markOccupiedGrid(global_grid, boundary_arr,"-");
+  markOccupiedGrid(global_grid, boundary_arr, "-");
   return rectangles.map((rect) => {
     let [x, y, width, height, variable_name, position, degree] = rect;
-    if(variable_name == "珊瑚礁狀態"){
-      position = "bottom"
-    }
-    else if (variable_name == "物理和化學品質"){
-      position = "right"
+    if (variable_name == "珊瑚礁狀態") {
+      position = "bottom";
+    } else if (variable_name == "物理和化學品質") {
+      position = "right";
     }
     const variable = vars.variable_mentions[variable_name];
     const mentions = variable?.mentions || [];
@@ -1914,13 +1994,15 @@ function pathFinding(link, grid: string[][], points) {
       this.h = 0;
     }
   }
-  let start, goal, inGroup = false;
-  
+  let start,
+    goal,
+    inGroup = false;
+
   if (link.source.var_type == link.target.var_type) {
     start = getNextStartPoint(link.source.var_name, points, true);
     goal = getNextEndPoint(link.target.var_name, points, true);
     inGroup = true;
-    let path = [start, goal]
+    let path = [start, goal];
     return path;
   } else {
     start = getNextStartPoint(link.source.var_name, points, false);
@@ -1957,7 +2039,7 @@ function pathFinding(link, grid: string[][], points) {
 
     while (!openList.isEmpty()) {
       let p = openList.dequeue();
-      
+
       let i = p[0];
       let j = p[1];
       // console.log("i,j",i,j)
@@ -1985,27 +2067,33 @@ function pathFinding(link, grid: string[][], points) {
             foundDest = true;
             // console.log({path})
             return path;
-          } else if (!closedList[ni][nj] && isUnBlocked(grid, ni, nj, inGroup)) {
+          } else if (
+            !closedList[ni][nj] &&
+            isUnBlocked(grid, ni, nj, inGroup)
+          ) {
             let status = parseInt(grid[ni][nj], 2);
             // allow crossing but not overlapping
-            if (i == ni ) { //check if there are vertical obstacles
-              const nonWalkableMasks = 0b1010 ;
-              if((status & nonWalkableMasks)){
-                  continue;
+            if (i == ni) {
+              //check if there are vertical obstacles
+              const nonWalkableMasks = 0b1010;
+              if (status & nonWalkableMasks) {
+                continue;
               }
-            }
-            else if (j == nj ) { //check if there are horizontal obstacles
-              const nonWalkableMasks = 0b0101 ;
-              if((status & nonWalkableMasks)){
-                  continue;
+            } else if (j == nj) {
+              //check if there are horizontal obstacles
+              const nonWalkableMasks = 0b0101;
+              if (status & nonWalkableMasks) {
+                continue;
               }
             }
 
             // console.log("if the neighbor not in the closed list and is not blocked")
-            if((cellDetails[i][j].parent_i == i && i == ni) || (cellDetails[i][j].parent_j == j && j == nj)){
+            if (
+              (cellDetails[i][j].parent_i == i && i == ni) ||
+              (cellDetails[i][j].parent_j == j && j == nj)
+            ) {
               gNew = cellDetails[i][j].g + 1.0;
-            }
-            else{
+            } else {
               gNew = cellDetails[i][j].g + 2.0; //add the turn cost
             }
             // gNew = cellDetails[i][j].g + 1.0;
@@ -2022,48 +2110,70 @@ function pathFinding(link, grid: string[][], points) {
               cellDetails[ni][nj].h = hNew;
               cellDetails[ni][nj].parent_i = i;
               cellDetails[ni][nj].parent_j = j;
-              
             }
           }
         }
       }
     }
     if (foundDest == false) {
-      let path = [start, goal]
-    
+      let path = [start, goal];
+
       unfoundCount += 1;
       console.log("Failed to find the destination cell");
       console.log(link.source.var_name, link.target.var_name, start, goal);
-      if ((link.source.var_type == "driver") && (link.target.var_type == "pressure") ){
+      if (
+        link.source.var_type == "driver" &&
+        link.target.var_type == "pressure"
+      ) {
         DP += 1;
-      }
-      else if ((link.source.var_type == "pressure") && (link.target.var_type == "state") ){
+      } else if (
+        link.source.var_type == "pressure" &&
+        link.target.var_type == "state"
+      ) {
         PS += 1;
-      }
-      else if ((link.source.var_type == "state") && (link.target.var_type == "impact") ){
+      } else if (
+        link.source.var_type == "state" &&
+        link.target.var_type == "impact"
+      ) {
         SI += 1;
-      }
-      else if ((link.source.var_type == "impact") && (link.target.var_type == "response") ){
+      } else if (
+        link.source.var_type == "impact" &&
+        link.target.var_type == "response"
+      ) {
         IR += 1;
-      }
-      else if ((link.source.var_type == "response") && (link.target.var_type == "driver") ){
+      } else if (
+        link.source.var_type == "response" &&
+        link.target.var_type == "driver"
+      ) {
         RD += 1;
-      }
-      else if ((link.source.var_type == "response") && (link.target.var_type == "pressure") ){
+      } else if (
+        link.source.var_type == "response" &&
+        link.target.var_type == "pressure"
+      ) {
         RP += 1;
-      }
-      else if ((link.source.var_type == "response") && (link.target.var_type == "state") ){
+      } else if (
+        link.source.var_type == "response" &&
+        link.target.var_type == "state"
+      ) {
         PS += 1;
       }
-      console.log("unfoundCount (total, DP, PS, SI, IR, RD, RP, PS)", unfoundCount, DP, PS, SI, IR, RD, RP, PS);
+      console.log(
+        "unfoundCount (total, DP, PS, SI, IR, RD, RP, PS)",
+        unfoundCount,
+        DP,
+        PS,
+        SI,
+        IR,
+        RD,
+        RP,
+        PS,
+      );
       // return null;
       return path;
     }
   }
 
   // console.log({ start, goal });
-
-  
 }
 
 function isValid(col, row, rows, cols) {
@@ -2089,10 +2199,7 @@ function tracePath(cellDetails, start, goal, grid) {
   let Path: [number, number][] = [];
   while (true) {
     // if start is reached, break out of the loop
-    if (
-      col == start[0] &&
-      row == start[1]
-    ) {
+    if (col == start[0] && row == start[1]) {
       Path.push([start[0], start[1]]);
       break;
     }
@@ -2106,46 +2213,70 @@ function tracePath(cellDetails, start, goal, grid) {
   }
   Path.reverse();
 
-  for (let k = 1; k < Path.length - 1; k++) { //skip the start and goal point
-      const [cur_col, cur_row] = Path[k];
-      const [prev_col, prev_row] = Path[k - 1];
-      const [next_col, next_row] = Path[k + 1];
+  for (let k = 1; k < Path.length - 1; k++) {
+    //skip the start and goal point
+    const [cur_col, cur_row] = Path[k];
+    const [prev_col, prev_row] = Path[k - 1];
+    const [next_col, next_row] = Path[k + 1];
 
-      let status = parseInt(grid[cur_col][cur_row], 2);
+    let status = parseInt(grid[cur_col][cur_row], 2);
 
-      // Handle corners
-      if (!(prev_col === cur_col && cur_col === next_col) && !(prev_row === cur_row && cur_row === next_row)) {
-          if ((prev_col > cur_col && next_row > cur_row) || (prev_row > cur_row && next_col > cur_col)){
-              status |= 0b1010; 
-          } 
-          if ((prev_col > cur_col && next_row < cur_row) || (prev_row < cur_row && next_col > cur_col)){
-              status |= 0b1100; 
-          } 
-          if ((prev_col < cur_col && next_row > cur_row) || (prev_row > cur_row && next_col < cur_col)){
-              status |= 0b0011; 
-          } 
-          if ((prev_col < cur_col && next_row < cur_row) || (prev_row < cur_row && next_col < cur_col)){
-              status |= 0b0110;
-          } 
-      } 
-      if ((prev_col > cur_col && prev_row === cur_row) || (next_col > cur_col && next_row === cur_row)) {
-          status |= 0b0100; // from or to right
-      } else if ((prev_col < cur_col && prev_row === cur_row) || (next_col < cur_col && next_row === cur_row)){
-          status |= 0b0001; // from or to left
-      } else if ((prev_col === cur_col && prev_row > cur_row) || (next_col === cur_col && next_row > cur_row)){
-          status |= 0b1000; // from or to below
-      } else if ((prev_col === cur_col && prev_row < cur_row) || (next_col === cur_col && next_row < cur_row)) {
-          status |= 0b0010; // from or to above
+    // Handle corners
+    if (
+      !(prev_col === cur_col && cur_col === next_col) &&
+      !(prev_row === cur_row && cur_row === next_row)
+    ) {
+      if (
+        (prev_col > cur_col && next_row > cur_row) ||
+        (prev_row > cur_row && next_col > cur_col)
+      ) {
+        status |= 0b1010;
       }
-      
-      grid[cur_col][cur_row] = status.toString(2).padStart(4, '0');
-      // console.log({cur_col, cur_row, status: grid[cur_col][cur_row]})
+      if (
+        (prev_col > cur_col && next_row < cur_row) ||
+        (prev_row < cur_row && next_col > cur_col)
+      ) {
+        status |= 0b1100;
+      }
+      if (
+        (prev_col < cur_col && next_row > cur_row) ||
+        (prev_row > cur_row && next_col < cur_col)
+      ) {
+        status |= 0b0011;
+      }
+      if (
+        (prev_col < cur_col && next_row < cur_row) ||
+        (prev_row < cur_row && next_col < cur_col)
+      ) {
+        status |= 0b0110;
+      }
+    }
+    if (
+      (prev_col > cur_col && prev_row === cur_row) ||
+      (next_col > cur_col && next_row === cur_row)
+    ) {
+      status |= 0b0100; // from or to right
+    } else if (
+      (prev_col < cur_col && prev_row === cur_row) ||
+      (next_col < cur_col && next_row === cur_row)
+    ) {
+      status |= 0b0001; // from or to left
+    } else if (
+      (prev_col === cur_col && prev_row > cur_row) ||
+      (next_col === cur_col && next_row > cur_row)
+    ) {
+      status |= 0b1000; // from or to below
+    } else if (
+      (prev_col === cur_col && prev_row < cur_row) ||
+      (next_col === cur_col && next_row < cur_row)
+    ) {
+      status |= 0b0010; // from or to above
+    }
+
+    grid[cur_col][cur_row] = status.toString(2).padStart(4, "0");
+    // console.log({cur_col, cur_row, status: grid[cur_col][cur_row]})
   }
 
-    
-
-    
-  
   return Path;
 }
 
@@ -2210,13 +2341,13 @@ function generatePoints(linkCounts) {
         //   primaryIncrementX = -primaryIncrementX;
         // }
         // else{
-          i = primaryStartX;
-          j = primaryStartY;
+        i = primaryStartX;
+        j = primaryStartY;
         // }
         for (
           ;
-          ((primaryIncrementX > 0) ? i <= primaryMaxX : i >= primaryMaxX) &&
-          ((primaryIncrementY > 0) ? j <= primaryMaxY : j >= primaryMaxY) &&
+          (primaryIncrementX > 0 ? i <= primaryMaxX : i >= primaryMaxX) &&
+          (primaryIncrementY > 0 ? j <= primaryMaxY : j >= primaryMaxY) &&
           remainingOutLinks > 0;
           primaryIncrementX
             ? (i += primaryIncrementX)
@@ -2263,8 +2394,8 @@ function generatePoints(linkCounts) {
         if (!usedSecondaryEdge) {
           for (
             ;
-            ((primaryIncrementX > 0) ? i <= primaryMaxX : i >= primaryMaxX) &&
-            ((primaryIncrementY > 0) ? j <= primaryMaxY : j >= primaryMaxY) &&
+            (primaryIncrementX > 0 ? i <= primaryMaxX : i >= primaryMaxX) &&
+            (primaryIncrementY > 0 ? j <= primaryMaxY : j >= primaryMaxY) &&
             remainingInLinks > 0;
             primaryIncrementX
               ? (i += primaryIncrementX)
@@ -2279,15 +2410,17 @@ function generatePoints(linkCounts) {
           if (!usedSecondaryEdge) {
             i = secondaryStartX;
             j = secondaryStartY;
-          } else if(varName == "規劃"){
-            i = secondaryStartX ;
+          } else if (varName == "規劃") {
+            i = secondaryStartX;
             j = primaryMaxY;
-          } else if(varName == "管理和規範"){
+          } else if (varName == "管理和規範") {
             i = primaryMaxX + 1;
             j = secondaryStartY;
-          }else {
+          } else {
             [i, j] = lastSecondaryPoint;
-            secondaryIncrementX ? (i += secondaryIncrementX) : (j += secondaryIncrementY);
+            secondaryIncrementX
+              ? (i += secondaryIncrementX)
+              : (j += secondaryIncrementY);
           }
 
           for (
@@ -2309,31 +2442,29 @@ function generatePoints(linkCounts) {
         }
         //those who needs the third edge
         if (remainingInLinks > 0) {
-          if (
-            varName == "教育和意識" ||
-            varName == "恢復"
-          ) {
+          if (varName == "教育和意識" || varName == "恢復") {
             for (
               let i = primaryMaxX + 1, j = secondaryStartY;
-              (secondaryIncrementY > 0 ? j <= secondaryMaxY : j >= primaryMaxY) &&
-              remainingInLinks > 0;
+              (secondaryIncrementY > 0
+                ? j <= secondaryMaxY
+                : j >= primaryMaxY) && remainingInLinks > 0;
               j += secondaryIncrementY
             ) {
               endPoints.push([i, j]);
               remainingInLinks--;
             }
-          // } else if (varName == "規劃") {
-          //   for (
-          //     let i = secondaryStartX, j = primaryMaxY;
-          //     secondaryIncrementX > 0 ? i <= secondaryStartX : i >= secondaryMaxX && remainingInLinks > 0;
-          //     i += secondaryIncrementX
-          //   ) {
-          //     endPoints.push([i, j]);
-          //     remainingInLinks--;
-          //   }
-          // } else if (varName == "管理和規範"){
-          //     endPoints.push([primaryMaxX + 1, primaryMaxY]);
-          //     remainingInLinks--;
+            // } else if (varName == "規劃") {
+            //   for (
+            //     let i = secondaryStartX, j = primaryMaxY;
+            //     secondaryIncrementX > 0 ? i <= secondaryStartX : i >= secondaryMaxX && remainingInLinks > 0;
+            //     i += secondaryIncrementX
+            //   ) {
+            //     endPoints.push([i, j]);
+            //     remainingInLinks--;
+            //   }
+            // } else if (varName == "管理和規範"){
+            //     endPoints.push([primaryMaxX + 1, primaryMaxY]);
+            //     remainingInLinks--;
           }
         }
       }
