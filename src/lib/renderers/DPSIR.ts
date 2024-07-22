@@ -30,10 +30,14 @@ let RS = 0;
 export const DPSIR = {
   init(svgId: string, utilities: string[], handlers: tUtilityHandlers) {
     // console.log("init");
+    // let offsetHeight = document.getElementById(svgId)?.offsetHeight;
+    // let offsetWidth = document.getElementById(svgId)?.offsetWidth;
     this.clicked_rect = null;
     this.clicked_link = null;
-    this.width = 1500;
-    this.height = 1000;
+    // this.width = offsetWidth;
+    // this.height = offsetHeight;
+    this.width = 1550;
+    this.height = 950;
     this.padding = { top: 10, right: 50, bottom: 10, left: 50 };
     this.rows = 240;
     this.columns = 210;
@@ -162,54 +166,14 @@ export const DPSIR = {
     });
 
     console.log({ categorizedLinks });
+    console.log({links});
 
-    const varTypeOrder = {
-      "driver-pressure": 1,
-      "pressure-state": 2,
-      "state-impact": 6,
-      "impact-response": 7,
-      "response-driver": 5,
-      "response-pressure": 1,
-      "response-state": 3,
-    };
-
-    // Function to get the order of the var_type pair
-    function getVarTypePairOrder(sourceType, targetType) {
-      const pair = `${sourceType}-${targetType}`;
-      return varTypeOrder[pair] || 999; // Default order if pair is not found
-    }
-
-    // Sort the links
-    links.sort((a, b) => {
-      const aOrder = getVarTypePairOrder(a.source.var_type, a.target.var_type);
-      const bOrder = getVarTypePairOrder(b.source.var_type, b.target.var_type);
-
-      if (aOrder !== bOrder) {
-        return aOrder - bOrder;
-      } else {
-        // Within the same var_type pair, sort by outGroup_link count of the source variable
-        const aOutGroupLink =
-          categorizedLinks[a.source.var_type] &&
-          categorizedLinks[a.source.var_type][a.source.variable_name]
-            ? categorizedLinks[a.source.var_type][a.source.variable_name]
-                .outGroup_link
-            : 0;
-        const bOutGroupLink =
-          categorizedLinks[b.source.var_type] &&
-          categorizedLinks[b.source.var_type][b.source.variable_name]
-            ? categorizedLinks[b.source.var_type][b.source.variable_name]
-                .outGroup_link
-            : 0;
-        return bOutGroupLink - aOutGroupLink;
-      }
-    });
-    // console.log({links});
     const bboxes_sizes: { [key in string]: [number, number] } = {
-      [var_type_names[0]]: [50, 54],
-      [var_type_names[1]]: [50, 66],
-      [var_type_names[2]]: [34, 36],
-      [var_type_names[3]]: [56, 78],
-      [var_type_names[4]]: [40, 48],
+      [var_type_names[0]]: [40, 48],
+      [var_type_names[1]]: [38, 70],
+      [var_type_names[2]]: [28,28],
+      [var_type_names[3]]: [38, 40],
+      [var_type_names[4]]: [42, 44],
     };
 
     const bboxes = radialBboxes(
@@ -285,11 +249,11 @@ export const DPSIR = {
     cellWidth: number,
     cellHeight: number,
   ) {
-    console.log({ linkCount });
+    // console.log({linkCount});
     // console.log(vars);
     const var_type_name = vars.variable_type;
     // const charWidth = 15;
-    const rectWidth = 15; //(g)
+    const rectWidth = 12; //(g)
     // const charHeight = 25;
     // const rectangles = Object.values(
     //   vars.variable_mentions as Record<string, tVariable>,
@@ -303,17 +267,36 @@ export const DPSIR = {
     //       height: Math.ceil(nameLength / 4) * 6, //(g)
     //     };
     //   });
+    
+    // sort the rect by outgroup link count
     const rectangles = Object.entries(linkCount)
-      .map(([name, counts]) => ({
-        name,
-        width: rectWidth,
-        height: Math.ceil(name.length / 5) * 6, // Adjust height calculation as needed
-        outgroup_degree: linkCount[name].outGroup_link,
-      }))
-      .sort(
-        (a, b) =>
-          linkCount[b.name].outGroup_link - linkCount[a.name].outGroup_link,
-      );
+            .map(([name, counts]) => {
+              // console.log({name, counts});
+              let calculate_height = Math.ceil(name.length/ 5) * 6;
+              if(  name == "資源消耗" || name == "过度捕捞" || name == "恢復"
+                ||name == "教育和意識" ||name == "規劃"|| name == "土地利用和土地覆蓋變化"){
+                calculate_height = 12;
+              }
+              else if(var_type_name == "impact" || name == "破壞性捕魚行為" 
+                || name == "物理和化學指標" || name == "物理和化學品質"){
+                calculate_height = 6;
+              }
+              else if (name == "立法"||name == "監測" || name == "極端天氣" ){
+                calculate_height = 9;
+              }
+
+              if(name == "管理和規範"  || name == "生態狀態（生物品質）"){
+                calculate_height = 18;
+              }
+              
+              return{
+                name,
+                width: rectWidth,
+                height: calculate_height, // Adjust height calculation as needed
+                outgroup_degree: linkCount[name].outGroup_link,
+              };
+            })
+            .sort((a, b) => linkCount[b.name].outGroup_link - linkCount[a.name].outGroup_link);
 
     // console.log({rectangles});
 
@@ -332,90 +315,42 @@ export const DPSIR = {
     }
     let updatedRectangles = rectangles;
     // Switch the positions of the elements with the specific names
-    if (var_type_name === "driver") {
-      updatedRectangles = switchElementsByName(rectangles, "漁業", "住房");
-      updatedRectangles = switchElementsByName(rectangles, "旅遊業", "人口");
-      updatedRectangles = switchElementsByName(rectangles, "能源", "交通運輸");
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "基礎設施發展",
-        "經濟",
-      );
-      updatedRectangles = switchElementsByName(rectangles, "沿海發展", "經濟");
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "交通運輸",
-        "旅遊業",
-      );
-    } else if (var_type_name === "pressure") {
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "土地利用和土地覆蓋變化",
-        "富營養化",
-      );
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "資源消耗",
-        "污染物",
-      );
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "入侵物種",
-        "極端天氣",
-      );
-      updatedRectangles = switchElementsByName(rectangles, "污染", "过度捕捞");
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "破壞性捕魚行為",
-        "物理破壞性活動",
-      );
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "物理破壞性活動",
-        "極端天氣",
-      );
-    } else if (var_type_name === "state") {
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "物理和化學品質",
-        "珊瑚礁狀態",
-      );
-    } else if (var_type_name === "impact") {
-      // updatedRectangles = switchElementsByName(rectangles, '自然棲息地變化', '存在價值的損失');
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "存在價值的損失",
-        "氣候和大氣調節的損失",
-      );
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "教育機會的損失",
-        "存在價值的損失",
-      );
-    } else if (var_type_name === "response") {
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "教育和意識",
-        "管理和規範",
-      );
-      updatedRectangles = switchElementsByName(rectangles, "恢復", "規劃");
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "監測",
-        "管理和規範",
-      );
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "監測",
-        "設立自然保護區",
-      );
-      updatedRectangles = switchElementsByName(rectangles, "監測", "恢復");
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "立法",
-        "管理和規範",
-      );
+    if(var_type_name === "driver"){
+      updatedRectangles = switchElementsByName(rectangles, '漁業', '住房');
+      updatedRectangles = switchElementsByName(rectangles, '旅遊業', '人口');
+      updatedRectangles = switchElementsByName(rectangles, '沿海發展', '經濟');
+      updatedRectangles = switchElementsByName(rectangles, '城市化', '住房');
+      updatedRectangles = switchElementsByName(rectangles, '健康', '人口');
     }
+    else if(var_type_name === "pressure"){
+      updatedRectangles = switchElementsByName(rectangles, '土地利用和土地覆蓋變化', '污染物');
+      updatedRectangles = switchElementsByName(rectangles, '資源消耗', '污染物');
+      updatedRectangles = switchElementsByName(rectangles, '破壞性捕魚行為', '入侵物種');
+      updatedRectangles = switchElementsByName(rectangles, '海洋酸化', '入侵物種');
+      updatedRectangles = switchElementsByName(rectangles, '極端天氣', '入侵物種');
+      
+    }
+    else if(var_type_name === "state"){
+      updatedRectangles = switchElementsByName(rectangles, '物理和化學品質', '珊瑚礁狀態');
+      updatedRectangles = switchElementsByName(rectangles, '物理和化學指標', '物理和化學品質');
+    }
+    else if(var_type_name === "impact"){
+      updatedRectangles = switchElementsByName(rectangles, '珊瑚白化', '審美價值的損失');
+    }
+    else if(var_type_name === "response"){
+      updatedRectangles = switchElementsByName(rectangles, '教育和意識', '管理和規範');
+      updatedRectangles = switchElementsByName(rectangles, '恢復', '規劃');
+      updatedRectangles = switchElementsByName(rectangles, '監測', '管理和規範');
+      updatedRectangles = switchElementsByName(rectangles, '監測', '設立自然保護區');
+      updatedRectangles = switchElementsByName(rectangles, '監測', '恢復');
+      updatedRectangles = switchElementsByName(rectangles, '立法', '規劃');
+      updatedRectangles = switchElementsByName(rectangles, '設立自然保護區', '規劃');
+      updatedRectangles = switchElementsByName(rectangles, '立法', '監測');
+    }
+   
+
+
+
 
     const self = this;
     const bbox_center = box_coor.center;
@@ -439,21 +374,25 @@ export const DPSIR = {
     // );
     let y_offset = 0;
     let space_between_rectangles = 8;
-    if (var_type_name == "driver") {
-      y_offset = bboxHeight / 3;
-      space_between_rectangles = 3;
-    } else if (var_type_name == "pressure") {
-      y_offset = bboxHeight / 3;
-      space_between_rectangles = 3;
-    } else if (var_type_name == "state") {
-      y_offset = bboxHeight / 2;
+    if(var_type_name == "driver"){
+      y_offset = 8;
       space_between_rectangles = 1;
-    } else if (var_type_name == "impact") {
-      y_offset = bboxHeight / 20;
+    }
+    else if(var_type_name == "pressure"){
+      y_offset = 7;
       space_between_rectangles = 1;
-    } else if (var_type_name == "response") {
-      y_offset = bboxHeight / 1.5;
-      space_between_rectangles = 7;
+    }
+    else if(var_type_name == "state"){
+      y_offset = 10;
+      space_between_rectangles = 1;
+    }
+    else if(var_type_name == "impact"){
+      y_offset = 7;
+      space_between_rectangles = 1;
+    }
+    else if(var_type_name == "response"){
+      y_offset = 6;
+      space_between_rectangles = 3;
     }
 
     const rectangleCoordinates = squareLayout(
@@ -467,7 +406,7 @@ export const DPSIR = {
       y_offset,
       space_between_rectangles,
     );
-    console.log({ rectangleCoordinates });
+    // console.log({ rectangleCoordinates });
     const rectWithVar = combineData(vars, rectangleCoordinates, global_grid); //return as an object
     // console.log({bbox_origin,bboxWidth,bboxHeight})
 
@@ -529,7 +468,63 @@ export const DPSIR = {
     // console.log(global_grid.map(row => row.join(' ')).join('\n'));
     // console.log({global_rects});
     // const frequencyList = calculateFrequencyList(links); // includes variables frequency and link frequency among all groups
-
+    const varTypeOrder = {
+      'driver-pressure': 1,
+      'pressure-state': 2,
+      'state-impact': 7,
+      'impact-response': 6,
+      'response-driver': 5,
+      'response-pressure': 4,
+      'response-state': 3,
+    };
+    
+    // Function to get the order of the var_type pair
+    function getVarTypePairOrder(sourceType, targetType) {
+      const pair = `${sourceType}-${targetType}`;
+      return varTypeOrder[pair] || 999; // Default order if pair is not found
+    }
+    
+    function getManhattanDistance(rect1, rect2, prioritize = 'y') {
+      const xDistance = Math.abs(rect1.x - rect2.x);
+      const yDistance = Math.abs(rect1.y - rect2.y);
+      
+      return (xDistance + yDistance);
+      // if (prioritize === 'y') {
+      //   if (yDistance !== 0) {
+      //     return yDistance;
+      //   }
+      // } else if (prioritize === 'x') {
+      //   if (xDistance !== 0) {
+      //     return xDistance;
+      //   }
+      // }
+      
+      // // If distances are the same or prioritize is not recognized, compare by the sum of distances
+      // return (xDistance + yDistance);
+    }
+    
+    // Sort the links
+    links.sort((a, b) => {
+      const aOrder = getVarTypePairOrder(a.source.var_type, a.target.var_type);
+      const bOrder = getVarTypePairOrder(b.source.var_type, b.target.var_type);
+    
+      if (aOrder !== bOrder) {
+        return aOrder - bOrder;
+      } else {
+        // Get the rectangles for source and target variables
+        const aSourceRect = this.global_rects.find(rect => rect.variable_name === a.source.variable_name);
+        const aTargetRect = this.global_rects.find(rect => rect.variable_name === a.target.variable_name);
+        const bSourceRect = this.global_rects.find(rect => rect.variable_name === b.source.variable_name);
+        const bTargetRect = this.global_rects.find(rect => rect.variable_name === b.target.variable_name);
+    
+        // Calculate the Manhattan distances
+        const aDistance = getManhattanDistance(aSourceRect, aTargetRect);
+        const bDistance = getManhattanDistance(bSourceRect, bTargetRect);
+    
+        // Sort by Manhattan distance
+        return aDistance - bDistance;
+      }
+    });
     const svg = d3.select("#" + this.svgId);
     const mergedData: (tLinkObject | undefined)[] = links.map((link) => {
       const source_block = document.querySelector(`#${link.source.var_type}`);
@@ -642,7 +637,7 @@ export const DPSIR = {
       }
     });
 
-    console.log({ linkCounts });
+    // console.log({ linkCounts });
     const points = generatePoints(linkCounts);
 
     // M: move to, H: horizontal line, V: vertical line
@@ -653,9 +648,11 @@ export const DPSIR = {
       target_grid = [link.target.newX_target, link.target.newY_target];
 
       let path_points;
-      // if ((link.source.var_type  == "impact" || link.target.var_type == "impact")) {
-      if (link.source.var_type !== link.target.var_type) {
-        path_points = pathFinding(link, global_grid, points);
+      // if ((link.source.var_type  == "response" || link.target.var_type  == "response")) {
+      // if((link.source.var_name  == "管理和規範" || link.target.var_name  == "管理和規範")){
+        if ((link.source.var_type  !== link.target.var_type )) {
+          path_points = pathFinding(link, global_grid, points);
+        // }
         // console.log(path_points);
       }
 
@@ -1218,7 +1215,7 @@ export const DPSIR = {
             }
           });
 
-        const tagWidth = d.width * cellWidth * 0.8; //text width
+        const tagWidth = d.width * cellWidth * 0.8; //width space for text
         tag
           .append("text")
           .attr("class", "label")
@@ -1243,7 +1240,7 @@ export const DPSIR = {
             ).y,
           )
           .attr("fill", "black")
-          .attr("font-size", "0.9rem")
+          .attr("font-size", "0.8rem")
           // .attr("font-weight", "bold")
           .attr("text-anchor", "middle")
           .attr("dominant-baseline", "middle")
@@ -1342,24 +1339,24 @@ function radialBboxes(
   cellHeight: number,
 ) {
   // change to svg size
-  // console.log(this.padding)
+  console.log(padding)
   const width = cellWidth * columns - padding.left - padding.right;
   const height = cellHeight * rows - padding.top - padding.bottom;
   const offset = (234 * Math.PI) / 180;
   //angles adjust the position of the components
   const angles = [
-    offset - (Math.PI * 2 * 1) / 40,
-    offset + (Math.PI * 2 * 1) / 4.4 + (Math.PI * 2 * 1) / 28,
+    offset - (Math.PI * 2 * 1) / 20,
+    offset + (Math.PI * 2 * 1) / 5.5 + (Math.PI * 2 * 1) / 10,
     offset + (Math.PI * 2 * 2) / 5.5,
-    offset + (Math.PI * 2 * 3) / 5.9 - (Math.PI * 2 * 1) / 40,
-    offset + (Math.PI * 2 * 4) / 5.4,
-  ];
+    offset + (Math.PI * 2 * 3) / 5.9 - (Math.PI * 2 * 1) / 15,
+    offset + (Math.PI * 2 * 4) / 5.4
+  ]
   const scaleFactors = [
-    1.5, // D
-    1.6, // P
-    1.15, // S
-    1.55, // I
-    1.3, // R
+    1.1, // D
+    1.3, // P
+    1, // S
+    1.2, // I
+    0.9, // R
   ];
   let bboxes: {
     [key: string]: { center: [number, number]; size: [number, number] };
@@ -1379,11 +1376,25 @@ function radialBboxes(
 
     // Calculate the new center to align with the grid
     const { x, y } = svgToGridCoordinate(pre_x, pre_y, cellWidth, cellHeight);
-
-    bboxes[group] = {
-      center: [x, y],
-      size: bboxesSizes[group],
-    };
+    if(group == "impact"){
+      bboxes[group] = {
+        center: [x-7, y+13],
+        size: bboxesSizes[group],
+      };
+    }
+    else if(group == "driver"){
+      bboxes[group] = {
+        center: [x-7, y],
+        size: bboxesSizes[group],
+      };
+    }
+    else{
+      bboxes[group] = {
+        center: [x-7, y+8],
+        size: bboxesSizes[group],
+      };
+    }
+    
   });
   return bboxes;
 }
@@ -1540,10 +1551,9 @@ function squareLayout(
   // const space_between_rectangles = (regionWidth - max_rect_per_row * rect_width) / (max_rect_per_row - 1)
   let first_row_space = space * cellWidth;
   let second_space_between_rectangles = space * cellWidth;
-  if (varname == "response") {
-    //resoonses
-    first_row_space = 10 * cellWidth;
-  }
+  if (varname == "response"){ //resoonses
+    first_row_space = 13*cellWidth;
+    }
   // console.log({regionHeight})
   // const y_offset = (rectangles.length == 12)? regionHeight/10: regionHeight / 8;
 
@@ -1560,13 +1570,20 @@ function squareLayout(
 
   // first row
   let first_row_rect_number = Math.max(2, max_rect_per_row - 2);
-  if (varname == "impact") {
-    first_row_rect_number = Math.max(3, max_rect_per_row - 3);
+  if (varname == "impact" || varname == "driver" || varname == "pressure"){
+    first_row_rect_number = Math.max(3, max_rect_per_row - 3);  
   }
+  // else if (varname == "state"){
+  //   first_row_rect_number = Math.max(1, max_rect_per_row - 1);  
+  // }
   let middle_row_number =
-    rectangles.length % 2 === 0
-      ? (rectangles.length - first_row_rect_number * 2) / 2
-      : (rectangles.length - first_row_rect_number * 2 - 1) / 2;
+  rectangles.length % 2 === 0
+    ? (rectangles.length - first_row_rect_number * 2) / 2
+    : (rectangles.length - first_row_rect_number * 2 - 1) / 2;
+
+  if (varname == "pressure"){
+    middle_row_number = 3;
+  }
   let last_row_rect_number =
     rectangles.length - first_row_rect_number - middle_row_number * 2;
   let first_row_offset_left =
@@ -1692,7 +1709,7 @@ function combineData(
   const allYPlusHeight = rectangles.map((rect) => rect[1] + rect[3]);
 
   const x_value = Array.from(new Set(allX)).sort((a, b) => a - b);
-  const min_x = vars.variable_type === "response" ? x_value[2] : x_value[1]; // if var type is response, choose the third min value
+  const min_x = (vars.variable_type === "state" ) ? x_value[0] : x_value[1]; // if var type is response, choose the third min value
   const max_x = Math.max(...allX);
   const min_y = Math.min(...allYPlusHeight);
   const max_y = Math.max(...allY);
@@ -1709,11 +1726,19 @@ function combineData(
   markOccupiedGrid(global_grid, boundary_arr, "-");
   return rectangles.map((rect) => {
     let [x, y, width, height, variable_name, position, degree] = rect;
-    if (variable_name == "珊瑚礁狀態") {
-      position = "bottom";
-    } else if (variable_name == "物理和化學品質") {
-      position = "right";
+    if(variable_name == "珊瑚礁狀態"){
+      position = "bottom"
     }
+    else if (variable_name == "物理和化學品質" || variable_name == "漁業減少"){
+      position = "right"
+    }
+    else if (variable_name == "自然棲息地變化" ){
+      position = "left"
+    }
+    // else if (variable_name == "漁業減少"){
+    //   position = "top"
+    // }
+    
     const variable = vars.variable_mentions[variable_name];
     const mentions = variable?.mentions || [];
     const factor_type = variable?.factor_type;
@@ -2116,15 +2141,8 @@ function pathFinding(link, grid: string[][], points) {
       }
     }
     if (foundDest == false) {
-      let path = [start, goal];
-
-      unfoundCount += 1;
-      console.log("Failed to find the destination cell");
-      console.log(link.source.var_name, link.target.var_name, start, goal);
-      if (
-        link.source.var_type == "driver" &&
-        link.target.var_type == "pressure"
-      ) {
+      let path = [start, goal]
+      if ((link.source.var_type == "driver") && (link.target.var_type == "pressure") ){
         DP += 1;
       } else if (
         link.source.var_type == "pressure" &&
@@ -2151,23 +2169,12 @@ function pathFinding(link, grid: string[][], points) {
         link.target.var_type == "pressure"
       ) {
         RP += 1;
-      } else if (
-        link.source.var_type == "response" &&
-        link.target.var_type == "state"
-      ) {
-        PS += 1;
       }
-      console.log(
-        "unfoundCount (total, DP, PS, SI, IR, RD, RP, PS)",
-        unfoundCount,
-        DP,
-        PS,
-        SI,
-        IR,
-        RD,
-        RP,
-        PS,
-      );
+      else if ((link.source.var_type == "response") && (link.target.var_type == "state") ){
+        RS += 1;
+      }
+      unfoundCount = DP + PS + SI + IR + RD + RP + RS;
+      console.log("unfoundCount (total, DP, PS, SI, IR, RD, RP, RS)", unfoundCount, DP, PS, SI, IR, RD, RP, RS);
       // return null;
       return path;
     }
@@ -2331,19 +2338,12 @@ function generatePoints(linkCounts) {
       let usedSecondaryEdge = false;
       let lastPrimaryPoint = [primaryStartX, primaryStartY];
       let lastSecondaryPoint = [secondaryStartX, secondaryStartY];
+      
       // Assign start points for outLinks
       while (remainingOutLinks > 0) {
         let i, j;
-        // if(varName == "監測"){ //ingroup
-        //   i = primaryMaxX;
-        //   primaryMaxX = primaryStartX;
-        //   j = primaryStartY;
-        //   primaryIncrementX = -primaryIncrementX;
-        // }
-        // else{
-        i = primaryStartX;
-        j = primaryStartY;
-        // }
+          i = primaryStartX;
+          j = primaryStartY;
         for (
           ;
           (primaryIncrementX > 0 ? i <= primaryMaxX : i >= primaryMaxX) &&
@@ -2390,6 +2390,10 @@ function generatePoints(linkCounts) {
         [i, j] = lastPrimaryPoint;
         primaryIncrementX ? (i += primaryIncrementX) : (j += primaryIncrementY);
       }
+      if(varName == "恢復"){
+        i = secondaryStartX;
+        j = secondaryStartY;
+      }
       while (remainingInLinks > 0) {
         if (!usedSecondaryEdge) {
           for (
@@ -2410,13 +2414,15 @@ function generatePoints(linkCounts) {
           if (!usedSecondaryEdge) {
             i = secondaryStartX;
             j = secondaryStartY;
-          } else if (varName == "規劃") {
+          } else if(varName == "海洋酸化" ){ //put all endpoint on the secondary edge
             i = secondaryStartX;
-            j = primaryMaxY;
-          } else if (varName == "管理和規範") {
-            i = primaryMaxX + 1;
             j = secondaryStartY;
-          } else {
+          }else if(varName == "管理和規範"){
+              i = secondaryMaxX;
+              j = secondaryMaxY-1;
+              // secondaryIncrementY = 1;
+              secondaryMaxY = secondaryMaxY-4
+          }else {
             [i, j] = lastSecondaryPoint;
             secondaryIncrementX
               ? (i += secondaryIncrementX)
@@ -2442,29 +2448,36 @@ function generatePoints(linkCounts) {
         }
         //those who needs the third edge
         if (remainingInLinks > 0) {
-          if (varName == "教育和意識" || varName == "恢復") {
+          if (
+            varName == "教育和意識" ||
+            varName == "恢復"
+          ) {
+            i = primaryMaxX;
+            j = (varName == "教育和意識")? secondaryStartY-1:secondaryStartY;
             for (
-              let i = primaryMaxX + 1, j = secondaryStartY;
-              (secondaryIncrementY > 0
-                ? j <= secondaryMaxY
-                : j >= primaryMaxY) && remainingInLinks > 0;
+              ;
+              (secondaryIncrementY > 0 ? j <= secondaryMaxY : j >= primaryMaxY) &&
+              remainingInLinks > 0;
               j += secondaryIncrementY
             ) {
               endPoints.push([i, j]);
               remainingInLinks--;
             }
-            // } else if (varName == "規劃") {
-            //   for (
-            //     let i = secondaryStartX, j = primaryMaxY;
-            //     secondaryIncrementX > 0 ? i <= secondaryStartX : i >= secondaryMaxX && remainingInLinks > 0;
-            //     i += secondaryIncrementX
-            //   ) {
-            //     endPoints.push([i, j]);
-            //     remainingInLinks--;
-            //   }
-            // } else if (varName == "管理和規範"){
-            //     endPoints.push([primaryMaxX + 1, primaryMaxY]);
-            //     remainingInLinks--;
+          }
+          else if(varName == "生態狀態（生物品質）"){
+            i = secondaryMaxX;
+            j = secondaryMaxY;
+            secondaryIncrementY = 1;
+            for (
+              ;
+              (secondaryIncrementY > 0 ? j <= primaryStartY : j >= secondaryMaxY) &&
+              remainingInLinks > 0;
+              j += secondaryIncrementY
+            ) {
+              endPoints.push([i, j]);
+              remainingInLinks--;
+            }
+          
           }
         }
       }
@@ -2550,17 +2563,17 @@ function generatePoints(linkCounts) {
         inGroup_endPoints,
         InGroup_outLinks,
         InGroup_inLinks,
-        x + width - 1,
+        x + width,
         y + height,
         -1,
         0,
-        x + 1,
+        x,
         y + height, // Primary edge: bottom
-        x + 1,
+        x,
         y + height,
         1,
         0,
-        x + width - 1,
+        x + width,
         y + height, // Secondary edge: right
       );
     } else if (position === "left") {
@@ -2607,11 +2620,11 @@ function generatePoints(linkCounts) {
         inGroup_endPoints,
         InGroup_outLinks,
         InGroup_inLinks,
-        x + width - 1,
+        x + width,
         y,
         -1,
         0,
-        x + 1,
+        x,
         y, // Primary edge: top
         x + width,
         y,
@@ -2624,80 +2637,221 @@ function generatePoints(linkCounts) {
 
     // Set points for outGroup links
     if (position === "top") {
+      if(varName == "生態狀態（生物品質）"){
+        addPoints(
+          outGroup_startPoints,
+          outGroup_endPoints,
+          OutGroup_outLinks,
+          OutGroup_inLinks,
+          x,y + height,0,-1,x,y+height-7, // left (bottom to top)
+          x+width,y,-1,0,x,y, // right (left to right)
+        );
+      }
+      else if (varName == "規劃"){
+        addPoints(
+          outGroup_startPoints,
+          outGroup_endPoints,
+          OutGroup_outLinks,
+          OutGroup_inLinks,
+          x+width,y,-1,0,x,y, // top (right to left)
+          x,y,0,1,x,y+height, // left (top to bottom)
+        );
+      }
+      else if(varName == "資源消耗"){
+        addPoints(
+          outGroup_startPoints,
+          outGroup_endPoints,
+          OutGroup_outLinks,
+          OutGroup_inLinks,
+          x+width,y,-1,0,x,y, // Primary edge: top )(left to right)
+          x,y+height,0,-1,x,y, // Secondary edge: left (top to bottom
+        );
+      }
+      else if(varName == "教育和意識"){
+        addPoints(
+          outGroup_startPoints,
+          outGroup_endPoints,
+          OutGroup_outLinks,
+          OutGroup_inLinks,
+          x,y,1,0,x + width,y, // Primary edge: top )(left to right)
+          x,y+2,0,1,x,y + height, // Secondary edge: left (top to bottom
+        );
+      }
+      
       addPoints(
         outGroup_startPoints,
         outGroup_endPoints,
         OutGroup_outLinks,
         OutGroup_inLinks,
-        x + 1,
-        y,
-        1,
-        0,
-        x + width - 1,
-        y, // Primary edge: top )(left to right)
-        x,
-        y,
-        0,
-        1,
-        x,
-        y + height, // Secondary edge: left (top to bottom
+        x,y,1,0,x + width,y, // Primary edge: top )(left to right)
+        x,y,0,1,x,y + height, // Secondary edge: left (top to bottom
       );
     } else if (position === "left") {
+      if(varName == "海洋酸化"){
+        addPoints(
+          outGroup_startPoints,
+          outGroup_endPoints,
+          OutGroup_outLinks,
+          OutGroup_inLinks,
+          x+3,y+height,1,0,x+4,y, // Secondary edge: bottom (left to right)
+          x,y,0,1,x,y + height, // Primary edge: left (top to bottom)
+        );
+      }
+      else if(varName == "自然棲息地變化"){
+        addPoints(
+          outGroup_startPoints,
+          outGroup_endPoints,
+          OutGroup_outLinks,
+          OutGroup_inLinks,
+          x,y,0,1,x,y + height, // Primary edge: left (top to bottom)
+          x+width,y,-1,0,x,y, // Secondary edge: top (left to right)
+        );
+      }
+      else if(varName == "極端天氣"){
+        addPoints(
+          outGroup_startPoints,
+          outGroup_endPoints,
+          OutGroup_outLinks,
+          OutGroup_inLinks,
+          x,y,1,0,x,y, // Secondary edge: bottom (left to right)
+          x,y,0,1,x,y + height, // Primary edge: left (top to bottom)
+        );
+      }
       addPoints(
         outGroup_startPoints,
         outGroup_endPoints,
         OutGroup_outLinks,
         OutGroup_inLinks,
-        x,
-        y,
-        0,
-        1,
-        x,
-        y + height, // Primary edge: left (top to bottom)
-        x + 1,
-        y,
-        1,
-        0,
-        x + width - 1,
-        y, // Secondary edge: top (left to right)
+        x,y,0,1,x,y + height, // Primary edge: left (top to bottom)
+        x,y,1,0,x + width,y, // Secondary edge: top (left to right)
       );
     } else if (position === "right") {
+      if(varName == "富營養化"){
+        addPoints(
+          outGroup_startPoints,
+          outGroup_endPoints,
+          OutGroup_outLinks,
+          OutGroup_inLinks,
+          x+width,y + height,-1,0,x,y + height, // bottom(right to left)     
+          x + width,y,0,1,x + width,y + height, // Primary edge: right (top to bottom)
+        );
+      }
+      else if(varName == "物理破壞性活動"){
+        addPoints(
+          outGroup_startPoints,
+          outGroup_endPoints,
+          OutGroup_outLinks,
+          OutGroup_inLinks,
+          x + width,y + height,0,-1,x + width,y+height-1, // Primary edge: right (top to bottom)
+          x + width,y,0,1,x + width,y + height, // Primary edge: right (top to bottom)
+        );
+      }
+      else if(varName == "監測"){
+        addPoints(
+          outGroup_startPoints,
+          outGroup_endPoints,
+          OutGroup_outLinks,
+          OutGroup_inLinks,
+          x + width,y+height-1,0,-1,x + width,y, // Primary edge: right (top to bottom)
+          x + width,y,-1,0,x,y, // Secondary edge: top (right to left)
+        );
+      }
       addPoints(
         outGroup_startPoints,
         outGroup_endPoints,
         OutGroup_outLinks,
         OutGroup_inLinks,
-        x + width,
-        y,
-        0,
-        1,
-        x + width,
-        y + height, // Primary edge: right (top to bottom)
-        x + width - 1,
-        y,
-        -1,
-        0,
-        x + 1,
-        y, // Secondary edge: top (right to left)
+        x + width,y,0,1,x + width,y + height, // Primary edge: right (top to bottom)
+        x + width,y,-1,0,x,y, // Secondary edge: top (right to left)
       );
     } else if (position === "bottom") {
+      if(varName == "土地利用和土地覆蓋變化"){
+        addPoints(
+          outGroup_startPoints,
+          outGroup_endPoints,
+          OutGroup_outLinks,
+          OutGroup_inLinks,
+          x,y ,0,1,x,y + height, // left (top tp bottom)
+          x,y + height,1,0,x + width,y + height, // bottom(let to right)          
+        );
+      }
+      else if (varName == "漁業" || varName == "立法"){
+        addPoints(
+          outGroup_startPoints,
+          outGroup_endPoints,
+          OutGroup_outLinks,
+          OutGroup_inLinks,
+          x + width,y ,0,1,x + width,y + height, // right (top to bottom)
+          x + width,y + height,-1,0,x,y + height, // bottom (right to left)          
+        );
+      }
+      else if (varName == "設立自然保護區"){
+        addPoints(
+          outGroup_startPoints,
+          outGroup_endPoints,
+          OutGroup_outLinks,
+          OutGroup_inLinks,
+          x,y+11 ,0,1,x,y + height, // left (top to bottom)
+          x,y + height,1,0,x + width,y + height, // bottom(let to right)          
+        );
+      }
+      else if (varName == "管理和規範"){
+        addPoints(
+          outGroup_startPoints,
+          outGroup_endPoints,
+          OutGroup_outLinks,
+          OutGroup_inLinks,
+          x + width,y + height,-1,0,x,y + height, // bottom (right to left)
+          x+width,y+height ,0,-1,x+width ,y+height-8, // right(bottom to top)
+        );
+      }
+      else if (varName == "珊瑚礁狀態"){
+        addPoints(
+          outGroup_startPoints,
+          outGroup_endPoints,
+          OutGroup_outLinks,
+          OutGroup_inLinks,
+          x+width,y + height,-1,0,x,y + height, // bottom (rigth to left)
+          x,y + height,0,-1,x,y, // Secondary edge: left (bottom to top)        
+        );
+      }
+      else if (varName == "恢復"){
+        addPoints(
+          outGroup_startPoints,
+          outGroup_endPoints,
+          OutGroup_outLinks,
+          OutGroup_inLinks,
+          x,y + height,0,-1,x,y, // Secondary edge: left (bottom to top)
+          x+width,y + height,-1,0,x,y + height, // Primary edge: bottom (left to right)          
+        );
+      }
+      else if(varName == "破壞性捕魚行為"){
+        addPoints(
+          outGroup_startPoints,
+          outGroup_endPoints,
+          OutGroup_outLinks,
+          OutGroup_inLinks,
+          x,y + height,1,0,x + 7,y + height, // Primary edge: bottom (left to right)
+          x+width,y + height,0,-1,x+width,y, // Secondary edge: right (bottom to top)      
+        );
+      }
+      else if(varName == "經濟"){
+        addPoints(
+          outGroup_startPoints,
+          outGroup_endPoints,
+          OutGroup_outLinks,
+          OutGroup_inLinks,
+          x,y + height,1,0,x + 5,y + height, // Primary edge: bottom (left to right)
+          x+width-3,y + height,1,0,x+width,y+height, // Secondary edge: left (bottom to top)
+        );
+      }
       addPoints(
         outGroup_startPoints,
         outGroup_endPoints,
         OutGroup_outLinks,
         OutGroup_inLinks,
-        x + 1,
-        y + height,
-        1,
-        0,
-        x + width - 1,
-        y + height, // Primary edge: bottom (left to right)
-        x,
-        y + height,
-        0,
-        -1,
-        x,
-        y, // Secondary edge: left (bottom to top)
+        x,y + height,1,0,x + width,y + height, // Primary edge: bottom (left to right)
+        x,y + height,0,-1,x,y, // Secondary edge: left (bottom to top)
       );
     }
 
