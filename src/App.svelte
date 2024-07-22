@@ -3,6 +3,7 @@
   import InterviewViewer from "lib/views/InterviewViewer_v2.svelte";
   import SummaryView from "lib/components/ScatterSummary.svelte";
   import SimGraph from "lib/v1/SimGraph.svelte";
+  import ControlPanel from "lib/components/ControlPanel.svelte";
   import type {
     tMention,
     tVariableType,
@@ -19,6 +20,8 @@
   import BrowserBlockingPage from "lib/views/BrowserBlockingPage.svelte";
   import * as utils from "lib/utils";
   import { server_address } from "lib/constants";
+  import { toggle } from "@melt-ui/svelte/internal/helpers";
+  import PromptDialog from "lib/components/PromptDialog.svelte";
 
   let interview_data: tTranscript[] | undefined = undefined;
   let interview_viewer_component;
@@ -28,6 +31,7 @@
   let summary_interviews: tChunk[] | undefined = undefined;
   let data_loading: boolean = true;
   let show_dpsir: boolean = true;
+  let show_prompts: boolean = false;
   // v1
   let keyword_data: any;
   let chunk_graph: any;
@@ -135,19 +139,21 @@
     <BrowserBlockingPage />
   {:else}
     <div class="page flex h-full space-x-1">
+      {#if show_prompts}
+        <PromptDialog on:close={() => (show_prompts = false)} />
+      {/if}
+      <div class="ml-1 mt-2">
+        <ControlPanel
+          on:toggle-viz={() => (show_dpsir = !show_dpsir)}
+          on:toggle-prompt={() => {
+            show_prompts = !show_prompts;
+          }}
+        ></ControlPanel>
+      </div>
       <div
         class="flex h-full w-[75%] flex-1 flex-col items-center justify-center"
       >
         <div class="relative h-full w-full">
-          <div
-            tabindex="0"
-            role="button"
-            class="absolute right-1 top-1 z-10"
-            on:click={() => (show_dpsir = !show_dpsir)}
-            on:keyup={() => {}}
-          >
-            Toggle
-          </div>
           <!-- <div
             class="title absolute left-6 top-1 w-fit rounded px-4 py-4 text-left text-sky-600"
           >

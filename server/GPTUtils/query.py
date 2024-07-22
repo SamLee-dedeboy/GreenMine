@@ -26,44 +26,43 @@ class tVarMention(BaseModel):
 class tChunkWithVarMentions(tChunk):
     var_mentions: Dict[str, List[tVarMention]]
 
-def multithread_prompts(client, prompts, model="gpt-3.5-turbo-0125", response_format=None):
+def multithread_prompts(client, prompts, model="gpt-4o-mini", response_format=None):
     l = len(prompts)
     # results = np.zeros(l)
     with tqdm(total=l) as pbar:
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=100)
-        futures = [executor.submit(request_chatgpt, client, prompt, model, response_format) for prompt in prompts]
+        futures = [executor.submit(request_gpt, client, prompt, model, response_format) for prompt in prompts]
         for _ in concurrent.futures.as_completed(futures):
             pbar.update(1)
     concurrent.futures.wait(futures)
     return [future.result() for future in futures]
 
-def request_chatgpt(client, messages, model='gpt-3.5-turbo-0125', format=None):
+def request_gpt(client, messages, model='gpt-4o-mini', temperature=0.5, format=None):
     try:
         if format == "json":
             response = client.chat.completions.create(
-                # model="gpt-4-1106-preview",
                 model = model,
                 messages=messages,
                 response_format={ "type": "json_object" },
-                temperature=0.5,
+                temperature=temperature
             )
         else:
             response = client.chat.completions.create(
                 model=model,
                 messages=messages,
-                temperature=0.5,
+                temperature=temperature
             )
         return response.choices[0].message.content
     except RateLimitError as e:
         print("RateLimitError")
         print(e)
         time.sleep(5)
-        return request_chatgpt(client, messages, model, format)
+        return request_gpt(client, messages, model, temperature, format)
     except APITimeoutError as e:
         print("APITimeoutError")
         print(messages)
         time.sleep(5)
-        return request_chatgpt(client, messages, model, format)
+        return request_gpt(client, messages, model, temperature, format)
 
 # def get_embedding(client, text, model="text-embedding-ada-002"):
 def get_embedding(client, text, model="text-embedding-3-small"):
