@@ -3,7 +3,8 @@ from tqdm import tqdm
 import tiktoken
 import json 
 import requests
-from . import prompts
+# from . import prompts
+from GPTUtils import prompts
 from openai import RateLimitError, APITimeoutError
 import time
 from pydantic import BaseModel
@@ -26,18 +27,22 @@ class tVarMention(BaseModel):
 class tChunkWithVarMentions(tChunk):
     var_mentions: Dict[str, List[tVarMention]]
 
-def multithread_prompts(client, prompts, model="gpt-4o-mini", response_format=None):
+def multithread_prompts(client, prompts, model="gpt-4o-mini", temperature=0.5, response_format=None):
     l = len(prompts)
     # results = np.zeros(l)
     with tqdm(total=l) as pbar:
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=100)
-        futures = [executor.submit(request_gpt, client, prompt, model, response_format) for prompt in prompts]
+        futures = [executor.submit(request_gpt, client, prompt, model, temperature, response_format) for prompt in prompts]
         for _ in concurrent.futures.as_completed(futures):
             pbar.update(1)
     concurrent.futures.wait(futures)
     return [future.result() for future in futures]
 
 def request_gpt(client, messages, model='gpt-4o-mini', temperature=0.5, format=None):
+    with open("request_log.txt", "a", encoding="utf-8") as f:
+        f.write(f"model: {model}, temperature: {temperature}, format: {format}\n")
+        f.write(json.dumps(messages, ensure_ascii=False) + "\n")
+        f.write("=====================================\n")
     try:
         if format == "json":
             response = client.chat.completions.create(
@@ -169,6 +174,30 @@ def connection_extraction(
             "response": response
         })
     return results
+
+def speaker_to_string(speaker):
+    return "Interviewer" if str(speaker) == "1" else "Interviewee"
+def conversation_to_string(conversation):
+    return "\n".join([
+        f"{index}: {speaker_to_string(message['speaker'])}: {message['content']}\n"
+        for index, message in enumerate(conversation)
+        ]
+    )
+def identify_var_types(all_chunks, openai_client, system_prompt_blocks, user_prompt_blocks, prompt_variables):
+    identify_var_type_prompt_list = []
+    response_format, extract_response_func = None, None
+    for chunk in all_chunks:
+        conversation = chunk['conversation']
+        prompt_variables['conversation'] = conversation_to_string(conversation)
+        identify_var_type_prompt, response_format, extract_response_func = prompts.identify_var_type_prompt_factory(system_prompt_blocks, user_prompt_blocks, prompt_variables)
+        identify_var_type_prompt_list.append(identify_var_type_prompt)
+    identified_var_types = multithread_prompts(openai_client, identify_var_type_prompt_list, response_format=response_format, temperature=0.0)
+    if response_format == 'json':
+        extraction_results = [extract_response_func(i) for i in identified_var_types]
+    for (chunk_index, extraction_result) in enumerate(extraction_results):
+        chunk = all_chunks[chunk_index]
+        chunk['identify_var_types_result'] = extraction_result
+    return all_chunks
 
 def save_json(data, filepath):
     with open(filepath, 'w', encoding='utf-8') as fp:

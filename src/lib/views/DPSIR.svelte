@@ -33,10 +33,6 @@
   ) {
     if (!vars || !links) return;
     // console.log(vars, links);
-    $varTypeColorScale = d3
-      .scaleOrdinal()
-      .domain(Object.keys(vars))
-      .range(d3.schemeSet2);
     DPSIR.update_vars(vars, links, $varTypeColorScale);
   }
 

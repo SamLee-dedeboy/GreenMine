@@ -3,9 +3,7 @@
   const dispatch = createEventDispatcher();
 </script>
 
-<div
-  class="flex flex-col divide-y rounded-md bg-gray-50 shadow-md outline-double outline-2 outline-gray-300"
->
+<div class="flex flex-col divide-y rounded-md bg-gray-50 shadow-md">
   <div
     tabindex="0"
     role="button"

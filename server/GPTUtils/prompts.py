@@ -1,3 +1,36 @@
+import json
+def inject_data(prompt_str, data_dict):
+    for key, value in data_dict.items():
+        prompt_str = prompt_str.replace(f"${{{key}}}", value)
+    return prompt_str
+
+def identify_var_type_prompt_factory(system_prompt_blocks, user_prompt_blocks, prompt_variables):
+    prompt_blocks = list(map(lambda block: inject_data(block, prompt_variables), system_prompt_blocks))
+    user_prompt_blocks = list(map(lambda block: inject_data(block, prompt_variables), user_prompt_blocks))
+    messages = [
+        {
+            "role": "system",
+            "content": "\n".join(prompt_blocks) + "\n" + 
+                """Reply with the following JSON format:
+                    {{
+                        "var_type": [] (list of "driver" or "pressure" or "state" or "impact" or "response", or ["none"]),
+                        "evidence": [] (list of sentence indices, empty if var_type is "none"),
+                        "explanation": string (explain why the evidence indicates the variable type), or "none" if var_type is "none"
+                    }}
+                """,
+        },
+        {
+            "role": "user",
+            "content": "\n".join(user_prompt_blocks)
+        }
+    ]
+    def extract_response_func(response):
+        response_dict = json.loads(response)
+        return response_dict
+        return response_dict['var_type'], response_dict['evidence'], response_dict['explanation']
+    response_format = "json"
+    return messages, response_format, extract_response_func
+
 def node_extraction_prompt_factory(paragraph, var_name, definition):
 
     # 驅動變數是基本的人為原因，引起環境中的某些影響，以滿足基本的人類需求。

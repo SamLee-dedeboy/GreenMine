@@ -39,12 +39,30 @@ def get_data():
     interview_data = process_interview(glob.glob(chunk_data_path + f'chunk_summaries_w_ktte/*.json'))
 
     v1_data = get_data_v1(v1_data_path)
+
+    # prompt data
+    var_type_definitions = json.load(open(relative_path(dirname, 'GPTUtils/contexts/var_type_definitions.json')))
+    prompts = json.load(open(relative_path(dirname,'GPTUtils/prompts/identify_var_types.json')))
+    system_prompt_blocks = prompts['system_prompt_blocks']
+    user_prompt_blocks = prompts['user_prompt_blocks']
+    
+    # pipeline data
+    identify_var_types = json.load(open(relative_path(dirname, 'data/v2/tmp/pipeline/identify_var_types/chunk_w_var_types.json')))
     return {
         "interviews": interview_data,
         "nodes": nodes,
         "metadata": metadata,
         "links": links,
         "v1": v1_data,
+        "prompts": {
+            "var_type_definitions": var_type_definitions,
+            "system_prompt_blocks": system_prompt_blocks,
+            "user_prompt_blocks": user_prompt_blocks
+        },
+        "pipeline_result": {
+            "identify_var_types": identify_var_types
+        }
+
     }
 
 @app.route("/var_extraction/", methods=['POST'])
@@ -81,6 +99,31 @@ def remove_var():
             link_file_path=node_data_path + "connections.json",
             var_name=var_name)
     return "success"
+
+@app.route("/curation/identify_var_types/", methods=['POST'])
+def curate_identify_var_types():
+    var_type_definitions = request.json['var_type_definitions']
+    system_prompt_blocks = request.json['system_prompt_blocks']
+    user_prompt_blocks = request.json['user_prompt_blocks']
+    prompt_variables = {
+        "var_types": "\n".join([f"{var_type}: {var_type_def}" for var_type, var_type_def in var_type_definitions.items()]),
+    }
+    all_chunks = []
+    for chunk_file in glob.glob(relative_path(dirname, "data/v2/tmp/chunk/chunk_summaries_w_ktte/*.json")):
+        chunks = json.load(open(chunk_file))
+        all_chunks += chunks
+    system_prompt_blocks = [prompt_block[1] for prompt_block in system_prompt_blocks]
+    user_prompt_blocks = [prompt_block[1] for prompt_block in user_prompt_blocks]
+    all_chunks = GPTUtils.query.identify_var_types(all_chunks, openai_client, system_prompt_blocks, user_prompt_blocks, prompt_variables)
+    return json.dumps(all_chunks, default=vars)
+
+@app.route("/curation/identify_var_types/save", methods=['POST'])
+def save_identify_var_types():
+    all_chunks =  request.json['all_chunks']
+    DataUtils.local.save_json(all_chunks, relative_path(dirname, "data/v2/tmp/pipeline/identify_var_types/chunk_w_var_types.json"))
+    return "success"
+
+
 
 
 # def clean_up_nodes(node):
