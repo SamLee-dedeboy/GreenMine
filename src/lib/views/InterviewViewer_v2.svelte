@@ -14,7 +14,7 @@
     1: "bg-gray-100",
     0: "bg-lime-100",
   };
-  $: colorScale = $colorBy === "emotion" ? emotionColorScale : topicColorScale;
+  $: colorScale = $colorBy === "topic" ? emotionColorScale : topicColorScale;
   let data_changes = 0;
   let show_chunk: any = [];
   let highlight_chunk: any = [];
@@ -323,8 +323,8 @@
                         >
                           <div
                             class="w-[1.5rem] shrink-0 border-r border-black text-center text-sm"
-                            style={`background:  ${colorScale(chunk[$colorBy])}`}
-                          >
+                            
+                          ><!-- style={`background:  ${colorScale(chunk[$colorBy])}`} -->
                             {chunk_index + 1}.
                           </div>
                           <div class="px-1 text-sm">

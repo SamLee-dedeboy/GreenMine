@@ -41,13 +41,13 @@ def get_data():
     v1_data = get_data_v1(v1_data_path)
 
     # prompt data
-    var_type_definitions = json.load(open(relative_path(dirname, 'GPTUtils/contexts/var_type_definitions.json')))
-    prompts = json.load(open(relative_path(dirname,'GPTUtils/prompts/identify_var_types.json')))
+    var_type_definitions = json.load(open(relative_path(dirname, 'GPTUtils/contexts/var_type_definitions.json'), encoding='utf-8'))
+    prompts = json.load(open(relative_path(dirname,'GPTUtils/prompts/identify_var_types.json'), encoding='utf-8'))
     system_prompt_blocks = prompts['system_prompt_blocks']
     user_prompt_blocks = prompts['user_prompt_blocks']
     
     # pipeline data
-    identify_var_types = json.load(open(relative_path(dirname, 'data/v2/tmp/pipeline/identify_var_types/chunk_w_var_types.json')))
+    identify_var_types = json.load(open(relative_path(dirname, 'data/v2/tmp/pipeline/identify_var_types/chunk_w_var_types.json'), encoding='utf-8'))
     return {
         "interviews": interview_data,
         "nodes": nodes,
@@ -110,7 +110,7 @@ def curate_identify_var_types():
     }
     all_chunks = []
     for chunk_file in glob.glob(relative_path(dirname, "data/v2/tmp/chunk/chunk_summaries_w_ktte/*.json")):
-        chunks = json.load(open(chunk_file))
+        chunks = json.load(open(chunk_file, encoding='utf-8'))
         all_chunks += chunks
     system_prompt_blocks = [prompt_block[1] for prompt_block in system_prompt_blocks]
     user_prompt_blocks = [prompt_block[1] for prompt_block in user_prompt_blocks]

@@ -14,7 +14,9 @@ import type {
   tLink,
 } from "../types/variables";
 import * as Constants from "../constants";
+// import { dispatch } from "d3";
 import PriorityQueue from "lib/types/priorityQueue";
+import { toggle } from "@melt-ui/svelte/internal/helpers";
 // import type { tVarTypeDef } from "lib/types";
 // import { space } from "postcss/lib/list";
 // import { name } from "@melt-ui/svelte";
@@ -48,16 +50,18 @@ export const DPSIR = {
       Array(this.rows + 1).fill("0000"),
     );
     this.svgId = svgId;
+    // this.dispatch = d3.dispatch("VarOrLinkSelected");
     this.utilities = utilities;
     this.handlers = handlers;
     this.varTypeColorScale = null;
+    this.showLinks = true;
     const self = this;
     const svg = d3
       .select("#" + svgId)
       .attr("viewBox", `0 0 ${this.width} ${this.height}`)
       .attr("width", this.width)
       .attr("height", this.height)
-      .on("click", function (e) {
+      .on("click",  function (e) {
         if (!e.defaultPrevented) {
           // console.log("remove all highlights");
           d3.selectAll("rect.box")
@@ -72,24 +76,28 @@ export const DPSIR = {
           d3.selectAll("path.link")
             .classed("link-highlight", false)
             .classed("link-not-highlight", false)
+            .classed("not-show-link-not-highlight", false)
             .attr("stroke", "gray")
-            .attr("marker-end", "");
-          handlers.VarOrLinkSelected(null);
+            .attr("marker-end", "")
+            // .style("visibility", "visible");
+            // DPSIR.on("VarOrLinkSelected", null);
+            // self.dispatch.call("VarOrLinkSelected", null);
+          self.handlers.VarOrLinkSelected(null);
           self.clicked_link = null;
           self.clicked_rect = null;
         }
       });
 
-    this.drawGids(
-      svg,
-      svgId,
-      this.width,
-      this.height,
-      this.cellWidth,
-      this.cellHeight,
-      this.columns,
-      this.rows,
-    );
+    // this.drawGids(
+    //   svg,
+    //   svgId,
+    //   this.width,
+    //   this.height,
+    //   this.cellWidth,
+    //   this.cellHeight,
+    //   this.columns,
+    //   this.rows,
+    // );
 
     svg.append("g").attr("class", "link_group");
     // .attr("transform", `translate(${padding.left}, ${padding.top})`);
@@ -102,11 +110,20 @@ export const DPSIR = {
       var_type_region.append("g").attr("class", "bbox-group");
     });
   },
-
+  // on(event, handler) {
+  //   this.dispatch.on(event, handler);
+  // },
+  toggleLinks(showLinks: boolean) {
+    this.showLinks = showLinks;
+  },
   update_vars(vars: tDPSIR, links: tVisLink[], varTypeColorScale: Function) {
     // console.log("update vars");
     // console.log({ links });
     // console.log({ vars });
+    // console.log("showLinks", showLinks);
+    this.global_grid = Array.from({ length: this.columns + 1 }, () =>
+      Array(this.rows + 1).fill("0000"),
+    );
     this.varTypeColorScale = varTypeColorScale;
     const var_type_names = Constants.var_type_names;
     type VarTypeNames = (typeof var_type_names)[number];
@@ -196,13 +213,13 @@ export const DPSIR = {
         this.cellHeight,
       );
     });
-    // this.drawLinks(
-    //   links,
-    //   bboxes,
-    //   this.global_grid,
-    //   this.cellWidth,
-    //   this.cellHeight,
-    // );
+    this.drawLinks(
+      links,
+      bboxes,
+      this.global_grid,
+      this.cellWidth,
+      this.cellHeight,
+    );
   },
   drawGids(svg, svgId, width, height, cellWidth, cellHeight, columns, rows) {
     // console.log(cellWidth, cellHeight);
@@ -248,6 +265,7 @@ export const DPSIR = {
     global_grid: string[][],
     cellWidth: number,
     cellHeight: number,
+    showLinks: boolean,
   ) {
     // console.log({linkCount});
     // console.log(vars);
@@ -499,6 +517,7 @@ export const DPSIR = {
       global_grid,
       cellWidth,
       cellHeight,
+      showLinks,
     );
   },
 
@@ -509,19 +528,21 @@ export const DPSIR = {
     cellWidth: number,
     cellHeight: number,
   ) {
-    // console.log({bboxes})
-    // console.log({global_grid})
-    // console.log(global_grid.map(row => row.join(' ')).join('\n'));
-    // console.log({global_rects});
+    console.log(this.showLinks)
     // const frequencyList = calculateFrequencyList(links); // includes variables frequency and link frequency among all groups
     const varTypeOrder = {
-      "driver-pressure": 1,
-      "pressure-state": 2,
-      "state-impact": 7,
-      "impact-response": 6,
-      "response-driver": 5,
-      "response-pressure": 4,
-      "response-state": 3,
+      'driver-pressure': 1,
+      'pressure-state': 2,
+      'state-impact': 7,
+      'impact-response': 6,
+      'response-driver': 5,
+      'response-pressure': 4,
+      'response-state': 3,
+      // 'driver-driver':8,
+      // 'pressure-pressure':9,
+      // 'state-state':10,
+      // 'impact-impact':11,
+      // 'response-response':12,
     };
 
     // Function to get the order of the var_type pair
@@ -533,20 +554,8 @@ export const DPSIR = {
     function getManhattanDistance(rect1, rect2, prioritize = "y") {
       const xDistance = Math.abs(rect1.x - rect2.x);
       const yDistance = Math.abs(rect1.y - rect2.y);
-
-      return xDistance + yDistance;
-      // if (prioritize === 'y') {
-      //   if (yDistance !== 0) {
-      //     return yDistance;
-      //   }
-      // } else if (prioritize === 'x') {
-      //   if (xDistance !== 0) {
-      //     return xDistance;
-      //   }
-      // }
-
-      // // If distances are the same or prioritize is not recognized, compare by the sum of distances
-      // return (xDistance + yDistance);
+      
+      return (xDistance + yDistance);
     }
 
     // Sort the links
@@ -702,13 +711,11 @@ export const DPSIR = {
       target_grid = [link.target.newX_target, link.target.newY_target];
 
       let path_points;
-      // if ((link.source.var_type  == "response" || link.target.var_type  == "response")) {
-      // if((link.source.var_name  == "管理和規範" || link.target.var_name  == "管理和規範")){
-      if (link.source.var_type !== link.target.var_type) {
-        path_points = pathFinding(link, global_grid, points);
-        // }
-        // console.log(path_points);
-      }
+
+    if ((link.source.var_type  == link.target.var_type )) {
+      path_points = pathFinding(link, global_grid, points);
+    }
+    // console.log(path_points);
 
       if (path_points) {
         const svgPath = path_points.map((point) =>
@@ -743,9 +750,10 @@ export const DPSIR = {
         return d3Path.toString();
       }
     };
-    const index_of_test = filteredMergeData
-      .map((d) => d.source.var_name + "-" + d.target.var_name)
-      .indexOf("自然棲息地變化-恢復");
+    // console.log(showLinks);
+    // const index_of_test = filteredMergeData
+    //   .map((d) => d.source.var_name + "-" + d.target.var_name)
+    //   .indexOf("自然棲息地變化-恢復");
     const link_paths = svg
       .select("g.link_group")
       .selectAll(".link")
@@ -753,12 +761,20 @@ export const DPSIR = {
       .join("path")
       .attr("class", "link")
       .attr("id", (d) => `${d.source.var_name}` + "-" + `${d.target.var_name}`)
+      .attr("d",function(d,i){
+        return lineGenerator(
+          d,
+          i,
+          bboxes[d.source.var_type],
+          bboxes[d.target.var_type],
+        );
+        
+      })
       .attr("cursor", "pointer")
       .attr("fill", "none")
       // .attr("stroke", "url(#grad)")
       // .attr("stroke",d=> scaleColor(d.frequency))
       .attr("stroke", (d) => {
-        // return this.varTypeColorScale(d.source.var_type);
         return "gray";
       })
       .attr("stroke-width", function (d: tLinkObject) {
@@ -774,20 +790,20 @@ export const DPSIR = {
       })
       .attr("opacity", (d) => {
         if (d.source.var_type == d.target.var_type) {
-          return 0.2;
+          return self.showLinks?0.2:0;
         } else {
-          return 0.5;
+          return self.showLinks?0.5:0;
         }
         // return 1;
       })
       .on("mouseover", function (e, d: tLinkObject) {
         d3.select(this)
-          .classed("line-hover", true)
-          .attr("stroke", (d: tLinkObject) => {
-            // const svg = d3.select("#" + self.svgId);
-            // return createOrUpdateGradient(svg, d, self);
-            return self.varTypeColorScale(d.source.var_type);
-          });
+          .classed("line-hover", self.showLinks === true)
+          // .attr("stroke", (d: tLinkObject) => {
+          //   // const svg = d3.select("#" + self.svgId);
+          //   // return createOrUpdateGradient(svg, d, self);
+          //   return self.varTypeColorScale(d.source.var_type);
+          // });
         // d3.select(this.parentNode) // this refers to the path element, and parentNode is the SVG or a <g> element containing it
         //   .append("text")
         //   .attr("class", "link-frequency-text") // Add a class for styling if needed
@@ -800,19 +816,21 @@ export const DPSIR = {
       .on("mouseout", function (e, d) {
         d3.select(this)
           .classed("line-hover", false)
-          .attr("stroke", (d: tLinkObject) => {
-            return "gray";
-          });
+        if (!d3.select(this).classed("link-highlight")) { //if the link is clicked then do not change the color
+          d3.select(this)
+            .attr("stroke", "gray");
+        }
         d3.selectAll(".link-frequency-text").remove();
       })
       .on("click", function (e, d: tLinkObject) {
         // console.log(d);
         e.preventDefault();
-
+        
         const links = d3
           .selectAll("path.link")
           .classed("link-highlight", false)
-          .classed("link-not-highlight", true)
+          .classed("link-not-highlight", this.showLinks === true)
+          .classed("not-show-link-not-highlight", this.showLinks === false)
           .attr("stroke", "gray")
           .attr("marker-end", "");
 
@@ -829,12 +847,16 @@ export const DPSIR = {
         if (self.clicked_link === d) {
           self.clicked_link = null;
           self.handlers.VarOrLinkSelected(null);
+          // self.dispatch.call("VarOrLinkSelected", null);
         } else {
           self.clicked_link = d;
           self.handlers.VarOrLinkSelected(d);
+          // self.dispatch.call("VarOrLinkSelected", d);
           d3.select(this)
             .classed("link-highlight", true)
             .classed("link-not-highlight", false)
+            .classed("not-show-link-not-highlight", false)
+            .classed("line-hover", false)
             .raise()
             .attr("stroke", (d: tLinkObject) => {
               // const svg = d3.select("#" + self.svgId);
@@ -870,26 +892,26 @@ export const DPSIR = {
       });
 
     // draw links with animation
-    let next_path_index = 0;
-    const t = d3.timer(() => {
-      const next_path = link_paths.filter((d, i) => i === next_path_index);
-      next_path
-        .transition()
-        .duration(0)
-        .attr("d", function (d, i) {
-          return lineGenerator(
-            d,
-            i,
-            bboxes[d.source.var_type],
-            bboxes[d.target.var_type],
-          );
-        });
-      next_path_index++;
-      if (next_path_index >= link_paths.size()) {
-        console.log("done");
-        t.stop();
-      }
-    });
+    // let next_path_index = 0;
+    // const t = d3.timer(() => {
+    //   const next_path = link_paths.filter((d, i) => i === next_path_index);
+    //   next_path
+    //     .transition()
+    //     .duration(0)
+    //     .attr("d", function (d, i) {
+    //       return lineGenerator(
+    //         d,
+    //         i,
+    //         bboxes[d.source.var_type],
+    //         bboxes[d.target.var_type],
+    //       );
+    //     });
+    //   next_path_index++;
+    //   if (next_path_index >= link_paths.size()) {
+    //     console.log("done");
+    //     t.stop();
+    //   }
+    // });
   },
 
   drawBbox(
@@ -906,35 +928,35 @@ export const DPSIR = {
       .select(`.${var_type_name}_region`);
 
     // group bounding box
-    group
-      .select("g.bbox-group")
-      .append("rect")
-      .attr("class", "bbox")
-      .attr("id", var_type_name)
-      .attr(
-        "x",
-        gridToSvgCoordinate(
-          bbox_center[0] - bboxWidth / 2,
-          bbox_center[1] - bboxHeight / 2,
-          cellWidth,
-          cellHeight,
-        ).x,
-      )
-      .attr(
-        "y",
-        gridToSvgCoordinate(
-          bbox_center[0] - bboxWidth / 2,
-          bbox_center[1] - bboxHeight / 2,
-          cellWidth,
-          cellHeight,
-        ).y,
-      )
-      .attr("width", bboxWidth * cellWidth)
-      .attr("height", bboxHeight * cellHeight)
-      .attr("fill", "none")
-      .attr("stroke", "grey")
-      .attr("stroke-width", 2)
-      .attr("opacity", "0.1"); //do not show the bounding box
+    // group
+    //   .select("g.bbox-group")
+    //   .append("rect")
+    //   .attr("class", "bbox")
+    //   .attr("id", var_type_name)
+    //   .attr(
+    //     "x",
+    //     gridToSvgCoordinate(
+    //       bbox_center[0] - bboxWidth / 2,
+    //       bbox_center[1] - bboxHeight / 2,
+    //       cellWidth,
+    //       cellHeight,
+    //     ).x,
+    //   )
+    //   .attr(
+    //     "y",
+    //     gridToSvgCoordinate(
+    //       bbox_center[0] - bboxWidth / 2,
+    //       bbox_center[1] - bboxHeight / 2,
+    //       cellWidth,
+    //       cellHeight,
+    //     ).y,
+    //   )
+    //   .attr("width", bboxWidth * cellWidth)
+    //   .attr("height", bboxHeight * cellHeight)
+    //   .attr("fill", "none")
+    //   .attr("stroke", "grey")
+    //   .attr("stroke-width", 2)
+    //   .attr("opacity", "0.1"); //do not show the bounding box
 
     //group name for clicking
     // group
@@ -1009,28 +1031,28 @@ export const DPSIR = {
       .attr("opacity", "0.2");
 
     //group center
-    group
-      .append("circle")
-      .attr(
-        "cx",
-        gridToSvgCoordinate(
-          bbox_center[0],
-          bbox_center[1],
-          cellWidth,
-          cellHeight,
-        ).x,
-      )
-      .attr(
-        "cy",
-        gridToSvgCoordinate(
-          bbox_center[0],
-          bbox_center[1],
-          cellWidth,
-          cellHeight,
-        ).y,
-      )
-      .attr("r", 1)
-      .attr("fill", "red");
+    // group
+    //   .append("circle")
+    //   .attr(
+    //     "cx",
+    //     gridToSvgCoordinate(
+    //       bbox_center[0],
+    //       bbox_center[1],
+    //       cellWidth,
+    //       cellHeight,
+    //     ).x,
+    //   )
+    //   .attr(
+    //     "cy",
+    //     gridToSvgCoordinate(
+    //       bbox_center[0],
+    //       bbox_center[1],
+    //       cellWidth,
+    //       cellHeight,
+    //     ).y,
+    //   )
+    //   .attr("r", 1)
+    //   .attr("fill", "red");
 
     //group icon
     group
@@ -1176,6 +1198,7 @@ export const DPSIR = {
             d.degree !== 0 ? scaleVarColor(d.degree) : "#cdcdcd",
             // "#cdcdcd"
           )
+          .attr("rx", "0.2%")
           .attr("opacity", "0.8")
           .attr("cursor", "pointer")
           .on("mouseover", function () {
@@ -1188,6 +1211,7 @@ export const DPSIR = {
             d3.select(this.parentNode).select(".tooltip").attr("opacity", 0);
           })
           .on("click", function (e) {
+            console.log("show links", self.showLinks);
             e.preventDefault();
             d3.selectAll("rect.box")
               .transition()
@@ -1207,9 +1231,14 @@ export const DPSIR = {
             if (self.clicked_rect === d) {
               self.clicked_rect = null;
               self.handlers.VarOrLinkSelected(null);
+              // self.dispatch.call("VarOrLinkSelected", null);
               d3.selectAll(".link")
                 .classed("link-highlight", false)
-                .classed("link-not-highlight", false);
+                .classed("link-not-highlight", false)
+                .classed("not-show-link-not-highlight", false)
+                .attr("stroke", "gray")
+                .attr("marker-end", "")
+                // .style("visibility", showLinks?"visibility":"hidden")
               rects
                 .classed("box-highlight", false)
                 .classed("box-not-highlight", false);
@@ -1220,10 +1249,11 @@ export const DPSIR = {
               self.clicked_rect = d;
 
               self.handlers.VarOrLinkSelected(d);
+              // self.dispatch.call("VarOrLinkSelected", d);
               d3.select(this)
                 .classed("box-highlight", true)
                 .classed("box-not-highlight", false)
-                .raise()
+                // .raise()
                 .transition()
                 .duration(250);
               // .attr("transform", function() {
@@ -1244,9 +1274,11 @@ export const DPSIR = {
                 .classed("box-label-not-highlight", false)
                 .raise();
 
-              d3.selectAll(".link")
+              
+                d3.selectAll(".link")
                 .classed("link-highlight", false)
-                .classed("link-not-highlight", true)
+                .classed("link-not-highlight", this.showLinks === true)
+                .classed("not-show-link-not-highlight", this.showLinks === false)
                 .attr("stroke", "gray")
                 .attr("marker-end", "")
                 .filter(
@@ -1256,6 +1288,7 @@ export const DPSIR = {
                 )
                 .classed("link-highlight", true)
                 .classed("link-not-highlight", false)
+                .classed("not-show-link-not-highlight", false)
                 .raise()
                 .attr("stroke", (link_data: tLinkObject) => {
                   // const svg = d3.select("#" + self.svgId);
@@ -1266,8 +1299,12 @@ export const DPSIR = {
                   const svg = d3.select("#" + self.svgId);
                   return createArrow(svg, d, self);
                 });
+              
+
+
             }
           });
+
 
         const tagWidth = d.width * cellWidth * 0.8; //width space for text
         tag
@@ -2082,7 +2119,8 @@ function pathFinding(link, grid: string[][], points) {
     inGroup = true;
     let path = [start, goal];
     return path;
-  } else {
+  } else 
+  {
     start = getNextStartPoint(link.source.var_name, points, false);
     goal = getNextEndPoint(link.target.var_name, points, false);
     const rows = grid[0].length;
@@ -2549,157 +2587,35 @@ function generatePoints(linkCounts) {
       }
     };
 
-    // const addPoints_InGroup =(
-    //   startPoints: [number, number][],
-    //   endPoints: [number, number][],
-    //   outLinks: number,
-    //   inLinks: number,
-    //   startX: number,
-    //   startY: number,
-    //   endX: number,
-    //   endY: number,
-    // )=>{
-    //   let remainingOutLinks = outLinks;
-    //   let remainingInLinks = inLinks;
-    //   let i = startX;
-    //   let j = startY;
-    //   let i_end = endX;
-    //   let j_end = endY;
-    //   // Assign start points for outLinks
-    //   while (remainingOutLinks > 0) {
-    //     startPoints.push([i, j]);
-    //     remainingOutLinks--;
-    //   }
-    //   // Assign end points for inLinks
-    //   while (remainingInLinks > 0) {
-    //     endPoints.push([i_end, j_end]);
-    //     remainingInLinks--;
-    //   }
-    // }
-    // // Set points for inGroup links
-    // if (position === "top") {
-    //   addPoints_InGroup(
-    //     inGroup_startPoints,
-    //     inGroup_endPoints,
-    //     InGroup_outLinks,
-    //     InGroup_inLinks,
-    //     x + 1,
-    //     y + height,
-    //     x + width - 1,
-    //     y + height, // Primary edge: bottom
-    //   );
-    // } else if (position === "left") {
-    //   addPoints_InGroup(
-    //     inGroup_startPoints,
-    //     inGroup_endPoints,
-    //     InGroup_outLinks,
-    //     InGroup_inLinks,
-    //     x + width,
-    //     y,
-    //     x + width,
-    //     y + height, // Primary edge: right
-    //   );
-    // } else if (position === "right") {
-    //   addPoints_InGroup(
-    //     inGroup_startPoints,
-    //     inGroup_endPoints,
-    //     InGroup_outLinks,
-    //     InGroup_inLinks,
-    //     x,
-    //     y,
-    //     x,
-    //     y + height, // Primary edge: left
-    //   );
-    // } else if (position === "bottom") {
-    //   addPoints_InGroup(
-    //     inGroup_startPoints,
-    //     inGroup_endPoints,
-    //     InGroup_outLinks,
-    //     InGroup_inLinks,
-    //     x + width - 1,
-    //     y,
-    //     x + 1,
-    //     y, // Primary edge: top
-    //   );
-    // }
-    // Set points for inGroup links
-    if (position === "top") {
-      addPoints(
-        inGroup_startPoints,
-        inGroup_endPoints,
-        InGroup_outLinks,
-        InGroup_inLinks,
-        x + width,
-        y + height,
-        -1,
-        0,
-        x,
-        y + height, // Primary edge: bottom
-        x,
-        y + height,
-        1,
-        0,
-        x + width,
-        y + height, // Secondary edge: right
-      );
-    } else if (position === "left") {
-      addPoints(
-        inGroup_startPoints,
-        inGroup_endPoints,
-        InGroup_outLinks,
-        InGroup_inLinks,
-        x + width,
-        y,
-        0,
-        1,
-        x + width,
-        y + height, // Primary edge: right
-        x + width,
-        y,
-        0,
-        1,
-        x + width,
-        y + height, // Secondary edge: bottom
-      );
-    } else if (position === "right") {
-      addPoints(
-        inGroup_startPoints,
-        inGroup_endPoints,
-        InGroup_outLinks,
-        InGroup_inLinks,
-        x,
-        y,
-        0,
-        1,
-        x,
-        y + height, // Primary edge: left
-        x,
-        y,
-        0,
-        1,
-        x,
-        y + height, // Secondary edge: bottom
-      );
-    } else if (position === "bottom") {
-      addPoints(
-        inGroup_startPoints,
-        inGroup_endPoints,
-        InGroup_outLinks,
-        InGroup_inLinks,
-        x + width,
-        y,
-        -1,
-        0,
-        x,
-        y, // Primary edge: top
-        x + width,
-        y,
-        0,
-        1,
-        x + width,
-        y + height, // Secondary edge: right
-      );
+    const addPoints_InGroup =(
+      startPoints: [number, number][],
+      endPoints: [number, number][],
+      outLinks: number,
+      inLinks: number,
+      centerX: number,
+      centerY: number,
+    )=>{
+      let remainingOutLinks = outLinks;
+      let remainingInLinks = inLinks;
+      let i = centerX;
+      let j = centerY;
+      while (remainingOutLinks > 0) {
+        startPoints.push([i, j]);
+        remainingOutLinks--;
+      }
+      while (remainingInLinks > 0) {
+        endPoints.push([i, j]);
+        remainingInLinks--;
+      }
     }
+    addPoints_InGroup(
+      inGroup_startPoints,
+      inGroup_endPoints,
+      InGroup_outLinks,
+      InGroup_inLinks,
+      x + width/2,
+      y + height/2
+    );
 
     // Set points for outGroup links
     if (position === "top") {

@@ -24,16 +24,17 @@
 
   let container;
   let selectedVar: tVariable | undefined = undefined;
-
+  let showLinks = true;
   // let trigger_times = 0;
-  $: update_vars(data, links);
+  $: update_vars(data, links, showLinks);
   async function update_vars(
     vars: tDPSIR | undefined,
     links: tVisLink[] | undefined,
+    showLinks: boolean
   ) {
     if (!vars || !links) return;
     // console.log(vars, links);
-    DPSIR.update_vars(vars, links, $varTypeColorScale);
+    DPSIR.update_vars(vars, links, $varTypeColorScale, showLinks);
   }
 
   onMount(async () => {
@@ -46,22 +47,38 @@
     };
 
     DPSIR.init(svgId, utilities, handlers);
-    update_vars(data, links);
+    // DPSIR.on("VarOrLinkSelected", handleVarOrLinkSelected);
+    update_vars(data, links, showLinks);
+    
   });
-
+  function toggleLinks() {
+    showLinks = !showLinks;
+    DPSIR.toggleLinks(showLinks);
+  }
   function handleVarOrLinkSelected(e) {
+    // console.log(e)
     // e.preventDefault();
     const variable: tVariable = e;
     selectedVar = variable;
     // console.log({ selectedVar });
     dispatch("var-selected", selectedVar); // for App.svelte to hightlight the chunks
   }
+
+
+
 </script>
 
 <div bind:this={container} class="container h-full w-full">
   <!-- <div class="absolute right-0 top-1">
     <Curation bind:this={curation} {metadata} />
   </div> -->
+  <button
+      class="absolute top-20 right-20 bg-gray-200 p-1 rounded-sm"
+      on:click={() => {
+        toggleLinks();
+      }}
+      >{showLinks ? 'Hide Other Links' : 'Show Other Links'}</button
+    >
   <svg id={svgId} class="varbox-svg h-full w-full">
     <defs></defs>
   </svg>
@@ -79,8 +96,11 @@
     & .link-not-highlight {
       opacity: 0.05;
     }
+    & .not-show-link-not-highlight {
+      opacity: 0;
+    }
     & .line-hover {
-      /* stroke: black; */
+      stroke: black;
       /* stroke-width: 3; */
       opacity: 1;
     }
