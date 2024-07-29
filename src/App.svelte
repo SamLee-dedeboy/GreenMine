@@ -25,8 +25,7 @@
   import { server_address } from "lib/constants";
   import * as d3 from "d3";
   import { varTypeColorScale } from "lib/store";
-  import PromptEntry from "lib/components/PromptEntry.svelte";
-  import PromptResults from "lib/components/PromptResults.svelte";
+  import Prompts from "lib/components/Prompts.svelte";
 
   let interview_data: tTranscript[] | undefined = undefined;
   let interview_viewer_component;
@@ -40,7 +39,6 @@
   let show_dpsir: boolean = true;
   let show_prompts: boolean = false;
   // pipeline
-  let pipeline_tmp_data: tServerPipelineData | undefined = undefined;
   // v1
   let keyword_data: any;
   let chunk_graph: any;
@@ -141,43 +139,6 @@
       summary_interviews = enhanceChunks(chunks);
     }
   }
-  function fetch_identify_var_types(data: tServerPromptData) {
-    if (!data) return;
-    fetch(server_address + "/curation/identify_var_types/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        var_type_definitions: data.var_type_definitions,
-        system_prompt_blocks: data.system_prompt_blocks,
-        user_prompt_blocks: data.user_prompt_blocks,
-      }),
-    })
-      .then((res) => res.json())
-      .then((chunks_w_var_types) => {
-        if (!pipeline_tmp_data) {
-          pipeline_tmp_data = {
-            identify_var_types: chunks_w_var_types,
-          };
-        } else {
-          pipeline_tmp_data.identify_var_types = chunks_w_var_types;
-        }
-        console.log({ chunks_w_var_types });
-      });
-  }
-  function save_identify_var_types(pipeline_tmp_data: tServerPipelineData) {
-    if (!pipeline_tmp_data) return;
-    fetch(server_address + "/curation/identify_var_types/save", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        all_chunks: pipeline_tmp_data.identify_var_types,
-      }),
-    });
-  }
   onMount(async () => {
     await fetchTest();
     await fetchData();
@@ -195,33 +156,11 @@
           class="absolute left-1/2 top-1/2 z-10 flex w-fit -translate-x-1/2 -translate-y-1/2 items-stretch rounded-md bg-gray-200 pt-6"
           use:draggable
         >
-          <PromptEntry
+          <Prompts
             data={prompt_data}
-            tmp_data={pipeline_tmp_data}
-            on:fetch_identify_var_types={(e) =>
-              fetch_identify_var_types(e.detail)}
-            on:save_identify_var_types={(e) =>
-              save_identify_var_types(e.detail)}
+            {pipeline_result}
             on:close={() => (show_prompts = false)}
-          />
-          <PromptResults
-            title="baseline"
-            data={pipeline_result?.identify_var_types || []}
-          />
-          <PromptResults
-            title="new"
-            data={pipeline_tmp_data?.identify_var_types || []}
-          />
-          <button
-            aria-label="close"
-            class="text-magnum-800 focus:shadow-magnum-400 absolute right-1 top-0.5 inline-flex h-5
-                w-5 appearance-none items-center justify-center
-                rounded-full hover:bg-zinc-300"
-            style="cursor: pointer"
-            on:click={() => (show_prompts = false)}
-          >
-            <img src="X.svg" alt="x" class="pointer-events-none h-4" />
-          </button>
+          ></Prompts>
         </div>
       {/if}
       <div
