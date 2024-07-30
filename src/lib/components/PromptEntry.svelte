@@ -1,17 +1,8 @@
 <script lang="ts">
-  import { createDialog, melt } from "@melt-ui/svelte";
   import { createEventDispatcher, onMount } from "svelte";
-  import { server_address } from "lib/constants";
-  import { draggable } from "lib/utils/draggable";
-  const dispatch = createEventDispatcher();
   import { fade, slide } from "svelte/transition";
-  import type {
-    tServerPipelineData,
-    tServerPromptData,
-    tPrompt,
-  } from "lib/types";
+  import type { tPrompt } from "lib/types";
   export let data: tPrompt | undefined = undefined;
-  let show_var_type_definitions = true;
   let show_prompts = true;
 
   function highlight_variables(text: string) {

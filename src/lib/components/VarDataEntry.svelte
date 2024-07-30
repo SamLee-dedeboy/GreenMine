@@ -4,7 +4,7 @@
   import { slide } from "svelte/transition";
   export let data: tVarData;
   let show = true;
-  let shown_var: string = "";
+  let shown_var: string = "driver";
 </script>
 
 <div class="flex flex-col gap-y-0.5 px-1">
@@ -80,6 +80,6 @@
     @apply rounded-sm bg-gray-200 text-gray-700 outline-double outline-1 outline-gray-600 hover:bg-gray-300;
   }
   .active {
-    @apply w-[6rem] bg-gray-200;
+    @apply w-[6rem] bg-gray-300 font-bold;
   }
 </style>

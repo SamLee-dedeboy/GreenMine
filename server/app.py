@@ -15,9 +15,9 @@ app = Flask(__name__)
 CORS(app)
 dirname = os.path.dirname(__file__)
 relative_path = lambda dirname, filename: os.path.join(dirname, filename)
-node_data_path = relative_path(dirname, 'data/v2/tmp/nodes/')
-chunk_data_path = relative_path(dirname, 'data/v2/tmp/chunk/')
-metadata_path = relative_path(dirname, 'data/v2/tmp/variable_definitions/')
+node_data_path = relative_path(dirname, 'data/v2/user/nodes/')
+chunk_data_path = relative_path(dirname, 'data/v2/user/chunk/')
+metadata_path = relative_path(dirname, 'data/v2/user/variable_definitions/')
 v1_data_path = relative_path(dirname, 'data/v1/')
 # openai
 openai_api_key = open(relative_path(dirname, "openai_api_key")).read()
@@ -52,8 +52,8 @@ def get_data():
     identify_vars_prompts = json.load(open(relative_path(dirname,'GPTUtils/prompts/identify_vars.json'), encoding='utf-8'))
     
     # pipeline data
-    identify_var_types = json.load(open(relative_path(dirname, 'data/v2/tmp/pipeline/identify_var_types/chunk_w_var_types.json'), encoding='utf-8'))
-    identify_vars = json.load(open(relative_path(dirname, 'data/v2/tmp/pipeline/identify_vars/chunk_w_vars.json'), encoding='utf-8'))
+    identify_var_types = json.load(open(relative_path(dirname, 'data/v2/user/pipeline/identify_var_types/chunk_w_var_types.json'), encoding='utf-8'))
+    identify_vars = json.load(open(relative_path(dirname, 'data/v2/user/pipeline/identify_vars/chunk_w_vars.json'), encoding='utf-8'))
     return {
         "interviews": interview_data,
         "nodes": nodes,
@@ -122,7 +122,7 @@ def curate_identify_var_types():
     prompt_variables = {
         "var_types": "\n".join([f"{var_type}: {var_type_def}" for var_type, var_type_def in var_type_definitions.items()]),
     }
-    all_chunks = json.load(open(relative_path(dirname, "data/v2/tmp/pipeline/init/chunks.json"), encoding='utf-8'))
+    all_chunks = json.load(open(relative_path(dirname, "data/v2/user/pipeline/init/chunks.json"), encoding='utf-8'))
     system_prompt_blocks = [prompt_block[1] for prompt_block in system_prompt_blocks]
     user_prompt_blocks = [prompt_block[1] for prompt_block in user_prompt_blocks]
     all_chunks = query.identify_var_types(all_chunks, openai_client, system_prompt_blocks, user_prompt_blocks, prompt_variables)
@@ -131,7 +131,7 @@ def curate_identify_var_types():
 @app.route("/curation/identify_var_types/save", methods=['POST'])
 def save_identify_var_types():
     all_chunks =  request.json['all_chunks']
-    local.save_json(all_chunks, relative_path(dirname, "data/v2/tmp/pipeline/identify_var_types/chunk_w_var_types.json"))
+    local.save_json(all_chunks, relative_path(dirname, "data/v2/user/pipeline/identify_var_types/chunk_w_var_types.json"))
     return "success"
 
 
