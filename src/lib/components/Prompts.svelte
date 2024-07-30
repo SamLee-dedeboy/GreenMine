@@ -15,94 +15,42 @@
 
   export let data: tServerPromptData;
   export let pipeline_result: tServerPipelineData | undefined = undefined;
-  let tmp_data: tServerPipelineData | undefined;
+  let tmp_data: tServerPipelineData = {
+    identify_var_types: [],
+    identify_vars: [],
+  };
   let show_step = 1;
-  function fetch_identify_var_types(data: tServerPromptData) {
+  function execute_prompt(data: tServerPromptData, key: string) {
     if (!data) return;
-    fetch(server_address + "/curation/identify_var_types/", {
+    fetch(server_address + `/curation/${key}/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(data.identify_var_types),
+      body: JSON.stringify(data[key]),
     })
       .then((res) => res.json())
-      .then((chunks_w_var_types) => {
-        if (!tmp_data) {
-          tmp_data = {
-            identify_var_types: chunks_w_var_types,
-            identify_vars: [],
-          };
-        } else {
-          tmp_data.identify_var_types = chunks_w_var_types;
-        }
-        console.log({ chunks_w_var_types });
+      .then((res) => {
+        tmp_data[key] = res;
+        console.log({ res });
       });
   }
-  function save_identify_var_types(pipeline_tmp_data: tServerPipelineData) {
+  function save_data(
+    data: tServerPromptData,
+    pipeline_tmp_data: tServerPipelineData,
+    key: string,
+  ) {
     if (!pipeline_tmp_data) return;
-    fetch(server_address + "/curation/identify_var_types/save", {
+    fetch(server_address + `/curation/${key}/save`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        all_chunks: pipeline_tmp_data.identify_var_types,
+        result: pipeline_tmp_data[key],
+        context: data[key],
       }),
     });
-  }
-
-  function myslide(
-    node,
-    { delay = 0, duration = 400, easing = cubicOut, axis = "y" } = {},
-  ) {
-    console.log({ node });
-    const style = getComputedStyle(node);
-    const opacity = +style.opacity;
-    const primary_property = axis === "y" ? "height" : "width";
-    const primary_property_value = parseFloat(style[primary_property]);
-    console.log(
-      { style, primary_property, primary_property_value },
-      style["height"],
-    );
-    const secondary_properties =
-      axis === "y" ? ["top", "bottom"] : ["left", "right"];
-    const capitalized_secondary_properties = secondary_properties.map(
-      (e) => `${e[0].toUpperCase()}${e.slice(1)}`,
-    );
-    const padding_start_value = parseFloat(
-      style[`padding${capitalized_secondary_properties[0]}`],
-    );
-    const padding_end_value = parseFloat(
-      style[`padding${capitalized_secondary_properties[1]}`],
-    );
-    const margin_start_value = parseFloat(
-      style[`margin${capitalized_secondary_properties[0]}`],
-    );
-    const margin_end_value = parseFloat(
-      style[`margin${capitalized_secondary_properties[1]}`],
-    );
-    const border_width_start_value = parseFloat(
-      style[`border${capitalized_secondary_properties[0]}Width`],
-    );
-    const border_width_end_value = parseFloat(
-      style[`border${capitalized_secondary_properties[1]}Width`],
-    );
-    return {
-      delay,
-      duration,
-      easing,
-      css: (t) =>
-        "overflow: hidden;" +
-        `opacity: ${Math.min(t * 20, 1) * opacity};` +
-        `${primary_property}: ${t * primary_property_value}px;` +
-        `padding-${secondary_properties[0]}: ${t * padding_start_value}px;` +
-        `padding-${secondary_properties[1]}: ${t * padding_end_value}px;` +
-        `margin-${secondary_properties[0]}: ${t * margin_start_value}px;` +
-        `margin-${secondary_properties[1]}: ${t * margin_end_value}px;` +
-        `border-${secondary_properties[0]}-width: ${t * border_width_start_value}px;` +
-        `border-${secondary_properties[1]}-width: ${t * border_width_end_value}px;`,
-    };
   }
 </script>
 
@@ -145,7 +93,11 @@
     {#if show_step === 1}
       <div in:slide|global class="step-1 flex">
         <div class="flex min-w-[15rem] flex-col gap-y-1 bg-gray-100">
-          <PromptHeader title="Identify Var Types"></PromptHeader>
+          <PromptHeader
+            title="Identify Var Types"
+            on:run={() => execute_prompt(data, "identify_var_types")}
+            on:save={() => save_data(data, tmp_data, "identify_var_types")}
+          ></PromptHeader>
           <VarTypeDataEntry data={data.identify_var_types.var_type_definitions}
           ></VarTypeDataEntry>
           <PromptEntry
@@ -154,11 +106,6 @@
                 data.identify_var_types.system_prompt_blocks,
               user_prompt_blocks: data.identify_var_types.user_prompt_blocks,
             }}
-            on:fetch_identify_var_types={(e) =>
-              fetch_identify_var_types(e.detail)}
-            on:save_identify_var_types={(e) =>
-              save_identify_var_types(e.detail)}
-            on:close={() => dispatch("close")}
           />
         </div>
         <IdentifyVarTypeResults
@@ -173,7 +120,11 @@
     {:else if show_step === 2}
       <div in:slide|global class="step-2 flex">
         <div class="flex min-w-[30rem] flex-col gap-y-1 bg-gray-100">
-          <PromptHeader title="Identify Vars"></PromptHeader>
+          <PromptHeader
+            title="Identify Vars"
+            on:run={() => execute_prompt(data, "identify_vars")}
+            on:save={() => save_data(data, tmp_data, "identify_vars")}
+          ></PromptHeader>
           <VarDataEntry data={data.identify_vars.var_definitions}
           ></VarDataEntry>
           <PromptEntry
@@ -181,11 +132,6 @@
               system_prompt_blocks: data.identify_vars.system_prompt_blocks,
               user_prompt_blocks: data.identify_vars.user_prompt_blocks,
             }}
-            on:fetch_identify_var_types={(e) =>
-              fetch_identify_var_types(e.detail)}
-            on:save_identify_var_types={(e) =>
-              save_identify_var_types(e.detail)}
-            on:close={() => dispatch("close")}
           />
         </div>
         <IdentifyVarResults
