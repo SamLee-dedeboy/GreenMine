@@ -5,11 +5,12 @@
   import VarTypeDataEntry from "./VarTypeDataEntry.svelte";
   import VarDataEntry from "./VarDataEntry.svelte";
   import PromptHeader from "./PromptHeader.svelte";
-  import { slide, fly, blur, draw, crossfade } from "svelte/transition";
+  import { fade, slide, fly, blur, draw, crossfade } from "svelte/transition";
+  import { cubicOut } from "svelte/easing";
 
   import type { tServerPipelineData, tServerPromptData } from "lib/types";
   import { server_address } from "lib/constants";
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, tick } from "svelte";
   const dispatch = createEventDispatcher();
 
   export let data: tServerPromptData;
@@ -50,11 +51,64 @@
       }),
     });
   }
+
+  function myslide(
+    node,
+    { delay = 0, duration = 400, easing = cubicOut, axis = "y" } = {},
+  ) {
+    console.log({ node });
+    const style = getComputedStyle(node);
+    const opacity = +style.opacity;
+    const primary_property = axis === "y" ? "height" : "width";
+    const primary_property_value = parseFloat(style[primary_property]);
+    console.log(
+      { style, primary_property, primary_property_value },
+      style["height"],
+    );
+    const secondary_properties =
+      axis === "y" ? ["top", "bottom"] : ["left", "right"];
+    const capitalized_secondary_properties = secondary_properties.map(
+      (e) => `${e[0].toUpperCase()}${e.slice(1)}`,
+    );
+    const padding_start_value = parseFloat(
+      style[`padding${capitalized_secondary_properties[0]}`],
+    );
+    const padding_end_value = parseFloat(
+      style[`padding${capitalized_secondary_properties[1]}`],
+    );
+    const margin_start_value = parseFloat(
+      style[`margin${capitalized_secondary_properties[0]}`],
+    );
+    const margin_end_value = parseFloat(
+      style[`margin${capitalized_secondary_properties[1]}`],
+    );
+    const border_width_start_value = parseFloat(
+      style[`border${capitalized_secondary_properties[0]}Width`],
+    );
+    const border_width_end_value = parseFloat(
+      style[`border${capitalized_secondary_properties[1]}Width`],
+    );
+    return {
+      delay,
+      duration,
+      easing,
+      css: (t) =>
+        "overflow: hidden;" +
+        `opacity: ${Math.min(t * 20, 1) * opacity};` +
+        `${primary_property}: ${t * primary_property_value}px;` +
+        `padding-${secondary_properties[0]}: ${t * padding_start_value}px;` +
+        `padding-${secondary_properties[1]}: ${t * padding_end_value}px;` +
+        `margin-${secondary_properties[0]}: ${t * margin_start_value}px;` +
+        `margin-${secondary_properties[1]}: ${t * margin_end_value}px;` +
+        `border-${secondary_properties[0]}-width: ${t * border_width_start_value}px;` +
+        `border-${secondary_properties[1]}-width: ${t * border_width_end_value}px;`,
+    };
+  }
 </script>
 
 <div class="flex">
   <!-- side panel -->
-  <div class="flex w-[5.5rem] flex-col items-end gap-y-0.5 px-0.5 text-sm">
+  <div class="flex w-[5.5rem] flex-col items-end gap-y-0.5 px-1 text-sm">
     <div
       tabindex="0"
       role="button"
@@ -86,55 +140,62 @@
       Links
     </div>
   </div>
-  {#if show_step === 1}
-    <div in:slide class="flex">
-      <div class="flex flex-col gap-y-1 bg-gray-100">
-        <PromptHeader></PromptHeader>
-        <VarTypeDataEntry data={data.identify_var_types.var_type_definitions}
-        ></VarTypeDataEntry>
-        <PromptEntry
-          data={{
-            system_prompt_blocks: data.identify_var_types.system_prompt_blocks,
-            user_prompt_blocks: data.identify_var_types.user_prompt_blocks,
-          }}
-          on:fetch_identify_var_types={(e) =>
-            fetch_identify_var_types(e.detail)}
-          on:save_identify_var_types={(e) => save_identify_var_types(e.detail)}
-          on:close={() => dispatch("close")}
+
+  {#key show_step}
+    {#if show_step === 1}
+      <div in:slide|global class="step-1 flex">
+        <div class="flex min-w-[15rem] flex-col gap-y-1 bg-gray-100">
+          <PromptHeader title="Identify Var Types"></PromptHeader>
+          <VarTypeDataEntry data={data.identify_var_types.var_type_definitions}
+          ></VarTypeDataEntry>
+          <PromptEntry
+            data={{
+              system_prompt_blocks:
+                data.identify_var_types.system_prompt_blocks,
+              user_prompt_blocks: data.identify_var_types.user_prompt_blocks,
+            }}
+            on:fetch_identify_var_types={(e) =>
+              fetch_identify_var_types(e.detail)}
+            on:save_identify_var_types={(e) =>
+              save_identify_var_types(e.detail)}
+            on:close={() => dispatch("close")}
+          />
+        </div>
+        <IdentifyVarTypeResults
+          title="baseline"
+          data={pipeline_result?.identify_var_types || []}
+        />
+        <IdentifyVarTypeResults
+          title="new"
+          data={tmp_data?.identify_var_types || []}
         />
       </div>
-      <IdentifyVarTypeResults
-        title="baseline"
-        data={pipeline_result?.identify_var_types || []}
-      />
-      <IdentifyVarTypeResults
-        title="new"
-        data={tmp_data?.identify_var_types || []}
-      />
-    </div>
-  {:else if show_step === 2}
-    <div in:slide class="flex">
-      <div class="flex flex-col gap-y-1 bg-gray-100">
-        <PromptHeader></PromptHeader>
-        <VarDataEntry data={data.identify_vars.var_definitions}></VarDataEntry>
-        <PromptEntry
-          data={{
-            system_prompt_blocks: data.identify_vars.system_prompt_blocks,
-            user_prompt_blocks: data.identify_vars.user_prompt_blocks,
-          }}
-          on:fetch_identify_var_types={(e) =>
-            fetch_identify_var_types(e.detail)}
-          on:save_identify_var_types={(e) => save_identify_var_types(e.detail)}
-          on:close={() => dispatch("close")}
+    {:else if show_step === 2}
+      <div in:slide|global class="step-2 flex">
+        <div class="flex min-w-[30rem] flex-col gap-y-1 bg-gray-100">
+          <PromptHeader title="Identify Vars"></PromptHeader>
+          <VarDataEntry data={data.identify_vars.var_definitions}
+          ></VarDataEntry>
+          <PromptEntry
+            data={{
+              system_prompt_blocks: data.identify_vars.system_prompt_blocks,
+              user_prompt_blocks: data.identify_vars.user_prompt_blocks,
+            }}
+            on:fetch_identify_var_types={(e) =>
+              fetch_identify_var_types(e.detail)}
+            on:save_identify_var_types={(e) =>
+              save_identify_var_types(e.detail)}
+            on:close={() => dispatch("close")}
+          />
+        </div>
+        <IdentifyVarResults
+          title="baseline"
+          data={pipeline_result?.identify_vars || []}
         />
+        <IdentifyVarResults title="new" data={tmp_data?.identify_vars || []} />
       </div>
-      <IdentifyVarResults
-        title="baseline"
-        data={pipeline_result?.identify_vars || []}
-      />
-      <IdentifyVarResults title="new" data={tmp_data?.identify_vars || []} />
-    </div>
-  {/if}
+    {/if}
+  {/key}
 
   <button
     aria-label="close"
