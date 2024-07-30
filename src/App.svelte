@@ -67,7 +67,7 @@
         // Process each group of variables to add factor_type
         Object.keys(res.nodes).forEach((varType: string) => {
           const nodes: tVariableType = res.nodes[varType];
-          const defs: tVarTypeDef = res.metadata[varType];
+          const defs: tVarTypeDef = res.variable_definitions[varType];
           if (!var_data) var_data = {};
           var_data[varType] = utils.integrateTypes(nodes, defs);
         });
@@ -190,7 +190,6 @@
           {#if show_dpsir}
             <DPSIR
               data={var_data}
-              metadata={dataset?.metadata}
               links={vis_links}
               on:var-selected={handleVarOrLinkSelected}
             ></DPSIR>

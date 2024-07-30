@@ -41,6 +41,7 @@
     key: string,
   ) {
     if (!pipeline_tmp_data) return;
+    console.log("saving", pipeline_tmp_data[key], data[key]);
     fetch(server_address + `/curation/${key}/save`, {
       method: "POST",
       headers: {
@@ -98,7 +99,8 @@
             on:run={() => execute_prompt(data, "identify_var_types")}
             on:save={() => save_data(data, tmp_data, "identify_var_types")}
           ></PromptHeader>
-          <VarTypeDataEntry data={data.identify_var_types.var_type_definitions}
+          <VarTypeDataEntry
+            bind:data={data.identify_var_types.var_type_definitions}
           ></VarTypeDataEntry>
           <PromptEntry
             data={{
@@ -125,7 +127,7 @@
             on:run={() => execute_prompt(data, "identify_vars")}
             on:save={() => save_data(data, tmp_data, "identify_vars")}
           ></PromptHeader>
-          <VarDataEntry data={data.identify_vars.var_definitions}
+          <VarDataEntry bind:data={data.identify_vars.var_definitions}
           ></VarDataEntry>
           <PromptEntry
             data={{
@@ -161,7 +163,7 @@
     transition: all 0.2s;
   }
   .active {
-    @apply w-[5rem] bg-gray-300 opacity-100;
+    @apply pointer-events-none w-[5rem] bg-green-300 opacity-100;
   }
   .container {
   }

@@ -4,7 +4,20 @@
   import { slide } from "svelte/transition";
   export let data: tVarData;
   let show = true;
-  let shown_var: string = "driver";
+  let shown_var_type: string = "driver";
+  function handleAddVar() {
+    data[shown_var_type] = [
+      {
+        var_name: "New Var",
+        definition: "New Definition",
+        factor_type: "Factor Type",
+      },
+      ...data[shown_var_type],
+    ];
+  }
+  onMount(() => {
+    console.log({ data });
+  });
 </script>
 
 <div class="flex flex-col gap-y-0.5 px-1">
@@ -28,44 +41,58 @@
           <div
             role="button"
             tabindex="0"
-            class="r flex w-[5.5rem] items-center px-0.5 capitalize transition-all"
-            class:active={shown_var === var_type}
+            class="flex w-[5.5rem] items-center px-0.5 capitalize transition-all hover:bg-gray-300"
+            class:active={shown_var_type === var_type}
             on:click={() =>
-              (shown_var = shown_var === var_type ? "" : var_type)}
+              (shown_var_type = shown_var_type === var_type ? "" : var_type)}
             on:keyup={() => {}}
           >
             {var_type + "s"}
           </div>
         {/each}
       </div>
-      {#if shown_var !== ""}
+      {#if shown_var_type !== ""}
         <div
           transition:slide
           class="flex max-h-[20rem] flex-col divide-y overflow-y-auto pr-3"
         >
           <div class="flex divide-x">
             <div
-              class="flex w-[5rem] shrink-0 items-center justify-center pr-2 capitalize italic text-gray-600"
+              role="button"
+              tabindex="0"
+              class="flex w-full py-0.5 capitalize italic text-gray-600 hover:bg-gray-300"
+              on:click={() => handleAddVar()}
+              on:keyup={() => {}}
             >
-              Add
+              <div class="flex w-[5rem] items-center justify-center">
+                <img src="add.svg" alt="add" class="h-4 w-4" />
+              </div>
             </div>
-            <div
-              class="grow pl-2 text-left italic text-gray-500"
-              contenteditable
-            ></div>
           </div>
-          {#each Object.entries(data[shown_var]) as [var_name, var_definition]}
+          {#each data[shown_var_type] as { var_name, definition, factor_type }, index}
             <div class="flex divide-x">
               <div
-                class="flex w-[5rem] shrink-0 items-center justify-center pr-2 capitalize italic text-gray-600"
+                class="relative flex w-[5rem] shrink-0 items-center justify-center capitalize italic text-gray-600"
+                contenteditable
+                on:blur={(e) => {
+                  data[shown_var_type][index].var_name =
+                    e.target.innerText.trim();
+                }}
               >
                 {var_name}
+                <!-- <span class="absolute left-0 top-0 text-xs text-gray-500"
+                  >{factor_type}</span
+                > -->
               </div>
               <div
                 class="grow pl-2 text-left italic text-gray-500"
                 contenteditable
+                on:blur={(e) => {
+                  data[shown_var_type][index].definition =
+                    e.target.innerText.trim();
+                }}
               >
-                {var_definition.definition} - {var_definition.factor_type}
+                {definition}
               </div>
             </div>
           {/each}
@@ -80,6 +107,6 @@
     @apply rounded-sm bg-gray-200 text-gray-700 outline-double outline-1 outline-gray-600 hover:bg-gray-300;
   }
   .active {
-    @apply w-[6rem] bg-gray-300 font-bold;
+    @apply pointer-events-none w-[6rem] bg-green-300 font-semibold;
   }
 </style>

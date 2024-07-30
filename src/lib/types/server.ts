@@ -4,7 +4,7 @@ export type tServerData = {
   interviews: tTranscript[];
   nodes: tDPSIR;
   links: tLink[];
-  metadata: tMetadata;
+  variable_definitions: Record<string, tVarDef>;
   v1: tV1ServerData;
   prompts: tServerPromptData;
   pipeline_result: tServerPipelineData;
@@ -31,7 +31,7 @@ export type tIdentifyVarsData = {
 export type tVarTypeData = Record<string, string>;
 export type tVarData = Record<
   string,
-  Record<string, { definition: string; factor_type: string }>
+  { var_name: string; definition: string; factor_type: string }[]
 >;
 export type tPrompt = {
   system_prompt_blocks: [string, string][];
@@ -62,16 +62,8 @@ export type tVarResult = Record<
   }[]
 >;
 
-export type tVarTypeDef = {
-  [key: string]: {
-    definition: string;
-    factor_type: string;
-  };
-};
-export type tMetadata = {
-  driver: tVarTypeDef;
-  pressure: tVarTypeDef;
-  state: tVarTypeDef;
-  impact: tVarTypeDef;
-  response: tVarTypeDef;
+export type tVarDef = {
+  var_name: string;
+  definition: string;
+  factor_type: string;
 };

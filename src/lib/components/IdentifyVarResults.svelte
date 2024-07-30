@@ -38,13 +38,13 @@
                   class:isEmpty
                 >
                   <div
-                    class="h-fit rounded-sm px-0.5 text-sm italic opacity-70 outline-double outline-0 outline-gray-300"
+                    class="h-fit w-[4.5rem] shrink-0 rounded-sm px-0.5 text-sm italic opacity-70 outline-double outline-0 outline-gray-300"
                   >
                     {var_type}
                   </div>
                   {#if !isEmpty}
                     <div
-                      class="flex w-full flex-wrap gap-x-1 gap-y-0.5 px-0.5 py-1"
+                      class="flex w-full flex-wrap gap-x-1 gap-y-1 px-0.5 py-1"
                     >
                       {#each datum.identify_vars_result[var_type] as var_data}
                         <div

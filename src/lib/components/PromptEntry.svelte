@@ -17,7 +17,7 @@
 </script>
 
 <div class="">
-  <div class="flex flex-col">
+  <div class="flex flex-col px-1">
     <div
       tabindex="0"
       role="button"

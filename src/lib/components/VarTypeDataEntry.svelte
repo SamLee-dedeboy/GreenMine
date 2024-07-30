@@ -22,7 +22,11 @@
           <div class="w-[5rem] shrink-0 pr-2 capitalize italic text-gray-600">
             {var_type}
           </div>
-          <div class="grow pl-2 text-left italic text-gray-500" contenteditable>
+          <div
+            class="grow pl-2 text-left italic text-gray-500"
+            contenteditable
+            on:blur={(e) => (data[var_type] = e.target.innerText.trim())}
+          >
             {definition}
           </div>
         </div>

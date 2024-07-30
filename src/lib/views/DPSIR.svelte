@@ -11,11 +11,9 @@
     tVariable,
     tLink,
     tVisLink,
-    tMetadata,
   } from "../types";
   import { varTypeColorScale } from "lib/store";
   export let data: tDPSIR | undefined;
-  export let metadata: tMetadata | undefined;
   export let links: tVisLink[] | undefined;
   const svgId = "model-svg";
 
