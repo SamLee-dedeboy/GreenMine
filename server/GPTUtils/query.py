@@ -184,20 +184,65 @@ def conversation_to_string(conversation):
         ]
     )
 def identify_var_types(all_chunks, openai_client, system_prompt_blocks, user_prompt_blocks, prompt_variables):
-    identify_var_type_prompt_list = []
+    prompt_list = []
     response_format, extract_response_func = None, None
     for chunk in all_chunks:
         conversation = chunk['conversation']
         prompt_variables['conversation'] = conversation_to_string(conversation)
-        identify_var_type_prompt, response_format, extract_response_func = prompts.identify_var_type_prompt_factory(system_prompt_blocks, user_prompt_blocks, prompt_variables)
-        identify_var_type_prompt_list.append(identify_var_type_prompt)
-    identified_var_types = multithread_prompts(openai_client, identify_var_type_prompt_list, response_format=response_format, temperature=0.0)
+        prompt, response_format, extract_response_func = prompts.identify_var_type_prompt_factory(system_prompt_blocks, user_prompt_blocks, prompt_variables)
+        prompt_list.append(prompt)
+    responses = multithread_prompts(openai_client, prompt_list, response_format=response_format, temperature=0.0)
     if response_format == 'json':
-        extraction_results = [extract_response_func(i) for i in identified_var_types]
-    for (chunk_index, extraction_result) in enumerate(extraction_results):
+        responses = [extract_response_func(i) for i in responses]
+    for (chunk_index, extraction_result) in enumerate(responses):
         chunk = all_chunks[chunk_index]
         chunk['identify_var_types_result'] = extraction_result
     return all_chunks
+
+def identify_vars(all_chunks, openai_client, system_prompt_blocks, user_prompt_blocks, prompt_variables):
+    prompt_list = []
+    response_format, extract_response_func = None, None
+    response_index_to_chunk_index = {}
+    response_index = 0
+    for chunk_index, chunk in enumerate(all_chunks):
+        chunk["identify_vars_result"] = {}
+        var_types = chunk['identify_var_types_result']
+        if len(var_types) == 0:
+            continue
+        conversation = chunk['conversation']
+        prompt_variables['conversation'] = conversation_to_string(conversation)
+        for var_type in var_types:
+            prompt_variables['var_type'] = var_type['var_type'] + prompt_variables[var_type['var_type']]['definition']
+            prompt_variables['explanation'] = var_type['explanation']
+            prompt_variables['vars'] = prompt_variables[var_type['var_type']]['vars']
+            prompt, response_format, extract_response_func = prompts.identify_var_prompt_factory(system_prompt_blocks, user_prompt_blocks, prompt_variables)
+            prompt_list.append(prompt)
+            response_index_to_chunk_index[response_index] = (chunk_index, var_type)
+            response_index += 1
+    responses = multithread_prompts(openai_client, prompt_list, response_format=response_format, temperature=0.0)
+    if response_format == 'json':
+        responses = [extract_response_func(i) for i in responses]
+    for (response_index, extraction_result) in enumerate(responses):
+        chunk_index, var_type = response_index_to_chunk_index[response_index]
+        chunk = all_chunks[chunk_index]
+        chunk["identify_vars_result"][var_type['var_type']] = extraction_result
+    return all_chunks
+
+# def chunk_execute_extraction(all_chunks, openai_client, system_prompt_blocks, user_prompt_blocks, prompt_variables, prompt_factory, extraction_result_key):
+#     prompt_list = []
+#     response_format, extract_response_func = None, None
+#     for chunk in all_chunks:
+#         conversation = chunk['conversation']
+#         prompt_variables['conversation'] = conversation_to_string(conversation)
+#         prompt, response_format, extract_response_func = prompt_factory(system_prompt_blocks, user_prompt_blocks, prompt_variables)
+#         prompt_list.append(prompt)
+#     responses = multithread_prompts(openai_client, prompt_list, response_format=response_format, temperature=0.0)
+#     if response_format == 'json':
+#         responses = [extract_response_func(i) for i in responses]
+#     for (chunk_index, extraction_result) in enumerate(responses):
+#         chunk = all_chunks[chunk_index]
+#         chunk[extraction_result_key] = extraction_result
+#     return all_chunks
 
 def save_json(data, filepath):
     with open(filepath, 'w', encoding='utf-8') as fp:

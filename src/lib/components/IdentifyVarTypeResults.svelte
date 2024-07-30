@@ -1,11 +1,11 @@
 <script lang="ts">
   import { fade } from "svelte/transition";
-  import type { tChunk } from "../types";
+  import type { tIdentifyVarTypes } from "../types";
   import { varTypeColorScale } from "lib/store";
-  export let data: tChunk[];
+  export let data: tIdentifyVarTypes[];
   export let title: string = "Results";
 
-  function sort_by_id(chunks: tChunk[]) {
+  function sort_by_id(chunks: tIdentifyVarTypes[]) {
     console.log("sort", chunks);
     return chunks.sort((a, b) => {
       const pid_a = a.id.replace("N", "").split("_")[0];

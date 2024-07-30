@@ -6,8 +6,8 @@ import os
 from openai import OpenAI
 # from . import GPTUtils
 # from . import DataUtils
-import GPTUtils
-import DataUtils
+from GPTUtils import query, prompts
+from DataUtils import local, dr, v1_processing
 from collections import defaultdict
 
 #init, do not read data
@@ -40,14 +40,20 @@ def get_data():
 
     v1_data = get_data_v1(v1_data_path)
 
-    # prompt data
+    # prompt template data
     var_type_definitions = json.load(open(relative_path(dirname, 'GPTUtils/contexts/var_type_definitions.json'), encoding='utf-8'))
-    prompts = json.load(open(relative_path(dirname,'GPTUtils/prompts/identify_var_types.json'), encoding='utf-8'))
-    system_prompt_blocks = prompts['system_prompt_blocks']
-    user_prompt_blocks = prompts['user_prompt_blocks']
+    var_definitions = {}
+    for var_type in var_type_definitions.keys():
+        var_definitions_by_type = json.load(open(f"GPTUtils/contexts/variable_definitions/{var_type}_variables_def.json"))
+        var_definitions[var_type] = var_definitions_by_type
+
+    # prompts
+    identify_var_types_prompts = json.load(open(relative_path(dirname,'GPTUtils/prompts/identify_var_types.json'), encoding='utf-8'))
+    identify_vars_prompts = json.load(open(relative_path(dirname,'GPTUtils/prompts/identify_vars.json'), encoding='utf-8'))
     
     # pipeline data
     identify_var_types = json.load(open(relative_path(dirname, 'data/v2/tmp/pipeline/identify_var_types/chunk_w_var_types.json'), encoding='utf-8'))
+    identify_vars = json.load(open(relative_path(dirname, 'data/v2/tmp/pipeline/identify_vars/chunk_w_vars.json'), encoding='utf-8'))
     return {
         "interviews": interview_data,
         "nodes": nodes,
@@ -55,12 +61,20 @@ def get_data():
         "links": links,
         "v1": v1_data,
         "prompts": {
-            "var_type_definitions": var_type_definitions,
-            "system_prompt_blocks": system_prompt_blocks,
-            "user_prompt_blocks": user_prompt_blocks
+            "identify_var_types": {
+                "var_type_definitions": var_type_definitions,
+                "system_prompt_blocks": identify_var_types_prompts['system_prompt_blocks'],
+                "user_prompt_blocks": identify_var_types_prompts['user_prompt_blocks']
+            },
+            "identify_vars": {
+                "var_definitions": var_definitions,
+                "system_prompt_blocks": identify_vars_prompts['system_prompt_blocks'],
+                "user_prompt_blocks": identify_vars_prompts['user_prompt_blocks']
+            }
         },
         "pipeline_result": {
-            "identify_var_types": identify_var_types
+            "identify_var_types": identify_var_types,
+            "identify_vars": identify_vars,
         }
 
     }
@@ -74,9 +88,9 @@ def var_extraction():
     chunks = collect_chunks(glob.glob(chunk_data_path + f'chunk_summaries_w_ktte/*.json'))
     all_nodes = collect_nodes([node_data_path + f'{var_type}_nodes.json' for var_type in var_types])
     chunk_dict = chunk_w_var_mentions(chunks, all_nodes)
-    all_def_dict = DataUtils.local.all_definitions(file_paths=[metadata_path + f'{var_type}_variables_def.json' for var_type in var_types])
-    DataUtils.local.add_variable(metadata_path + f'{var_type}_variables_def.json', var_name, var_definition, factor_type)
-    GPTUtils.var_extraction(
+    all_def_dict = local.all_definitions(file_paths=[metadata_path + f'{var_type}_variables_def.json' for var_type in var_types])
+    local.add_variable(metadata_path + f'{var_type}_variables_def.json', var_name, var_definition, factor_type)
+    query.var_extraction(
         openai_client,
         node_data_path + f'{var_type}_nodes.json',
         node_data_path + "connections.json",
@@ -93,7 +107,7 @@ def remove_var():
     var_type = request.json['var_type']
     var_names = request.json['var_names']
     for var_name in var_names:
-        DataUtils.local.remove_variable(
+        local.remove_variable(
             node_file_path=node_data_path + f'{var_type}_nodes.json',
             def_file_path=metadata_path + f'{var_type}_variables_def.json',
             link_file_path=node_data_path + "connections.json",
@@ -108,19 +122,16 @@ def curate_identify_var_types():
     prompt_variables = {
         "var_types": "\n".join([f"{var_type}: {var_type_def}" for var_type, var_type_def in var_type_definitions.items()]),
     }
-    all_chunks = []
-    for chunk_file in glob.glob(relative_path(dirname, "data/v2/tmp/chunk/chunk_summaries_w_ktte/*.json")):
-        chunks = json.load(open(chunk_file, encoding='utf-8'))
-        all_chunks += chunks
+    all_chunks = json.load(open(relative_path(dirname, "data/v2/tmp/pipeline/init/chunks.json"), encoding='utf-8'))
     system_prompt_blocks = [prompt_block[1] for prompt_block in system_prompt_blocks]
     user_prompt_blocks = [prompt_block[1] for prompt_block in user_prompt_blocks]
-    all_chunks = GPTUtils.query.identify_var_types(all_chunks, openai_client, system_prompt_blocks, user_prompt_blocks, prompt_variables)
+    all_chunks = query.identify_var_types(all_chunks, openai_client, system_prompt_blocks, user_prompt_blocks, prompt_variables)
     return json.dumps(all_chunks, default=vars)
 
 @app.route("/curation/identify_var_types/save", methods=['POST'])
 def save_identify_var_types():
     all_chunks =  request.json['all_chunks']
-    DataUtils.local.save_json(all_chunks, relative_path(dirname, "data/v2/tmp/pipeline/identify_var_types/chunk_w_var_types.json"))
+    local.save_json(all_chunks, relative_path(dirname, "data/v2/tmp/pipeline/identify_var_types/chunk_w_var_types.json"))
     return "success"
 
 
@@ -254,16 +265,16 @@ def processData(data_path, reload=False):
 
     if reload:
         # chunk graph
-        chunk_links = DataUtils.v1_processing.chunk_cosine_similarity(chunk_embeddings)
-        chunk_links = DataUtils.v1_processing.normalize_weight(chunk_links)
+        chunk_links = v1_processing.chunk_cosine_similarity(chunk_embeddings)
+        chunk_links = v1_processing.normalize_weight(chunk_links)
         # topic tsnes
         for chunk in chunk_embeddings:
             chunk['topic'] = data_by_chunk[chunk['id']]['topic']
-        chunks_by_topic = DataUtils.v1_processing.group_by_key(chunk_embeddings, 'topic')
-        topic_tsnes = DataUtils.v1_processing.tsne_by_topic(chunks_by_topic)
+        chunks_by_topic = v1_processing.group_by_key(chunk_embeddings, 'topic')
+        topic_tsnes = v1_processing.tsne_by_topic(chunks_by_topic)
         # keyword
         keywords = json.load(open(data_path + "keywords.json"))
         keyword_embeddings = [keyword['embedding'] for keyword in keywords]
-        coordinates = DataUtils.scatter_plot(keyword_embeddings, method="tsne")
+        coordinates = dr.scatter_plot(keyword_embeddings, method="tsne")
         keyword_coordinates = {k['keyword']: c.tolist() for k, c in zip(keywords, coordinates)}
     return interviews, reports, report_embeddings, chunk_links, chunk_nodes, topic_tsnes, keyword_coordinates, keyword_statistics

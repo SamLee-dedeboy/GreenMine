@@ -1,6 +1,9 @@
 import json
 def inject_data(prompt_str, data_dict):
     for key, value in data_dict.items():
+        # skip if value is not str
+        if not isinstance(value, str):
+            continue
         prompt_str = prompt_str.replace(f"${{{key}}}", value)
     return prompt_str
 
@@ -13,9 +16,52 @@ def identify_var_type_prompt_factory(system_prompt_blocks, user_prompt_blocks, p
             "content": "\n".join(prompt_blocks) + "\n" + 
                 """Reply with the following JSON format:
                     {{
-                        "var_type": [] (list of "driver" or "pressure" or "state" or "impact" or "response", or ["none"]),
-                        "evidence": [] (list of sentence indices, empty if var_type is "none"),
-                        "explanation": string (explain why the evidence indicates the variable type), or "none" if var_type is "none"
+                        "result": [
+                            {{
+                                "concept": string ("driver" or "pressure" or "state" or "impact" or "response", or "none"),
+                                "evidence": [] (list of sentence indices, empty if concept is "none"),
+                                "explanation": string (explain why the evidence indicates the concept), or "none" if concept is "none"
+                            }}
+                        ]
+                    }}
+                """,
+                # """Reply with the following JSON format:
+                #     {{
+                #         "var_types": [] (list of "driver" or "pressure" or "state" or "impact" or "response", or ["none"]),
+                #         "evidence": [] (list of sentence indices, empty if var_type is "none"),
+                #         "explanation": string (explain why the evidence indicates the variable type), or "none" if var_type is "none"
+                #     }}
+                # """,
+        },
+        {
+            "role": "user",
+            "content": "\n".join(user_prompt_blocks)
+        }
+    ]
+    def extract_response_func(response):
+        response = json.loads(response)['result']
+        response = list(map(lambda x: {"var_type": x["concept"], "evidence": x["evidence"], "explanation": x["explanation"]}, response))
+        response = list(filter(lambda x: x["var_type"] != "none", response))
+        return response
+    response_format = "json"
+    return messages, response_format, extract_response_func
+
+def identify_var_prompt_factory(system_prompt_blocks, user_prompt_blocks, prompt_variables):
+    prompt_blocks = list(map(lambda block: inject_data(block, prompt_variables), system_prompt_blocks))
+    user_prompt_blocks = list(map(lambda block: inject_data(block, prompt_variables), user_prompt_blocks))
+    messages = [
+        {
+            "role": "system",
+            "content": "\n".join(prompt_blocks) + "\n" + 
+                """Reply with the following JSON format:
+                    {{
+                        "result": [
+                            {{
+                                "tag": string (one of the above or "none")
+                                "evidence": [] (list of sentence indices, empty if tag is "none"),
+                                "explanation": string (explain why the evidence indicates the tag), or "none" if tag is "none"
+                            }}
+                        ]
                     }}
                 """,
         },
@@ -25,9 +71,10 @@ def identify_var_type_prompt_factory(system_prompt_blocks, user_prompt_blocks, p
         }
     ]
     def extract_response_func(response):
-        response_dict = json.loads(response)
-        return response_dict
-        return response_dict['var_type'], response_dict['evidence'], response_dict['explanation']
+        response = json.loads(response)['result']
+        response = list(map(lambda x: {"var": x["tag"], "evidence": x["evidence"], "explanation": x["explanation"]}, response))
+        response = list(filter(lambda x: x["var"] != "none", response))
+        return response
     response_format = "json"
     return messages, response_format, extract_response_func
 
