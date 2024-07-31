@@ -30,7 +30,7 @@
     <div class="flex h-1 grow flex-col divide-y divide-black overflow-y-scroll">
       {#each sort_by_id(data) as datum, i}
         {#if datum.identify_var_types_result}
-          {@const isNone = datum.identify_var_types_result.var_type.length === 0}
+          {@const isNone = datum.identify_var_types_result.length === 0}
           <div
             class="flex items-center gap-x-2 divide-x bg-gray-200"
             class:isNone
@@ -42,12 +42,12 @@
               {#if isNone}
                 <div class="text-sm">None</div>
               {:else}
-                {#each datum.identify_var_types_result.var_type as var_type_wrapper, i}
+                {#each datum.identify_var_types_result.sort( (a, b) => compare_var_types(a.var_type, b.var_type), ) as var_type_wrapper, i}
                   <div
                     class="rounded-sm px-0.5 text-sm italic opacity-70 outline-double outline-1 outline-gray-300"
-                    style={`background-color: ${$varTypeColorScale(var_type_wrapper)}`}
+                    style={`background-color: ${$varTypeColorScale(var_type_wrapper.var_type)}`}
                   >
-                    {var_type_wrapper}
+                    {var_type_wrapper.var_type}
                   </div>
                 {/each}
                 {#if !isNone}
