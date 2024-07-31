@@ -96,7 +96,10 @@
         };
       });
   }
-
+  function handleEvidenceSelected(e) {
+    console.log("evidence selected", e.detail);
+    interview_viewer_component.handleEvidenceSelected(e.detail);
+  }
   function handleVarOrLinkSelected(e) {
     if (!interview_data) return;
     //deselect var/link
@@ -160,6 +163,7 @@
             data={prompt_data}
             {pipeline_result}
             on:close={() => (show_prompts = false)}
+            on:var_types_evidence= {handleEvidenceSelected}
           ></Prompts>
         </div>
       {/if}

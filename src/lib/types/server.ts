@@ -49,10 +49,10 @@ export type tIdentifyVars = tChunk & {
   identify_vars_result: tVarResult;
 };
 export type tVarTypeResult = {
-  var_type: string;
+  var_type: string[];
   evidence: number[];
   explanation: string;
-}[];
+};
 export type tVarResult = Record<
   string,
   {

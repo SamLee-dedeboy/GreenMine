@@ -18,7 +18,7 @@
         role="button"
         tabindex="0"
         class="flex-1 rounded-sm bg-green-200 outline outline-1 outline-gray-300 hover:bg-green-300"
-        on:click={() => dispatch("fetch_identify_var_types", data)}
+        on:click={() => dispatch("run")}
         on:keyup={() => {}}
       >
         Run
@@ -27,7 +27,7 @@
         role="button"
         tabindex="0"
         class="flex-1 rounded-sm bg-green-200 outline outline-1 outline-gray-300 hover:bg-green-300"
-        on:click={() => dispatch("save_identify_var_types")}
+        on:click={() => dispatch("save")}
         on:keyup={() => {}}
       >
         Save

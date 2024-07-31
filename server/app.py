@@ -19,6 +19,12 @@ node_data_path = relative_path(dirname, 'data/v2/user/nodes/')
 chunk_data_path = relative_path(dirname, 'data/v2/user/chunk/')
 metadata_path = relative_path(dirname, 'data/v2/user/variable_definitions/')
 v1_data_path = relative_path(dirname, 'data/v1/')
+# pipeline result path
+pipeline_result_path = relative_path(dirname, 'data/v2/user/pipeline/')
+# prompt path
+prompt_path = relative_path(dirname, 'GPTUtils/prompts/')
+# prompt context data path
+prompt_context_path = relative_path(dirname, 'GPTUtils/contexts/')
 # openai
 openai_api_key = open(relative_path(dirname, "openai_api_key")).read()
 openai_client=OpenAI(api_key=openai_api_key, timeout=10)
@@ -41,19 +47,19 @@ def get_data():
     v1_data = get_data_v1(v1_data_path)
 
     # prompt template data
-    var_type_definitions = json.load(open(relative_path(dirname, 'GPTUtils/contexts/var_type_definitions.json'), encoding='utf-8'))
+    var_type_definitions = json.load(open(prompt_context_path + 'var_type_definitions.json', encoding='utf-8'))
     var_definitions = {}
     for var_type in var_type_definitions.keys():
-        var_definitions_by_type = json.load(open(f"GPTUtils/contexts/variable_definitions/{var_type}_variables_def.json"))
+        var_definitions_by_type = json.load(open(prompt_context_path + f"variable_definitions/{var_type}_variables_def.json", encoding='utf-8'))
         var_definitions[var_type] = var_definitions_by_type
 
     # prompts
-    identify_var_types_prompts = json.load(open(relative_path(dirname,'GPTUtils/prompts/identify_var_types.json'), encoding='utf-8'))
-    identify_vars_prompts = json.load(open(relative_path(dirname,'GPTUtils/prompts/identify_vars.json'), encoding='utf-8'))
+    identify_var_types_prompts = json.load(open(prompt_path + 'identify_var_types.json', encoding='utf-8'))
+    identify_vars_prompts = json.load(open(prompt_path + 'identify_vars.json', encoding='utf-8'))
     
     # pipeline data
-    identify_var_types = json.load(open(relative_path(dirname, 'data/v2/user/pipeline/identify_var_types/chunk_w_var_types.json'), encoding='utf-8'))
-    identify_vars = json.load(open(relative_path(dirname, 'data/v2/user/pipeline/identify_vars/chunk_w_vars.json'), encoding='utf-8'))
+    identify_var_types = json.load(open(pipeline_result_path + 'identify_var_types/chunk_w_var_types.json', encoding='utf-8'))
+    identify_vars = json.load(open(pipeline_result_path + 'identify_vars/chunk_w_vars.json', encoding='utf-8'))
     return {
         "interviews": interview_data,
         "nodes": nodes,
@@ -122,7 +128,7 @@ def curate_identify_var_types():
     prompt_variables = {
         "var_types": "\n".join([f"{var_type}: {var_type_def}" for var_type, var_type_def in var_type_definitions.items()]),
     }
-    all_chunks = json.load(open(relative_path(dirname, "data/v2/user/pipeline/init/chunks.json"), encoding='utf-8'))
+    all_chunks = json.load(open(pipeline_result_path + "init/chunks.json", encoding='utf-8'))
     system_prompt_blocks = [prompt_block[1] for prompt_block in system_prompt_blocks]
     user_prompt_blocks = [prompt_block[1] for prompt_block in user_prompt_blocks]
     all_chunks = query.identify_var_types(all_chunks, openai_client, system_prompt_blocks, user_prompt_blocks, prompt_variables)
@@ -130,8 +136,55 @@ def curate_identify_var_types():
 
 @app.route("/curation/identify_var_types/save", methods=['POST'])
 def save_identify_var_types():
-    all_chunks =  request.json['all_chunks']
-    local.save_json(all_chunks, relative_path(dirname, "data/v2/user/pipeline/identify_var_types/chunk_w_var_types.json"))
+    all_chunks =  request.json['result']
+    context = request.json['context']
+    var_type_definitions = context['var_type_definitions']
+    prompts =  {
+        "system_prompt_blocks": context['system_prompt_blocks'],
+        "user_prompt_blocks": context['user_prompt_blocks']
+    }
+    local.save_json(all_chunks, pipeline_result_path + "identify_var_types/chunk_w_var_types.json")
+    local.save_json(var_type_definitions, prompt_context_path + "var_type_definitions.json")
+    local.save_json(prompts, prompt_path + "identify_var_types.json")
+    return "success"
+
+@app.route("/curation/identify_vars/", methods=['POST'])
+def curate_identify_vars():
+    var_definitions = request.json['var_definitions']
+    system_prompt_blocks = request.json['system_prompt_blocks']
+    user_prompt_blocks = request.json['user_prompt_blocks']
+    var_type_definitions = json.load(open(prompt_context_path + 'var_type_definitions.json', encoding='utf-8'))
+    var_definitions = {}
+    for var_type in var_type_definitions.keys():
+        var_definitions_by_type = json.load(open(prompt_context_path + f"variable_definitions/{var_type}_variables_def.json", encoding='utf-8'))
+        var_definitions[var_type] = var_definitions_by_type
+    prompt_variables = {}
+    for var_type, var_type_def in var_type_definitions.items():
+        prompt_variables[var_type] = {
+            "definition": var_type_def,
+            "vars": "\n".join([f"{var_name}: {var_def}" for var_name, var_def in var_definitions[var_type].items()])
+        }
+    all_chunks = json.load(open(pipeline_result_path + "identify_var_types/chunk_w_var_types.json", encoding='utf-8'))
+    all_chunks = all_chunks[:10]
+    system_prompt_blocks = [prompt_block[1] for prompt_block in system_prompt_blocks]
+    user_prompt_blocks = [prompt_block[1] for prompt_block in user_prompt_blocks]
+    all_chunks = query.identify_vars(all_chunks, openai_client, system_prompt_blocks, user_prompt_blocks, prompt_variables)
+    return json.dumps(all_chunks, default=vars)
+
+@app.route("/curation/identify_vars/save", methods=['POST'])
+def save_identify_vars():
+    all_chunks =  request.json['result']
+    context = request.json['context']
+    var_definitions = context['var_definitions']
+    prompts =  {
+        "system_prompt_blocks": context['system_prompt_blocks'],
+        "user_prompt_blocks": context['user_prompt_blocks']
+    }
+    var_type_definitions = json.load(open(prompt_context_path + 'var_type_definitions.json', encoding='utf-8'))
+    for var_type in var_type_definitions.keys():
+        local.save_json(var_definitions[var_type], prompt_context_path + f"variable_definitions/{var_type}_variables_def.json")
+    local.save_json(prompts, prompt_path + "identify_vars.json")
+    local.save_json(all_chunks, pipeline_result_path + "identify_vars/chunk_w_vars.json")
     return "success"
 
 

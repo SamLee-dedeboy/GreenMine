@@ -20,6 +20,7 @@
   let highlight_chunk: any = [];
   let highlight_chunk_ids: any[] = [];
   let highlight_messages = {};
+  let highlight_evidence = {}
   let external_highlights = false;
   let chunk_indexes = {};
   let original_data;
@@ -46,6 +47,7 @@
     // console.log(data, show_chunk);
     original_data = JSON.parse(JSON.stringify(data));
     init_highlight_messages();
+    init_highlight_evidence();
     //   show_chunk_title.forEach((show, index) => {
     //     console.log({ show,index });
     //     if (show) {
@@ -53,6 +55,13 @@
     //     }
     //     });
   });
+  function init_highlight_evidence() {
+    data.forEach((interview, interview_index) => {
+      interview.data.forEach((chunk, chunk_index) => {
+        highlight_evidence[chunk.id] = chunk.conversation.map(() => false);
+      });
+    });
+  }
   function init_highlight_messages() {
     data.forEach((interview, interview_index) => {
       interview.data.forEach((chunk, chunk_index) => {
@@ -86,7 +95,7 @@
       if (highlight_chunks[0].conversation_ids) {
         highlight_conversations(highlight_chunks);
       } else {
-        highlight_evidence(highlight_chunks);
+        // highlight_evidence(highlight_chunks);
       }
     return;
   }
@@ -106,25 +115,25 @@
     });
   }
 
-  function highlight_evidence(highlight_chunks: tMention[]) {
-    data.forEach((interview) => {
-      interview.data.forEach((chunk) => {
-        // check if chunk is in highlight_chunks
-        const index = highlight_chunks.findIndex(
-          (highlight_chunk) => highlight_chunk.chunk_id === chunk.id,
-        );
-        if (index === -1) return;
-        chunk.conversation.forEach((message, message_index) => {
-          if (
-            highlight_chunks[index].evidence?.some((evidence_message) =>
-              message.content.includes(evidence_message),
-            )
-          )
-            highlight_messages[chunk.id][message_index] = true;
-        });
-      });
-    });
-  }
+  // function highlight_evidence(highlight_chunks: tMention[]) {
+  //   data.forEach((interview) => {
+  //     interview.data.forEach((chunk) => {
+  //       // check if chunk is in highlight_chunks
+  //       const index = highlight_chunks.findIndex(
+  //         (highlight_chunk) => highlight_chunk.chunk_id === chunk.id,
+  //       );
+  //       if (index === -1) return;
+  //       chunk.conversation.forEach((message, message_index) => {
+  //         if (
+  //           highlight_chunks[index].evidence?.some((evidence_message) =>
+  //             message.content.includes(evidence_message),
+  //           )
+  //         )
+  //           highlight_messages[chunk.id][message_index] = true;
+  //       });
+  //     });
+  //   });
+  // }
 
   export function dehighlight_chunks() {
     highlight_chunk = [];
@@ -138,6 +147,25 @@
       });
     });
     return;
+  }
+
+  export function handleEvidenceSelected(e) {
+    init_highlight_evidence();
+    const chunk_index = e.id;
+    const message_indexes:number[] = e.identify_var_types_result.evidence
+    const explanation = e.identify_var_types_result.explanation;
+    const interview_index_match = chunk_index.match(/N(\d+)/);
+    if(interview_index_match){
+      const interview_index = parseInt(interview_index_match[1],10) - 1;
+      show_interview[interview_index] = true;
+      message_indexes.forEach((message_index) => {
+        highlight_evidence[chunk_index][message_index] = true;
+        console.log(explanation);
+        scrollToFirstTargetChunk(interview_index,"evidence_hightlight");
+
+      });
+
+    }
   }
 
   // export function highlight_keywords(keyword_chunks, keywords) {
@@ -187,7 +215,7 @@
   }
 
   function scrollToMessage(messageId, containerId) {
-    const messageElement = document.getElementById(`${messageId}` + `-0`);
+    const messageElement = document.getElementById(messageId);
     const containerElement = document.getElementById(containerId);
     if (messageElement && containerElement) {
       containerElement.scrollTop =
@@ -197,42 +225,65 @@
 
   function handleChunkClick(interview_index, chunk_index) {
     selected_chunk[interview_index] = chunk_index;
+    // console.log("handle chunk click", interview_index, chunk_index);
     scrollToMessage(
       `${interview_index}-${chunk_index}`,
       `conversation-container-${interview_index}`,
     );
   }
 
-  async function scrollToFirstHighlightedChunk(interview_index) {
+
+
+  async function scrollToFirstTargetChunk(interview_index,chunk_state="chunk_highlight") {
     await tick(); //to wait for the DOM to update before attempting to find and scroll to the highlighted chunk
-    // console.log(show_chunk_title[interview_index],interview_index);
-    const container = document.getElementById(
-      `chunk-title-container-` + `${interview_index}`,
-    );
+    let container;
+    let target;// record the target element to scroll to
+    if(chunk_state == "chunk_highlight"){
+      container = document.getElementById(
+        `chunk-title-container-` + `${interview_index}`,
+      );
+      target = container?.querySelector(".chunk-highlight");
+    }else if(chunk_state == "evidence_hightlight"){
+      container = document.getElementById(
+        `conversation-container-` + `${interview_index}`,
+      );
+      target = container?.querySelector(".highlighted_evidence").parentNode;
+    }
+      
     // console.log(container);
-    if (container) {
-      const highlightedChunk = container.querySelector(".chunk-highlight");
+   
+    if (container && target) {
+      // const highlightedChunk = container.querySelector(".chunk-highlight");
       // console.log(highlightedChunk);
-      if (highlightedChunk) {
-        highlightedChunk.scrollIntoView({
+        target.scrollIntoView({
           behavior: "smooth",
-          block: "center",
+          block: "start",
         });
         // 500 milliseconds delay delay to allow the first scroll to complete
-        setTimeout(() => {
-          scrollToMessage(
-            `${interview_index}-${highlightedChunk.id}`,
-            `conversation-container-${interview_index}`,
-          );
-        }, 1000);
-      }
+        if(chunk_state == "chunk_highlight"){
+          setTimeout(() => {
+            scrollToMessage(
+              `${interview_index}-${target.id}-0`,
+              `conversation-container-${interview_index}`,
+            );
+          }, 1000);
+        }
+        else if(chunk_state == "evidence_hightlight"){
+          setTimeout(() => {
+            scrollToMessage(
+              `${target.id}`,
+              `conversation-container-${interview_index}`,
+            );
+          }, 1000);
+        }
+        
     }
   }
   $: {
     show_chunk_title.forEach((show, index) => {
       // console.log({ show,index });
       if (show) {
-        scrollToFirstHighlightedChunk(index);
+        scrollToFirstTargetChunk(index);
       }
     });
   }
@@ -354,7 +405,8 @@
                             <div class="interview-message-speaker font-bold">
                               {speaker_title[message.speaker]}:
                             </div>
-                            <div class="interview-message-content">
+                            <div class="interview-message-content"
+                            class:highlighted_evidence = {highlight_evidence[message.chunkIndex][message.messageIndex]}>
                               {@html message.content}
                             </div>
                           </div>
@@ -398,5 +450,9 @@
   }
   .highlighted_message {
     background: #ff8f00;
+  }
+  .highlighted_evidence{
+    text-decoration: underline;
+    text-decoration-color: red;
   }
 </style>

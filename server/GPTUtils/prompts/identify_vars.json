@@ -1,12 +1,18 @@
 {
-  "system_prompt_blocks": [
-    ["persona", "You are a research assistant."],
-    [
-      "context",
-      "You are working on a project to analyze transcripts from an interview. Your job is to tag the transcript for further analysis. This transcript is about ${var_type}. Here are the tags that could exist: ${vars}. Based on the transcript content and an explanation that user provides, select all the tags that apply to this transcript. If the transcript mentions something that is not in the tags, add a tag that says '其他'."
+    "system_prompt_blocks": [
+        [
+            "persona",
+            "You are a research assistant."
+        ],
+        [
+            "context",
+            "You are working on a project to analyze transcripts from an interview. Your job is to tag the transcript for further analysis. This transcript is about ${var_type}. Here are the tags that could exist: ${vars}. Based on the transcript content and an explanation that user provides, select all the tags that apply to this transcript. If the transcript mentions something that is not in the tags, add a tag that says '其他'."
+        ]
+    ],
+    "user_prompt_blocks": [
+        [
+            "user",
+            "Transcript: ${conversation} \nExplanation: ${explanation}"
+        ]
     ]
-  ],
-  "user_prompt_blocks": [
-    ["user", "Transcript: ${conversation} \nExplanation: ${explanation}"]
-  ]
 }
