@@ -1,9 +1,10 @@
 <script lang="ts">
-  import PromptEntry from "./PromptEntry.svelte";
-  import IdentifyVarTypeResults from "./IdentifyVarTypeResults.svelte";
-  import IdentifyVarResults from "./IdentifyVarResults.svelte";
-  import VarTypeDataEntry from "./VarTypeDataEntry.svelte";
-  import VarDataEntry from "./VarDataEntry.svelte";
+  import PromptEntry from "./DataEntry/PromptEntry.svelte";
+  import IdentifyVarTypeResults from "lib/components/PipelineResult/IdentifyVarTypeResults.svelte";
+  import IdentifyVarResults from "lib/components/PipelineResult/IdentifyVarResults.svelte";
+  import IdentifyLinkResults from "lib/components/PipelineResult/IdentifyLinkResults.svelte";
+  import VarTypeDataEntry from "lib/components/DataEntry/VarTypeDataEntry.svelte";
+  import VarDataEntry from "lib/components/DataEntry/VarDataEntry.svelte";
   import PromptHeader from "./PromptHeader.svelte";
   import { fade, slide, fly, blur, draw, crossfade } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
@@ -18,6 +19,7 @@
   let tmp_data: tServerPipelineData = {
     identify_var_types: [],
     identify_vars: [],
+    identify_links: [],
   };
   let show_step = 1;
   function execute_prompt(data: tServerPromptData, key: string) {
@@ -141,6 +143,30 @@
           data={pipeline_result?.identify_vars || []}
         />
         <IdentifyVarResults title="new" data={tmp_data?.identify_vars || []} />
+      </div>
+    {:else if show_step === 3}
+      <div in:slide|global class="step-2 flex">
+        <div class="flex min-w-[30rem] flex-col gap-y-1 bg-gray-100">
+          <PromptHeader
+            title="Identify Links"
+            on:run={() => execute_prompt(data, "identify_links")}
+            on:save={() => save_data(data, tmp_data, "identify_links")}
+          ></PromptHeader>
+          <PromptEntry
+            data={{
+              system_prompt_blocks: data.identify_links.system_prompt_blocks,
+              user_prompt_blocks: data.identify_links.user_prompt_blocks,
+            }}
+          />
+        </div>
+        <IdentifyLinkResults
+          title="baseline"
+          data={pipeline_result?.identify_links || []}
+        />
+        <IdentifyLinkResults
+          title="new"
+          data={tmp_data?.identify_links || []}
+        />
       </div>
     {/if}
   {/key}

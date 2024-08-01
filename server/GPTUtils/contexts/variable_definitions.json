@@ -1,257 +1,257 @@
 {
-    "driver": [
-        {
-            "definition": "test",
-            "factor_type": "Factor Type",
-            "var_name": "Test"
-        },
-        {
-            "definition": "包括航運、海事活動、航運產業、船舶交通、商用船隻、高運輸成本和運輸實踐。",
-            "factor_type": "social",
-            "var_name": "交通運輸"
-        },
-        {
-            "definition": "包括人口密度、人口增長、人口規模、生育率以及人口增長和變化。",
-            "factor_type": "social",
-            "var_name": "人口"
-        },
-        {
-            "definition": "包括建築和住宅建設、園林綠化和家庭服務。",
-            "factor_type": "social",
-            "var_name": "住房"
-        },
-        {
-            "definition": "包括醫療、中心、生物技術、製藥、化妝品和廢物管理。",
-            "factor_type": "social",
-            "var_name": "健康"
-        },
-        {
-            "definition": "包括城市發展、城區建設、旅遊度假村、高爾夫球場和機場建設。",
-            "factor_type": "social",
-            "var_name": "城市化"
-        },
-        {
-            "definition": "包括土木工程和建築、河流築壩和公共設施。",
-            "factor_type": "social",
-            "var_name": "基礎設施發展"
-        },
-        {
-            "definition": "包括製造業、採礦業（礦物提取）、鹽業（鹽提取）、食品加工和造紙廠的有機物排放以及高度專業化生產。",
-            "factor_type": "social",
-            "var_name": "工業化"
-        },
-        {
-            "definition": " 涵蓋遊客、貿易、垂釣、划船、帆船、水上運動、旅遊度假村、高爾夫球場和水族館。",
-            "factor_type": "social",
-            "var_name": "旅遊業"
-        },
-        {
-            "definition": "包括海岸防禦建築、碼頭/遊艇港/港口設施、人工礁和堤壩建設、港口擴建以及海堤/防波堤的建造。",
-            "factor_type": "social",
-            "var_name": "沿海發展"
-        },
-        {
-            "definition": "包含捕魚、商業漁業、手工漁業、娛樂性漁業、漁民人數、船隊規模、漁船、捕撈努力、漁業管控，以及捕撈率或丟棄率。",
-            "factor_type": "social",
-            "var_name": "漁業"
-        },
-        {
-            "definition": "包括經濟發展、經濟活動、金融、保險、市場需求、宏觀經濟政策、全球經濟變化（如石油價格）、人均GDP和年度GDP增長。",
-            "factor_type": "social",
-            "var_name": "經濟"
-        },
-        {
-            "definition": "包括能源開發、使用、需求和勘探、建設和運營發電設施、核能建設和運營、石油和天然氣產業及石油勘探。",
-            "factor_type": "social",
-            "var_name": "能源"
-        },
-        {
-            "definition": "包括施肥、灌溉、集約化畜牧場的糞肥、農場廢水、水產養殖（魚類、大型藻類、貝類養殖）、珍珠農場和林業。",
-            "factor_type": "social",
-            "var_name": "農業"
-        }
-    ],
-    "impact": [
-        {
-            "definition": "包括珊瑚礁和沿岸娛樂，以及休閒活動",
-            "factor_type": "ecological",
-            "var_name": "休閒價值和機會的損失"
-        },
-        {
-            "definition": "",
-            "factor_type": "ecological",
-            "var_name": "可用資源的損失"
-        },
-        {
-            "definition": "包括地方感",
-            "factor_type": "ecological",
-            "var_name": "存在價值的損失"
-        },
-        {
-            "definition": "",
-            "factor_type": "ecological",
-            "var_name": "審美價值的損失"
-        },
-        {
-            "definition": "",
-            "factor_type": "ecological",
-            "var_name": "教育機會的損失"
-        },
-        {
-            "definition": "旅遊經營者收入減少",
-            "factor_type": "ecological",
-            "var_name": "旅遊收入的減少"
-        },
-        {
-            "definition": "包括空氣質量調節、氣候穩定性、自然災害調節和碳固定",
-            "factor_type": "ecological",
-            "var_name": "氣候和大氣調節的損失"
-        },
-        {
-            "definition": "包括沿岸/岸線侵蝕、沉降和上升、鹽水滲透和鹽水滲入",
-            "factor_type": "ecological",
-            "var_name": "沿岸保護減少"
-        },
-        {
-            "definition": "包括漁業產品和漁獲量減少",
-            "factor_type": "ecological",
-            "var_name": "漁業減少"
-        },
-        {
-            "definition": "包括珊瑚死亡、生長速率、骨骼強度和疾病",
-            "factor_type": "ecological",
-            "var_name": "珊瑚白化"
-        },
-        {
-            "definition": "包括生態或生態系統完整性的損失和退化，棲息地和環境的減少和干擾",
-            "factor_type": "ecological",
-            "var_name": "自然棲息地變化"
-        },
-        {
-            "definition": "包括食物供應和可用性的減少",
-            "factor_type": "ecological",
-            "var_name": "食物生產的損失"
-        }
-    ],
-    "pressure": [
-        {
-            "definition": "包括入侵外來物種和非本地物種。",
-            "factor_type": "ecological",
-            "var_name": "入侵物種"
-        },
-        {
-            "definition": "包括陸地活動、土地利用實踐、土地開發、岸邊利用變化、海床變化、森林砍伐、棲息地破壞、人工棲息地、河流物理修改、河流取水、珊瑚礁損失、棲息地轉換、景觀破壞和佔據沙灘空間。",
-            "factor_type": "social",
-            "var_name": "土地利用和土地覆蓋變化"
-        },
-        {
-            "definition": "包括有機物和營養物質輸入、富營養化、營養物排放和藻類生長。",
-            "factor_type": "ecological",
-            "var_name": "富營養化"
-        },
-        {
-            "definition": "包括自然災害或災難（例如颱風、颶風、豪雨、風暴、風暴潮、暴風雨、海嘯、岩漿、洋流、地震），淡水径流的變化、降雨和蒸發的變化、熱帶氣旋強度和/或頻率的變化、冰川和冰帽的減少、乾旱、豪雨、洪水、熱浪和寒潮。海平面上升：包括海平面和海平面變化。",
-            "factor_type": "ecological",
-            "var_name": "極端天氣"
-        },
-        {
-            "definition": "包括海洋變暖、大氣溫度和海表溫度上升、地表變暖，以及溫室氣體（CO2、CH4、N2O、SF6、PFCs）濃度增加。",
-            "factor_type": "ecological",
-            "var_name": "氣候變化和全球變暖"
-        },
-        {
-            "definition": "包括海洋垃圾、亂丟垃圾、海洋垃圾、市政廢水、家庭垃圾污染、農業排放、家庭污水排放、油污、和污染物釋放。",
-            "factor_type": "social",
-            "var_name": "污染"
-        },
-        {
-            "definition": "包括金屬、烴類、化學物質、持久性有機污染物、有毒排放、防污劑、熱排放（冷卻水）、核排放、淡化排放、沉積物、藥物、殺蟲劑和清潔劑。",
-            "factor_type": "social",
-            "var_name": "污染物"
-        },
-        {
-            "definition": "包括酸化和海洋pH值。",
-            "factor_type": "ecological",
-            "var_name": "海洋酸化"
-        },
-        {
-            "definition": "包括挖渠和港口、船只搁浅、锚泊、岸线改变以及踩踏或船只活动产生的水下噪音和物理损害。",
-            "factor_type": "social",
-            "var_name": "物理破壞性活動"
-        },
-        {
-            "definition": "包括丟失的裝備、破壞性捕魚、破壞性收穫，以及破壞性捕魚裝備和技術。裝備和技術包括沙灘围網、魚叉、炸藥捕魚、爆炸捕魚、氰化捕魚和近岸拖網。",
-            "factor_type": "social",
-            "var_name": "破壞性捕魚行為"
-        },
-        {
-            "definition": "包括海洋資源提取、淡水過度提取、採石、礦業、有機資源、用於建設的岩石、礫石和沙子的使用，對資源的日益需求，以及對沙子、鹽、珊瑚岩、木材和建築柱的提取。",
-            "factor_type": "social",
-            "var_name": "資源消耗"
-        },
-        {
-            "definition": "包括过度开发、过度提取、过度开采、过度捕猎、过度收获、增加捕鱼时间和陷阱数量、渔网网眼变小以及渔业压力增加。",
-            "factor_type": "social",
-            "var_name": "过度捕捞"
-        }
-    ],
-    "response": [
-        {
-            "definition": "包括物種救援、重新造林、移民和物種及生態系統的恢復。",
-            "factor_type": "ecological",
-            "var_name": "恢復"
-        },
-        {
-            "definition": "包括教育計劃、社區教育、環境和生態系統（珊瑚礁、紅樹林、海草等）保護意識和同儕教育。",
-            "factor_type": "ecological",
-            "var_name": "教育和意識"
-        },
-        {
-            "definition": "包括環境監測和監視。",
-            "factor_type": "ecological",
-            "var_name": "監測"
-        },
-        {
-            "definition": "包括制定促進環境保護和保育的條例、固體廢物管理條例、修訂旅遊法規、禁止使用一次性塑料條例、全球環境協議、政策、戰略和法令（環境和空間發展、漁業、森林資源管理和保育）。",
-            "factor_type": "ecological",
-            "var_name": "立法"
-        },
-        {
-            "definition": "包括合作管理、替代管理、管理改進和合作管理；漁業、物種、入侵物種、水域、固體廢棄物、化學物質、危險泄漏、污水和廢水的管理；船隻進出和交通管理；伐木、漁業、採收、污染、挖掘和排放的規定。",
-            "factor_type": "ecological",
-            "var_name": "管理和規範"
-        },
-        {
-            "definition": "包括海洋空間規劃、海岸管理計劃、旅遊總體規劃、地方管理計劃、林業管理規劃和土地利用規劃。",
-            "factor_type": "ecological",
-            "var_name": "規劃"
-        },
-        {
-            "definition": "包括陸地保護區、海洋保護區、建議的保護區、禁捕區、國家公園、州立公園、避難所和生物走廊；海洋保護區宣告和擴張。",
-            "factor_type": "ecological",
-            "var_name": "設立自然保護區"
-        }
-    ],
-    "state": [
-        {
-            "definition": "包括水質、溫度、氧條件（水平）、營養條件、水動力學、特性、海平面、沉積速率以及淡水或海水流動。",
-            "factor_type": "ecological",
-            "var_name": "物理和化學品質"
-        },
-        {
-            "definition": "透明度、濁度、鹽度、酸度（pH值）、堿度、清晰度、沉積、重金屬、光線、葉綠素-a濃度、二氧化碳（CO2）、生化需氧量（BOD）、化學需氧量（COD）、碳（C）、氮（N）、磷（P）、總懸浮固體（TSS）、總溶解固體（TDS）、溶解有機碳（DOC）、總有機碳（TOC）、總硬度（TH）。生物多樣性:包括珊瑚礁社區和底棲覆蓋。",
-            "factor_type": "ecological",
-            "var_name": "物理和化學指標"
-        },
-        {
-            "definition": "包括珊瑚健康、覆蓋、生長、存活、繁殖和招募，以及珊瑚礁結構或碳酸鹽結構。",
-            "factor_type": "ecological",
-            "var_name": "珊瑚礁狀態"
-        },
-        {
-            "definition": "包括珊瑚、浮游植物、底棲生物、魚類、貝類、海鳥、紅樹林、海草、海膽、水生植物（微型底質藻類、大型藻類、海草和鹽沼植物）等的物種、存量、組成、豐度、族群和生物量，以及海洋和淡水生物系統。",
-            "factor_type": "ecological",
-            "var_name": "生態狀態（生物品質）"
-        }
-    ]
+  "driver": [
+    {
+      "definition": "test",
+      "factor_type": "Factor Type",
+      "var_name": "Test"
+    },
+    {
+      "definition": "包括航運、海事活動、航運產業、船舶交通、商用船隻、高運輸成本和運輸實踐。",
+      "factor_type": "social",
+      "var_name": "交通運輸"
+    },
+    {
+      "definition": "包括人口密度、人口增長、人口規模、生育率以及人口增長和變化。",
+      "factor_type": "social",
+      "var_name": "人口"
+    },
+    {
+      "definition": "包括建築和住宅建設、園林綠化和家庭服務。",
+      "factor_type": "social",
+      "var_name": "住房"
+    },
+    {
+      "definition": "包括醫療、中心、生物技術、製藥、化妝品和廢物管理。",
+      "factor_type": "social",
+      "var_name": "健康"
+    },
+    {
+      "definition": "包括城市發展、城區建設、旅遊度假村、高爾夫球場和機場建設。",
+      "factor_type": "social",
+      "var_name": "城市化"
+    },
+    {
+      "definition": "包括土木工程和建築、河流築壩和公共設施。",
+      "factor_type": "social",
+      "var_name": "基礎設施發展"
+    },
+    {
+      "definition": "包括製造業、採礦業（礦物提取）、鹽業（鹽提取）、食品加工和造紙廠的有機物排放以及高度專業化生產。",
+      "factor_type": "social",
+      "var_name": "工業化"
+    },
+    {
+      "definition": " 涵蓋遊客、貿易、垂釣、划船、帆船、水上運動、旅遊度假村、高爾夫球場和水族館。",
+      "factor_type": "social",
+      "var_name": "旅遊業"
+    },
+    {
+      "definition": "包括海岸防禦建築、碼頭/遊艇港/港口設施、人工礁和堤壩建設、港口擴建以及海堤/防波堤的建造。",
+      "factor_type": "social",
+      "var_name": "沿海發展"
+    },
+    {
+      "definition": "包含捕魚、商業漁業、手工漁業、娛樂性漁業、漁民人數、船隊規模、漁船、捕撈努力、漁業管控，以及捕撈率或丟棄率。",
+      "factor_type": "social",
+      "var_name": "漁業"
+    },
+    {
+      "definition": "包括經濟發展、經濟活動、金融、保險、市場需求、宏觀經濟政策、全球經濟變化（如石油價格）、人均GDP和年度GDP增長。",
+      "factor_type": "social",
+      "var_name": "經濟"
+    },
+    {
+      "definition": "包括能源開發、使用、需求和勘探、建設和運營發電設施、核能建設和運營、石油和天然氣產業及石油勘探。",
+      "factor_type": "social",
+      "var_name": "能源"
+    },
+    {
+      "definition": "包括施肥、灌溉、集約化畜牧場的糞肥、農場廢水、水產養殖（魚類、大型藻類、貝類養殖）、珍珠農場和林業。",
+      "factor_type": "social",
+      "var_name": "農業"
+    }
+  ],
+  "impact": [
+    {
+      "definition": "包括珊瑚礁和沿岸娛樂，以及休閒活動",
+      "factor_type": "ecological",
+      "var_name": "休閒價值和機會的損失"
+    },
+    {
+      "definition": "",
+      "factor_type": "ecological",
+      "var_name": "可用資源的損失"
+    },
+    {
+      "definition": "包括土地認同感",
+      "factor_type": "ecological",
+      "var_name": "存在價值的損失"
+    },
+    {
+      "definition": "",
+      "factor_type": "ecological",
+      "var_name": "審美價值的損失"
+    },
+    {
+      "definition": "",
+      "factor_type": "ecological",
+      "var_name": "教育機會的損失"
+    },
+    {
+      "definition": "旅遊經營者收入",
+      "factor_type": "ecological",
+      "var_name": "旅遊收入的減少"
+    },
+    {
+      "definition": "包括空氣質量調節、氣候穩定性、自然災害調節和碳固定",
+      "factor_type": "ecological",
+      "var_name": "氣候和大氣調節的損失"
+    },
+    {
+      "definition": "包括沿岸/岸線侵蝕、沉降和上升、鹽水滲透和鹽水滲入",
+      "factor_type": "ecological",
+      "var_name": "沿岸保護減少"
+    },
+    {
+      "definition": "包括漁業產品和漁獲量減少",
+      "factor_type": "ecological",
+      "var_name": "漁業減少"
+    },
+    {
+      "definition": "包括珊瑚死亡、生長速率、骨骼強度和疾病",
+      "factor_type": "ecological",
+      "var_name": "珊瑚白化"
+    },
+    {
+      "definition": "包括生態或生態系統完整性的損失和退化，棲息地和環境的減少和干擾",
+      "factor_type": "ecological",
+      "var_name": "自然棲息地變化"
+    },
+    {
+      "definition": "包括食物供應和可用性的減少",
+      "factor_type": "ecological",
+      "var_name": "食物生產的損失"
+    }
+  ],
+  "pressure": [
+    {
+      "definition": "包括入侵外來物種和非本地物種。",
+      "factor_type": "ecological",
+      "var_name": "入侵物種"
+    },
+    {
+      "definition": "包括陸地活動、土地利用實踐、土地開發、岸邊利用變化、海床變化、森林砍伐、棲息地破壞、人工棲息地、河流物理修改、河流取水、珊瑚礁損失、棲息地轉換、景觀破壞和佔據沙灘空間。",
+      "factor_type": "social",
+      "var_name": "土地利用和土地覆蓋變化"
+    },
+    {
+      "definition": "包括有機物和營養物質輸入、富營養化、營養物排放和藻類生長。",
+      "factor_type": "ecological",
+      "var_name": "富營養化"
+    },
+    {
+      "definition": "包括自然災害或災難（例如颱風、颶風、豪雨、風暴、風暴潮、暴風雨、海嘯、岩漿、洋流、地震），淡水径流的變化、降雨和蒸發的變化、熱帶氣旋強度和/或頻率的變化、冰川和冰帽的減少、乾旱、豪雨、洪水、熱浪和寒潮。海平面上升：包括海平面和海平面變化。",
+      "factor_type": "ecological",
+      "var_name": "極端天氣"
+    },
+    {
+      "definition": "包括海洋變暖、大氣溫度和海表溫度上升、地表變暖，以及溫室氣體（CO2、CH4、N2O、SF6、PFCs）濃度增加。",
+      "factor_type": "ecological",
+      "var_name": "氣候變化和全球變暖"
+    },
+    {
+      "definition": "包括海洋垃圾、亂丟垃圾、海洋垃圾、市政廢水、家庭垃圾污染、農業排放、家庭污水排放、油污、和污染物釋放。",
+      "factor_type": "social",
+      "var_name": "污染"
+    },
+    {
+      "definition": "包括金屬、烴類、化學物質、持久性有機污染物、有毒排放、防污劑、熱排放（冷卻水）、核排放、淡化排放、沉積物、藥物、殺蟲劑和清潔劑。",
+      "factor_type": "social",
+      "var_name": "污染物"
+    },
+    {
+      "definition": "包括酸化和海洋pH值。",
+      "factor_type": "ecological",
+      "var_name": "海洋酸化"
+    },
+    {
+      "definition": "包括挖渠和港口、船只搁浅、锚泊、岸线改变以及踩踏或船只活动产生的水下噪音和物理损害。",
+      "factor_type": "social",
+      "var_name": "物理破壞性活動"
+    },
+    {
+      "definition": "包括丟失的裝備、破壞性捕魚、破壞性收穫，以及破壞性捕魚裝備和技術。裝備和技術包括沙灘围網、魚叉、炸藥捕魚、爆炸捕魚、氰化捕魚和近岸拖網。",
+      "factor_type": "social",
+      "var_name": "破壞性捕魚行為"
+    },
+    {
+      "definition": "包括海洋資源提取、淡水過度提取、採石、礦業、有機資源、用於建設的岩石、礫石和沙子的使用，對資源的日益需求，以及對沙子、鹽、珊瑚岩、木材和建築柱的提取。",
+      "factor_type": "social",
+      "var_name": "資源消耗"
+    },
+    {
+      "definition": "包括過度開發，過度提取，過度開採，過度捕獵，過度收穫，增加捕魚時間和陷阱數量，漁網網眼變小以及漁業壓力增加。",
+      "factor_type": "social",
+      "var_name": "過度捕撈"
+    }
+  ],
+  "response": [
+    {
+      "definition": "包括物種救援、重新造林、移民和物種及生態系統的恢復。",
+      "factor_type": "ecological",
+      "var_name": "恢復"
+    },
+    {
+      "definition": "包括教育計劃、社區教育、環境和生態系統（珊瑚礁、紅樹林、海草等）保護意識和同儕教育。",
+      "factor_type": "ecological",
+      "var_name": "教育和意識"
+    },
+    {
+      "definition": "包括環境監測和監視。",
+      "factor_type": "ecological",
+      "var_name": "監測"
+    },
+    {
+      "definition": "包括制定促進環境保護和保育的條例、固體廢物管理條例、修訂旅遊法規、禁止使用一次性塑料條例、全球環境協議、政策、戰略和法令（環境和空間發展、漁業、森林資源管理和保育）。",
+      "factor_type": "ecological",
+      "var_name": "立法"
+    },
+    {
+      "definition": "包括合作管理、替代管理、管理改進和合作管理；漁業、物種、入侵物種、水域、固體廢棄物、化學物質、危險泄漏、污水和廢水的管理；船隻進出和交通管理；伐木、漁業、採收、污染、挖掘和排放的規定。",
+      "factor_type": "ecological",
+      "var_name": "管理和規範"
+    },
+    {
+      "definition": "包括海洋空間規劃、海岸管理計劃、旅遊總體規劃、地方管理計劃、林業管理規劃和土地利用規劃。",
+      "factor_type": "ecological",
+      "var_name": "規劃"
+    },
+    {
+      "definition": "包括陸地保護區、海洋保護區、建議的保護區、禁捕區、國家公園、州立公園、避難所和生物走廊；海洋保護區宣告和擴張。",
+      "factor_type": "ecological",
+      "var_name": "設立自然保護區"
+    }
+  ],
+  "state": [
+    {
+      "definition": "包括水質、溫度、氧條件（水平）、營養條件、水動力學、特性、海平面、沉積速率以及淡水或海水流動。",
+      "factor_type": "ecological",
+      "var_name": "物理和化學品質"
+    },
+    {
+      "definition": "透明度、濁度、鹽度、酸度（pH值）、堿度、清晰度、沉積、重金屬、光線、葉綠素-a濃度、二氧化碳（CO2）、生化需氧量（BOD）、化學需氧量（COD）、碳（C）、氮（N）、磷（P）、總懸浮固體（TSS）、總溶解固體（TDS）、溶解有機碳（DOC）、總有機碳（TOC）、總硬度（TH）。生物多樣性:包括珊瑚礁社區和底棲覆蓋。",
+      "factor_type": "ecological",
+      "var_name": "物理和化學指標"
+    },
+    {
+      "definition": "包括珊瑚健康、覆蓋、生長、存活、繁殖和招募，以及珊瑚礁結構或碳酸鹽結構。",
+      "factor_type": "ecological",
+      "var_name": "珊瑚礁狀態"
+    },
+    {
+      "definition": "包括珊瑚、浮游植物、底棲生物、魚類、貝類、海鳥、紅樹林、海草、海膽、水生植物（微型底質藻類、大型藻類、海草和鹽沼植物）等的物種、存量、組成、豐度、族群和生物量，以及海洋和淡水生物系統。",
+      "factor_type": "ecological",
+      "var_name": "生態狀態（生物品質）"
+    }
+  ]
 }

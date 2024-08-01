@@ -73,7 +73,8 @@
         });
         var_data = var_data;
         console.log({ var_data });
-        vis_links = utils.link_to_vis_link(res.links);
+        // vis_links = utils.link_to_vis_link(res.links);
+        vis_links = utils.link_to_vis_link(res.pipeline_links);
         $varTypeColorScale = d3
           .scaleOrdinal()
           .domain(Object.keys(var_data!))

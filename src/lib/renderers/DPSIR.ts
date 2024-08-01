@@ -509,6 +509,7 @@ export const DPSIR = {
     cellWidth: number,
     cellHeight: number,
   ) {
+    console.log("drawing links");
     // console.log({bboxes})
     // console.log({global_grid})
     // console.log(global_grid.map(row => row.join(' ')).join('\n'));
@@ -579,6 +580,7 @@ export const DPSIR = {
         return aDistance - bDistance;
       }
     });
+    console.log("link sort done");
     const svg = d3.select("#" + this.svgId);
     const mergedData: (tLinkObject | undefined)[] = links.map((link) => {
       const source_block = document.querySelector(`#${link.source.var_type}`);
@@ -630,6 +632,7 @@ export const DPSIR = {
         mentions: link.mentions,
       };
     });
+    console.log("link merged");
     const filteredMergeData: tLinkObject[] = mergedData.filter(
       (data) => data !== null,
     ) as tLinkObject[];
@@ -691,8 +694,11 @@ export const DPSIR = {
       }
     });
 
+    console.log("link degree counted");
     // console.log({ linkCounts });
+    console.log("generating points...");
     const points = generatePoints(linkCounts);
+    console.log("generating points done");
 
     // M: move to, H: horizontal line, V: vertical line
     const lineGenerator = (link, i, bbox_source, bbox_target) => {
