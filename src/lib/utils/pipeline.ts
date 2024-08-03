@@ -1,7 +1,12 @@
-import type { tChunk, tIdentifyVars, tIdentifyVarTypes } from "lib/types";
-export function sort_by_id<T extends tIdentifyVarTypes | tIdentifyVars>(
-  chunks: T[],
-): T[] {
+import type {
+  tChunk,
+  tIdentifyLinks,
+  tIdentifyVars,
+  tIdentifyVarTypes,
+} from "lib/types";
+export function sort_by_id<
+  T extends tIdentifyVarTypes | tIdentifyVars | tIdentifyLinks,
+>(chunks: T[]): T[] {
   return chunks.sort((a, b) => {
     const pid_a = a.id.replace("N", "").split("_")[0];
     const pid_b = b.id.replace("N", "").split("_")[0];

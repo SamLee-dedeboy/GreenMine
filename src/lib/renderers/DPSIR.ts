@@ -15,19 +15,20 @@ import type {
 } from "../types/variables";
 import * as Constants from "../constants";
 // import { dispatch } from "d3";
-import {
-  radialBboxes,
-  gridToSvgCoordinate,
-  svgToGridCoordinate,
-  markOccupiedGrid,
-  squareLayout,
-  combineData,
-  createArrow,
-  wrap,
-  add_utility_button,
-  pathFinding,
-  generatePoints,
-} from "./grid_layout";
+// import {
+//   radialBboxes,
+//   gridToSvgCoordinate,
+//   svgToGridCoordinate,
+//   markOccupiedGrid,
+//   squareLayout,
+//   combineData,
+//   createArrow,
+//   wrap,
+//   add_utility_button,
+//   pathFinding,
+//   generatePoints,
+// } from "./grid_layout";
+import * as grid_layout from "./grid_layout";
 import { toggle } from "@melt-ui/svelte/internal/helpers";
 // import type { tVarTypeDef } from "lib/types";
 // import { space } from "postcss/lib/list";
@@ -41,20 +42,24 @@ export const DPSIR = {
     this.width = 1550;
     this.height = 950;
     this.padding = { top: 10, right: 50, bottom: 10, left: 50 };
-    this.rows = 240;
-    this.columns = 210;
-    this.cellWidth = this.width / this.columns;
-    this.cellHeight = this.height / this.rows;
+    // this.rows = 240;
+    // this.columns = 210;
     this.global_rects = [];
-    this.global_grid = Array.from({ length: this.columns + 1 }, () =>
-      Array(this.rows + 1).fill("0000"),
-    );
+    // this.global_grid = Array.from({ length: this.columns + 1 }, () =>
+    //   Array(this.rows + 1).fill("0000"),
+    // );
+    this.grid_renderer = grid_layout.grid_renderer;
+    this.grid_renderer.init(210,240);
+    // console.log(this.grid_renderer.columns, this.grid_renderer.rows);
+    this.cellWidth = this.width / this.grid_renderer.columns;
+    this.cellHeight = this.height / this.grid_renderer.rows;
     this.svgId = svgId;
-    // this.dispatch = d3.dispatch("VarOrLinkSelected");
+    this.dispatch = d3.dispatch("VarOrLinkSelected");
     this.utilities = utilities;
     this.handlers = handlers;
     this.varTypeColorScale = null;
     this.showLinks = true;
+    // this.enable = false;
     const self = this;
     const svg = d3
       .select("#" + svgId)
@@ -79,8 +84,8 @@ export const DPSIR = {
             .attr("stroke", "gray")
             .attr("marker-end", "");
           // DPSIR.on("VarOrLinkSelected", null);
-          // self.dispatch.call("VarOrLinkSelected", null);
-          self.handlers.VarOrLinkSelected(null);
+          self.dispatch.call("VarOrLinkSelected", null);
+          // self.handlers.VarOrLinkSelected(null);
           self.clicked_link = null;
           self.clicked_rect = null;
         }
@@ -108,16 +113,15 @@ export const DPSIR = {
       var_type_region.append("g").attr("class", "bbox-group");
     });
   },
-  // on(event, handler) {
-  //   this.dispatch.on(event, handler);
-  // },
+  on(event, handler) {
+    this.dispatch.on(event, handler);
+  },
   toggleLinks(showLinks: boolean) {
     this.showLinks = showLinks;
   },
   update_vars(vars: tDPSIR, links: tVisLink[], varTypeColorScale: Function) {
-    this.global_grid = Array.from({ length: this.columns + 1 }, () =>
-      Array(this.rows + 1).fill("0000"),
-    );
+    this.grid_renderer?.reset_global_grid(210,240);
+    console.log(this.grid_renderer.global_grid)
     this.varTypeColorScale = varTypeColorScale;
     const var_type_names = Constants.var_type_names;
     type VarTypeNames = (typeof var_type_names)[number];
@@ -184,10 +188,10 @@ export const DPSIR = {
       [var_type_names[4]]: [42, 44],
     };
 
-    const bboxes = radialBboxes(
+    const bboxes = grid_layout.radialBboxes(
       var_type_names,
-      this.columns,
-      this.rows,
+      this.grid_renderer?.columns,
+      this.grid_renderer?.rows,
       bboxes_sizes,
       this.padding,
       this.cellWidth,
@@ -241,7 +245,7 @@ export const DPSIR = {
     linkCount,
   ) {
     const self = this;
-    let global_grid: string[][] = self.global_grid;
+    // let global_grid: string[][] = this.grid_renderer.global_grid;
     let cellWidth: number = self.cellWidth;
     let cellHeight: number = self.cellHeight;
     const var_type_name = vars.variable_type;
@@ -424,7 +428,7 @@ export const DPSIR = {
       space_between_rectangles = 3;
     }
 
-    const rectangleCoordinates = squareLayout(
+    const rectangleCoordinates = grid_layout.squareLayout(
       var_type_name,
       bboxWidth,
       bboxHeight,
@@ -435,7 +439,7 @@ export const DPSIR = {
       y_offset,
       space_between_rectangles,
     );
-    const rectWithVar = combineData(vars, rectangleCoordinates, global_grid); //return as an object
+    const rectWithVar = grid_layout.combineData(vars, rectangleCoordinates, this.grid_renderer?.global_grid); //return as an object
 
     //merge all rects info(grid coordinate position and size) to a global var
     rectWithVar.forEach((rect) => {
@@ -472,7 +476,7 @@ export const DPSIR = {
     bboxes: { [key: string]: { center: [number, number] } },
   ) {
     const self = this;
-    let global_grid: string[][] = self.global_grid;
+    // let global_grid: string[][] = this.grid_renderer.global_grid;
     let cellWidth: number = self.cellWidth;
     let cellHeight: number = self.cellHeight;
     // const frequencyList = calculateFrequencyList(links); // includes variables frequency and link frequency among all groups
@@ -529,6 +533,7 @@ export const DPSIR = {
         return aDistance - bDistance;
       }
     });
+    console.log("link sort done");
     const svg = d3.select("#" + this.svgId);
     const mergedData: (tLinkObject | undefined)[] = links.map((link) => {
       const source_block = document.querySelector(`#${link.source.var_type}`);
@@ -580,6 +585,7 @@ export const DPSIR = {
         mentions: link.mentions,
       };
     });
+    console.log("link merged");
     const filteredMergeData: tLinkObject[] = mergedData.filter(
       (data) => data !== null,
     ) as tLinkObject[];
@@ -640,7 +646,7 @@ export const DPSIR = {
       }
     });
 
-    const points = generatePoints(linkCounts);
+    const points = grid_layout.generatePoints(linkCounts);
 
     // M: move to, H: horizontal line, V: vertical line
     const lineGenerator = (link, i, bbox_source, bbox_target) => {
@@ -651,26 +657,26 @@ export const DPSIR = {
 
       let path_points;
 
-      if (link.source.var_type == link.target.var_type) {
-        path_points = pathFinding(link, global_grid, points);
+      if (link.source.var_type !== link.target.var_type) {
+        path_points = grid_layout.pathFinding(link, this.grid_renderer.global_grid, points);
       }
 
       if (path_points) {
         const svgPath = path_points.map((point) =>
-          gridToSvgCoordinate(point[0], point[1], cellWidth, cellHeight),
+          grid_layout.gridToSvgCoordinate(point[0], point[1], cellWidth, cellHeight),
         );
 
         const d3Path = d3.path();
         d3Path.moveTo(svgPath[0].x, svgPath[0].y);
         if (link.source.var_type == link.target.var_type) {
           d3Path.quadraticCurveTo(
-            gridToSvgCoordinate(
+            grid_layout.gridToSvgCoordinate(
               bboxes[link.source.var_type].center[0],
               bboxes[link.source.var_type].center[1],
               cellWidth,
               cellHeight,
             ).x,
-            gridToSvgCoordinate(
+            grid_layout.gridToSvgCoordinate(
               bboxes[link.source.var_type].center[0],
               bboxes[link.source.var_type].center[1],
               cellWidth,
@@ -695,14 +701,14 @@ export const DPSIR = {
       .join("path")
       .attr("class", "link")
       .attr("id", (d) => `${d.source.var_name}` + "-" + `${d.target.var_name}`)
-      .attr("d", function (d, i) {
-        return lineGenerator(
-          d,
-          i,
-          bboxes[d.source.var_type],
-          bboxes[d.target.var_type],
-        );
-      })
+      // .attr("d", function (d, i) {
+      //   return lineGenerator(
+      //     d,
+      //     i,
+      //     bboxes[d.source.var_type],
+      //     bboxes[d.target.var_type],
+      //   );
+      // })
       .attr("cursor", "pointer")
       .attr("fill", "none")
       // .attr("stroke", "url(#grad)")
@@ -767,12 +773,12 @@ export const DPSIR = {
 
         if (self.clicked_link === d) {
           self.clicked_link = null;
-          self.handlers.VarOrLinkSelected(null);
-          // self.dispatch.call("VarOrLinkSelected", null);
+          // self.handlers.VarOrLinkSelected(null);
+          self.dispatch.call("VarOrLinkSelected", null);
         } else {
           self.clicked_link = d;
-          self.handlers.VarOrLinkSelected(d);
-          // self.dispatch.call("VarOrLinkSelected", d);
+          // self.handlers.VarOrLinkSelected(d);
+          self.dispatch.call("VarOrLinkSelected", d);
           d3.select(this)
             .classed("link-highlight", true)
             .classed("link-not-highlight", false)
@@ -786,7 +792,7 @@ export const DPSIR = {
             })
             .attr("marker-end", (d: tLinkObject) => {
               const svg = d3.select("#" + self.svgId);
-              return createArrow(svg, d, self);
+              return grid_layout.createArrow(svg, d, self);
             });
 
           rects
@@ -812,26 +818,35 @@ export const DPSIR = {
       });
 
     // draw links with animation
-    // let next_path_index = 0;
-    // const t = d3.timer(() => {
-    //   const next_path = link_paths.filter((d, i) => i === next_path_index);
-    //   next_path
-    //     .transition()
-    //     .duration(0)
-    //     .attr("d", function (d, i) {
-    //       return lineGenerator(
-    //         d,
-    //         i,
-    //         bboxes[d.source.var_type],
-    //         bboxes[d.target.var_type],
-    //       );
-    //     });
-    //   next_path_index++;
-    //   if (next_path_index >= link_paths.size()) {
-    //     console.log("done");
-    //     t.stop();
-    //   }
-    // });
+    let next_path_index = 0;
+    let isTimerRunning = false;
+    const t = d3.timer(() => {
+      if(!isTimerRunning){
+        isTimerRunning = true;
+        self.handlers.EnableLinks(false);
+      }
+      const next_path = link_paths.filter((d, i) => i === next_path_index);
+      next_path
+        .transition()
+        .duration(0)
+        .attr("d", function (d, i) {
+          return lineGenerator(
+            d,
+            i,
+            bboxes[d.source.var_type],
+            bboxes[d.target.var_type],
+          );
+        });
+      next_path_index++;
+      if (next_path_index >= link_paths.size()) {
+        console.log("done");
+        t.stop();
+        // this.enable = !this.enable;
+        isTimerRunning = false;
+        self.handlers.EnableLinks(true);
+      }
+      
+    });
   },
 
   drawBbox(
@@ -919,7 +934,7 @@ export const DPSIR = {
       .attr("id", `${var_type_name}` + `_label`)
       .attr(
         "x",
-        gridToSvgCoordinate(
+        grid_layout.gridToSvgCoordinate(
           bbox_center[0],
           bbox_center[1] - bboxHeight / 2 - 2,
           cellWidth,
@@ -928,7 +943,7 @@ export const DPSIR = {
       )
       .attr(
         "y",
-        gridToSvgCoordinate(
+        grid_layout.gridToSvgCoordinate(
           bbox_center[0],
           bbox_center[1] - bboxHeight / 2 - 2,
           cellWidth,
@@ -964,7 +979,7 @@ export const DPSIR = {
       })
       .attr(
         "x",
-        gridToSvgCoordinate(
+        grid_layout.gridToSvgCoordinate(
           bbox_center[0] + var_type_name.length / 2 + 8,
           bbox_center[1] - bboxHeight / 2 - 7,
           cellWidth,
@@ -973,7 +988,7 @@ export const DPSIR = {
       )
       .attr(
         "y",
-        gridToSvgCoordinate(
+        grid_layout.gridToSvgCoordinate(
           bbox_center[0] + var_type_name.length / 2 + 8,
           bbox_center[1] - bboxHeight / 2 - 7,
           cellWidth,
@@ -1048,7 +1063,7 @@ export const DPSIR = {
             self.handlers[d](var_type_name);
           },
         };
-        add_utility_button(utility_attrs);
+        grid_layout.add_utility_button(utility_attrs);
       });
   },
 
@@ -1058,14 +1073,14 @@ export const DPSIR = {
     scaleVarColor: any,
   ) {
     const self = this;
-    let global_grid: string[][] = self.global_grid;
+    // let global_grid: string[][] = this.grid_renderer.global_grid;
     let cellWidth: number = self.cellWidth;
     let cellHeight: number = self.cellHeight;
     const group = d3
       .select("#" + this.svgId)
       .select(`.${var_type_name}_region`);
     // mark rect with "*" in the grid
-    markOccupiedGrid(global_grid, rectWithVar, "*");
+    grid_layout.markOccupiedGrid(this.grid_renderer?.global_grid, rectWithVar, "*");
 
     group
       .select("g.tag-group")
@@ -1080,8 +1095,8 @@ export const DPSIR = {
           .append("rect")
           .attr("class", "box")
           .attr("id", d.variable_name)
-          .attr("x", gridToSvgCoordinate(d.x, d.y, cellWidth, cellHeight).x)
-          .attr("y", gridToSvgCoordinate(d.x, d.y, cellWidth, cellHeight).y)
+          .attr("x", grid_layout.gridToSvgCoordinate(d.x, d.y, cellWidth, cellHeight).x)
+          .attr("y", grid_layout.gridToSvgCoordinate(d.x, d.y, cellWidth, cellHeight).y)
           .attr("width", d.width * cellWidth)
           .attr("height", d.height * cellHeight)
           .attr("stroke", "#cdcdcd")
@@ -1123,8 +1138,8 @@ export const DPSIR = {
             // style changing after select a variable, including the links and labels
             if (self.clicked_rect === d) {
               self.clicked_rect = null;
-              self.handlers.VarOrLinkSelected(null);
-              // self.dispatch.call("VarOrLinkSelected", null);
+              // self.handlers.VarOrLinkSelected(null);
+              self.dispatch.call("VarOrLinkSelected", null);
               d3.selectAll(".link")
                 .classed("link-highlight", false)
                 .classed("link-not-highlight", false)
@@ -1140,8 +1155,8 @@ export const DPSIR = {
             } else {
               self.clicked_rect = d;
 
-              self.handlers.VarOrLinkSelected(d);
-              // self.dispatch.call("VarOrLinkSelected", d);
+              // self.handlers.VarOrLinkSelected(d);
+              self.dispatch.call("VarOrLinkSelected", d);
               d3.select(this)
                 .classed("box-highlight", true)
                 .classed("box-not-highlight", false)
@@ -1194,7 +1209,7 @@ export const DPSIR = {
           .attr("class", "label")
           .attr(
             "x",
-            gridToSvgCoordinate(
+            grid_layout.gridToSvgCoordinate(
               d.x + d.width / 2,
               d.y + d.height / 2,
               cellWidth,
@@ -1203,7 +1218,7 @@ export const DPSIR = {
           ) // slightly move text to the left within the rectangle
           .attr(
             "y",
-            gridToSvgCoordinate(
+            grid_layout.gridToSvgCoordinate(
               d.x + d.width / 2,
               d.y + d.height / 2,
               cellWidth,
@@ -1216,7 +1231,7 @@ export const DPSIR = {
           .attr("text-anchor", "middle")
           .attr("dominant-baseline", "middle")
           .attr("pointer-events", "none")
-          .call(wrap, tagWidth);
+          .call(grid_layout.wrap, tagWidth);
 
         const icon_size = 20;
         if (var_type_name === "pressure") {
@@ -1228,7 +1243,7 @@ export const DPSIR = {
             )
             .attr(
               "x",
-              gridToSvgCoordinate(
+              grid_layout.gridToSvgCoordinate(
                 d.x + d.width - 2.4,
                 d.y,
                 cellWidth,
@@ -1237,7 +1252,7 @@ export const DPSIR = {
             )
             .attr(
               "y",
-              gridToSvgCoordinate(
+              grid_layout.gridToSvgCoordinate(
                 d.x + d.width - 2.4,
                 d.y,
                 cellWidth,

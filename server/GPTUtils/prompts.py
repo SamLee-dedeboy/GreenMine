@@ -78,6 +78,39 @@ def identify_var_prompt_factory(system_prompt_blocks, user_prompt_blocks, prompt
     response_format = "json"
     return messages, response_format, extract_response_func
 
+def identify_link_prompt_factory(system_prompt_blocks, user_prompt_blocks, prompt_variables):
+    prompt_blocks = list(map(lambda block: inject_data(block, prompt_variables), system_prompt_blocks))
+    user_prompt_blocks = list(map(lambda block: inject_data(block, prompt_variables), user_prompt_blocks))
+    messages = [
+        {
+            "role": "system",
+            "content": "\n".join(prompt_blocks) + "\n" + 
+                """Reply with the following JSON format:
+                    {{
+                        "result": 
+                            {{
+                                "relationship": string (relationship between the two variables, or "none"),
+                                "evidence": [] (list of sentence indices, empty if relationship is "none"),
+                                "explanation": string (explain why the evidence indicates the relationship), or "none" if relationship is "none"
+                            }}
+                        
+                    }}
+                """,
+        },
+        {
+            "role": "user",
+            "content": "\n".join(user_prompt_blocks)
+        }
+    ]
+    def extract_response_func(response):
+        response = json.loads(response)['result']
+        if response['relationship'] == "none":
+            return None
+        return response
+    response_format = "json"
+    return messages, response_format, extract_response_func
+
+    return
 def node_extraction_prompt_factory(paragraph, var_name, definition):
 
     # 驅動變數是基本的人為原因，引起環境中的某些影響，以滿足基本的人類需求。

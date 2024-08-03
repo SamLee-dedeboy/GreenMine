@@ -37,34 +37,39 @@ def test():
 @app.route("/data/")
 def get_data():
     nodes = {}
-    metadata = {}
     for var_type in var_types:
         nodes[var_type] = json.load(open(node_data_path + f"{var_type}_nodes.json", encoding='utf-8'))
-        metadata[var_type] = json.load(open(metadata_path + f'{var_type}_variables_def.json', encoding='utf-8'))
-    links = json.load(open(node_data_path + 'connections.json', encoding='utf-8'))
+
+    old_links = json.load(open(node_data_path + 'connections.json', encoding='utf-8'))
     interview_data = process_interview(glob.glob(chunk_data_path + f'chunk_summaries_w_ktte/*.json'))
 
     v1_data = get_data_v1(v1_data_path)
 
     # prompt template data
     var_type_definitions = json.load(open(prompt_context_path + 'var_type_definitions.json', encoding='utf-8'))
-    var_definitions = {}
-    for var_type in var_type_definitions.keys():
-        var_definitions_by_type = json.load(open(prompt_context_path + f"variable_definitions/{var_type}_variables_def.json", encoding='utf-8'))
-        var_definitions[var_type] = var_definitions_by_type
+    var_definitions = json.load(open(prompt_context_path + 'variable_definitions.json', encoding='utf-8'))
+    # var_definitions = {}
+    # for var_type in var_type_definitions.keys():
+    #     var_definitions_by_type = json.load(open(prompt_context_path + f"variable_definitions/{var_type}_variables_def.json", encoding='utf-8'))
+    #     var_definitions[var_type] = var_definitions_by_type
 
     # prompts
     identify_var_types_prompts = json.load(open(prompt_path + 'identify_var_types.json', encoding='utf-8'))
     identify_vars_prompts = json.load(open(prompt_path + 'identify_vars.json', encoding='utf-8'))
+    identify_links_prompts = json.load(open(prompt_path + 'identify_links.json', encoding='utf-8'))
     
     # pipeline data
     identify_var_types = json.load(open(pipeline_result_path + 'identify_var_types/chunk_w_var_types.json', encoding='utf-8'))
     identify_vars = json.load(open(pipeline_result_path + 'identify_vars/chunk_w_vars.json', encoding='utf-8'))
+    identify_links = json.load(open(pipeline_result_path + 'identify_links/chunk_w_links.json', encoding='utf-8'))
+    pipeline_links = [link for chunk in identify_links for link in chunk['identify_links_result']]
+
     return {
         "interviews": interview_data,
         "nodes": nodes,
-        "metadata": metadata,
-        "links": links,
+        "variable_definitions": var_definitions,
+        "links": old_links,
+        "pipeline_links": pipeline_links,
         "v1": v1_data,
         "prompts": {
             "identify_var_types": {
@@ -76,11 +81,17 @@ def get_data():
                 "var_definitions": var_definitions,
                 "system_prompt_blocks": identify_vars_prompts['system_prompt_blocks'],
                 "user_prompt_blocks": identify_vars_prompts['user_prompt_blocks']
+            },
+            "identify_links": {
+                "var_definitions": var_definitions,
+                "system_prompt_blocks": identify_links_prompts['system_prompt_blocks'],
+                "user_prompt_blocks": identify_links_prompts['user_prompt_blocks']
             }
         },
         "pipeline_result": {
             "identify_var_types": identify_var_types,
             "identify_vars": identify_vars,
+            "identify_links": identify_links
         }
 
     }
@@ -154,18 +165,19 @@ def curate_identify_vars():
     system_prompt_blocks = request.json['system_prompt_blocks']
     user_prompt_blocks = request.json['user_prompt_blocks']
     var_type_definitions = json.load(open(prompt_context_path + 'var_type_definitions.json', encoding='utf-8'))
-    var_definitions = {}
-    for var_type in var_type_definitions.keys():
-        var_definitions_by_type = json.load(open(prompt_context_path + f"variable_definitions/{var_type}_variables_def.json", encoding='utf-8'))
-        var_definitions[var_type] = var_definitions_by_type
+    var_definitions = json.load(open(prompt_context_path + 'variable_definitions.json', encoding='utf-8'))
+    # var_definitions = {}
+    # for var_type in var_type_definitions.keys():
+    #     var_definitions_by_type = json.load(open(prompt_context_path + f"variable_definitions/{var_type}_variables_def.json", encoding='utf-8'))
+    #     var_definitions[var_type] = var_definitions_by_type
     prompt_variables = {}
     for var_type, var_type_def in var_type_definitions.items():
         prompt_variables[var_type] = {
             "definition": var_type_def,
-            "vars": "\n".join([f"{var_name}: {var_def}" for var_name, var_def in var_definitions[var_type].items()])
+            "vars": "\n".join([f"{var_datum['var_name']}: {var_datum['definition']}" for var_datum in var_definitions[var_type]]),
+            "var_checklist": [var_datum['var_name'] for var_datum in var_definitions[var_type]] 
         }
     all_chunks = json.load(open(pipeline_result_path + "identify_var_types/chunk_w_var_types.json", encoding='utf-8'))
-    all_chunks = all_chunks[:10]
     system_prompt_blocks = [prompt_block[1] for prompt_block in system_prompt_blocks]
     user_prompt_blocks = [prompt_block[1] for prompt_block in user_prompt_blocks]
     all_chunks = query.identify_vars(all_chunks, openai_client, system_prompt_blocks, user_prompt_blocks, prompt_variables)
@@ -187,6 +199,34 @@ def save_identify_vars():
     local.save_json(all_chunks, pipeline_result_path + "identify_vars/chunk_w_vars.json")
     return "success"
 
+@app.route("/curation/identify_links/", methods=['POST'])
+def curate_identify_links():
+    raw_variable_definitions = request.json['var_definitions']
+    system_prompt_blocks = request.json['system_prompt_blocks']
+    user_prompt_blocks = request.json['user_prompt_blocks']
+    all_chunks = json.load(open(pipeline_result_path + "identify_vars/chunk_w_vars.json", encoding='utf-8'))
+    candidate_links = query.filter_candidate_links(all_chunks)
+
+    variable_definitions= {
+        var_data['var_name']: var_data['definition']
+        for var_list in raw_variable_definitions.values()
+        for var_data in var_list
+    }
+
+    system_prompt_blocks = [prompt_block[1] for prompt_block in system_prompt_blocks]
+    user_prompt_blocks = [prompt_block[1] for prompt_block in user_prompt_blocks]
+    prompt_variables = {
+        "links": candidate_links,
+        "variable_definitions": variable_definitions,
+    }
+    all_chunks = query.identify_links(all_chunks, candidate_links, openai_client, system_prompt_blocks, user_prompt_blocks, prompt_variables)
+    return json.dumps(all_chunks, default=vars)
+
+@app.route("/curation/identify_links/save", methods=['POST'])
+def save_identify_links():
+    all_chunks =  request.json['result']
+    local.save_json(all_chunks, pipeline_result_path + "identify_links/chunk_w_links.json")
+    return "success"
 
 
 
@@ -195,6 +235,7 @@ def save_identify_vars():
 #         node['variable_type'] = node['variable_type'][:-1]
 #     node['variable_type'] = node['variable_type'].lower()
 #     return node
+
 
 def process_interview(filepaths):
     interview_dict = {}

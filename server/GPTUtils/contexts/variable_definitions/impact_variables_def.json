@@ -1,50 +1,62 @@
-{
-    "休閒價值和機會的損失": {
+[
+    {
         "definition": "包括珊瑚礁和沿岸娛樂，以及休閒活動",
-        "factor_type": "ecological"
+        "factor_type": "ecological",
+        "var_name": "休閒價值和機會的損失"
     },
-    "可用資源的損失": {
+    {
         "definition": "",
-        "factor_type": "ecological"
+        "factor_type": "ecological",
+        "var_name": "可用資源的損失"
     },
-    "存在價值的損失": {
-        "definition": "包括地方感",
-        "factor_type": "ecological"
+    {
+        "definition": "包括土地認同感",
+        "factor_type": "ecological",
+        "var_name": "存在價值的損失"
     },
-    "審美價值的損失": {
+    {
         "definition": "",
-        "factor_type": "ecological"
+        "factor_type": "ecological",
+        "var_name": "審美價值的損失"
     },
-    "教育機會的損失": {
+    {
         "definition": "",
-        "factor_type": "ecological"
+        "factor_type": "ecological",
+        "var_name": "教育機會的損失"
     },
-    "旅遊收入的減少": {
-        "definition": "旅遊經營者收入減少",
-        "factor_type": "ecological"
+    {
+        "definition": "旅遊經營者收入",
+        "factor_type": "ecological",
+        "var_name": "旅遊收入的減少"
     },
-    "氣候和大氣調節的損失": {
+    {
         "definition": "包括空氣質量調節、氣候穩定性、自然災害調節和碳固定",
-        "factor_type": "ecological"
+        "factor_type": "ecological",
+        "var_name": "氣候和大氣調節的損失"
     },
-    "沿岸保護減少": {
+    {
         "definition": "包括沿岸/岸線侵蝕、沉降和上升、鹽水滲透和鹽水滲入",
-        "factor_type": "ecological"
+        "factor_type": "ecological",
+        "var_name": "沿岸保護減少"
     },
-    "漁業減少": {
+    {
         "definition": "包括漁業產品和漁獲量減少",
-        "factor_type": "ecological"
+        "factor_type": "ecological",
+        "var_name": "漁業減少"
     },
-    "珊瑚白化": {
+    {
         "definition": "包括珊瑚死亡、生長速率、骨骼強度和疾病",
-        "factor_type": "ecological"
+        "factor_type": "ecological",
+        "var_name": "珊瑚白化"
     },
-    "自然棲息地變化": {
+    {
         "definition": "包括生態或生態系統完整性的損失和退化，棲息地和環境的減少和干擾",
-        "factor_type": "ecological"
+        "factor_type": "ecological",
+        "var_name": "自然棲息地變化"
     },
-    "食物生產的損失": {
+    {
         "definition": "包括食物供應和可用性的減少",
-        "factor_type": "ecological"
+        "factor_type": "ecological",
+        "var_name": "食物生產的損失"
     }
-}
+]

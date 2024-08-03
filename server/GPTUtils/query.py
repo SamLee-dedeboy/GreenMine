@@ -38,6 +38,16 @@ def multithread_prompts(client, prompts, model="gpt-4o-mini", temperature=0.5, r
     concurrent.futures.wait(futures)
     return [future.result() for future in futures]
 
+def multithread_embeddings(client, texts):
+    l = len(texts)
+    with tqdm(total=l) as pbar:
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=100)
+        futures = [executor.submit(get_embedding, client, text) for text in texts]
+        for _ in concurrent.futures.as_completed(futures):
+            pbar.update(1)
+    concurrent.futures.wait(futures)
+    return [future.result() for future in futures]
+
 def request_gpt(client, messages, model='gpt-4o-mini', temperature=0.5, format=None):
     with open("request_log.txt", "a", encoding="utf-8") as f:
         f.write(f"model: {model}, temperature: {temperature}, format: {format}\n")
@@ -72,10 +82,10 @@ def request_gpt(client, messages, model='gpt-4o-mini', temperature=0.5, format=N
 # def get_embedding(client, text, model="text-embedding-ada-002"):
 def get_embedding(client, text, model="text-embedding-3-small"):
     enc = tiktoken.encoding_for_model(model)
-    print(len(enc.encode(text)))
+    print("tokens: ", len(enc.encode(text)), len(enc.encode(text)) > 8191)
     while len(enc.encode(text)) > 8191:
         text = text[:-100]
-        print(len(enc.encode(text)))
+        print("truncated: ", len(enc.encode(text)))
     try:
         return client.embeddings.create(input = [text], model=model).data[0].embedding
     except Exception as e:
@@ -175,14 +185,6 @@ def connection_extraction(
         })
     return results
 
-def speaker_to_string(speaker):
-    return "Interviewer" if str(speaker) == "1" else "Interviewee"
-def conversation_to_string(conversation):
-    return "\n".join([
-        f"{index}: {speaker_to_string(message['speaker'])}: {message['content']}\n"
-        for index, message in enumerate(conversation)
-        ]
-    )
 def identify_var_types(all_chunks, openai_client, system_prompt_blocks, user_prompt_blocks, prompt_variables):
     prompt_list = []
     response_format, extract_response_func = None, None
@@ -196,6 +198,8 @@ def identify_var_types(all_chunks, openai_client, system_prompt_blocks, user_pro
         responses = [extract_response_func(i) for i in responses]
     for (chunk_index, extraction_result) in enumerate(responses):
         chunk = all_chunks[chunk_index]
+        var_type_checklist = ['driver', 'pressure', 'state', 'impact', 'response']
+        extraction_result = list(filter(lambda x: x['var_type'] in var_type_checklist, extraction_result))
         chunk['identify_var_types_result'] = extraction_result
     return all_chunks
 
@@ -225,8 +229,73 @@ def identify_vars(all_chunks, openai_client, system_prompt_blocks, user_prompt_b
     for (response_index, extraction_result) in enumerate(responses):
         chunk_index, var_type = response_index_to_chunk_index[response_index]
         chunk = all_chunks[chunk_index]
+        var_checklist = prompt_variables[var_type['var_type']]['var_checklist']
+        extraction_result = list(filter(lambda x: x['var'] in var_checklist, extraction_result))
         chunk["identify_vars_result"][var_type['var_type']] = extraction_result
     return all_chunks
+
+def identify_links(all_chunks, links, openai_client, system_prompt_blocks, user_prompt_blocks, prompt_variables):
+    chunk_dict = {chunk['id']: dict(chunk, **{'identify_links_result':[]}) for chunk in all_chunks}
+    prompt_list = []
+    chunk_id_list = []
+    link_metadata_list = []
+    variable_definitions = prompt_variables['variable_definitions']
+    for link in links:
+        if link['var1'] == '其他' or link['var2'] == '其他': continue
+        conversation = chunk_dict[link['chunk_id']]['conversation']
+        prompt_variables['conversation'] = conversation_to_string(conversation)
+        prompt_variables['var1'] = f"{link['var1']}, {variable_definitions[link['var1']]}"
+        prompt_variables['var2'] = f"{link['var2']}, {variable_definitions[link['var2']]}"
+        prompt, response_format, extract_response_func = prompts.identify_link_prompt_factory(system_prompt_blocks, user_prompt_blocks, prompt_variables)
+        prompt_list.append(prompt)
+        chunk_id_list.append(link['chunk_id'])
+        link_metadata_list.append(link) 
+    responses = multithread_prompts(openai_client, prompt_list, response_format=response_format, temperature=0.0)
+    if response_format == 'json':
+        responses = [extract_response_func(i) for i in responses]
+    responses
+    for (response_index, extraction_result) in enumerate(responses):
+        if extraction_result is None: continue
+        chunk_id = chunk_id_list[response_index]
+        chunk = chunk_dict[chunk_id]
+        link_metadata = link_metadata_list[response_index]
+        chunk["identify_links_result"].append({
+            "chunk_id": link_metadata['chunk_id'],
+            "var1": link_metadata['var1'],
+            "var2": link_metadata['var2'],
+            "indicator1": link_metadata['indicator1'],
+            "indicator2": link_metadata['indicator2'],
+            "response": extraction_result
+        })
+    all_chunks = list(chunk_dict.values())
+    return all_chunks
+
+
+def filter_candidate_links(chunk_w_vars):
+    links = []
+    for chunk in chunk_w_vars:
+        chunk_id = chunk['id']
+        all_vars_in_chunk =  [(var_type, var_mention) for 
+                              var_type, var_mentions in chunk['identify_vars_result'].items()
+                              for var_mention in var_mentions]
+        if len(all_vars_in_chunk) == 0: continue
+        for i in range(len(all_vars_in_chunk)):
+            for j in range(i+1, len(all_vars_in_chunk)):
+                indicator1, var1 = all_vars_in_chunk[i]
+                indicator2, var2 = all_vars_in_chunk[j]
+                links.append({
+                    "chunk_id": chunk_id,
+                    "var1": var1['var'],
+                    "var2": var2['var'],
+                    "indicator1": indicator1,
+                    "indicator2": indicator2,
+                    "response": {
+                        "relationship": "",
+                        "evidence": ""
+                    }
+                })
+    return links
+
 
 # def chunk_execute_extraction(all_chunks, openai_client, system_prompt_blocks, user_prompt_blocks, prompt_variables, prompt_factory, extraction_result_key):
 #     prompt_list = []
@@ -248,18 +317,26 @@ def save_json(data, filepath):
     with open(filepath, 'w', encoding='utf-8') as fp:
         json.dump(data, fp, indent=4, ensure_ascii=False)
 
-def messages_to_str(messages): 
-    result = ""
-    for conversation in messages:
-        if str(conversation["speaker"]) == "1":
-            result += "Interviewer: " 
-        else:
-            result += "Interviewee: "
-        result += conversation["content"] + "\n"
-    return result
-def combination(vars1, vars2):
-    combs = []
-    for var1 in vars1:
-        for var2 in vars2:
-            combs.append([var1, var2])
-    return combs
+def speaker_to_string(speaker):
+    return "Interviewer" if str(speaker) == "1" else "Interviewee"
+def conversation_to_string(conversation):
+    return "\n".join([
+        f"{index}: {speaker_to_string(message['speaker'])}: {message['content']}\n"
+        for index, message in enumerate(conversation)
+        ]
+    )
+# def messages_to_str(messages): 
+#     result = ""
+#     for conversation in messages:
+#         if str(conversation["speaker"]) == "1":
+#             result += "Interviewer: " 
+#         else:
+#             result += "Interviewee: "
+#         result += conversation["content"] + "\n"
+#     return result
+# def combination(vars1, vars2):
+#     combs = []
+#     for var1 in vars1:
+#         for var2 in vars2:
+#             combs.append([var1, var2])
+#     return combs

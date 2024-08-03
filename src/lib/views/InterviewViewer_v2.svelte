@@ -171,34 +171,20 @@
       });
     });
     console.log(evidenceMap);
-    // let message_indexes = new Set();
-    // e.identify_var_types_result.forEach(item => {
-    //   item.evidence.forEach(evidence => {
-    //     message_indexes.add(evidence);
-    //   });
-    // });
-    // let message_indexes_array = Array.from(message_indexes);
-    // // const explanation = e.identify_var_types_result.explanation;
     const interview_index_match = chunk_index.match(/N(\d+)/);
     if(interview_index_match){
       const interview_index = parseInt(interview_index_match[1],10) - 1;
       show_interview[interview_index] = true;
       Object.keys(evidenceMap).forEach(key=>{
         const message_index = parseInt(key,10);
-        const explanations = evidenceMap[message_index].map(e => `<span style="background-color: ${$varTypeColorScale(e.var_type)}">${e.var_type}:</span> ${e.explanation}`)
+        const explanations = evidenceMap[message_index].map(e => `<span style="background-color: ${$varTypeColorScale(e.var_type)}">${e.var_type}</span>:${e.explanation}`)
         .join('<br>');
         evidence[message_index] = explanations;
         console.log(evidence);
         highlight_evidence[chunk_index][message_index] = true;
         scrollToFirstTargetChunk(interview_index,"evidence_hightlight");
-        // evidence[message_index] = explanations;
       })
-    //   message_indexes_array.forEach((message_index) => {
-    //     highlight_evidence[chunk_index][message_index] = true;
-    //     // console.log(explanation);
-    //     scrollToFirstTargetChunk(interview_index,"evidence_hightlight");
 
-    //   });
 
     }
   }
@@ -444,7 +430,7 @@
                       {/each}
                     </div>
                   {/if}
-                  <div class="conversation-wrapper relative">
+                  <div class="conversation-wrapper relative flex-grow">
                     <div
                       id={`conversation-container-${interview_index}`}
                       class="max-h-96 flex-grow overflow-y-auto border border-dashed border-black text-xs"
@@ -483,7 +469,7 @@
                     </div>
                     {#each aggregateMessages(interview) as message, index}
                       {#if highlight_evidence[message.chunkIndex][message.messageIndex]}
-                        <div class="tooltip">
+                        <div class="tooltip ">
                           <div class="tooltip-content">
                             <span>{@html evidence[message.messageIndex]}</span>
                           </div>
@@ -547,7 +533,7 @@
 
   .tooltip-content {
     visibility: hidden;
-    background: #fff;
+    background: rgb(249 250 251);
     width: 300px;
     text-align: justify;
     border-radius: 6px;

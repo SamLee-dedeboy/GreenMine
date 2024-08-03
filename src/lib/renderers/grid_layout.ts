@@ -20,6 +20,25 @@ let IR = 0;
 let RD = 0;
 let RP = 0;
 let RS = 0;
+export const grid_renderer = {
+  // global_grid: [],
+  // rows: 0,
+  // columns: 0,
+  init(columns, rows) {
+    this.global_grid = Array.from({ length: columns + 1 }, () =>
+      Array(rows + 1).fill("0000"),
+    );
+    this.rows = rows;
+    this.columns = columns;
+    // console.log("init grid", this.rows, this.columns);
+  
+  },
+  reset_global_grid(columns, rows) {
+    this.global_grid = Array.from({ length: columns + 1 }, () =>
+      Array(rows + 1).fill("0000"),
+    );
+  },
+}
 
 export function radialBboxes(
   groups: string[],

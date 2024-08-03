@@ -1,10 +1,10 @@
 export type tDPSIR = {
-  [key: string]: tVariableType
-}
+  [key: string]: tVariableType;
+};
 export type tVariableType = {
   variable_type: string;
-  variable_mentions: { [key: string]: tVariable}
-}
+  variable_mentions: { [key: string]: tVariable };
+};
 
 export type tVariable = {
   variable_name: string;
@@ -15,9 +15,9 @@ export type tVariable = {
 
 export type tMention = {
   chunk_id: string;
-  conversation_ids?: number[]
-  evidence?: string[]
-}
+  conversation_ids?: number[];
+  evidence?: string[];
+};
 
 export type tLink = {
   chunk_id: string;
@@ -28,8 +28,9 @@ export type tLink = {
   response: {
     relationship: string;
     evidence: string[];
-  }
-}
+    explanation: string;
+  };
+};
 
 // for links after reformatting
 export type tVisLink = {
@@ -48,15 +49,13 @@ export type VariableInfo = {
   variable_name: string;
 };
 
-
 //for layout each rect for variables
 export type tRectangle = {
   width: number;
   height: number;
   name: string;
   outgroup_degree: number;
-}
-
+};
 
 //for d3 drawing
 export type tRectObject = {
@@ -71,11 +70,11 @@ export type tRectObject = {
   frequency: number;
   definition: string;
   boundary: {
-    min_x: number,
-    max_x: number,
-    min_y: number,
-    max_y: number,
-  },
+    min_x: number;
+    max_x: number;
+    min_y: number;
+    max_y: number;
+  };
   degree: number;
 };
 
@@ -84,15 +83,15 @@ export type tLinkObject = {
   source: {
     var_type: string;
     var_name: string;
-    leftTop:number[];
+    leftTop: number[];
     width: number;
     height: number;
     position: string;
     boundary: {
-      min_x: number,
-      max_x: number,
-      min_y: number,
-      max_y: number,
+      min_x: number;
+      max_x: number;
+      min_y: number;
+      max_y: number;
     };
     newX_source: number;
     newY_source: number;
@@ -100,22 +99,22 @@ export type tLinkObject = {
   target: {
     var_type: string;
     var_name: string;
-    leftTop:number[];
+    leftTop: number[];
     width: number;
     height: number;
     position: string;
     boundary: {
-      min_x: number,
-      max_x: number,
-      min_y: number,
-      max_y: number,
+      min_x: number;
+      max_x: number;
+      min_y: number;
+      max_y: number;
     };
     newX_target: number;
     newY_target: number;
   };
   frequency: number;
   mentions: Mention[];
-}
+};
 export type tUtilityHandlers = {
-  [key: string]: Function
-}
+  [key: string]: Function;
+};

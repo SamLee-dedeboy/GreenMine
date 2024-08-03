@@ -63,17 +63,19 @@
         interview_data = res.interviews;
         prompt_data = res.prompts;
         pipeline_result = res.pipeline_result;
+        console.log({pipeline_result})
         data_loading = false;
         // Process each group of variables to add factor_type
         Object.keys(res.nodes).forEach((varType: string) => {
           const nodes: tVariableType = res.nodes[varType];
-          const defs: tVarTypeDef = res.metadata[varType];
+          const defs: tVarTypeDef = res.variable_definitions[varType];
           if (!var_data) var_data = {};
           var_data[varType] = utils.integrateTypes(nodes, defs);
         });
         var_data = var_data;
         console.log({ var_data });
-        vis_links = utils.link_to_vis_link(res.links);
+        // vis_links = utils.link_to_vis_link(res.links);
+        vis_links = utils.link_to_vis_link(res.pipeline_links);
         $varTypeColorScale = d3
           .scaleOrdinal()
           .domain(Object.keys(var_data!))
@@ -142,6 +144,53 @@
       summary_interviews = enhanceChunks(chunks);
     }
   }
+  function handleRemoveVarType(e){
+    console.log("e.detail", e.detail)
+    const { id, var_type } = e.detail;
+    if(pipeline_result === undefined) return;
+  
+    pipeline_result.identify_var_types = pipeline_result.identify_var_types.map(item => {
+      if (item.id === id) {
+        return {
+          ...item,
+          identify_var_types_result: item.identify_var_types_result.filter(
+            result => result.var_type !== var_type
+          )
+        };
+      }
+      return item;
+    });
+    //save to backend
+
+    
+  }
+  function handleAddVarType(e){
+    console.log("e.detail", e.detail);
+    const { id, newdata } = e.detail;
+    if(pipeline_result === undefined) return;
+    let temp;
+    pipeline_result.identify_var_types = pipeline_result.identify_var_types.map(item => {
+      if (item.id === id) {
+        console.log(newdata.var_type);
+        
+        const existingIndex = item.identify_var_types_result.findIndex(
+          result => result.var_type && result.var_type === newdata.var_type
+        );
+
+        const updatedNewData = { ...newdata, var_type: newdata.var_type };
+
+        if (existingIndex !== -1) {
+          // Replace the existing element
+          item.identify_var_types_result[existingIndex] = updatedNewData;
+        } else {
+          // Add the new element to the array
+          item.identify_var_types_result.push(updatedNewData);
+        }
+      }
+      return item;
+    });
+    //save to backend
+  }
   onMount(async () => {
     await fetchTest();
     await fetchData();
@@ -156,7 +205,7 @@
     <div class="page flex h-full space-x-1">
       {#if show_prompts}
         <div
-          class="absolute left-1/3 top-1/2 z-10 flex w-fit -translate-x-1/2 -translate-y-1/2 items-stretch rounded-md bg-gray-200 pt-6 shadow-md outline outline-1 outline-gray-300"
+          class="absolute left-1/2 top-1/2 z-10 flex w-fit -translate-x-1/2 -translate-y-1/2 items-stretch rounded-md bg-gray-200 pt-6 shadow-md outline outline-1 outline-gray-300"
           use:draggable
         >
           <Prompts
@@ -164,6 +213,9 @@
             {pipeline_result}
             on:close={() => (show_prompts = false)}
             on:var_types_evidence= {handleEvidenceSelected}
+            on:remove_var_type = {handleRemoveVarType}
+            on:add_var_type = {handleAddVarType}
+            
           ></Prompts>
         </div>
       {/if}
@@ -194,7 +246,6 @@
           {#if show_dpsir}
             <DPSIR
               data={var_data}
-              metadata={dataset?.metadata}
               links={vis_links}
               on:var-selected={handleVarOrLinkSelected}
             ></DPSIR>

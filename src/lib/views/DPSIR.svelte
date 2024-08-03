@@ -11,11 +11,9 @@
     tVariable,
     tLink,
     tVisLink,
-    tMetadata,
   } from "../types";
   import { varTypeColorScale } from "lib/store";
   export let data: tDPSIR | undefined;
-  export let metadata: tMetadata | undefined;
   export let links: tVisLink[] | undefined;
   const svgId = "model-svg";
 
@@ -25,35 +23,43 @@
   let container;
   let selectedVar: tVariable | undefined = undefined;
   let showLinks = true;
+  let enable = false;
   // let trigger_times = 0;
   $: update_vars(data, links, showLinks);
   async function update_vars(
     vars: tDPSIR | undefined,
     links: tVisLink[] | undefined,
-    showLinks: boolean
+    showLinks: boolean,
   ) {
     if (!vars || !links) return;
     // console.log(vars, links);
-    DPSIR.update_vars(vars, links, $varTypeColorScale, showLinks);
+    DPSIR.update_vars(vars, links, $varTypeColorScale);
   }
 
   onMount(async () => {
     await tick();
     const handlers = {
       ["VarOrLinkSelected"]: handleVarOrLinkSelected,
+      ["EnableLinks"]: enableLinks,
       // ["add"]: curation.handleAddVar,
       // ["remove"]: curation.handleRemoveVar,
       // ["edit"]: curation.handleEditVar,
     };
 
     DPSIR.init(svgId, utilities, handlers);
-    // DPSIR.on("VarOrLinkSelected", handleVarOrLinkSelected);
+    DPSIR.on("VarOrLinkSelected", handleVarOrLinkSelected);
     update_vars(data, links, showLinks);
     
   });
   function toggleLinks() {
-    showLinks = !showLinks;
-    DPSIR.toggleLinks(showLinks);
+    if(enable){
+      showLinks = !showLinks;
+      DPSIR.toggleLinks(showLinks);
+    }
+    else{
+      alert("Please wait until links is complete")
+    }
+    
   }
   function handleVarOrLinkSelected(e) {
     // console.log(e)
@@ -62,6 +68,10 @@
     selectedVar = variable;
     // console.log({ selectedVar });
     dispatch("var-selected", selectedVar); // for App.svelte to hightlight the chunks
+  }
+
+  function enableLinks(e){
+    enable = e;
   }
 
 

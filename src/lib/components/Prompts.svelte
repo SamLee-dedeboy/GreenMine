@@ -1,14 +1,15 @@
 <script lang="ts">
-  import PromptEntry from "./PromptEntry.svelte";
-  import IdentifyVarTypeResults from "./IdentifyVarTypeResults.svelte";
-  import IdentifyVarResults from "./IdentifyVarResults.svelte";
-  import VarTypeDataEntry from "./VarTypeDataEntry.svelte";
-  import VarDataEntry from "./VarDataEntry.svelte";
+  import PromptEntry from "./DataEntry/PromptEntry.svelte";
+  import IdentifyVarTypeResults from "lib/components/PipelineResult/IdentifyVarTypeResults.svelte";
+  import IdentifyVarResults from "lib/components/PipelineResult/IdentifyVarResults.svelte";
+  import IdentifyLinkResults from "lib/components/PipelineResult/IdentifyLinkResults.svelte";
+  import VarTypeDataEntry from "lib/components/DataEntry/VarTypeDataEntry.svelte";
+  import VarDataEntry from "lib/components/DataEntry/VarDataEntry.svelte";
   import PromptHeader from "./PromptHeader.svelte";
   import { fade, slide, fly, blur, draw, crossfade } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
 
-  import type { tServerPipelineData, tServerPromptData } from "lib/types";
+  import type { tServerPipelineData, tServerPromptData, tVarTypeResult } from "lib/types";
   import { server_address } from "lib/constants";
   import { createEventDispatcher, tick } from "svelte";
   const dispatch = createEventDispatcher();
@@ -18,6 +19,7 @@
   let tmp_data: tServerPipelineData = {
     identify_var_types: [],
     identify_vars: [],
+    identify_links: [],
   };
   let show_step = 1;
   function fetch_var_types_evidence(data: tServerPromptData) {
@@ -46,6 +48,7 @@
     key: string,
   ) {
     if (!pipeline_tmp_data) return;
+    console.log("saving", pipeline_tmp_data[key], data[key]);
     fetch(server_address + `/curation/${key}/save`, {
       method: "POST",
       headers: {
@@ -56,6 +59,24 @@
         context: data[key],
       }),
     });
+  }
+  function remove_var_type(data: tServerPromptData){
+    if (!data) return;
+    console.log({ data });
+    dispatch("remove_var_type", data);
+  }
+  function add_var_type(data: { id: string; var_type: string }): void {
+    if (!data) return;
+    console.log(data.var_type.toLowerCase() );
+
+    const newVarTypeResult = {
+      var_type: data.var_type.toLowerCase(), // Convert to lowercase
+      evidence: [] as number[],
+      explanation: ""
+    };
+
+    // console.log({ newVarTypeResult });
+    dispatch("add_var_type", { id: data.id, newdata: newVarTypeResult });
   }
 </script>
 
@@ -103,7 +124,8 @@
             on:run={() => execute_prompt(data, "identify_var_types")}
             on:save={() => save_data(data, tmp_data, "identify_var_types")}
           ></PromptHeader>
-          <VarTypeDataEntry data={data.identify_var_types.var_type_definitions}
+          <VarTypeDataEntry
+            bind:data={data.identify_var_types.var_type_definitions}
           ></VarTypeDataEntry>
           <PromptEntry
             data={{
@@ -118,6 +140,8 @@
           data={pipeline_result?.identify_var_types || []}
           on:fetch_var_types_evidence={(e) =>
               fetch_var_types_evidence(e.detail)}
+          on:remove_var_type={(e)=>remove_var_type(e.detail)}
+          on:add_var_type={(e)=>add_var_type(e.detail)}
         />
         <IdentifyVarTypeResults
           title="new"
@@ -132,7 +156,7 @@
             on:run={() => execute_prompt(data, "identify_vars")}
             on:save={() => save_data(data, tmp_data, "identify_vars")}
           ></PromptHeader>
-          <VarDataEntry data={data.identify_vars.var_definitions}
+          <VarDataEntry bind:data={data.identify_vars.var_definitions}
           ></VarDataEntry>
           <PromptEntry
             data={{
@@ -144,8 +168,33 @@
         <IdentifyVarResults
           title="baseline"
           data={pipeline_result?.identify_vars || []}
+          
         />
         <IdentifyVarResults title="new" data={tmp_data?.identify_vars || []} />
+      </div>
+    {:else if show_step === 3}
+      <div in:slide|global class="step-2 flex">
+        <div class="flex min-w-[30rem] flex-col gap-y-1 bg-gray-100">
+          <PromptHeader
+            title="Identify Links"
+            on:run={() => execute_prompt(data, "identify_links")}
+            on:save={() => save_data(data, tmp_data, "identify_links")}
+          ></PromptHeader>
+          <PromptEntry
+            data={{
+              system_prompt_blocks: data.identify_links.system_prompt_blocks,
+              user_prompt_blocks: data.identify_links.user_prompt_blocks,
+            }}
+          />
+        </div>
+        <IdentifyLinkResults
+          title="baseline"
+          data={pipeline_result?.identify_links || []}
+        />
+        <IdentifyLinkResults
+          title="new"
+          data={tmp_data?.identify_links || []}
+        />
       </div>
     {/if}
   {/key}
@@ -168,7 +217,7 @@
     transition: all 0.2s;
   }
   .active {
-    @apply w-[5rem] bg-gray-300 opacity-100;
+    @apply pointer-events-none w-[5rem] bg-green-300 opacity-100;
   }
   .container {
   }
