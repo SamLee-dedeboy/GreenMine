@@ -201,7 +201,7 @@ export const DPSIR = {
     Object.keys(vars).forEach((key) => {
       this.drawVars(vars[key], bboxes[key], categorizedLinks[key]);
     });
-    this.drawLinks(links, bboxes);
+    // this.drawLinks(links, bboxes);
   },
   drawGids(svg, svgId, width, height, cellWidth, cellHeight, columns, rows) {
     // Get the dimensions of the SVG
@@ -657,7 +657,7 @@ export const DPSIR = {
 
       let path_points;
 
-      if (link.source.var_type !== link.target.var_type) {
+      if (link.source.var_type == link.target.var_type) {
         path_points = grid_layout.pathFinding(link, this.grid_renderer.global_grid, points);
       }
 
@@ -1196,7 +1196,7 @@ export const DPSIR = {
                 })
                 .attr("marker-end", (d: tLinkObject) => {
                   const svg = d3.select("#" + self.svgId);
-                  return createArrow(svg, d, self);
+                  return grid_layout.createArrow(svg, d, self);
                 });
             }
           });
