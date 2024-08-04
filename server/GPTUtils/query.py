@@ -200,6 +200,7 @@ def identify_var_types(all_chunks, openai_client, system_prompt_blocks, user_pro
         chunk = all_chunks[chunk_index]
         var_type_checklist = ['driver', 'pressure', 'state', 'impact', 'response']
         extraction_result = list(filter(lambda x: x['var_type'] in var_type_checklist, extraction_result))
+        extraction_result = filter_evidences(extraction_result, len(chunk['conversation']))
         chunk['identify_var_types_result'] = extraction_result
     return all_chunks
 
@@ -231,6 +232,7 @@ def identify_vars(all_chunks, openai_client, system_prompt_blocks, user_prompt_b
         chunk = all_chunks[chunk_index]
         var_checklist = prompt_variables[var_type['var_type']]['var_checklist']
         extraction_result = list(filter(lambda x: x['var'] in var_checklist, extraction_result))
+        extraction_result = filter_evidences(extraction_result, len(chunk['conversation']))
         chunk["identify_vars_result"][var_type['var_type']] = extraction_result
     return all_chunks
 
@@ -258,6 +260,7 @@ def identify_links(all_chunks, links, openai_client, system_prompt_blocks, user_
         if extraction_result is None: continue
         chunk_id = chunk_id_list[response_index]
         chunk = chunk_dict[chunk_id]
+        extraction_result = filter_evidences([extraction_result], len(chunk['conversation']))[0]
         link_metadata = link_metadata_list[response_index]
         chunk["identify_links_result"].append({
             "chunk_id": link_metadata['chunk_id'],
@@ -312,6 +315,12 @@ def filter_candidate_links(chunk_w_vars):
 #         chunk = all_chunks[chunk_index]
 #         chunk[extraction_result_key] = extraction_result
 #     return all_chunks
+
+def filter_evidences(extraction_result, max_index):
+    for index, var_type in enumerate(extraction_result):
+        var_type['evidence'] = list(filter(lambda evidence: evidence < max_index, var_type['evidence']))
+        extraction_result[index] = var_type
+    return extraction_result
 
 def save_json(data, filepath):
     with open(filepath, 'w', encoding='utf-8') as fp:
