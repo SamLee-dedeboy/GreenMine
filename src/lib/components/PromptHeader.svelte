@@ -21,17 +21,17 @@
         on:click={() => dispatch("run")}
         on:keyup={() => {}}
       >
-        Run
+        Run 
       </div>
-      <div
+      <!-- <div
         role="button"
         tabindex="0"
         class="flex-1 rounded-sm bg-green-200 outline outline-1 outline-gray-300 hover:bg-green-300"
         on:click={() => dispatch("save")}
         on:keyup={() => {}}
       >
-        Save
-      </div>
+        Save Version
+      </div> -->
     </div>
   </div>
 </div>

@@ -251,7 +251,7 @@ export function squareLayout(
   space: number,
 ) {
   // console.log({ regionWidth, rectangles, bbox_origin });
-  console.log({ rectangles });
+  // console.log({ rectangles });
   // assuming rectangles has the same width
   const rect_width = cellWidth * rectangles[0].width;
   // const rect_height = rectangles[0].height;

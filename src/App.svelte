@@ -38,6 +38,7 @@
   let data_loading: boolean = true;
   let show_dpsir: boolean = true;
   let show_prompts: boolean = false;
+  let log_record: any;
   // pipeline
   // v1
   let keyword_data: any;
@@ -99,7 +100,7 @@
       });
   }
   function handleEvidenceSelected(e) {
-    console.log("evidence selected", e.detail);
+    // console.log("evidence selected", e.detail);
     interview_viewer_component.handleEvidenceSelected(e.detail);
   }
   function handleVarOrLinkSelected(e) {
@@ -146,7 +147,7 @@
   }
   function handleRemoveVarType(e){
     console.log("e.detail", e.detail)
-    const { id, var_type } = e.detail;
+    const { id, variable } = e.detail;
     if(pipeline_result === undefined) return;
   
     pipeline_result.identify_var_types = pipeline_result.identify_var_types.map(item => {
@@ -154,43 +155,27 @@
         return {
           ...item,
           identify_var_types_result: item.identify_var_types_result.filter(
-            result => result.var_type !== var_type
+            result => result.var_type !== variable.var_type
           )
         };
       }
       return item;
-    });
-    //save to backend
-
-    
+    });    
   }
   function handleAddVarType(e){
-    console.log("e.detail", e.detail);
-    const { id, newdata } = e.detail;
+    // console.log("e.detail", e.detail);
+    const { id, variable } = e.detail;
     if(pipeline_result === undefined) return;
-    let temp;
     pipeline_result.identify_var_types = pipeline_result.identify_var_types.map(item => {
       if (item.id === id) {
-        console.log(newdata.var_type);
-        
-        const existingIndex = item.identify_var_types_result.findIndex(
-          result => result.var_type && result.var_type === newdata.var_type
-        );
-
-        const updatedNewData = { ...newdata, var_type: newdata.var_type };
-
-        if (existingIndex !== -1) {
-          // Replace the existing element
-          item.identify_var_types_result[existingIndex] = updatedNewData;
-        } else {
-          // Add the new element to the array
-          item.identify_var_types_result.push(updatedNewData);
-        }
+        // console.log(newdata.var_type);
+        const updatedNewData = { ...variable, var_type: variable.var_type };
+        item.identify_var_types_result.push(updatedNewData);
       }
       return item;
     });
-    //save to backend
   }
+
   onMount(async () => {
     await fetchTest();
     await fetchData();
@@ -205,7 +190,7 @@
     <div class="page flex h-full space-x-1">
       {#if show_prompts}
         <div
-          class="absolute left-1/2 top-1/2 z-10 flex w-fit -translate-x-1/2 -translate-y-1/2 items-stretch rounded-md bg-gray-200 pt-6 shadow-md outline outline-1 outline-gray-300"
+          class="absolute left-1/4 top-1/2 z-10 flex w-fit -translate-x-1/4 -translate-y-1/2 items-stretch rounded-md bg-gray-200 pt-6 shadow-md outline outline-1 outline-gray-300"
           use:draggable
         >
           <Prompts

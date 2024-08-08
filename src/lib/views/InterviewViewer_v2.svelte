@@ -63,6 +63,7 @@
         highlight_evidence[chunk.id] = chunk.conversation.map(() => false);
       });
     });
+    // console.log(highlight_evidence);
   }
   function init_highlight_messages() {
     data.forEach((interview, interview_index) => {
@@ -154,11 +155,12 @@
   export function handleEvidenceSelected(e) {
     init_highlight_evidence(); //set all evidence to false
     show_interview = []; //clear and not show the previous evidence interview index
-    console.log(e);
+    // console.log(e);
     const chunk_index = e.id;
+    // const message_indexes = e.result
     let evidenceMap = {};
 
-    e.identify_var_types_result.forEach(item => {
+    e.result.forEach(item => {
       item.evidence.forEach(index => {
         if (!evidenceMap[index]) {
           evidenceMap[index] = [];
@@ -170,20 +172,45 @@
         });
       });
     });
-    console.log(evidenceMap);
+    // console.log(evidenceMap);
     const interview_index_match = chunk_index.match(/N(\d+)/);
     if(interview_index_match){
       const interview_index = parseInt(interview_index_match[1],10) - 1;
       show_interview[interview_index] = true;
-      Object.keys(evidenceMap).forEach(key=>{
-        const message_index = parseInt(key,10);
-        const explanations = evidenceMap[message_index].map(e => `<span style="background-color: ${$varTypeColorScale(e.var_type)}">${e.var_type}</span>:${e.explanation}`)
-        .join('<br>');
-        evidence[message_index] = explanations;
-        console.log(evidence);
-        highlight_evidence[chunk_index][message_index] = true;
+      const matchingResult = e.result.find(item => item.var_type === e.var_type);
+      if (matchingResult !== -1) {
+
+        matchingResult.evidence.forEach((message_index: number) => {
+          if (evidenceMap[message_index]) {
+            const explanations = evidenceMap[message_index]
+              .map(e => `<span style="background-color: ${$varTypeColorScale(e.var_type)}">${e.var_type}</span>:${e.explanation}`)
+              .join('<br>');
+
+            evidence[message_index] = explanations;
+            highlight_evidence[chunk_index][message_index] = true;
+            // console.log(highlight_evidence)
+          }
+        });
         scrollToFirstTargetChunk(interview_index,"evidence_hightlight");
-      })
+      }
+      // console.log(evidence_index);
+      // if (matchingResult !== -1) {      
+      //     const explanation = `<span style="background-color: ${$varTypeColorScale(matchingResult.var_type)}">${matchingResult.var_type}</span>:${matchingResult.explanation}`;          
+      //     matchingResult.evidence.forEach(message_index => {
+      //       evidence[message_index] = explanation;
+      //       highlight_evidence[chunk_index][message_index] = true;
+      //     });
+      //     scrollToFirstTargetChunk(interview_index,"evidence_hightlight");
+      // }
+    //   Object.keys(evidenceMap).forEach(key=>{
+    //     const message_index = parseInt(key,10);
+    //     const explanations = evidenceMap[message_index].map(e => `<span style="background-color: ${$varTypeColorScale(e.var_type)}">${e.var_type}</span>:${e.explanation}`)
+    //     .join('<br>');
+    //     evidence[message_index] = explanations;
+    //     console.log(evidence);
+    //     highlight_evidence[chunk_index][message_index] = true;
+    //     scrollToFirstTargetChunk(interview_index,"evidence_hightlight");
+      // })
 
 
     }
@@ -248,7 +275,7 @@
     selected_chunk[interview_index] = chunk_index;
     // console.log("handle chunk click", interview_index, chunk_index);
     scrollToMessage(
-      `${interview_index}-${chunk_index}`,
+      `${interview_index}-${chunk_index}-0`,
       `conversation-container-${interview_index}`,
     );
   }
