@@ -75,3 +75,13 @@ export type tVarDef = {
   definition: string;
   factor_type: string;
 };
+
+export type LogEntry = {
+  id:string;
+  add_element: tVarTypeResult;
+  remove_element: tVarTypeResult;
+}
+
+export type LogRecord = {
+  identify_type_results: LogEntry[];
+}
