@@ -1,8 +1,7 @@
-export function updateTmpData(tmp_data: any, log_record: any, version:string) {
+export function updateTmpData(tmp_data: any, log_record: any) {
     console.log('tmp_data', tmp_data);
-    const baselineRecord = log_record.find(record => record.version === version);
   
-    baselineRecord.identify_type_results.forEach((logItem: any) => {
+    log_record.identify_type_results.forEach((logItem: any) => {
       const tmpDataItem = tmp_data.identify_var_types.find((item: any) => item.id === logItem.id);
       
       if (tmpDataItem) {

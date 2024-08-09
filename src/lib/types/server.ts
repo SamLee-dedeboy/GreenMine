@@ -83,7 +83,5 @@ export type LogEntry = {
 }
 
 export type LogRecord = {
-  // timestamp: string;
-  version: string;
   identify_type_results: LogEntry[];
 }

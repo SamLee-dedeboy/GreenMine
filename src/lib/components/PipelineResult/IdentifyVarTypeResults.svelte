@@ -6,14 +6,12 @@
   export let data: tIdentifyVarTypes[];
   // export let title: string = "Results";
   export let title: string;
-  export let titleOptions: string[] = [];
-  export let selectedTitle: string | undefined = undefined;
+  export let titleOptions: string[]=[];
   export let buttonText: string = ""; // New prop for button text
   export let data_loading:boolean;
   import { createEventDispatcher, onMount } from "svelte";
+  let selectedTitle: string = title;
   const dispatch = createEventDispatcher();
-  // console.log(data)
-  // console.log(data);
   const validTypes = ["driver", "pressure", "state", "impact", "response"];
 
   function handleInput(id: string, event: Event) {
@@ -54,6 +52,13 @@
       target.textContent = "";
     }
   }
+  function handleTitleChange() {
+    if (selectedTitle !== title) {
+      dispatch("title_change", selectedTitle);
+    }
+  }
+
+  $: selectedTitle, handleTitleChange();
 </script>
 
 <div
@@ -65,9 +70,9 @@
     duration: 100,
   }}
 >
-  {#if titleOptions.length > 0 && selectedTitle !== undefined}
+  {#if titleOptions.length > 0 }
     <select
-      bind:value={selectedTitle}
+      bind:value={selectedTitle} 
       class="text-lg font-medium capitalize text-black text-center"
     >
       {#each titleOptions as option}
@@ -84,7 +89,7 @@
       <div
         role="button"
         tabindex="0"
-        class="ml-auto flex items-center justify-center self-center rounded-sm px-2 py-1 text-[0.7rem] normal-case italic leading-3 text-gray-600 outline-double outline-1 outline-gray-300 hover:bg-gray-300 transition-colors duration-200"
+        class="ml-auto flex items-center justify-center self-center  bg-gray-200 text-gray-700 rounded-sm px-2 py-1 text-[0.7rem] normal-case italic leading-3 text-gray-600 outline-double outline-1 outline-gray-600 hover:bg-gray-300  transition-colors duration-200"
         on:click={() => dispatch("base_or_new_button_click")}
         on:keyup={() => {}}
         >

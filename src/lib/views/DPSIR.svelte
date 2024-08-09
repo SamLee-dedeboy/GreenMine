@@ -39,7 +39,7 @@
   onMount(async () => {
     await tick();
     const handlers = {
-      ["VarOrLinkSelected"]: handleVarOrLinkSelected,
+      // ["VarOrLinkSelected"]: handleVarOrLinkSelected,
       ["EnableLinks"]: enableLinks,
       // ["add"]: curation.handleAddVar,
       // ["remove"]: curation.handleRemoveVar,
@@ -62,7 +62,7 @@
     
   }
   function handleVarOrLinkSelected(e) {
-    // console.log(e)
+    console.log(e)
     // e.preventDefault();
     const variable: tVariable = e;
     selectedVar = variable;

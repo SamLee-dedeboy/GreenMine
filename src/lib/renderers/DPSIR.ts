@@ -83,9 +83,8 @@ export const DPSIR = {
             .classed("not-show-link-not-highlight", false)
             .attr("stroke", "gray")
             .attr("marker-end", "");
-          // DPSIR.on("VarOrLinkSelected", null);
-          // self.dispatch.call("VarOrLinkSelected", null);
-          self.handlers.VarOrLinkSelected(null);
+          self.dispatch.call("VarOrLinkSelected", null, null);
+          // self.handlers.VarOrLinkSelected(null);
           self.clicked_link = null;
           self.clicked_rect = null;
         }
@@ -657,7 +656,7 @@ export const DPSIR = {
 
       let path_points;
 
-      if (link.source.var_type == link.target.var_type) {
+      if (link.source.var_type !== link.target.var_type) {
         path_points = grid_layout.pathFinding(link, this.grid_renderer.global_grid, points);
       }
 
@@ -773,12 +772,12 @@ export const DPSIR = {
 
         if (self.clicked_link === d) {
           self.clicked_link = null;
-          self.handlers.VarOrLinkSelected(null);
-          // self.dispatch.call("VarOrLinkSelected", null);
+          // self.handlers.VarOrLinkSelected(null);
+          self.dispatch.call("VarOrLinkSelected", null, null);
         } else {
           self.clicked_link = d;
-          self.handlers.VarOrLinkSelected(d);
-          // self.dispatch.call("VarOrLinkSelected", d);
+          // self.handlers.VarOrLinkSelected(d);
+          self.dispatch.call("VarOrLinkSelected", null, d);
           d3.select(this)
             .classed("link-highlight", true)
             .classed("link-not-highlight", false)
@@ -1138,8 +1137,8 @@ export const DPSIR = {
             // style changing after select a variable, including the links and labels
             if (self.clicked_rect === d) {
               self.clicked_rect = null;
-              self.handlers.VarOrLinkSelected(null);
-              // self.dispatch.call("VarOrLinkSelected", null);
+              // self.handlers.VarOrLinkSelected(null);
+              self.dispatch.call("VarOrLinkSelected", null, null);
               d3.selectAll(".link")
                 .classed("link-highlight", false)
                 .classed("link-not-highlight", false)
@@ -1155,8 +1154,9 @@ export const DPSIR = {
             } else {
               self.clicked_rect = d;
 
-              self.handlers.VarOrLinkSelected(d);
-              // self.dispatch.call("VarOrLinkSelected", d);
+              // self.handlers.VarOrLinkSelected(d);
+              console.log(d)
+              self.dispatch.call("VarOrLinkSelected", null, d); //this refer to the context of the event
               d3.select(this)
                 .classed("box-highlight", true)
                 .classed("box-not-highlight", false)

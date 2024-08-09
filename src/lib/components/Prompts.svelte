@@ -17,6 +17,9 @@
 
   export let data: tServerPromptData;
   export let pipeline_result: tServerPipelineData | undefined = undefined;
+  export let selectedTitle:string;
+  export let titleOptions:string[];
+
   let data_loading: boolean = false;
   let tmp_data: tServerPipelineData = {
     identify_var_types: [],
@@ -24,18 +27,16 @@
     identify_links: [],
   };
   let show_step = 1;
-  let selectedTitle = "baseline";
-  const titleOptions = ["baseline","version1","version2"];
-  let log_record: LogRecord[] = [
+
+  let log_record: LogRecord = 
     {
-      version: "baseline",
       identify_type_results: pipeline_result?.identify_var_types.map((item: any) => ({
         id: item.id,
         add_element: [],
         remove_element: []
       })) || []
     }
-  ];
+  
   type VarTypeItem = {
     id: string;
     variable: {
@@ -47,20 +48,17 @@
   let removeVar:VarTypeItem[] = []
   let addVar: VarTypeItem[] = [];
 
-  // console.log({ log_record });
   function fetch_var_types_evidence(data) {
     if (!data) return;
     console.log({ data });
     dispatch("var_types_evidence", data); //To App.sevelte
   }
   function update_rules() {
-    //TODO: add version as input, initialize is version not exist in log record
-    const baselineRecord = log_record.find(record => record.version === "baseline");
-  
-    if (baselineRecord) {
+     
+    if (log_record) {
       // Update remove_element
       for (const item of removeVar) {
-        const logItem = baselineRecord.identify_type_results.find((result: any) => result.id === item.id);
+        const logItem = log_record.identify_type_results.find((result: any) => result.id === item.id);
         if (logItem) {
           logItem.remove_element.push(item.variable);
         }
@@ -68,13 +66,16 @@
 
       // Update add_element
       for (const item of addVar) {
-        const logItem = baselineRecord.identify_type_results.find((result: any) => result.id === item.id);
+        const logItem = log_record.identify_type_results.find((result: any) => result.id === item.id);
         if (logItem) {
           logItem.add_element.push(item.variable);
         }
       }
     }
     console.log({ log_record });
+    alert("Rules updated");
+    removeVar = [];
+    addVar = [];
     
   }
   function execute_prompt(data: tServerPromptData, key: string) {
@@ -92,20 +93,46 @@
         tmp_data[key] = res;
         console.log({ res });
         //apply rules (prompt from App) to tmp_data which get back from server with new prompt
-        tmp_data = updateTmpData(tmp_data, log_record, "baseline");
+        tmp_data = updateTmpData(tmp_data, log_record);
         data_loading = false;
-      });
-
-    
-    
+      });    
   }
+  function getNextVersion(): string {
+    if (titleOptions.length === 1 && titleOptions[0] === "baseline") {
+      return "version1";
+    } else {
+      const lastVersion = titleOptions[titleOptions.length - 1];
+      if (lastVersion === "baseline") {
+        return "version1";
+      }
+      const versionNumber = parseInt(lastVersion.replace("version", "")) + 1;
+      return `version${versionNumber}`;
+    }
+  }
+  function handle_save() {
+    const nextVersion = getNextVersion();
+    save_data(data, tmp_data, "identify_var_types", nextVersion);
+  }
+
+  function handle_title_change(newTitle:string){
+    // console.log("title changed",newTitle);
+    selectedTitle = newTitle; 
+    //reset tmp_data
+    tmp_data = {
+      identify_var_types: [],
+      identify_vars: [],
+      identify_links: [],
+    };
+    dispatch('versions_changed',selectedTitle)
+  }
+
   function save_data(
     data: tServerPromptData,
     pipeline_tmp_data: tServerPipelineData,
     key: string,
+    version: string
   ) {
-    //TODO: save the pipeline_tmp_data (tmp data) with rules to backend, 
-    //      add version as input and modify "titleOptions"
+    // console.log(version);
     if (!pipeline_tmp_data) return;
     console.log("saving", pipeline_tmp_data[key], data[key]);
     fetch(server_address + `/curation/${key}/save`, {
@@ -116,14 +143,29 @@
       body: JSON.stringify({
         result: pipeline_tmp_data[key],
         context: data[key],
+        version: version,
       }),
+    })
+    .then(response => response.text())  // Change this line from response.json() to response.text()
+    .then(data => {
+      if (data === "success") {
+        // Add the new version to titleOptions if it's not already there
+        if (!titleOptions.includes(version)) {
+          dispatch("new_verison_added",version); //To App.svelte
+        }
+      } else {
+        console.error("Unexpected response:", data);
+      }
+    })
+    .catch(error => {
+      console.error("Error saving data:", error);
     });
   }
   function remove_var_type(data:VarTypeItem,key:string){
     if (!data) return;
     // add to log
     removeVar.push(data);
-    if(key == "base"){
+    if(key == "base"){ //left side
       dispatch("remove_var_type", data);
     }else{
       console.log("modify tmp_data");
@@ -155,10 +197,10 @@
     // add to log
     addVar.push(newVarTypeResult);
 
-    if (key === "base") {
+    if (key === "base") { //left side
       dispatch("add_var_type", newVarTypeResult);
     } else {
-      console.log("modify tmp_data");
+      // console.log("modify tmp_data");
       if (tmp_data === undefined) return;
       tmp_data.identify_var_types = tmp_data.identify_var_types.map(item => {
         if (item.id === data.id) {
@@ -212,10 +254,8 @@
         <div class="flex min-w-[15rem] flex-col gap-y-1 bg-gray-100">
           <PromptHeader
             title="Identify Var Types"
-            on:run={() => execute_prompt(data, "identify_var_types")}
-            
+            on:run={() => execute_prompt(data, "identify_var_types")}            
           ></PromptHeader>
-          <!-- on:save={() => save_data(data, tmp_data, "identify_var_types")} -->
           <VarTypeDataEntry
             bind:data={data.identify_var_types.var_type_definitions}
           ></VarTypeDataEntry>
@@ -230,8 +270,7 @@
         <IdentifyVarTypeResults
           data={pipeline_result?.identify_var_types || []}
           title={selectedTitle}
-          titleOptions={titleOptions}          
-          bind:selectedTitle={selectedTitle}
+          titleOptions={titleOptions}   
           buttonText = "Update Rules"
           data_loading= {pipeline_result?false:true}  
           on:base_or_new_button_click={() => update_rules()}
@@ -239,6 +278,7 @@
               fetch_var_types_evidence(e.detail)}
           on:remove_var_type={(e)=>remove_var_type(e.detail,"base")}
           on:add_var_type={(e)=>add_var_type(e.detail, "base")}
+          on:title_change={(e)=>handle_title_change(e.detail)}
         />
         <IdentifyVarTypeResults
           data={tmp_data?.identify_var_types || []}
@@ -249,9 +289,8 @@
               fetch_var_types_evidence(e.detail)}  
           on:remove_var_type={(e)=>remove_var_type(e.detail,"new")}
           on:add_var_type={(e)=>add_var_type(e.detail, "new")}       
-          on:base_or_new_button_click={() => save_data(data, tmp_data, "identify_var_types")}
+          on:base_or_new_button_click={() => handle_save()}          
         />
-        <!-- on:base_or_new_button_click={() => save_data(data, tmp_data, "identify_var_types")} -->
       </div>
     {:else if show_step === 2}
       <div in:slide|global class="step-2 flex">

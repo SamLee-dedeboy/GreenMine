@@ -26,19 +26,24 @@
   import * as d3 from "d3";
   import { varTypeColorScale } from "lib/store";
   import Prompts from "lib/components/Prompts.svelte";
+    // import { version } from "os";
 
   let interview_data: tTranscript[] | undefined = undefined;
   let interview_viewer_component;
   let dataset: tServerData | undefined = undefined;
   let prompt_data: tServerPromptData | undefined = undefined;
   let pipeline_result: tServerPipelineData | undefined = undefined;
+  let versionedPipelineResults: { [key: string]: tServerPipelineData } = {};
   let var_data: tDPSIR | undefined = undefined;
   let vis_links: tVisLink[] | undefined = undefined;
   let summary_interviews: tChunk[] | undefined = undefined;
   let data_loading: boolean = true;
   let show_dpsir: boolean = true;
   let show_prompts: boolean = false;
+  // let versions: string[] = [];
   let log_record: any;
+  let selectedTitle = "baseline";
+  let titleOptions = ["baseline"];
   // pipeline
   // v1
   let keyword_data: any;
@@ -63,8 +68,9 @@
         dataset = res;
         interview_data = res.interviews;
         prompt_data = res.prompts;
-        pipeline_result = res.pipeline_result;
-        console.log({pipeline_result})
+        versionedPipelineResults["baseline"] = res.pipeline_result;
+        pipeline_result = res.pipeline_result; //set the initial pipeline result
+        // console.log({pipeline_result})
         data_loading = false;
         // Process each group of variables to add factor_type
         Object.keys(res.nodes).forEach((varType: string) => {
@@ -99,6 +105,41 @@
         };
       });
   }
+
+  function fetchVersionData(version: string) {
+    data_loading = true;
+    fetch(`${server_address}/data/${version}`)
+      .then((res) => res.json())
+      .then((versionData: tServerData) => {
+        versionedPipelineResults[version] = versionData.pipeline_result;
+        pipeline_result = versionData.pipeline_result;
+        // console.log(`Data fetched for version: ${version}`);
+        data_loading = false;
+      })
+      .catch(error => {
+        console.error(`Error fetching data for version ${version}:`, error);
+        data_loading = false;
+      });
+  }
+
+  function updateVersion(e,key:string){
+
+    if(key === "version_changed"){
+      selectedTitle = e.detail;      
+      if(versionedPipelineResults[selectedTitle] ){
+        pipeline_result = versionedPipelineResults[selectedTitle];
+      }
+      else{
+        console.warn("no data for this version");
+      }
+    }else if(key === "new_verison_added"){
+      let new_version = e.detail;
+      titleOptions = [...titleOptions, new_version];
+      // console.log("updated titleOptions is", titleOptions);
+      // console.warn(`fetching data for version: ${new_version}`);
+      fetchVersionData(new_version);
+    }
+  }
   function handleEvidenceSelected(e) {
     // console.log("evidence selected", e.detail);
     interview_viewer_component.handleEvidenceSelected(e.detail);
@@ -111,7 +152,7 @@
       summary_interviews = []; //clear summary view
     } else {
       const chunks: tMention[] = e.detail.mentions;
-      console.log({ chunks });
+      // console.log({ chunks });
       interview_viewer_component.highlight_chunks(chunks);
       // console.log(interview_data);
       const flattenedInterviewData = interview_data.flatMap(
@@ -146,7 +187,7 @@
     }
   }
   function handleRemoveVarType(e){
-    console.log("e.detail", e.detail)
+    // console.log("e.detail", e.detail)
     const { id, variable } = e.detail;
     if(pipeline_result === undefined) return;
   
@@ -180,6 +221,7 @@
     await fetchTest();
     await fetchData();
   });
+
   setContext("fetchData", fetchData);
 </script>
 
@@ -196,11 +238,14 @@
           <Prompts
             data={prompt_data}
             {pipeline_result}
+            {selectedTitle}
+            {titleOptions}
             on:close={() => (show_prompts = false)}
             on:var_types_evidence= {handleEvidenceSelected}
             on:remove_var_type = {handleRemoveVarType}
             on:add_var_type = {handleAddVarType}
-            
+            on:versions_changed = {e=>updateVersion(e,"versions_changed")}
+            on:new_verison_added = {e=>updateVersion(e,"new_verison_added")}
           ></Prompts>
         </div>
       {/if}
@@ -229,11 +274,15 @@
             <div>Data Loading...</div>
           {/if}
           {#if show_dpsir}
-            <DPSIR
-              data={var_data}
-              links={vis_links}
-              on:var-selected={handleVarOrLinkSelected}
-            ></DPSIR>
+            {#if data_loading}
+              <div></div>
+            {:else}
+              <DPSIR
+                data={var_data}
+                links={vis_links}
+                on:var-selected={handleVarOrLinkSelected}
+              ></DPSIR>
+            {/if}
           {:else}
             <SimGraph topic_data={chunk_graph} {keyword_data}></SimGraph>
           {/if}
