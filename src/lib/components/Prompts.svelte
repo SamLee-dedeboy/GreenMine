@@ -9,7 +9,12 @@
   import { fade, slide, fly, blur, draw, crossfade } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
 
-  import type { tServerPipelineData, tServerPromptData, tVarTypeResult, LogRecord } from "lib/types";
+  import type {
+    tServerPipelineData,
+    tServerPromptData,
+    tVarTypeResult,
+    LogRecord,
+  } from "lib/types";
   import { updateTmpData } from "lib/utils/update_with_log";
   import { server_address } from "lib/constants";
   import { createEventDispatcher, tick } from "svelte";
@@ -17,8 +22,8 @@
 
   export let data: tServerPromptData;
   export let pipeline_result: tServerPipelineData | undefined = undefined;
-  export let selectedTitle:string;
-  export let titleOptions:string[];
+  export let selectedTitle: string;
+  export let titleOptions: string[];
 
   let data_loading: boolean = false;
   let tmp_data: tServerPipelineData = {
@@ -28,15 +33,15 @@
   };
   let show_step = 1;
 
-  let log_record: LogRecord = 
-    {
-      identify_type_results: pipeline_result?.identify_var_types.map((item: any) => ({
+  let log_record: LogRecord = {
+    identify_type_results:
+      pipeline_result?.identify_var_types.map((item: any) => ({
         id: item.id,
         add_element: [],
-        remove_element: []
-      })) || []
-    }
-  
+        remove_element: [],
+      })) || [],
+  };
+
   type VarTypeItem = {
     id: string;
     variable: {
@@ -45,7 +50,7 @@
       var_type: string;
     };
   };
-  let removeVar:VarTypeItem[] = []
+  let removeVar: VarTypeItem[] = [];
   let addVar: VarTypeItem[] = [];
 
   function fetch_var_types_evidence(data) {
@@ -54,11 +59,12 @@
     dispatch("var_types_evidence", data); //To App.sevelte
   }
   function update_rules() {
-     
     if (log_record) {
       // Update remove_element
       for (const item of removeVar) {
-        const logItem = log_record.identify_type_results.find((result: any) => result.id === item.id);
+        const logItem = log_record.identify_type_results.find(
+          (result: any) => result.id === item.id,
+        );
         if (logItem) {
           logItem.remove_element.push(item.variable);
         }
@@ -66,7 +72,9 @@
 
       // Update add_element
       for (const item of addVar) {
-        const logItem = log_record.identify_type_results.find((result: any) => result.id === item.id);
+        const logItem = log_record.identify_type_results.find(
+          (result: any) => result.id === item.id,
+        );
         if (logItem) {
           logItem.add_element.push(item.variable);
         }
@@ -76,11 +84,10 @@
     alert("Rules updated");
     removeVar = [];
     addVar = [];
-    
   }
   function execute_prompt(data: tServerPromptData, key: string) {
     if (!data) return;
-    data_loading = true; 
+    data_loading = true;
     fetch(server_address + `/curation/${key}/`, {
       method: "POST",
       headers: {
@@ -95,8 +102,25 @@
         //apply rules (prompt from App) to tmp_data which get back from server with new prompt
         tmp_data = updateTmpData(tmp_data, log_record);
         data_loading = false;
-      });    
+        // compute_uncertainty(data, key);
+      });
   }
+
+  function compute_uncertainty(data: tServerPromptData, key: string) {
+    if (!data) return;
+    fetch(server_address + `/curation/${key}/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ ...data[key], compute_uncertainty: true }),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        console.log("uncertainty: ", { res });
+      });
+  }
+
   function getNextVersion(): string {
     if (titleOptions.length === 1 && titleOptions[0] === "baseline") {
       return "version1";
@@ -114,23 +138,23 @@
     save_data(data, tmp_data, "identify_var_types", nextVersion);
   }
 
-  function handle_title_change(newTitle:string){
+  function handle_title_change(newTitle: string) {
     // console.log("title changed",newTitle);
-    selectedTitle = newTitle; 
+    selectedTitle = newTitle;
     //reset tmp_data
     tmp_data = {
       identify_var_types: [],
       identify_vars: [],
       identify_links: [],
     };
-    dispatch('versions_changed',selectedTitle)
+    dispatch("versions_changed", selectedTitle);
   }
 
   function save_data(
     data: tServerPromptData,
     pipeline_tmp_data: tServerPipelineData,
     key: string,
-    version: string
+    version: string,
   ) {
     // console.log(version);
     if (!pipeline_tmp_data) return;
@@ -146,44 +170,48 @@
         version: version,
       }),
     })
-    .then(response => response.text())  // Change this line from response.json() to response.text()
-    .then(data => {
-      if (data === "success") {
-        // Add the new version to titleOptions if it's not already there
-        if (!titleOptions.includes(version)) {
-          dispatch("new_verison_added",version); //To App.svelte
+      .then((response) => response.text()) // Change this line from response.json() to response.text()
+      .then((data) => {
+        if (data === "success") {
+          // Add the new version to titleOptions if it's not already there
+          if (!titleOptions.includes(version)) {
+            dispatch("new_verison_added", version); //To App.svelte
+          }
+        } else {
+          console.error("Unexpected response:", data);
         }
-      } else {
-        console.error("Unexpected response:", data);
-      }
-    })
-    .catch(error => {
-      console.error("Error saving data:", error);
-    });
+      })
+      .catch((error) => {
+        console.error("Error saving data:", error);
+      });
   }
-  function remove_var_type(data:VarTypeItem,key:string){
+  function remove_var_type(data: VarTypeItem, key: string) {
     if (!data) return;
     // add to log
     removeVar.push(data);
-    if(key == "base"){ //left side
+    if (key == "base") {
+      //left side
       dispatch("remove_var_type", data);
-    }else{
+    } else {
       console.log("modify tmp_data");
-      if(tmp_data === undefined) return;
-      tmp_data.identify_var_types = tmp_data.identify_var_types.map(item => {
+      if (tmp_data === undefined) return;
+      tmp_data.identify_var_types = tmp_data.identify_var_types.map((item) => {
         if (item.id === data.id) {
           return {
             ...item,
             identify_var_types_result: item.identify_var_types_result.filter(
-              result => result.var_type !== data.variable.var_type
-            )
+              (result) => result.var_type !== data.variable.var_type,
+            ),
           };
         }
         return item;
-      });    
+      });
     }
   }
-  function add_var_type(data: { id: string; var_type: string },key:string): void {
+  function add_var_type(
+    data: { id: string; var_type: string },
+    key: string,
+  ): void {
     if (!data) return;
 
     const newVarTypeResult: VarTypeItem = {
@@ -191,18 +219,19 @@
       variable: {
         var_type: data.var_type.toLowerCase(), // Convert to lowercase
         evidence: [],
-        explanation: "add manually"
-      }
+        explanation: "add manually",
+      },
     };
     // add to log
     addVar.push(newVarTypeResult);
 
-    if (key === "base") { //left side
+    if (key === "base") {
+      //left side
       dispatch("add_var_type", newVarTypeResult);
     } else {
       // console.log("modify tmp_data");
       if (tmp_data === undefined) return;
-      tmp_data.identify_var_types = tmp_data.identify_var_types.map(item => {
+      tmp_data.identify_var_types = tmp_data.identify_var_types.map((item) => {
         if (item.id === data.id) {
           const updatedNewData = { ...newVarTypeResult.variable };
           item.identify_var_types_result.push(updatedNewData);
@@ -254,7 +283,7 @@
         <div class="flex min-w-[15rem] flex-col gap-y-1 bg-gray-100">
           <PromptHeader
             title="Identify Var Types"
-            on:run={() => execute_prompt(data, "identify_var_types")}            
+            on:run={() => execute_prompt(data, "identify_var_types")}
           ></PromptHeader>
           <VarTypeDataEntry
             bind:data={data.identify_var_types.var_type_definitions}
@@ -270,26 +299,26 @@
         <IdentifyVarTypeResults
           data={pipeline_result?.identify_var_types || []}
           title={selectedTitle}
-          titleOptions={titleOptions}   
-          buttonText = "Update Rules"
-          data_loading= {pipeline_result?false:true}  
+          {titleOptions}
+          buttonText="Update Rules"
+          data_loading={pipeline_result ? false : true}
           on:base_or_new_button_click={() => update_rules()}
           on:fetch_var_types_evidence={(e) =>
-              fetch_var_types_evidence(e.detail)}
-          on:remove_var_type={(e)=>remove_var_type(e.detail,"base")}
-          on:add_var_type={(e)=>add_var_type(e.detail, "base")}
-          on:title_change={(e)=>handle_title_change(e.detail)}
+            fetch_var_types_evidence(e.detail)}
+          on:remove_var_type={(e) => remove_var_type(e.detail, "base")}
+          on:add_var_type={(e) => add_var_type(e.detail, "base")}
+          on:title_change={(e) => handle_title_change(e.detail)}
         />
         <IdentifyVarTypeResults
           data={tmp_data?.identify_var_types || []}
           title={`${selectedTitle} after run (new)`}
-          buttonText = "Save Version" 
-          data_loading={data_loading}
+          buttonText="Save Version"
+          {data_loading}
           on:fetch_var_types_evidence={(e) =>
-              fetch_var_types_evidence(e.detail)}  
-          on:remove_var_type={(e)=>remove_var_type(e.detail,"new")}
-          on:add_var_type={(e)=>add_var_type(e.detail, "new")}       
-          on:base_or_new_button_click={() => handle_save()}          
+            fetch_var_types_evidence(e.detail)}
+          on:remove_var_type={(e) => remove_var_type(e.detail, "new")}
+          on:add_var_type={(e) => add_var_type(e.detail, "new")}
+          on:base_or_new_button_click={() => handle_save()}
         />
       </div>
     {:else if show_step === 2}
@@ -312,7 +341,6 @@
         <IdentifyVarResults
           title="baseline"
           data={pipeline_result?.identify_vars || []}
-          
         />
         <IdentifyVarResults title="new" data={tmp_data?.identify_vars || []} />
       </div>

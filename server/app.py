@@ -7,7 +7,7 @@ from openai import OpenAI
 # from . import GPTUtils
 # from . import DataUtils
 from GPTUtils import query, prompts
-from DataUtils import local, dr, v1_processing
+from DataUtils import local, dr, v1_processing, uncertainty
 from collections import defaultdict
 
 #init, do not read data
@@ -156,8 +156,17 @@ def curate_identify_var_types():
     all_chunks = json.load(open(pipeline_result_path + "init/chunks.json", encoding='utf-8'))
     system_prompt_blocks = [prompt_block[1] for prompt_block in system_prompt_blocks]
     user_prompt_blocks = [prompt_block[1] for prompt_block in user_prompt_blocks]
-    all_chunks = query.identify_var_types(all_chunks, openai_client, system_prompt_blocks, user_prompt_blocks, prompt_variables)
-    return json.dumps(all_chunks, default=vars)
+
+    compute_uncertainty = request.json['compute_uncertainty'] if 'compute_uncertainty' in request.json else False
+    if not compute_uncertainty:
+        all_chunks = query.identify_var_types(all_chunks, openai_client, system_prompt_blocks, user_prompt_blocks, prompt_variables)
+        return json.dumps(all_chunks, default=vars)
+    else:
+        # test only
+        # chunks_w_uncertainty = json.load(open(pipeline_result_path + "identify_var_types/chunk_w_var_types.json", encoding='utf-8'))
+        all_chunks = uncertainty.identify_var_types_uncertainty(all_chunks, openai_client, system_prompt_blocks, user_prompt_blocks, prompt_variables)
+        local.save_json(all_chunks, pipeline_result_path + "identify_var_types/chunk_w_var_types.json")
+        return json.dumps(all_chunks, default=vars)
 
 @app.route("/curation/identify_var_types/save", methods=['POST'])
 def save_identify_var_types():
@@ -182,10 +191,6 @@ def curate_identify_vars():
     user_prompt_blocks = request.json['user_prompt_blocks']
     var_type_definitions = json.load(open(prompt_context_path + 'var_type_definitions.json', encoding='utf-8'))
     var_definitions = json.load(open(prompt_context_path + 'variable_definitions.json', encoding='utf-8'))
-    # var_definitions = {}
-    # for var_type in var_type_definitions.keys():
-    #     var_definitions_by_type = json.load(open(prompt_context_path + f"variable_definitions/{var_type}_variables_def.json", encoding='utf-8'))
-    #     var_definitions[var_type] = var_definitions_by_type
     prompt_variables = {}
     for var_type, var_type_def in var_type_definitions.items():
         prompt_variables[var_type] = {
@@ -196,8 +201,16 @@ def curate_identify_vars():
     all_chunks = json.load(open(pipeline_result_path + "identify_var_types/chunk_w_var_types.json", encoding='utf-8'))
     system_prompt_blocks = [prompt_block[1] for prompt_block in system_prompt_blocks]
     user_prompt_blocks = [prompt_block[1] for prompt_block in user_prompt_blocks]
-    all_chunks = query.identify_vars(all_chunks, openai_client, system_prompt_blocks, user_prompt_blocks, prompt_variables)
-    return json.dumps(all_chunks, default=vars)
+    compute_uncertainty = request.json['compute_uncertainty'] if 'compute_uncertainty' in request.json else False
+    if not compute_uncertainty:
+        all_chunks = query.identify_vars(all_chunks, openai_client, system_prompt_blocks, user_prompt_blocks, prompt_variables)
+        return json.dumps(all_chunks, default=vars)
+    else:
+        # test only
+        # chunks_w_uncertainty = json.load(open(pipeline_result_path + "identify_vars/chunk_w_vars_w_uncertainty.json", encoding='utf-8'))
+        all_chunks = uncertainty.identify_vars_uncertainty(all_chunks, openai_client, system_prompt_blocks, user_prompt_blocks, prompt_variables)
+        local.save_json(all_chunks, pipeline_result_path + "identify_vars/chunk_w_vars.json")
+        return json.dumps(all_chunks, default=vars)
 
 @app.route("/curation/identify_vars/save", methods=['POST'])
 def save_identify_vars():
