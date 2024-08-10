@@ -20,4 +20,4 @@ server/data/**/*.json
 openai_api_key
 node_modules
 .prettierrc
-request_log.txt
+server/request_log.txt
