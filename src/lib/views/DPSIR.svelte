@@ -32,7 +32,6 @@
     showLinks: boolean,
   ) {
     if (!vars || !links) return;
-    // console.log(vars, links);
     DPSIR.update_vars(vars, links, $varTypeColorScale);
   }
 

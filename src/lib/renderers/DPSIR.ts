@@ -90,16 +90,10 @@ export const DPSIR = {
         }
       });
 
-    // this.drawGids(
-    //   svg,
-    //   svgId,
-    //   this.width,
-    //   this.height,
-    //   this.cellWidth,
-    //   this.cellHeight,
-    //   this.columns,
-    //   this.rows,
-    // );
+    this.drawGids(
+      svg,
+      svgId,
+    );
 
     svg.append("g").attr("class", "link_group");
     // .attr("transform", `translate(${padding.left}, ${padding.top})`);
@@ -180,11 +174,11 @@ export const DPSIR = {
     });
 
     const bboxes_sizes: { [key in string]: [number, number] } = {
-      [var_type_names[0]]: [40, 48],
+      [var_type_names[0]]: [38, 62],
       [var_type_names[1]]: [38, 70],
       [var_type_names[2]]: [28, 28],
-      [var_type_names[3]]: [38, 40],
-      [var_type_names[4]]: [42, 44],
+      [var_type_names[3]]: [38, 68],
+      [var_type_names[4]]: [40, 48],
     };
 
     const bboxes = grid_layout.radialBboxes(
@@ -200,10 +194,17 @@ export const DPSIR = {
     Object.keys(vars).forEach((key) => {
       this.drawVars(vars[key], bboxes[key], categorizedLinks[key]);
     });
-    // this.drawLinks(links, bboxes);
+    this.drawLinks(links, bboxes);
   },
-  drawGids(svg, svgId, width, height, cellWidth, cellHeight, columns, rows) {
+  drawGids(svg, svgId) {
     // Get the dimensions of the SVG
+    const self = this
+    let cellWidth: number = self.cellWidth;
+    let cellHeight: number = self.cellHeight;
+    let columns = self.grid_renderer.columns;
+    let rows = self.grid_renderer.rows;
+    let width = self.width;
+    let height = self.height;
     const svgElement = document.getElementById(svgId);
 
     // Append the grid group
@@ -243,6 +244,7 @@ export const DPSIR = {
     box_coor: { center: [number, number]; size: [number, number] },
     linkCount,
   ) {
+    // console.log(vars);
     const self = this;
     // let global_grid: string[][] = this.grid_renderer.global_grid;
     let cellWidth: number = self.cellWidth;
@@ -263,35 +265,12 @@ export const DPSIR = {
     //       height: Math.ceil(nameLength / 4) * 6, //(g)
     //     };
     //   });
-
+    console.log(linkCount);
     // sort the rect by outgroup link count
+
     const rectangles = Object.entries(linkCount)
       .map(([name, counts]) => {
-        // console.log({name, counts});
-        let calculate_height = Math.ceil(name.length / 5) * 6;
-        if (
-          name == "資源消耗" ||
-          name == "过度捕捞" ||
-          name == "恢復" ||
-          name == "教育和意識" ||
-          name == "規劃" ||
-          name == "土地利用和土地覆蓋變化"
-        ) {
-          calculate_height = 12;
-        } else if (
-          var_type_name == "impact" ||
-          name == "破壞性捕魚行為" ||
-          name == "物理和化學指標" ||
-          name == "物理和化學品質"
-        ) {
-          calculate_height = 6;
-        } else if (name == "立法" || name == "監測" || name == "極端天氣") {
-          calculate_height = 9;
-        }
-
-        if (name == "管理和規範" || name == "生態狀態（生物品質）") {
-          calculate_height = 18;
-        }
+        let calculate_height = 6;
 
         return {
           name,
@@ -305,97 +284,6 @@ export const DPSIR = {
           linkCount[b.name].outGroup_link - linkCount[a.name].outGroup_link,
       );
 
-    // Function to switch the positions of two elements in an array
-    function switchElementsByName(array, name1, name2) {
-      const index1 = array.findIndex((el) => el.name === name1);
-      const index2 = array.findIndex((el) => el.name === name2);
-
-      if (index1 !== -1 && index2 !== -1) {
-        const temp = array[index1];
-        array[index1] = array[index2];
-        array[index2] = temp;
-      }
-
-      return array;
-    }
-    let updatedRectangles = rectangles;
-    // Switch the positions of the elements with the specific names
-    if (var_type_name === "driver") {
-      updatedRectangles = switchElementsByName(rectangles, "漁業", "住房");
-      updatedRectangles = switchElementsByName(rectangles, "旅遊業", "人口");
-      updatedRectangles = switchElementsByName(rectangles, "沿海發展", "經濟");
-      updatedRectangles = switchElementsByName(rectangles, "城市化", "住房");
-      updatedRectangles = switchElementsByName(rectangles, "健康", "人口");
-    } else if (var_type_name === "pressure") {
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "土地利用和土地覆蓋變化",
-        "污染物",
-      );
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "資源消耗",
-        "污染物",
-      );
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "破壞性捕魚行為",
-        "入侵物種",
-      );
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "海洋酸化",
-        "入侵物種",
-      );
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "極端天氣",
-        "入侵物種",
-      );
-    } else if (var_type_name === "state") {
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "物理和化學品質",
-        "珊瑚礁狀態",
-      );
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "物理和化學指標",
-        "物理和化學品質",
-      );
-    } else if (var_type_name === "impact") {
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "珊瑚白化",
-        "審美價值的損失",
-      );
-    } else if (var_type_name === "response") {
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "教育和意識",
-        "管理和規範",
-      );
-      updatedRectangles = switchElementsByName(rectangles, "恢復", "規劃");
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "監測",
-        "管理和規範",
-      );
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "監測",
-        "設立自然保護區",
-      );
-      updatedRectangles = switchElementsByName(rectangles, "監測", "恢復");
-      updatedRectangles = switchElementsByName(rectangles, "立法", "規劃");
-      updatedRectangles = switchElementsByName(
-        rectangles,
-        "設立自然保護區",
-        "規劃",
-      );
-      updatedRectangles = switchElementsByName(rectangles, "立法", "監測");
-    }
-
     const bbox_center = box_coor.center;
     const bboxWidth = box_coor.size[0];
     const bboxHeight = box_coor.size[1];
@@ -404,42 +292,17 @@ export const DPSIR = {
       bbox_center[1] - bboxHeight / 2,
     ];
 
-    //change the grid layout to node placing algo
-
-    // const rectangleCoordinates = matrixLayout(bboxWidth, rectangles, bbox_origin);
-
-    let y_offset = 0;
-    let space_between_rectangles = 8;
-    if (var_type_name == "driver") {
-      y_offset = 8;
-      space_between_rectangles = 1;
-    } else if (var_type_name == "pressure") {
-      y_offset = 7;
-      space_between_rectangles = 1;
-    } else if (var_type_name == "state") {
-      y_offset = 10;
-      space_between_rectangles = 1;
-    } else if (var_type_name == "impact") {
-      y_offset = 7;
-      space_between_rectangles = 1;
-    } else if (var_type_name == "response") {
-      y_offset = 6;
-      space_between_rectangles = 3;
-    }
-
     const rectangleCoordinates = grid_layout.squareLayout(
       var_type_name,
       bboxWidth,
       bboxHeight,
-      updatedRectangles,
+      rectangles,
       bbox_origin,
       cellWidth,
       cellHeight,
-      y_offset,
-      space_between_rectangles,
     );
     const rectWithVar = grid_layout.combineData(vars, rectangleCoordinates, this.grid_renderer?.global_grid); //return as an object
-
+    console.log(rectWithVar);
     //merge all rects info(grid coordinate position and size) to a global var
     rectWithVar.forEach((rect) => {
       self.global_rects?.push(rect);
@@ -533,6 +396,7 @@ export const DPSIR = {
       }
     });
     console.log("link sort done");
+
     const svg = d3.select("#" + this.svgId);
     const mergedData: (tLinkObject | undefined)[] = links.map((link) => {
       const source_block = document.querySelector(`#${link.source.var_type}`);
@@ -585,7 +449,7 @@ export const DPSIR = {
       };
     });
     console.log("link merged");
-    const filteredMergeData: tLinkObject[] = mergedData.filter(
+    let filteredMergeData: tLinkObject[] = mergedData.filter(
       (data) => data !== null,
     ) as tLinkObject[];
 
@@ -644,7 +508,8 @@ export const DPSIR = {
         linkCounts[targetVarName].OutGroup_links += 1;
       }
     });
-
+    // // filteredMergeData = filteredMergeData.slice(0, 10);
+    // console.log("link filtered");
     const points = grid_layout.generatePoints(linkCounts);
 
     // M: move to, H: horizontal line, V: vertical line
@@ -656,9 +521,12 @@ export const DPSIR = {
 
       let path_points;
 
-      if (link.source.var_type !== link.target.var_type) {
+      // if (
+      //   !((link.source.var_type === "driver" && (link.target.var_type === "impact" || link.target.var_type === "state")) ||
+      //     ((link.source.var_type === "impact" || link.source.var_type === "state") && link.target.var_type === "driver"))
+      // ) {
         path_points = grid_layout.pathFinding(link, this.grid_renderer.global_grid, points);
-      }
+      // }
 
       if (path_points) {
         const svgPath = path_points.map((point) =>
@@ -693,6 +561,9 @@ export const DPSIR = {
         return d3Path.toString();
       }
     };
+
+
+
     const link_paths = svg
       .select("g.link_group")
       .selectAll(".link")
@@ -863,35 +734,35 @@ export const DPSIR = {
       .select(`.${var_type_name}_region`);
 
     // group bounding box
-    // group
-    //   .select("g.bbox-group")
-    //   .append("rect")
-    //   .attr("class", "bbox")
-    //   .attr("id", var_type_name)
-    //   .attr(
-    //     "x",
-    //     gridToSvgCoordinate(
-    //       bbox_center[0] - bboxWidth / 2,
-    //       bbox_center[1] - bboxHeight / 2,
-    //       cellWidth,
-    //       cellHeight,
-    //     ).x,
-    //   )
-    //   .attr(
-    //     "y",
-    //     gridToSvgCoordinate(
-    //       bbox_center[0] - bboxWidth / 2,
-    //       bbox_center[1] - bboxHeight / 2,
-    //       cellWidth,
-    //       cellHeight,
-    //     ).y,
-    //   )
-    //   .attr("width", bboxWidth * cellWidth)
-    //   .attr("height", bboxHeight * cellHeight)
-    //   .attr("fill", "none")
-    //   .attr("stroke", "grey")
-    //   .attr("stroke-width", 2)
-    //   .attr("opacity", "0.1"); //do not show the bounding box
+    group
+      .select("g.bbox-group")
+      .append("rect")
+      .attr("class", "bbox")
+      .attr("id", var_type_name)
+      .attr(
+        "x",
+        grid_layout.gridToSvgCoordinate(
+          bbox_center[0] - bboxWidth / 2,
+          bbox_center[1] - bboxHeight / 2,
+          cellWidth,
+          cellHeight,
+        ).x,
+      )
+      .attr(
+        "y",
+        grid_layout.gridToSvgCoordinate(
+          bbox_center[0] - bboxWidth / 2,
+          bbox_center[1] - bboxHeight / 2,
+          cellWidth,
+          cellHeight,
+        ).y,
+      )
+      .attr("width", bboxWidth * cellWidth)
+      .attr("height", bboxHeight * cellHeight)
+      .attr("fill", "none")
+      .attr("stroke", "grey")
+      .attr("stroke-width", 2)
+      .attr("opacity", "0.1"); //do not show the bounding box
 
     //group name for clicking
     // group

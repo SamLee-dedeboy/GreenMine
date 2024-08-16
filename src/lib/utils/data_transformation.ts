@@ -35,6 +35,7 @@ export function link_to_vis_link(data: tLink[]): tVisLink[] {
       });
     }
   });
+  console.log("translation done")
   // Convert the map values to an array and adjust structure to include frequency
   const result: tVisLink[] = Array.from(linksMap.values()).map((entry) => ({
     ...entry,
