@@ -27,12 +27,12 @@ class tVarMention(BaseModel):
 class tChunkWithVarMentions(tChunk):
     var_mentions: Dict[str, List[tVarMention]]
 
-def multithread_prompts(client, prompts, model="gpt-4o-mini", temperature=0.5, response_format=None):
+def multithread_prompts(client, prompts, model="gpt-4o-mini", temperature=0.5, response_format=None, seed=None):
     l = len(prompts)
     # results = np.zeros(l)
     with tqdm(total=l) as pbar:
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=100)
-        futures = [executor.submit(request_gpt, client, prompt, model, temperature, response_format) for prompt in prompts]
+        futures = [executor.submit(request_gpt, client, prompt, model, temperature, response_format, seed) for prompt in prompts]
         for _ in concurrent.futures.as_completed(futures):
             pbar.update(1)
     concurrent.futures.wait(futures)
@@ -48,7 +48,7 @@ def multithread_embeddings(client, texts):
     concurrent.futures.wait(futures)
     return [future.result() for future in futures]
 
-def request_gpt(client, messages, model='gpt-4o-mini', temperature=0.5, format=None):
+def request_gpt(client, messages, model='gpt-4o-mini', temperature=0.5, format=None, seed=None):
     with open("request_log.txt", "a", encoding="utf-8") as f:
         f.write(f"model: {model}, temperature: {temperature}, format: {format}\n")
         f.write(json.dumps(messages, ensure_ascii=False) + "\n")
@@ -59,13 +59,15 @@ def request_gpt(client, messages, model='gpt-4o-mini', temperature=0.5, format=N
                 model = model,
                 messages=messages,
                 response_format={ "type": "json_object" },
-                temperature=temperature
-            )
+                temperature=temperature,
+                seed=seed
+            ),
         else:
             response = client.chat.completions.create(
                 model=model,
                 messages=messages,
-                temperature=temperature
+                temperature=temperature,
+                seed=seed
             )
         return response.choices[0].message.content
     except RateLimitError as e:

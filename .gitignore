@@ -17,6 +17,7 @@ prompts/**/*.json
 .DS_Store
 v1_data
 server/data/**/*.json
+server/data/**/*.jsonl
 openai_api_key
 node_modules
 .prettierrc
