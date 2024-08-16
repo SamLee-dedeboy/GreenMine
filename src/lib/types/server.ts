@@ -4,6 +4,7 @@ export type tServerData = {
   interviews: tTranscript[];
   nodes: tDPSIR;
   links: tLink[];
+  pipeline_links: tLink[];
   variable_definitions: Record<string, tVarDef>;
   v1: tV1ServerData;
   prompts: tServerPromptData;

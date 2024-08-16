@@ -77,7 +77,7 @@ def get_data(version="baseline"):
         identify_vars = json.load(open(pipeline_result_path + 'identify_vars/chunk_w_vars.json', encoding='utf-8')) #TBM
         identify_links = json.load(open(pipeline_result_path + 'identify_links/chunk_w_links.json', encoding='utf-8')) #TBM
         pipeline_links = [link for chunk in identify_links for link in chunk['identify_links_result']] #TBM
-        
+
     return {
         "interviews": interview_data,
         "nodes": nodes,
@@ -105,7 +105,7 @@ def get_data(version="baseline"):
         "pipeline_result": {
             "identify_var_types": identify_var_types,
             "identify_vars": identify_vars,
-            "identify_links": identify_links
+            "identify_links": identify_links,
         }
 
     }
