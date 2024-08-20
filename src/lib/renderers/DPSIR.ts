@@ -47,8 +47,15 @@ export const DPSIR = {
     // this.global_grid = Array.from({ length: this.columns + 1 }, () =>
     //   Array(this.rows + 1).fill("0000"),
     // );
+    this.bboxes = {
+      driver:{center:[58,70],size:[0,0]},
+      pressure:{center:[230,61],size:[0,0]},
+      impact:{center:[200,185],size:[0,0]},
+      response:{center:[63,190],size:[0,0]},
+      state:{center:[260,132],size:[0,0]}
+    }
     this.grid_renderer = grid_layout.grid_renderer;
-    this.grid_renderer.init(210, 240);
+    this.grid_renderer.init(300,240);
     // console.log(this.grid_renderer.columns, this.grid_renderer.rows);
     this.cellWidth = this.width / this.grid_renderer.columns;
     this.cellHeight = this.height / this.grid_renderer.rows;
@@ -109,7 +116,7 @@ export const DPSIR = {
     this.showLinks = showLinks;
   },
   update_vars(vars: tDPSIR, links: tVisLink[], varTypeColorScale: Function) {
-    this.grid_renderer?.reset_global_grid(210, 240);
+    this.grid_renderer?.reset_global_grid(300,240);
     // console.log(this.grid_renderer.global_grid)
     this.varTypeColorScale = varTypeColorScale;
     const var_type_names = Constants.var_type_names;
@@ -169,28 +176,36 @@ export const DPSIR = {
       }
     });
 
-    const bboxes_sizes: { [key in string]: [number, number] } = {
-      [var_type_names[0]]: [38, 62],
-      [var_type_names[1]]: [38, 70],
-      [var_type_names[2]]: [28, 28],
-      [var_type_names[3]]: [38, 68],
-      [var_type_names[4]]: [40, 48],
-    };
+    // const bboxes_sizes: { [key in string]: [number, number] } = {
+    //   [var_type_names[0]]: [38, 62],
+    //   [var_type_names[1]]: [38, 70],
+    //   [var_type_names[2]]: [28, 28],
+    //   [var_type_names[3]]: [38, 68],
+    //   [var_type_names[4]]: [40, 48],
+    // };
 
-    const bboxes = grid_layout.radialBboxes(
-      var_type_names,
-      this.grid_renderer?.columns,
-      this.grid_renderer?.rows,
-      bboxes_sizes,
-      this.padding,
-      this.cellWidth,
-      this.cellHeight,
-    );
+    // const bboxes = grid_layout.radialBboxes(
+    //   var_type_names,
+    //   this.grid_renderer?.columns,
+    //   this.grid_renderer?.rows,
+    //   bboxes_sizes,
+    //   this.padding,
+    //   this.cellWidth,
+    //   this.cellHeight,
+    // );
+    // bboxes = {
+    //   driver:{center:[49,59]},
+    //   pressure:{center:[151,61]},
+    //   impact:{center:[129,185]},
+    //   response:{center:[57,173]},
+    //   state:{center:[176,132]}
+    // }
     // console.log({bboxes});
-    Object.keys(vars).forEach((key) => {
-      this.drawVars(vars[key], bboxes[key], categorizedLinks[key]);
+    Object.values(var_type_names).forEach((varType) => {
+      console.log(varType);
+        this.drawVars(vars[varType], this.bboxes[varType],categorizedLinks[varType]);
     });
-    // this.drawLinks(links, bboxes);
+    // this.drawLinks(links, this.bboxes);
   },
   drawGids(svg, svgId) {
     // Get the dimensions of the SVG
@@ -236,31 +251,17 @@ export const DPSIR = {
 
   //center(gridX,gridY), size(x grids,y grids)
   drawVars(
-    vars: tVariableType,
-    box_coor: { center: [number, number]; size: [number, number] },
+    vars: tVariableType,    
+    bbox_info: { center: [number, number]; size: [number, number] },
     linkCount,
   ) {
     // console.log(vars);
     const self = this;
-    // let global_grid: string[][] = this.grid_renderer.global_grid;
     let cellWidth: number = self.cellWidth;
     let cellHeight: number = self.cellHeight;
     const var_type_name = vars.variable_type;
-    // const charWidth = 15;
-    const rectWidth = 12; //(g)
-    // const charHeight = 25;
-    // const rectangles = Object.values(
-    //   vars.variable_mentions as Record<string, tVariable>,
-    // )
-    //   .sort((a, b) => b.mentions.length - a.mentions.length) // Sorting in descending order by mentions length
-    //   .map((variable) => {
-    //     const nameLength = variable.variable_name.length;
-    //     return {
-    //       name: variable.variable_name,
-    //       width: rectWidth,
-    //       height: Math.ceil(nameLength / 4) * 6, //(g)
-    //     };
-    //   });
+    const rectWidth = 18; //(g)
+
     console.log(linkCount);
     // sort the rect by outgroup link count
 
@@ -280,28 +281,23 @@ export const DPSIR = {
           linkCount[b.name].outGroup_link - linkCount[a.name].outGroup_link,
       );
 
-    const bbox_center = box_coor.center;
-    const bboxWidth = box_coor.size[0];
-    const bboxHeight = box_coor.size[1];
-    const bbox_origin = [
-      bbox_center[0] - bboxWidth / 2,
-      bbox_center[1] - bboxHeight / 2,
-    ];
+    // const bbox_center = box_coor.center;
+    // const bboxWidth = box_coor.size[0];
+    // const bboxHeight = box_coor.size[1];
+    // const bbox_origin = [
+    //   bbox_center[0] - bboxWidth / 2,
+    //   bbox_center[1] - bboxHeight / 2,
+    // ];
 
     const rectangleCoordinates = grid_layout.squareLayout(
       var_type_name,
-      bboxWidth,
-      bboxHeight,
       rectangles,
-      bbox_origin,
       cellWidth,
       cellHeight,
+      bbox_info
     );
-    const rectWithVar = grid_layout.combineData(
-      vars,
-      rectangleCoordinates,
-      this.grid_renderer?.global_grid,
-    ); //return as an object
+    console.log(rectangleCoordinates);
+    const rectWithVar = grid_layout.combineData(vars, rectangleCoordinates, this.grid_renderer?.global_grid); //return as an object
     console.log(rectWithVar);
     //merge all rects info(grid coordinate position and size) to a global var
     rectWithVar.forEach((rect) => {
@@ -323,7 +319,7 @@ export const DPSIR = {
       if (degree > maxMentions) maxMentions = degree;
     });
 
-    this.drawBbox(var_type_name, bbox_center, bboxWidth, bboxHeight);
+    this.drawBbox(var_type_name, bbox_info.center, bbox_info.size[0], bbox_info.size[1]);
     const scaleVarColor = d3
       .scaleLinear()
       .domain([minMentions, maxMentions])

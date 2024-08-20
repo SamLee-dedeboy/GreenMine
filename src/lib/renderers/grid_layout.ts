@@ -12,14 +12,6 @@ import type {
 } from "../types/variables";
 import * as d3 from "d3";
 import PriorityQueue from "lib/types/PriorityQueue";
-let unfoundCount = 0;
-let DP = 0;
-let PS = 0;
-let SI = 0;
-let IR = 0;
-let RD = 0;
-let RP = 0;
-let RS = 0;
 const linkTypeCounts = new Map<string, number>();
 export const grid_renderer = {
   // global_grid: [],
@@ -240,183 +232,182 @@ export function markOccupiedGrid(
 //  -   -
 //  -   -
 //   ---
-export function squareLayout(
-  varname: string,
-  regionWidth: number,
-  regionHeight: number,
-  rectangles: tRectangle[],
-  bbox_origin: number[],
-  cellWidth: number,
-  cellHeight: number,
-) {
-  // Calculate the number of rectangles in each row
-  let first_row_rect_number = Math.max(3, Math.floor(regionWidth / rectangles[0].width) - 2);
-  if (rectangles.length < 9) {
-    first_row_rect_number = Math.max(2, Math.floor(regionWidth / rectangles[0].width) - 2);
-  }
+// export function squareLayout(
+//   varname: string,
+//   regionWidth: number,
+//   regionHeight: number,
+//   rectangles: tRectangle[],
+//   bbox_origin: number[],
+//   cellWidth: number,
+//   cellHeight: number,
+// ) {
+//   // Calculate the number of rectangles in each row
+//   let first_row_rect_number = Math.max(3, Math.floor(regionWidth / rectangles[0].width) - 2);
+//   if (rectangles.length < 9) {
+//     first_row_rect_number = Math.max(2, Math.floor(regionWidth / rectangles[0].width) - 2);
+//   }
 
-  let middle_row_number =
-    rectangles.length % 2 === 0
-      ? (rectangles.length - first_row_rect_number * 2) / 2
-      : (rectangles.length - first_row_rect_number * 2 - 1) / 2;
+//   let middle_row_number =
+//     rectangles.length % 2 === 0
+//       ? (rectangles.length - first_row_rect_number * 2) / 2
+//       : (rectangles.length - first_row_rect_number * 2 - 1) / 2;
 
-  // Adjust heights based on the new rules
-  const { selectedMiddleRectangles } = adjustRectangleHeights(rectangles, middle_row_number);
+//   // Adjust heights based on the new rules
+//   const { selectedMiddleRectangles } = adjustRectangleHeights(rectangles, middle_row_number);
 
-  // Rearrange rectangles to put top 4 at corners and selectedMiddleRectangles in the middle
-  const topFour = rectangles.slice(0, 4);
-  const otherRectangles = rectangles.filter(rect => !topFour.includes(rect) && !selectedMiddleRectangles.includes(rect));
+//   // Rearrange rectangles to put top 4 at corners and selectedMiddleRectangles in the middle
+//   const topFour = rectangles.slice(0, 4);
+//   const otherRectangles = rectangles.filter(rect => !topFour.includes(rect) && !selectedMiddleRectangles.includes(rect));
   
-  const rearrangedRectangles = [
-    topFour[0],
-    ...otherRectangles.slice(0, first_row_rect_number - 2),
-    topFour[1],
-    ...selectedMiddleRectangles,
-    topFour[2],
-    ...otherRectangles.slice(first_row_rect_number - 2),
-    topFour[3]
-  ];
+//   const rearrangedRectangles = [
+//     topFour[0],
+//     ...otherRectangles.slice(0, first_row_rect_number - 2),
+//     topFour[1],
+//     ...selectedMiddleRectangles,
+//     topFour[2],
+//     ...otherRectangles.slice(first_row_rect_number - 2),
+//     topFour[3]
+//   ];
 
-  const rect_width = cellWidth * rectangles[0].width;
-  const max_rect_per_row = Math.floor(regionWidth / rectangles[0].width);
-  console.log(rearrangedRectangles);
-  let rectangleCoordinates: [
-    number,
-    number,
-    number,
-    number,
-    string,
-    string,
-    number,
-  ][] = [];
+//   const rect_width = cellWidth * rectangles[0].width;
+//   const max_rect_per_row = Math.floor(regionWidth / rectangles[0].width);
+//   console.log(rearrangedRectangles);
+//   let rectangleCoordinates: [
+//     number,
+//     number,
+//     number,
+//     number,
+//     string,
+//     string,
+//     number,
+//   ][] = [];
 
-  let last_row_rect_number =
-    rearrangedRectangles.length - first_row_rect_number - middle_row_number * 2;
+//   let last_row_rect_number =
+//     rearrangedRectangles.length - first_row_rect_number - middle_row_number * 2;
 
-  // Calculate total height of all rectangles
-  let total_rect_height = 0;
-  total_rect_height += Math.max(...rearrangedRectangles.slice(0, first_row_rect_number).map(rect => rect.height * cellHeight));
-  for (let i = 0; i < middle_row_number; i++) {
-    total_rect_height += Math.max(
-      rearrangedRectangles[2 * i + first_row_rect_number].height * cellHeight,
-      rearrangedRectangles[2 * i + 1 + first_row_rect_number].height * cellHeight
-    );
-  }
-  total_rect_height += Math.max(...rearrangedRectangles.slice(rearrangedRectangles.length - last_row_rect_number).map(rect => rect.height * cellHeight));
+//   // Calculate total height of all rectangles
+//   let total_rect_height = 0;
+//   total_rect_height += Math.max(...rearrangedRectangles.slice(0, first_row_rect_number).map(rect => rect.height * cellHeight));
+//   for (let i = 0; i < middle_row_number; i++) {
+//     total_rect_height += Math.max(
+//       rearrangedRectangles[2 * i + first_row_rect_number].height * cellHeight,
+//       rearrangedRectangles[2 * i + 1 + first_row_rect_number].height * cellHeight
+//     );
+//   }
+//   total_rect_height += Math.max(...rearrangedRectangles.slice(rearrangedRectangles.length - last_row_rect_number).map(rect => rect.height * cellHeight));
 
-  // Calculate y_offset
-  let num_gaps = 2 + middle_row_number; // gaps between rows
-  let y_offset = (regionHeight * cellHeight - total_rect_height) / num_gaps;
+//   // Calculate y_offset
+//   let num_gaps = 2 + middle_row_number; // gaps between rows
+//   let y_offset = (regionHeight * cellHeight - total_rect_height) / num_gaps;
 
-  // Ensure y_offset is not negative
-  y_offset = Math.max(y_offset, 0);
+//   // Ensure y_offset is not negative
+//   y_offset = Math.max(y_offset, 0);
 
-  let first_space_between_rectangles = (regionWidth * cellWidth - rect_width * first_row_rect_number) / (first_row_rect_number - 1);
-  let second_space_between_rectangles = (regionWidth * cellWidth - rect_width * last_row_rect_number) / (last_row_rect_number - 1);
+//   let first_space_between_rectangles = (regionWidth * cellWidth - rect_width * first_row_rect_number) / (first_row_rect_number - 1);
+//   let second_space_between_rectangles = (regionWidth * cellWidth - rect_width * last_row_rect_number) / (last_row_rect_number - 1);
 
-  let first_row_offset_left =
-    (cellWidth * regionWidth -
-      (first_row_rect_number * rect_width +
-        (first_row_rect_number - 1) * first_space_between_rectangles)) /
-    2;
+//   let first_row_offset_left =
+//     (cellWidth * regionWidth -
+//       (first_row_rect_number * rect_width +
+//         (first_row_rect_number - 1) * first_space_between_rectangles)) /
+//     2;
 
-  let accumulative_y_offset = 0;
+//   let accumulative_y_offset = 0;
 
-  // First row
-  for (let i = 0; i < first_row_rect_number; i++) {
-    let x =
-      (bbox_origin[0] - 1) * cellWidth +
-      first_row_offset_left +
-      i * (rect_width + first_space_between_rectangles);
-    let y = bbox_origin[1] * cellHeight + accumulative_y_offset;
-    let Grid = svgToGridCoordinate(x, y, cellWidth, cellHeight);
+//   // First row
+//   for (let i = 0; i < first_row_rect_number; i++) {
+//     let x =
+//       (bbox_origin[0] - 1) * cellWidth +
+//       first_row_offset_left +
+//       i * (rect_width + first_space_between_rectangles);
+//     let y = bbox_origin[1] * cellHeight + accumulative_y_offset;
+//     let Grid = svgToGridCoordinate(x, y, cellWidth, cellHeight);
 
-    let type = "top";
-    if (i === 0) type = "top-left";
-    if (i === first_row_rect_number - 1) type = "top-right";
+//     let type = "top";
+//     if (i === 0) type = "top-left";
+//     if (i === first_row_rect_number - 1) type = "top-right";
 
-    rectangleCoordinates.push([
-      Grid.x,
-      Grid.y,
-      rearrangedRectangles[i].width,
-      rearrangedRectangles[i].height,
-      rearrangedRectangles[i].name,
-      type,
-      rearrangedRectangles[i].outgroup_degree,
-    ]);
-  }
+//     rectangleCoordinates.push([
+//       Grid.x,
+//       Grid.y,
+//       rearrangedRectangles[i].width,
+//       rearrangedRectangles[i].height,
+//       rearrangedRectangles[i].name,
+//       type,
+//       rearrangedRectangles[i].outgroup_degree,
+//     ]);
+//   }
 
-  accumulative_y_offset += Math.max(...rearrangedRectangles.slice(0, first_row_rect_number).map(rect => rect.height * cellHeight)) + y_offset;
+//   accumulative_y_offset += Math.max(...rearrangedRectangles.slice(0, first_row_rect_number).map(rect => rect.height * cellHeight)) + y_offset;
 
-  // Middle rows
-  for (let i = 0; i < middle_row_number; i++) {
-    let x1 = (bbox_origin[0] - 1) * cellWidth;
-    let y1 = bbox_origin[1] * cellHeight + accumulative_y_offset;
-    let Grid1 = svgToGridCoordinate(x1, y1, cellWidth, cellHeight);
+//   // Middle rows
+//   for (let i = 0; i < middle_row_number; i++) {
+//     let x1 = (bbox_origin[0] - 1) * cellWidth;
+//     let y1 = bbox_origin[1] * cellHeight + accumulative_y_offset;
+//     let Grid1 = svgToGridCoordinate(x1, y1, cellWidth, cellHeight);
 
-    let x2 = (bbox_origin[0] - 1) * cellWidth + cellWidth * regionWidth - rect_width;
-    let y2 = bbox_origin[1] * cellHeight + accumulative_y_offset;
-    let Grid2 = svgToGridCoordinate(x2, y2, cellWidth, cellHeight);
+//     let x2 = (bbox_origin[0] - 1) * cellWidth + cellWidth * regionWidth - rect_width;
+//     let y2 = bbox_origin[1] * cellHeight + accumulative_y_offset;
+//     let Grid2 = svgToGridCoordinate(x2, y2, cellWidth, cellHeight);
 
-    rectangleCoordinates.push([
-      Grid1.x,
-      Grid1.y,
-      rearrangedRectangles[2 * i + first_row_rect_number].width,
-      rearrangedRectangles[2 * i + first_row_rect_number].height,
-      rearrangedRectangles[2 * i + first_row_rect_number].name,
-      "left",
-      rearrangedRectangles[2 * i + first_row_rect_number].outgroup_degree,
-    ]);
-    rectangleCoordinates.push([
-      Grid2.x,
-      Grid2.y,
-      rearrangedRectangles[2 * i + 1 + first_row_rect_number].width,
-      rearrangedRectangles[2 * i + 1 + first_row_rect_number].height,
-      rearrangedRectangles[2 * i + 1 + first_row_rect_number].name,
-      "right",
-      rearrangedRectangles[2 * i + 1 + first_row_rect_number].outgroup_degree,
-    ]);
+//     rectangleCoordinates.push([
+//       Grid1.x,
+//       Grid1.y,
+//       rearrangedRectangles[2 * i + first_row_rect_number].width,
+//       rearrangedRectangles[2 * i + first_row_rect_number].height,
+//       rearrangedRectangles[2 * i + first_row_rect_number].name,
+//       "left",
+//       rearrangedRectangles[2 * i + first_row_rect_number].outgroup_degree,
+//     ]);
+//     rectangleCoordinates.push([
+//       Grid2.x,
+//       Grid2.y,
+//       rearrangedRectangles[2 * i + 1 + first_row_rect_number].width,
+//       rearrangedRectangles[2 * i + 1 + first_row_rect_number].height,
+//       rearrangedRectangles[2 * i + 1 + first_row_rect_number].name,
+//       "right",
+//       rearrangedRectangles[2 * i + 1 + first_row_rect_number].outgroup_degree,
+//     ]);
 
-    let row_max_height = Math.max(
-      rearrangedRectangles[2 * i + first_row_rect_number].height * cellHeight,
-      rearrangedRectangles[2 * i + 1 + first_row_rect_number].height * cellHeight
-    );
-    accumulative_y_offset += row_max_height + y_offset;
-  }
+//     let row_max_height = Math.max(
+//       rearrangedRectangles[2 * i + first_row_rect_number].height * cellHeight,
+//       rearrangedRectangles[2 * i + 1 + first_row_rect_number].height * cellHeight
+//     );
+//     accumulative_y_offset += row_max_height + y_offset;
+//   }
 
-  // Last row
-  let last_row_offset_left =
-    (cellWidth * regionWidth -
-      (last_row_rect_number * rect_width +
-        (last_row_rect_number - 1) * second_space_between_rectangles)) /
-    2;
+//   // Last row
+//   let last_row_offset_left =
+//     (cellWidth * regionWidth -
+//       (last_row_rect_number * rect_width +
+//         (last_row_rect_number - 1) * second_space_between_rectangles)) /
+//     2;
 
-  for (let i = 0; i < last_row_rect_number; i++) {
-    let x =
-      (bbox_origin[0] - 1) * cellWidth +
-      last_row_offset_left +
-      i * (rect_width + second_space_between_rectangles);
-    let y = bbox_origin[1] * cellHeight + accumulative_y_offset;
-    let Grid = svgToGridCoordinate(x, y, cellWidth, cellHeight);
+//   for (let i = 0; i < last_row_rect_number; i++) {
+//     let x =
+//       (bbox_origin[0] - 1) * cellWidth +
+//       last_row_offset_left +
+//       i * (rect_width + second_space_between_rectangles);
+//     let y = bbox_origin[1] * cellHeight + accumulative_y_offset;
+//     let Grid = svgToGridCoordinate(x, y, cellWidth, cellHeight);
 
-    let type = "bottom";
-    if (i === 0) type = "bottom-left";
-    if (i === last_row_rect_number - 1) type = "bottom-right";
+//     let type = "bottom";
+//     if (i === 0) type = "bottom-left";
+//     if (i === last_row_rect_number - 1) type = "bottom-right";
 
-    rectangleCoordinates.push([
-      Grid.x,
-      Grid.y,
-      rearrangedRectangles[i + first_row_rect_number + middle_row_number * 2].width,
-      rearrangedRectangles[i + first_row_rect_number + middle_row_number * 2].height,
-      rearrangedRectangles[i + first_row_rect_number + middle_row_number * 2].name,
-      type,
-      rearrangedRectangles[i + first_row_rect_number + middle_row_number * 2].outgroup_degree,
-    ]);
-  }
+//     rectangleCoordinates.push([
+//       Grid.x,
+//       Grid.y,
+//       rearrangedRectangles[i + first_row_rect_number + middle_row_number * 2].width,
+//       rearrangedRectangles[i + first_row_rect_number + middle_row_number * 2].height,
+//       rearrangedRectangles[i + first_row_rect_number + middle_row_number * 2].name,
+//       type,
+//       rearrangedRectangles[i + first_row_rect_number + middle_row_number * 2].outgroup_degree,
+//     ]);
+//   }
 
-  return rectangleCoordinates;
-}
-
+//   return rectangleCoordinates;
+// }
 export function adjustRectangleHeights(rectangles: tRectangle[], middle_row_number: number) {
   const defaultHeight = 6;
 
@@ -424,7 +415,7 @@ export function adjustRectangleHeights(rectangles: tRectangle[], middle_row_numb
   for (let i = 0; i < 4 && i < rectangles.length; i++) {
     let rect = rectangles[i];
     while (rect.height + rect.width < rect.outgroup_degree) {
-      rect.height = rect.outgroup_degree - rect.width;
+      rect.height = Math.round(rect.outgroup_degree - rect.width);
     }
   }
 
@@ -434,7 +425,6 @@ export function adjustRectangleHeights(rectangles: tRectangle[], middle_row_numb
   // Sort the remaining rectangles by the difference between height and outgroup_degree
   const sortedRemainingRectangles = rectangles.slice(4)
     .sort((a, b) => {
-      // First, prioritize rectangles where outgroup_degree < height
       const aLessThanHeight = a.outgroup_degree < a.height;
       const bLessThanHeight = b.outgroup_degree < b.height;
       
@@ -442,21 +432,17 @@ export function adjustRectangleHeights(rectangles: tRectangle[], middle_row_numb
       if (!aLessThanHeight && bLessThanHeight) return 1;
       
       if (aLessThanHeight && bLessThanHeight) {
-        // Both are less than height, sort by outgroup_degree ascending
         return a.outgroup_degree - b.outgroup_degree;
       }
       
-      // If neither or both are less than height, sort by absolute difference
       return Math.abs(a.height - a.outgroup_degree) - Math.abs(b.height - b.outgroup_degree);
     });
-  
 
   // Select the middleRowCount number of rectangles from the sorted list
   const selectedMiddleRectangles = sortedRemainingRectangles.slice(0, middleRowCount);
-  console.log(selectedMiddleRectangles)
   for (let rect of selectedMiddleRectangles) {
     if (rect.outgroup_degree !== 0) {
-      rect.height = Math.max(defaultHeight,rect.outgroup_degree);
+      rect.height = Math.round(Math.max(defaultHeight, rect.outgroup_degree));
     } else {
       rect.height = defaultHeight;
     }
@@ -470,6 +456,147 @@ export function adjustRectangleHeights(rectangles: tRectangle[], middle_row_numb
 
   return { selectedMiddleRectangles };
 }
+
+export function squareLayout(
+  varname: string,
+  rectangles: tRectangle[],
+  cellWidth: number,
+  cellHeight: number,
+  bboxes: { center: [number, number]; size: [number, number] },
+) {
+  const center = bboxes.center;
+  const y_offset = 2;
+  const rect_width = Math.round(rectangles[0].width);
+  
+  // Ensure all rectangle widths and heights are integers
+  rectangles.forEach(rect => {
+    rect.width = Math.round(rect.width);
+    rect.height = Math.round(rect.height);
+  });
+  
+  let first_row_rect_number = rectangles.length <= 7 ? 2 : 3;
+  let middle_row_number: number;
+  // Adjust first_row_rect_number until middle_row_number is 3 or less
+  do {
+    middle_row_number = Math.floor(
+      rectangles.length % 2 === 0
+        ? (rectangles.length - first_row_rect_number * 2) / 2
+        : (rectangles.length - first_row_rect_number * 2 - 1) / 2
+    );
+
+    if (middle_row_number > 3) {
+      first_row_rect_number++;
+    }
+  } while (middle_row_number > 3);
+
+  const { selectedMiddleRectangles } = adjustRectangleHeights(rectangles, middle_row_number);
+
+  const topFour = rectangles.slice(0, 4);
+  const otherRectangles = rectangles.filter(rect => !topFour.includes(rect) && !selectedMiddleRectangles.includes(rect));
+  
+  const rearrangedRectangles = [
+    topFour[0],
+    ...otherRectangles.slice(0, first_row_rect_number - 2),
+    topFour[1],
+    ...selectedMiddleRectangles,
+    topFour[2],
+    ...otherRectangles.slice(first_row_rect_number - 2),
+    topFour[3]
+  ];
+
+  let last_row_rect_number =
+    rearrangedRectangles.length - first_row_rect_number - middle_row_number * 2;
+
+  // Correct box_height calculation
+  let box_height = 0;
+  
+  // First row height
+  box_height += Math.max(...rearrangedRectangles.slice(0, first_row_rect_number).map(r => r.height));
+  
+  // Middle rows height
+  for (let i = 0; i < middle_row_number; i++) {
+    let leftIndex = first_row_rect_number + i * 2;
+    let rightIndex = leftIndex + 1;
+    box_height += Math.max(rearrangedRectangles[leftIndex].height, rearrangedRectangles[rightIndex].height);
+  }
+  
+  // Last row height
+  if (last_row_rect_number > 0) {
+    box_height += Math.max(...rearrangedRectangles.slice(-last_row_rect_number).map(r => r.height));
+  }
+  
+  // Add y_offset between rows
+  box_height += (first_row_rect_number > 0 ? 1 : 0 + middle_row_number + (last_row_rect_number > 0 ? 1 : 0) - 1) * y_offset;
+
+  box_height = Math.round(box_height);
+
+  const box_width = Math.round(Math.max(
+    first_row_rect_number * rect_width + (first_row_rect_number - 1) * 2,
+    last_row_rect_number * rect_width + (last_row_rect_number - 1) * 2
+  ));
+  console.log(bboxes);
+  bboxes.size = [box_width, box_height];
+
+  let first_space_between_rectangles = Math.round((box_width - rect_width * first_row_rect_number) / (first_row_rect_number - 1));
+  let second_space_between_rectangles = Math.round((box_width - rect_width * last_row_rect_number) / (last_row_rect_number - 1));
+
+  const bbox_origin: [number, number] = [
+    Math.round(center[0] - box_width / 2),
+    Math.round(center[1] - box_height / 2)
+  ];
+
+  let rectangleCoordinates: [number, number, number, number, string, string, number][] = [];
+  let accumulative_y_offset = 0;
+
+  // First row
+  for (let i = 0; i < first_row_rect_number; i++) {
+    let x = Math.round(bbox_origin[0] + i * (rect_width + first_space_between_rectangles));
+    let y = Math.round(bbox_origin[1] + accumulative_y_offset);
+    let type = i === 0 ? "top-left" : i === first_row_rect_number - 1 ? "top-right" : "top";
+
+    rectangleCoordinates.push([
+      x, y, rearrangedRectangles[i].width, rearrangedRectangles[i].height,
+      rearrangedRectangles[i].name, type, rearrangedRectangles[i].outgroup_degree
+    ]);
+  }
+
+  accumulative_y_offset += Math.max(...rearrangedRectangles.slice(0, first_row_rect_number).map(r => r.height)) + y_offset;
+
+  // Middle rows
+  for (let i = 0; i < middle_row_number; i++) {
+    let leftIndex = first_row_rect_number + i * 2;
+    let rightIndex = leftIndex + 1;
+
+    rectangleCoordinates.push([
+      bbox_origin[0], Math.round(bbox_origin[1] + accumulative_y_offset),
+      rearrangedRectangles[leftIndex].width, rearrangedRectangles[leftIndex].height,
+      rearrangedRectangles[leftIndex].name, "left", rearrangedRectangles[leftIndex].outgroup_degree
+    ]);
+
+    rectangleCoordinates.push([
+      bbox_origin[0] + box_width - rect_width, Math.round(bbox_origin[1] + accumulative_y_offset),
+      rearrangedRectangles[rightIndex].width, rearrangedRectangles[rightIndex].height,
+      rearrangedRectangles[rightIndex].name, "right", rearrangedRectangles[rightIndex].outgroup_degree
+    ]);
+
+    accumulative_y_offset += Math.max(rearrangedRectangles[leftIndex].height, rearrangedRectangles[rightIndex].height) + y_offset;
+  }
+
+  // Last row
+  for (let i = 0; i < last_row_rect_number; i++) {
+    let x = Math.round(bbox_origin[0] + i * (rect_width + second_space_between_rectangles));
+    let y = Math.round(bbox_origin[1] + accumulative_y_offset);
+    let type = i === 0 ? "bottom-left" : i === last_row_rect_number - 1 ? "bottom-right" : "bottom";
+
+    let index = first_row_rect_number + middle_row_number * 2 + i;
+    rectangleCoordinates.push([
+      x, y, rearrangedRectangles[index].width, rearrangedRectangles[index].height,
+      rearrangedRectangles[index].name, type, rearrangedRectangles[index].outgroup_degree
+    ]);
+  }
+
+  return rectangleCoordinates;
+}
 export function combineData(
   vars: tVariableType,
   rectangles: [number, number, number, number, string, string, number][],
@@ -478,10 +605,12 @@ export function combineData(
   // console.log({rectangles})
   const allX = rectangles.map((rect) => rect[0]);
   const allY = rectangles.map((rect) => rect[1]);
+  const allXPlusWidth = rectangles.map((rect) => rect[0] + rect[2]);
   const allYPlusHeight = rectangles.map((rect) => rect[1] + rect[3]);
 
-  const x_value = Array.from(new Set(allX)).sort((a, b) => a - b);
-  const min_x = vars.variable_type === "state" ? x_value[0] : x_value[1]; // if var type is response, choose the third min value
+  // const x_value = Array.from(new Set(allX)).sort((a, b) => a - b);
+  // const min_x = vars.variable_type === "state" ? x_value[0] : x_value[1]; // if var type is response, choose the third min value
+  const min_x = Math.min(...allXPlusWidth);
   const max_x = Math.max(...allX);
   const min_y = Math.min(...allYPlusHeight);
   const max_y = Math.max(...allY);
