@@ -45,7 +45,7 @@
   <div class="flex grow flex-col divide-y divide-black">
     <div class="flex gap-x-2 divide-x">
       <div class="w-[3rem] shrink-0">ID</div>
-      <div class="flex pl-2">Var Type</div>
+      <div class="flex pl-2">Links</div>
     </div>
     <div class="flex h-1 grow flex-col divide-y divide-black overflow-y-auto">
       {#each sort_by_id(data) as datum, index}

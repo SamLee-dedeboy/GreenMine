@@ -15,8 +15,8 @@
   <h2 class="text-lg font-medium capitalize text-black">{title}</h2>
   <div class="flex grow flex-col divide-y divide-black">
     <div class="flex gap-x-2 divide-x">
-      <div class="w-[3rem] shrink-0">ID</div>
-      <div class="flex pl-2">Var Type</div>
+      <div class="w-[3rem] shrink-0">Snippet</div>
+      <div class="flex pl-2">Variables</div>
     </div>
     <div class="flex h-1 grow flex-col divide-y divide-black overflow-y-auto">
       {#each sort_by_id(data) as datum}
@@ -71,7 +71,7 @@
                     </div> -->
                   {:else}
                     <div class="ml-2 text-xs italic text-gray-500">
-                      No Vars Identified
+                      No Variable Identified
                     </div>
                   {/if}
                 </div>

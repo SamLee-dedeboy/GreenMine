@@ -13,7 +13,7 @@
     on:click={() => (show = !show)}
     on:keyup={() => {}}
   >
-    Var Type Definitions
+    Indicator Definitions
   </div>
   {#if show}
     <div transition:slide class="var-type-definition-content divide-y text-sm">

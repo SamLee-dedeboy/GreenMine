@@ -257,7 +257,7 @@
       on:click={() => (show_step = 1)}
       on:keyup={() => {}}
     >
-      Var Types
+      Indicators
     </div>
     <div
       tabindex="0"
@@ -267,7 +267,7 @@
       on:click={() => (show_step = 2)}
       on:keyup={() => {}}
     >
-      Vars
+      Variables
     </div>
     <div
       tabindex="0"
@@ -288,7 +288,7 @@
           class="flex min-w-[25rem] max-w-[30rem] flex-col gap-y-1 overflow-y-auto bg-gray-100"
         >
           <PromptHeader
-            title="Identify Var Types"
+            title="Identify Indicators"
             on:run={() => execute_prompt(data, "identify_var_types")}
           ></PromptHeader>
           <VarTypeDataEntry
@@ -331,7 +331,7 @@
       <div in:slide|global class="step-2 flex">
         <div class="flex min-w-[30rem] flex-col gap-y-1 bg-gray-100">
           <PromptHeader
-            title="Identify Vars"
+            title="Identify Variables"
             on:run={() => execute_prompt(data, "identify_vars")}
             on:save={() => save_data(data, tmp_data, "identify_vars")}
           ></PromptHeader>

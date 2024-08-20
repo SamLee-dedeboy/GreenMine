@@ -8,7 +8,7 @@
   function handleAddVar() {
     data[shown_var_type] = [
       {
-        var_name: "New Var",
+        var_name: "New Variable",
         definition: "New Definition",
         factor_type: "Factor Type",
       },
@@ -28,7 +28,7 @@
     on:click={() => (show = !show)}
     on:keyup={() => {}}
   >
-    Var Definitions
+    Variable Definitions
   </div>
   {#if show}
     <div
