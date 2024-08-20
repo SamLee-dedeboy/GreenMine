@@ -21,8 +21,8 @@
   let highlight_chunk: any = [];
   let highlight_chunk_ids: any[] = [];
   let highlight_messages = {};
-  let highlight_evidence = {}
-  let evidence:string[] = [];
+  let highlight_evidence = {};
+  let evidence: string[] = [];
   let external_highlights = false;
   let chunk_indexes = {};
   let original_data;
@@ -160,59 +160,60 @@
     // const message_indexes = e.result
     let evidenceMap = {};
 
-    e.result.forEach(item => {
-      item.evidence.forEach(index => {
+    e.result.forEach((item) => {
+      item.evidence.forEach((index) => {
         if (!evidenceMap[index]) {
           evidenceMap[index] = [];
         }
         evidenceMap[index].push({
           var_type: item.var_type,
           explanation: item.explanation,
-        
         });
       });
     });
     // console.log(evidenceMap);
     const interview_index_match = chunk_index.match(/N(\d+)/);
-    if(interview_index_match){
-      const interview_index = parseInt(interview_index_match[1],10) - 1;
+    if (interview_index_match) {
+      const interview_index = parseInt(interview_index_match[1], 10) - 1;
       show_interview[interview_index] = true;
-      const matchingResult = e.result.find(item => item.var_type === e.var_type);
+      const matchingResult = e.result.find(
+        (item) => item.var_type === e.var_type,
+      );
       if (matchingResult !== -1) {
-
         matchingResult.evidence.forEach((message_index: number) => {
           if (evidenceMap[message_index]) {
             const explanations = evidenceMap[message_index]
-              .map(e => `<span style="background-color: ${$varTypeColorScale(e.var_type)}">${e.var_type}</span>:${e.explanation}`)
-              .join('<br>');
+              .map(
+                (e) =>
+                  `<span style="background-color: ${$varTypeColorScale(e.var_type)}; text-transform: capitalize; padding-left: 0.125rem; padding-right: 0.125rem;">${e.var_type}</span>:${e.explanation}`,
+              )
+              .join("<br>");
 
             evidence[message_index] = explanations;
             highlight_evidence[chunk_index][message_index] = true;
             // console.log(highlight_evidence)
           }
         });
-        scrollToFirstTargetChunk(interview_index,"evidence_hightlight");
+        scrollToFirstTargetChunk(interview_index, "evidence_hightlight");
       }
       // console.log(evidence_index);
-      // if (matchingResult !== -1) {      
-      //     const explanation = `<span style="background-color: ${$varTypeColorScale(matchingResult.var_type)}">${matchingResult.var_type}</span>:${matchingResult.explanation}`;          
+      // if (matchingResult !== -1) {
+      //     const explanation = `<span style="background-color: ${$varTypeColorScale(matchingResult.var_type)}">${matchingResult.var_type}</span>:${matchingResult.explanation}`;
       //     matchingResult.evidence.forEach(message_index => {
       //       evidence[message_index] = explanation;
       //       highlight_evidence[chunk_index][message_index] = true;
       //     });
       //     scrollToFirstTargetChunk(interview_index,"evidence_hightlight");
       // }
-    //   Object.keys(evidenceMap).forEach(key=>{
-    //     const message_index = parseInt(key,10);
-    //     const explanations = evidenceMap[message_index].map(e => `<span style="background-color: ${$varTypeColorScale(e.var_type)}">${e.var_type}</span>:${e.explanation}`)
-    //     .join('<br>');
-    //     evidence[message_index] = explanations;
-    //     console.log(evidence);
-    //     highlight_evidence[chunk_index][message_index] = true;
-    //     scrollToFirstTargetChunk(interview_index,"evidence_hightlight");
+      //   Object.keys(evidenceMap).forEach(key=>{
+      //     const message_index = parseInt(key,10);
+      //     const explanations = evidenceMap[message_index].map(e => `<span style="background-color: ${$varTypeColorScale(e.var_type)}">${e.var_type}</span>:${e.explanation}`)
+      //     .join('<br>');
+      //     evidence[message_index] = explanations;
+      //     console.log(evidence);
+      //     highlight_evidence[chunk_index][message_index] = true;
+      //     scrollToFirstTargetChunk(interview_index,"evidence_hightlight");
       // })
-
-
     }
   }
 
@@ -280,51 +281,50 @@
     );
   }
 
-
-
-  async function scrollToFirstTargetChunk(interview_index,chunk_state="chunk_highlight") {
+  async function scrollToFirstTargetChunk(
+    interview_index,
+    chunk_state = "chunk_highlight",
+  ) {
     await tick(); //to wait for the DOM to update before attempting to find and scroll to the highlighted chunk
     let container;
-    let target;// record the target element to scroll to
-    if(chunk_state == "chunk_highlight"){
+    let target; // record the target element to scroll to
+    if (chunk_state == "chunk_highlight") {
       container = document.getElementById(
         `chunk-title-container-` + `${interview_index}`,
       );
       target = container?.querySelector(".chunk-highlight");
-    }else if(chunk_state == "evidence_hightlight"){
+    } else if (chunk_state == "evidence_hightlight") {
       container = document.getElementById(
         `conversation-container-` + `${interview_index}`,
       );
       target = container?.querySelector(".highlighted_evidence").parentNode;
     }
-      
+
     // console.log(container);
-   
+
     if (container && target) {
       // const highlightedChunk = container.querySelector(".chunk-highlight");
       // console.log(highlightedChunk);
-        target.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-        // 500 milliseconds delay delay to allow the first scroll to complete
-        if(chunk_state == "chunk_highlight"){
-          setTimeout(() => {
-            scrollToMessage(
-              `${interview_index}-${target.id}-0`,
-              `conversation-container-${interview_index}`,
-            );
-          }, 1000);
-        }
-        else if(chunk_state == "evidence_hightlight"){
-          setTimeout(() => {
-            scrollToMessage(
-              `${target.id}`,
-              `conversation-container-${interview_index}`,
-            );
-          }, 1000);
-        }
-        
+      target.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+      // 500 milliseconds delay delay to allow the first scroll to complete
+      if (chunk_state == "chunk_highlight") {
+        setTimeout(() => {
+          scrollToMessage(
+            `${interview_index}-${target.id}-0`,
+            `conversation-container-${interview_index}`,
+          );
+        }, 1000);
+      } else if (chunk_state == "evidence_hightlight") {
+        setTimeout(() => {
+          scrollToMessage(
+            `${target.id}`,
+            `conversation-container-${interview_index}`,
+          );
+        }, 1000);
+      }
     }
   }
   $: {
@@ -344,7 +344,7 @@
   //       if (message) {
   //         const rect = message.getBoundingClientRect();
   //         const containerRect = message.closest('.conversation-container').getBoundingClientRect();
-          
+
   //         tooltip.style.top = `${rect.top - containerRect.top}px`;
   //         tooltip.style.left = `${rect.right - containerRect.left + 10}px`;
   //       }
@@ -446,8 +446,8 @@
                         >
                           <div
                             class="w-[1.5rem] shrink-0 border-r border-black text-center text-sm"
-                            
-                          ><!-- style={`background:  ${colorScale(chunk[$colorBy])}`} -->
+                          >
+                            <!-- style={`background:  ${colorScale(chunk[$colorBy])}`} -->
                             {chunk_index + 1}.
                           </div>
                           <div class="px-1 text-sm">
@@ -460,7 +460,7 @@
                   <div class="conversation-wrapper relative flex-grow">
                     <div
                       id={`conversation-container-${interview_index}`}
-                      class="max-h-96 flex-grow overflow-y-auto border border-dashed border-black text-xs"
+                      class="max-h-96 flex-grow overflow-y-auto border border-dashed border-black text-sm"
                     >
                       <div class="conversation-container flex">
                         <div class="grow">
@@ -478,25 +478,33 @@
                               <div class="interview-message-speaker font-bold">
                                 {speaker_title[message.speaker]}:
                               </div>
-                              <div class="interview-message-content"
-                              class:highlighted_evidence = {highlight_evidence[message.chunkIndex][message.messageIndex]}>
+                              <div
+                                class="interview-message-content"
+                                class:highlighted_evidence={highlight_evidence[
+                                  message.chunkIndex
+                                ][message.messageIndex]}
+                              >
                                 {@html message.content}
-                              </div>                            
+                              </div>
                             </div>
                             {#if highlight_evidence[message.chunkIndex][message.messageIndex]}
                               <div class="tooltip">
                                 <div class="tooltip-content">
-                                  <span>{@html evidence[message.messageIndex]}</span>
+                                  <span
+                                    >{@html evidence[
+                                      message.messageIndex
+                                    ]}</span
+                                  >
                                 </div>
                               </div>
-                            {/if}                          
+                            {/if}
                           {/each}
                         </div>
                       </div>
                     </div>
                     {#each aggregateMessages(interview) as message, index}
                       {#if highlight_evidence[message.chunkIndex][message.messageIndex]}
-                        <div class="tooltip ">
+                        <div class="tooltip">
                           <div class="tooltip-content">
                             <span>{@html evidence[message.messageIndex]}</span>
                           </div>
@@ -513,7 +521,6 @@
     </div>
   {/key}
 </div>
-
 
 <style lang="postcss">
   .selected {
@@ -542,7 +549,7 @@
   .highlighted_message {
     background: #ff8f00;
   }
-  .highlighted_evidence{
+  .highlighted_evidence {
     text-decoration: underline;
     text-decoration-color: red;
   }
@@ -553,21 +560,21 @@
   .tooltip {
     position: absolute;
     z-index: 1000;
-    left: 50%;  
+    left: 50%;
     transform: translateX(-50%);
-    top: 105%;      /* This positions the tooltip just outside the bottom edge of the conversation-container */
+    top: 100%; /* This positions the tooltip just outside the bottom edge of the conversation-container */
   }
 
   .tooltip-content {
     visibility: hidden;
     background: rgb(249 250 251);
-    width: 300px;
-    text-align: justify;
+    width: 23rem;
+    /* text-align: justify; */
     border-radius: 6px;
     padding: 5px 5px;
     border: 2px solid grey;
     margin-left: 10px;
-    font-size: 0.8rem;
+    font-size: 1rem;
   }
   .interview-message:hover + .tooltip .tooltip-content {
     visibility: visible;

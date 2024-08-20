@@ -25,7 +25,7 @@
   let showLinks = true;
   let enable = false;
   // let trigger_times = 0;
-  $: update_vars(data, links, showLinks);
+  // $: update_vars(data, links, showLinks);
   async function update_vars(
     vars: tDPSIR | undefined,
     links: tVisLink[] | undefined,
@@ -48,20 +48,17 @@
     DPSIR.init(svgId, utilities, handlers);
     DPSIR.on("VarOrLinkSelected", handleVarOrLinkSelected);
     update_vars(data, links, showLinks);
-    
   });
   function toggleLinks() {
-    if(enable){
+    if (enable) {
       showLinks = !showLinks;
       DPSIR.toggleLinks(showLinks);
+    } else {
+      alert("Please wait until links is complete");
     }
-    else{
-      alert("Please wait until links is complete")
-    }
-    
   }
   function handleVarOrLinkSelected(e) {
-    console.log(e)
+    console.log(e);
     // e.preventDefault();
     const variable: tVariable = e;
     selectedVar = variable;
@@ -69,12 +66,9 @@
     dispatch("var-selected", selectedVar); // for App.svelte to hightlight the chunks
   }
 
-  function enableLinks(e){
+  function enableLinks(e) {
     enable = e;
   }
-
-
-
 </script>
 
 <div bind:this={container} class="container h-full w-full">
@@ -82,12 +76,11 @@
     <Curation bind:this={curation} {metadata} />
   </div> -->
   <button
-      class="absolute top-20 right-20 bg-gray-200 p-1 rounded-sm"
-      on:click={() => {
-        toggleLinks();
-      }}
-      >{showLinks ? 'Hide Other Links' : 'Show Other Links'}</button
-    >
+    class="absolute right-20 top-20 rounded-sm bg-gray-200 p-1"
+    on:click={() => {
+      toggleLinks();
+    }}>{showLinks ? "Hide Other Links" : "Show Other Links"}</button
+  >
   <svg id={svgId} class="varbox-svg h-full w-full">
     <defs></defs>
   </svg>

@@ -36,10 +36,13 @@ import { toggle } from "@melt-ui/svelte/internal/helpers";
 
 export const DPSIR = {
   init(svgId: string, utilities: string[], handlers: tUtilityHandlers) {
+    console.log("init");
     this.clicked_rect = null;
     this.clicked_link = null;
-    this.width = 1550;
-    this.height = 950;
+    // this.width = 1550;
+    // this.height = 950;
+    this.width = document.querySelector("#" + svgId).clientWidth;
+    this.height = document.querySelector("#" + svgId).clientHeight;
     this.padding = { top: 10, right: 50, bottom: 10, left: 50 };
     // this.rows = 240;
     // this.columns = 210;
@@ -48,14 +51,14 @@ export const DPSIR = {
     //   Array(this.rows + 1).fill("0000"),
     // );
     this.bboxes = {
-      driver:{center:[58,70],size:[0,0]},
-      pressure:{center:[230,61],size:[0,0]},
-      impact:{center:[200,185],size:[0,0]},
-      response:{center:[63,190],size:[0,0]},
-      state:{center:[260,132],size:[0,0]}
-    }
+      driver: { center: [58, 70], size: [0, 0] },
+      pressure: { center: [230, 61], size: [0, 0] },
+      impact: { center: [200, 185], size: [0, 0] },
+      response: { center: [63, 190], size: [0, 0] },
+      state: { center: [260, 132], size: [0, 0] },
+    };
     this.grid_renderer = grid_layout.grid_renderer;
-    this.grid_renderer.init(300,240);
+    this.grid_renderer.init(300, 240);
     // console.log(this.grid_renderer.columns, this.grid_renderer.rows);
     this.cellWidth = this.width / this.grid_renderer.columns;
     this.cellHeight = this.height / this.grid_renderer.rows;
@@ -70,8 +73,6 @@ export const DPSIR = {
     const svg = d3
       .select("#" + svgId)
       .attr("viewBox", `0 0 ${this.width} ${this.height}`)
-      .attr("width", this.width)
-      .attr("height", this.height)
       .on("click", function (e) {
         if (!e.defaultPrevented) {
           d3.selectAll("rect.box")
@@ -116,7 +117,8 @@ export const DPSIR = {
     this.showLinks = showLinks;
   },
   update_vars(vars: tDPSIR, links: tVisLink[], varTypeColorScale: Function) {
-    this.grid_renderer?.reset_global_grid(300,240);
+    console.log("update vars");
+    this.grid_renderer?.reset_global_grid(300, 240);
     // console.log(this.grid_renderer.global_grid)
     this.varTypeColorScale = varTypeColorScale;
     const var_type_names = Constants.var_type_names;
@@ -201,11 +203,16 @@ export const DPSIR = {
     //   state:{center:[176,132]}
     // }
     // console.log({bboxes});
+    const self = this;
     Object.values(var_type_names).forEach((varType) => {
       console.log(varType);
-        this.drawVars(vars[varType], this.bboxes[varType],categorizedLinks[varType]);
+      self.drawVars(
+        vars[varType],
+        self.bboxes[varType],
+        categorizedLinks[varType],
+      );
     });
-    // this.drawLinks(links, this.bboxes);
+    this.drawLinks(links, this.bboxes);
   },
   drawGids(svg, svgId) {
     // Get the dimensions of the SVG
@@ -251,7 +258,7 @@ export const DPSIR = {
 
   //center(gridX,gridY), size(x grids,y grids)
   drawVars(
-    vars: tVariableType,    
+    vars: tVariableType,
     bbox_info: { center: [number, number]; size: [number, number] },
     linkCount,
   ) {
@@ -294,10 +301,14 @@ export const DPSIR = {
       rectangles,
       cellWidth,
       cellHeight,
-      bbox_info
+      bbox_info,
     );
     console.log(rectangleCoordinates);
-    const rectWithVar = grid_layout.combineData(vars, rectangleCoordinates, this.grid_renderer?.global_grid); //return as an object
+    const rectWithVar = grid_layout.combineData(
+      vars,
+      rectangleCoordinates,
+      this.grid_renderer?.global_grid,
+    ); //return as an object
     console.log(rectWithVar);
     //merge all rects info(grid coordinate position and size) to a global var
     rectWithVar.forEach((rect) => {
@@ -319,7 +330,12 @@ export const DPSIR = {
       if (degree > maxMentions) maxMentions = degree;
     });
 
-    this.drawBbox(var_type_name, bbox_info.center, bbox_info.size[0], bbox_info.size[1]);
+    this.drawBbox(
+      var_type_name,
+      bbox_info.center,
+      bbox_info.size[0],
+      bbox_info.size[1],
+    );
     const scaleVarColor = d3
       .scaleLinear()
       .domain([minMentions, maxMentions])

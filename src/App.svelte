@@ -229,7 +229,7 @@
   setContext("fetchData", fetchData);
 </script>
 
-<main class="h-full px-1">
+<main class="h-full w-full px-1">
   {#if !fetch_success}
     <BrowserBlockingPage />
   {:else}
@@ -264,9 +264,7 @@
           }}
         ></ControlPanel>
       </div>
-      <div
-        class="flex h-full w-[75%] flex-1 flex-col items-center justify-center"
-      >
+      <div class="flex h-full w-[75%] flex-col items-center justify-center">
         <div class="relative h-full w-full">
           <!-- <div
             class="title absolute left-6 top-1 w-fit rounded px-4 py-4 text-left text-sky-600"
@@ -292,7 +290,7 @@
           {/if}
         </div>
       </div>
-      <div class="flex h-full w-full basis-[20%] flex-col">
+      <div class="flex h-full grow flex-col">
         <!-- <div class="gap-y-1">
           <SummaryView {summary_interviews} id="statistics" />
         </div> -->
