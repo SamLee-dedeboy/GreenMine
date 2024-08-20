@@ -48,6 +48,8 @@
       evidence: number[];
       explanation: string;
       var_type: string;
+      confidence: number;
+      uncertainty: number;
     };
   };
   let removeVar: VarTypeItem[] = [];
@@ -220,6 +222,8 @@
         var_type: data.var_type.toLowerCase(), // Convert to lowercase
         evidence: [],
         explanation: "add manually",
+        confidence: 1,
+        uncertainty: 0,
       },
     };
     // add to log
@@ -242,9 +246,9 @@
   }
 </script>
 
-<div class="flex">
+<div class="flex flex-col">
   <!-- side panel -->
-  <div class="flex w-[5.5rem] flex-col items-end gap-y-0.5 px-1 text-sm">
+  <div class="mt-[-1.4rem] flex w-fit items-end gap-y-0.5 px-1 text-sm">
     <div
       tabindex="0"
       role="button"
@@ -279,8 +283,10 @@
 
   {#key show_step}
     {#if show_step === 1}
-      <div in:slide|global class="step-1 flex">
-        <div class="flex min-w-[15rem] flex-col gap-y-1 bg-gray-100">
+      <div in:slide|global class="step-1 flex max-h-[40rem]">
+        <div
+          class="flex min-w-[25rem] max-w-[30rem] flex-col gap-y-1 overflow-y-auto bg-gray-100"
+        >
           <PromptHeader
             title="Identify Var Types"
             on:run={() => execute_prompt(data, "identify_var_types")}
@@ -385,7 +391,7 @@
 
 <style lang="postcss">
   .pipeline-step-button {
-    @apply w-[4.5rem]  rounded-sm border-gray-400 bg-gray-200 p-1 text-center opacity-50 shadow-[-1px_1px_0_0_black] hover:bg-gray-300;
+    @apply w-[5.5rem]  rounded-sm border-r  border-gray-600 bg-gray-200 p-1 text-center opacity-50 hover:bg-gray-300;
     transition: all 0.2s;
   }
   .active {

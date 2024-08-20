@@ -50,6 +50,9 @@ export type tServerPipelineData = {
 };
 export type tIdentifyVarTypes = tChunk & {
   identify_var_types_result: tVarTypeResult;
+  uncertainty: {
+    identify_var_types: number;
+  };
 };
 export type tIdentifyVars = tChunk & {
   identify_vars_result: tVarResult;
@@ -61,6 +64,8 @@ export type tVarTypeResult = {
   var_type: string;
   evidence: number[];
   explanation: string;
+  confidence: number;
+  uncertainty: number;
 }[];
 export type tVarResult = Record<
   string,
@@ -78,11 +83,11 @@ export type tVarDef = {
 };
 
 export type LogEntry = {
-  id:string;
+  id: string;
   add_element: tVarTypeResult;
   remove_element: tVarTypeResult;
-}
+};
 
 export type LogRecord = {
   identify_type_results: LogEntry[];
-}
+};

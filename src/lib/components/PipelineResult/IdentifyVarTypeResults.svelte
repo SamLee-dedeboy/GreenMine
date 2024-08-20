@@ -1,19 +1,23 @@
 <script lang="ts">
   import { fade } from "svelte/transition";
-  import type { tIdentifyVarTypes, tVarTypeResult } from "../types";
+  import type { tIdentifyVarTypes, tVarTypeResult } from "lib/types";
   import { varTypeColorScale } from "lib/store";
   import { compare_var_types, sort_by_id } from "lib/utils";
   export let data: tIdentifyVarTypes[];
   // export let title: string = "Results";
   export let title: string;
-  export let titleOptions: string[]=[];
+  export let titleOptions: string[] = [];
   export let buttonText: string = ""; // New prop for button text
-  export let data_loading:boolean;
+  export let data_loading: boolean;
   import { createEventDispatcher, onMount } from "svelte";
   let selectedTitle: string = title;
   const dispatch = createEventDispatcher();
   const validTypes = ["driver", "pressure", "state", "impact", "response"];
 
+  function varTypeConfidenceShadow(confidence: number) {
+    if (confidence > 0.5) return "; color: rgb(31 41 55)";
+    return `1px 1px 1px 1px black`;
+  }
   function handleInput(id: string, event: Event) {
     if (!(event.target instanceof HTMLElement)) return;
     const currentDatum = data.find((datum) => datum.id === id);
@@ -59,28 +63,38 @@
   }
 
   $: selectedTitle, handleTitleChange();
+  function sort_by_uncertainty(data: tIdentifyVarTypes[]) {
+    const sorted = data.sort(
+      (a, b) =>
+        b.uncertainty.identify_var_types - a.uncertainty.identify_var_types,
+    );
+    console.log({ sorted });
+    return sorted;
+  }
 </script>
 
 <div
   class="relative z-50 flex
-    max-h-[85vh] w-[100vw]
-            max-w-[600px] flex-col
+     min-w-[30rem]
+            max-w-[30rem] flex-col
             bg-gray-100 px-1 shadow-lg"
   transition:fade={{
     duration: 100,
   }}
 >
-  {#if titleOptions.length > 0 }
+  {#if titleOptions.length > 0}
     <select
-      bind:value={selectedTitle} 
-      class="text-lg font-medium capitalize text-black text-center"
+      bind:value={selectedTitle}
+      class="text-center text-lg font-medium capitalize text-black"
     >
       {#each titleOptions as option}
         <option value={option}>{option}</option>
       {/each}
     </select>
   {:else}
-    <h2 class="text-lg font-medium capitalize text-black text-center">{title}</h2>
+    <h2 class="text-center text-lg font-medium capitalize text-black">
+      {title}
+    </h2>
   {/if}
   <div class="flex grow flex-col divide-y divide-black">
     <div class="flex gap-x-2 divide-x">
@@ -89,18 +103,20 @@
       <div
         role="button"
         tabindex="0"
-        class="ml-auto flex items-center justify-center self-center  bg-gray-200 text-gray-700 rounded-sm px-2 py-1 text-[0.7rem] normal-case italic leading-3 text-gray-600 outline-double outline-1 outline-gray-600 hover:bg-gray-300  transition-colors duration-200"
+        class="ml-auto flex items-center justify-center self-center rounded-sm bg-gray-200 px-2 py-1 text-[0.7rem] normal-case italic leading-3 text-gray-600 text-gray-700 outline-double outline-1 outline-gray-600 transition-colors duration-200 hover:bg-gray-300"
         on:click={() => dispatch("base_or_new_button_click")}
         on:keyup={() => {}}
-        >
+      >
         {buttonText}
       </div>
     </div>
     {#if data_loading}
-      <div class="flex justify-center items-center h-full">Data Loading...</div>
+      <div class="flex h-full items-center justify-center">Data Loading...</div>
     {:else}
-      <div class="flex h-1 grow flex-col divide-y divide-black overflow-y-scroll">
-        {#each sort_by_id(data) as datum, i}
+      <div
+        class="flex h-1 grow flex-col divide-y divide-black overflow-y-scroll"
+      >
+        {#each sort_by_uncertainty(data) as datum, i}
           {#if datum.identify_var_types_result}
             {@const isNone = datum.identify_var_types_result.length === 0}
             <div
@@ -129,41 +145,46 @@
                   {#each datum.identify_var_types_result
                     // .filter((item) => item.evidence && item.evidence.length > 0)
                     .sort( (a, b) => compare_var_types(a.var_type, b.var_type), ) as var_type_wrapper, i}
-                    <div
-                      role="button"
-                      tabindex="0"
-                      class="rounded-sm px-0.5 text-sm italic opacity-70 outline-double outline-1 outline-gray-300 hover:outline-gray-600"
-                      style={`background-color: ${$varTypeColorScale(var_type_wrapper.var_type)}`}
-                      on:click={() => {
-                        if (
-                          var_type_wrapper.evidence &&
-                          var_type_wrapper.evidence.length > 0
-                        ) {
-                          dispatch("fetch_var_types_evidence", {
-                            result: datum.identify_var_types_result,
-                            id: datum.id,
-                            var_type: var_type_wrapper.var_type,
-                          });
-                        } else {
-                          alert("No evidence. Add manually.");
-                        }
-                      }}
-                      on:keyup={() => {}}
-                    >
-                      <span>{var_type_wrapper.var_type}</span>
-                      <button
-                        class="font-bold  hover:text-white focus:outline-none"
-                        on:click={(event) => {
-                          event.stopPropagation();
-                          dispatch("remove_var_type", {
-                            id: datum.id,
-                            variable: var_type_wrapper,
-                          })
+                    <div class="flex flex-col">
+                      <div
+                        role="button"
+                        tabindex="0"
+                        class="flex rounded-sm px-0.5 text-sm italic opacity-70 outline-double outline-0 outline-gray-300 hover:outline-gray-600"
+                        style={`background-color: ${$varTypeColorScale(var_type_wrapper.var_type)}; box-shadow: ${varTypeConfidenceShadow(var_type_wrapper.confidence)}`}
+                        on:click={() => {
+                          if (
+                            var_type_wrapper.evidence &&
+                            var_type_wrapper.evidence.length > 0
+                          ) {
+                            dispatch("fetch_var_types_evidence", {
+                              result: datum.identify_var_types_result,
+                              id: datum.id,
+                              var_type: var_type_wrapper.var_type,
+                            });
+                          } else {
+                            alert("No evidence. Add manually.");
+                          }
                         }}
                         on:keyup={() => {}}
                       >
-                        ×
-                      </button>
+                        <span>{var_type_wrapper.var_type}</span>
+                        <button
+                          class="font-bold hover:text-white focus:outline-none"
+                          on:click={(event) => {
+                            event.stopPropagation();
+                            dispatch("remove_var_type", {
+                              id: datum.id,
+                              variable: var_type_wrapper,
+                            });
+                          }}
+                          on:keyup={() => {}}
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <div class="text-xs italic text-gray-600">
+                        {var_type_wrapper.confidence}
+                      </div>
                     </div>
                   {/each}
                   {#if datum.identify_var_types_result.length < 5}
@@ -179,6 +200,9 @@
                       on:blur={(event) => handleBlur(datum.id, event)}
                     ></div>
                   {/if}
+                  <div class="ml-auto text-xs italic text-gray-600">
+                    {datum.uncertainty.identify_var_types.toFixed(2)}
+                  </div>
                 {/if}
               </div>
             </div>

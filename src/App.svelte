@@ -26,7 +26,7 @@
   import * as d3 from "d3";
   import { varTypeColorScale } from "lib/store";
   import Prompts from "lib/components/Prompts.svelte";
-    // import { version } from "os";
+  // import { version } from "os";
 
   let interview_data: tTranscript[] | undefined = undefined;
   let interview_viewer_component;
@@ -118,23 +118,21 @@
         // console.log(`Data fetched for version: ${version}`);
         data_loading = false;
       })
-      .catch(error => {
+      .catch((error) => {
         console.error(`Error fetching data for version ${version}:`, error);
         data_loading = false;
       });
   }
 
-  function updateVersion(e,key:string){
-
-    if(key === "version_changed"){
-      selectedTitle = e.detail;      
-      if(versionedPipelineResults[selectedTitle] ){
+  function updateVersion(e, key: string) {
+    if (key === "version_changed") {
+      selectedTitle = e.detail;
+      if (versionedPipelineResults[selectedTitle]) {
         pipeline_result = versionedPipelineResults[selectedTitle];
-      }
-      else{
+      } else {
         console.warn("no data for this version");
       }
-    }else if(key === "new_verison_added"){
+    } else if (key === "new_verison_added") {
       let new_version = e.detail;
       titleOptions = [...titleOptions, new_version];
       // console.log("updated titleOptions is", titleOptions);
@@ -188,35 +186,39 @@
       summary_interviews = enhanceChunks(chunks);
     }
   }
-  function handleRemoveVarType(e){
+  function handleRemoveVarType(e) {
     // console.log("e.detail", e.detail)
     const { id, variable } = e.detail;
-    if(pipeline_result === undefined) return;
-  
-    pipeline_result.identify_var_types = pipeline_result.identify_var_types.map(item => {
-      if (item.id === id) {
-        return {
-          ...item,
-          identify_var_types_result: item.identify_var_types_result.filter(
-            result => result.var_type !== variable.var_type
-          )
-        };
-      }
-      return item;
-    });    
+    if (pipeline_result === undefined) return;
+
+    pipeline_result.identify_var_types = pipeline_result.identify_var_types.map(
+      (item) => {
+        if (item.id === id) {
+          return {
+            ...item,
+            identify_var_types_result: item.identify_var_types_result.filter(
+              (result) => result.var_type !== variable.var_type,
+            ),
+          };
+        }
+        return item;
+      },
+    );
   }
-  function handleAddVarType(e){
+  function handleAddVarType(e) {
     // console.log("e.detail", e.detail);
     const { id, variable } = e.detail;
-    if(pipeline_result === undefined) return;
-    pipeline_result.identify_var_types = pipeline_result.identify_var_types.map(item => {
-      if (item.id === id) {
-        // console.log(newdata.var_type);
-        const updatedNewData = { ...variable, var_type: variable.var_type };
-        item.identify_var_types_result.push(updatedNewData);
-      }
-      return item;
-    });
+    if (pipeline_result === undefined) return;
+    pipeline_result.identify_var_types = pipeline_result.identify_var_types.map(
+      (item) => {
+        if (item.id === id) {
+          // console.log(newdata.var_type);
+          const updatedNewData = { ...variable, var_type: variable.var_type };
+          item.identify_var_types_result.push(updatedNewData);
+        }
+        return item;
+      },
+    );
   }
 
   onMount(async () => {
@@ -243,11 +245,11 @@
             {selectedTitle}
             {titleOptions}
             on:close={() => (show_prompts = false)}
-            on:var_types_evidence= {handleEvidenceSelected}
-            on:remove_var_type = {handleRemoveVarType}
-            on:add_var_type = {handleAddVarType}
-            on:versions_changed = {e=>updateVersion(e,"versions_changed")}
-            on:new_verison_added = {e=>updateVersion(e,"new_verison_added")}
+            on:var_types_evidence={handleEvidenceSelected}
+            on:remove_var_type={handleRemoveVarType}
+            on:add_var_type={handleAddVarType}
+            on:versions_changed={(e) => updateVersion(e, "versions_changed")}
+            on:new_verison_added={(e) => updateVersion(e, "new_verison_added")}
           ></Prompts>
         </div>
       {/if}

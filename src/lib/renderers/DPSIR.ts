@@ -34,7 +34,6 @@ import { toggle } from "@melt-ui/svelte/internal/helpers";
 // import { space } from "postcss/lib/list";
 // import { name } from "@melt-ui/svelte";
 
-
 export const DPSIR = {
   init(svgId: string, utilities: string[], handlers: tUtilityHandlers) {
     this.clicked_rect = null;
@@ -49,7 +48,7 @@ export const DPSIR = {
     //   Array(this.rows + 1).fill("0000"),
     // );
     this.grid_renderer = grid_layout.grid_renderer;
-    this.grid_renderer.init(210,240);
+    this.grid_renderer.init(210, 240);
     // console.log(this.grid_renderer.columns, this.grid_renderer.rows);
     this.cellWidth = this.width / this.grid_renderer.columns;
     this.cellHeight = this.height / this.grid_renderer.rows;
@@ -90,10 +89,7 @@ export const DPSIR = {
         }
       });
 
-    this.drawGids(
-      svg,
-      svgId,
-    );
+    this.drawGids(svg, svgId);
 
     svg.append("g").attr("class", "link_group");
     // .attr("transform", `translate(${padding.left}, ${padding.top})`);
@@ -113,7 +109,7 @@ export const DPSIR = {
     this.showLinks = showLinks;
   },
   update_vars(vars: tDPSIR, links: tVisLink[], varTypeColorScale: Function) {
-    this.grid_renderer?.reset_global_grid(210,240);
+    this.grid_renderer?.reset_global_grid(210, 240);
     // console.log(this.grid_renderer.global_grid)
     this.varTypeColorScale = varTypeColorScale;
     const var_type_names = Constants.var_type_names;
@@ -194,11 +190,11 @@ export const DPSIR = {
     Object.keys(vars).forEach((key) => {
       this.drawVars(vars[key], bboxes[key], categorizedLinks[key]);
     });
-    this.drawLinks(links, bboxes);
+    // this.drawLinks(links, bboxes);
   },
   drawGids(svg, svgId) {
     // Get the dimensions of the SVG
-    const self = this
+    const self = this;
     let cellWidth: number = self.cellWidth;
     let cellHeight: number = self.cellHeight;
     let columns = self.grid_renderer.columns;
@@ -301,7 +297,11 @@ export const DPSIR = {
       cellWidth,
       cellHeight,
     );
-    const rectWithVar = grid_layout.combineData(vars, rectangleCoordinates, this.grid_renderer?.global_grid); //return as an object
+    const rectWithVar = grid_layout.combineData(
+      vars,
+      rectangleCoordinates,
+      this.grid_renderer?.global_grid,
+    ); //return as an object
     console.log(rectWithVar);
     //merge all rects info(grid coordinate position and size) to a global var
     rectWithVar.forEach((rect) => {
@@ -525,12 +525,21 @@ export const DPSIR = {
       //   !((link.source.var_type === "driver" && (link.target.var_type === "impact" || link.target.var_type === "state")) ||
       //     ((link.source.var_type === "impact" || link.source.var_type === "state") && link.target.var_type === "driver"))
       // ) {
-        path_points = grid_layout.pathFinding(link, this.grid_renderer.global_grid, points);
+      path_points = grid_layout.pathFinding(
+        link,
+        this.grid_renderer.global_grid,
+        points,
+      );
       // }
 
       if (path_points) {
         const svgPath = path_points.map((point) =>
-          grid_layout.gridToSvgCoordinate(point[0], point[1], cellWidth, cellHeight),
+          grid_layout.gridToSvgCoordinate(
+            point[0],
+            point[1],
+            cellWidth,
+            cellHeight,
+          ),
         );
 
         const d3Path = d3.path();
@@ -561,8 +570,6 @@ export const DPSIR = {
         return d3Path.toString();
       }
     };
-
-
 
     const link_paths = svg
       .select("g.link_group")
@@ -691,7 +698,7 @@ export const DPSIR = {
     let next_path_index = 0;
     let isTimerRunning = false;
     const t = d3.timer(() => {
-      if(!isTimerRunning){
+      if (!isTimerRunning) {
         isTimerRunning = true;
         self.handlers.EnableLinks(false);
       }
@@ -715,7 +722,6 @@ export const DPSIR = {
         isTimerRunning = false;
         self.handlers.EnableLinks(true);
       }
-      
     });
   },
 
@@ -950,7 +956,11 @@ export const DPSIR = {
       .select("#" + this.svgId)
       .select(`.${var_type_name}_region`);
     // mark rect with "*" in the grid
-    grid_layout.markOccupiedGrid(this.grid_renderer?.global_grid, rectWithVar, "*");
+    grid_layout.markOccupiedGrid(
+      this.grid_renderer?.global_grid,
+      rectWithVar,
+      "*",
+    );
 
     group
       .select("g.tag-group")
@@ -965,8 +975,14 @@ export const DPSIR = {
           .append("rect")
           .attr("class", "box")
           .attr("id", d.variable_name)
-          .attr("x", grid_layout.gridToSvgCoordinate(d.x, d.y, cellWidth, cellHeight).x)
-          .attr("y", grid_layout.gridToSvgCoordinate(d.x, d.y, cellWidth, cellHeight).y)
+          .attr(
+            "x",
+            grid_layout.gridToSvgCoordinate(d.x, d.y, cellWidth, cellHeight).x,
+          )
+          .attr(
+            "y",
+            grid_layout.gridToSvgCoordinate(d.x, d.y, cellWidth, cellHeight).y,
+          )
           .attr("width", d.width * cellWidth)
           .attr("height", d.height * cellHeight)
           .attr("stroke", "#cdcdcd")
@@ -1026,7 +1042,7 @@ export const DPSIR = {
               self.clicked_rect = d;
 
               // self.handlers.VarOrLinkSelected(d);
-              console.log(d)
+              console.log(d);
               self.dispatch.call("VarOrLinkSelected", null, d); //this refer to the context of the event
               d3.select(this)
                 .classed("box-highlight", true)
@@ -1173,5 +1189,3 @@ export const DPSIR = {
       });
   },
 };
-
-
