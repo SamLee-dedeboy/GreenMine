@@ -283,7 +283,9 @@
         <!-- <div class="gap-y-1">
           <SummaryView {summary_interviews} id="statistics" />
         </div> -->
-        <div class="interview-viewer-container relative w-full grow">
+        <div
+          class="interview-viewer-container relative w-full grow bg-[#fefbf1]"
+        >
           {#if data_loading}
             <div>Data Loading...</div>
           {:else}

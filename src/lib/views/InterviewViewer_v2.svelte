@@ -12,8 +12,10 @@
     0: "Guest",
   };
   const speaker_background = {
-    1: "bg-gray-100",
-    0: "bg-lime-100",
+    1: "bg-lime-200",
+    // 1: "bg-stone-200",
+    // 0: "bg-lime-100",
+    0: "bg-yellow-100",
   };
   $: colorScale = $colorBy === "topic" ? emotionColorScale : topicColorScale;
   let data_changes = 0;
@@ -361,11 +363,11 @@
   // });
 </script>
 
-<div>
+<div class="flex flex-col">
   <div
-    class="title border-gray relative m-1 flex items-center justify-center rounded border bg-gray-100 py-2 text-center"
+    class="title border-gray relative m-1 flex select-none items-center justify-center rounded border bg-amber-100 py-1 text-center text-gray-700"
   >
-    <span class="text-lg font-bold"> Interview Contents </span>
+    <span class="text-lg font-semibold"> Interview Contents </span>
   </div>
   {#key data_changes}
     <div

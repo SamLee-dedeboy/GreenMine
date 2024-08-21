@@ -96,7 +96,7 @@ export const DPSIR = {
         }
       });
 
-    this.drawGids(svg, svgId);
+    // this.drawGids(svg, svgId);
 
     svg.append("g").attr("class", "link_group");
     // .attr("transform", `translate(${padding.left}, ${padding.top})`);
@@ -823,7 +823,7 @@ export const DPSIR = {
         "x",
         grid_layout.gridToSvgCoordinate(
           bbox_center[0],
-          bbox_center[1] - bboxHeight / 2 - 2,
+          bbox_center[1] - bboxHeight / 2 - 5,
           cellWidth,
           cellHeight,
         ).x,
@@ -832,7 +832,7 @@ export const DPSIR = {
         "y",
         grid_layout.gridToSvgCoordinate(
           bbox_center[0],
-          bbox_center[1] - bboxHeight / 2 - 2,
+          bbox_center[1] - bboxHeight / 2 - 5,
           cellWidth,
           cellHeight,
         ).y,
@@ -851,7 +851,7 @@ export const DPSIR = {
       .attr("font-weight", "bold")
       .attr("fill", "#636363")
       .attr("fill", varTypeColorScale(var_type_name))
-      .attr("opacity", "0.2");
+      .attr("opacity", "0.5");
 
     //group icon
     group
@@ -867,7 +867,7 @@ export const DPSIR = {
       .attr(
         "x",
         grid_layout.gridToSvgCoordinate(
-          bbox_center[0] + var_type_name.length / 2 + 8,
+          bbox_center[0] + (5.8 * var_type_name.length) / 2,
           bbox_center[1] - bboxHeight / 2 - 7,
           cellWidth,
           cellHeight,
@@ -876,15 +876,15 @@ export const DPSIR = {
       .attr(
         "y",
         grid_layout.gridToSvgCoordinate(
-          bbox_center[0] + var_type_name.length / 2 + 8,
-          bbox_center[1] - bboxHeight / 2 - 7,
+          bbox_center[0] + (2 * var_type_name.length) / 2,
+          bbox_center[1] - bboxHeight / 2 - 5 - 5,
           cellWidth,
           cellHeight,
         ).y,
       )
       .attr("width", 30)
       .attr("height", 30)
-      .attr("opacity", 0.2);
+      .attr("opacity", 0.5);
 
     // this.drawUtilities(
     //   var_type_name,

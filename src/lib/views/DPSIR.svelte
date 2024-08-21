@@ -69,7 +69,7 @@
     <Curation bind:this={curation} {metadata} />
   </div> -->
   <button
-    class="absolute right-20 top-20 rounded-sm bg-gray-200 p-1"
+    class="absolute right-2 top-2 rounded-sm bg-gray-100 p-1 outline outline-1 outline-gray-200 hover:bg-gray-200 hover:shadow-md"
     on:click={() => {
       toggleLinks();
     }}>{showLinks ? "Hide Other Links" : "Show Other Links"}</button
