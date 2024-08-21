@@ -14,8 +14,8 @@
   } from "../types";
   import { varTypeColorScale } from "lib/store";
   import KeywordSea from "lib/components/KeywordSea.svelte";
-  export let data: tDPSIR | undefined;
-  export let links: tVisLink[] | undefined;
+  export let data: tDPSIR;
+  export let links: tVisLink[];
   const svgId = "model-svg";
 
   let curation: any;
@@ -28,11 +28,10 @@
   // let trigger_times = 0;
   // $: update_vars(data, links, showLinks);
   async function update_vars(
-    vars: tDPSIR | undefined,
-    links: tVisLink[] | undefined,
+    vars: tDPSIR,
+    links: tVisLink[],
     showLinks: boolean,
   ) {
-    if (!vars || !links) return;
     DPSIR.update_vars(vars, links, $varTypeColorScale);
   }
 

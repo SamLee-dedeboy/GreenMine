@@ -15,7 +15,6 @@
     tVariable,
     tChunk,
     tDPSIR,
-    tVarTypeDef,
     tServerPromptData,
     tServerPipelineData,
   } from "lib/types";
@@ -28,15 +27,14 @@
   import Prompts from "lib/components/Prompts.svelte";
   // import { version } from "os";
 
-  let interview_data: tTranscript[] | undefined = undefined;
+  let interview_data: tTranscript[];
   let interview_viewer_component;
-  let dataset: tServerData | undefined = undefined;
-  let prompt_data: tServerPromptData | undefined = undefined;
-  let pipeline_result: tServerPipelineData | undefined = undefined;
+  let prompt_data: tServerPromptData;
+  let pipeline_result: tServerPipelineData;
   let versionedPipelineResults: { [key: string]: tServerPipelineData } = {};
-  let var_data: tDPSIR | undefined = undefined;
-  let vis_links: tVisLink[] | undefined = undefined;
-  let summary_interviews: tChunk[] | undefined = undefined;
+  let var_data: tDPSIR;
+  let vis_links: tVisLink[];
+  let summary_interviews: tChunk[];
   let data_loading: boolean = true;
   let show_dpsir: boolean = true;
   let show_prompts: boolean = false;
@@ -65,7 +63,6 @@
       .then((res) => res.json())
       .then((res: tServerData) => {
         console.log({ res });
-        dataset = res;
         interview_data = res.interviews;
         prompt_data = res.prompts;
         versionedPipelineResults["baseline"] = res.pipeline_result;
@@ -77,9 +74,10 @@
         vis_links = utils.link_to_vis_link(res.pipeline_links);
         // console.log(vis_links)
         // console.log(res.pipeline_links)
+        const var_types = Object.keys(var_data);
         $varTypeColorScale = d3
           .scaleOrdinal()
-          .domain(Object.keys(var_data!))
+          .domain(var_types)
           .range(d3.schemeSet2);
 
         // v1
@@ -91,7 +89,6 @@
           0.91,
           chunk_coordinates,
         );
-        // console.log({ chunk_graph });
         // timeline_data = res.reports;
         keyword_data = {
           keyword_coordinates: res.v1.keyword_coordinates,
