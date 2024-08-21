@@ -35,14 +35,14 @@ import { toggle } from "@melt-ui/svelte/internal/helpers";
 // import { name } from "@melt-ui/svelte";
 
 export const DPSIR = {
-  init(svgId: string, utilities: string[], handlers: tUtilityHandlers) {
+  init(svgId: string, utilities: string[]) {
     console.log("init");
     this.clicked_rect = null;
     this.clicked_link = null;
     // this.width = 1550;
     // this.height = 950;
-    this.width = document.querySelector("#" + svgId).clientWidth;
-    this.height = document.querySelector("#" + svgId).clientHeight;
+    this.width = document.querySelector("#" + svgId)?.clientWidth;
+    this.height = document.querySelector("#" + svgId)?.clientHeight;
     this.padding = { top: 10, right: 50, bottom: 10, left: 50 };
     // this.rows = 240;
     // this.columns = 210;
@@ -65,7 +65,6 @@ export const DPSIR = {
     this.svgId = svgId;
     this.dispatch = d3.dispatch("VarOrLinkSelected");
     this.utilities = utilities;
-    this.handlers = handlers;
     this.varTypeColorScale = null;
     this.showLinks = true;
     // this.enable = false;
@@ -212,7 +211,7 @@ export const DPSIR = {
         categorizedLinks[varType],
       );
     });
-    this.drawLinks(links, this.bboxes);
+    // this.drawLinks(links, this.bboxes);
   },
   drawGids(svg, svgId) {
     // Get the dimensions of the SVG

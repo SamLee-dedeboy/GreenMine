@@ -35,7 +35,7 @@ export function link_to_vis_link(data: tLink[]): tVisLink[] {
       });
     }
   });
-  console.log("translation done")
+  console.log("translation done");
   // Convert the map values to an array and adjust structure to include frequency
   const result: tVisLink[] = Array.from(linksMap.values()).map((entry) => ({
     ...entry,
@@ -45,11 +45,16 @@ export function link_to_vis_link(data: tLink[]): tVisLink[] {
   return result;
 }
 
+/**
+ * Record which chunk mentions each variable
+ * @param variableTypeData: dictionary where key is var type and value is another dictionary, where key is variable name and value is the chunks that mention the variable
+ * @param defsData: dictionary where key is var type  and value is the definitions of the variables
+ * @returns
+ */
 export function integrateTypes(
   variableTypeData: tVariableType,
   defsData: { [key: string]: { definition: string; factor_type: string } },
 ): tVariableType {
-  console.log(variableTypeData, defsData);
   const variable_mentions = Object.keys(
     variableTypeData.variable_mentions,
   ).reduce(

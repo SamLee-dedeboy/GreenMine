@@ -8,7 +8,7 @@ from openai import OpenAI
 # from . import GPTUtils
 # from . import DataUtils
 from GPTUtils import query, prompts
-from DataUtils import local, dr, v1_processing, uncertainty
+from DataUtils import local, dr, v1_processing, uncertainty, v2_processing
 from collections import defaultdict
 
 # init, do not read data
@@ -18,6 +18,7 @@ dirname = os.path.dirname(__file__)
 relative_path = lambda dirname, filename: os.path.join(dirname, filename)
 node_data_path = relative_path(dirname, "data/v2/user/nodes/")
 chunk_data_path = relative_path(dirname, "data/v2/user/chunk/")
+keyword_data_path = relative_path(dirname, "data/v2/user/keyword/")
 metadata_path = relative_path(dirname, "data/v2/user/variable_definitions/")
 v1_data_path = relative_path(dirname, "data/v1/")
 # pipeline result path
@@ -146,10 +147,26 @@ def get_data(version="baseline"):
             link for chunk in identify_links for link in chunk["identify_links_result"]
         ]  # TBM
 
+    keyword_embeddings = json.load(open(keyword_data_path + "keywords.json"))
+    userdict = keyword_data_path + "userdict.txt"
+    stopwords = ["綠島"]
+    kpca_reducer = dr.init_kpca_reducer(
+        list(map(lambda x: x["embedding"], keyword_embeddings))
+    )
+    DPSIR_data = v2_processing.generate_DPSIR_data(
+        identify_var_types,
+        nodes,
+        var_definitions,
+        keyword_embeddings,
+        stopwords,
+        userdict,
+        kpca_reducer,
+    )
     return {
         "interviews": interview_data,
-        "nodes": nodes,
-        "variable_definitions": var_definitions,
+        # "nodes": nodes,
+        # "variable_definitions": var_definitions,
+        "DPSIR_data": DPSIR_data,
         "links": old_links,
         "pipeline_links": pipeline_links,
         "v1": v1_data,

@@ -1,9 +1,13 @@
-export type tDPSIR = {
-  [key: string]: tVariableType;
-};
+export type tDPSIR = Record<string, tVariableType>;
 export type tVariableType = {
   variable_type: string;
   variable_mentions: { [key: string]: tVariable };
+  keyword_data: tKeywordData;
+};
+export type tKeywordData = {
+  keyword_list: string[];
+  keyword_statistics: Record<string, { frequency: number; tf_idf: number }>;
+  keyword_coordinates: Record<string, [number, number]>;
 };
 
 export type tVariable = {

@@ -13,6 +13,7 @@
     tVisLink,
   } from "../types";
   import { varTypeColorScale } from "lib/store";
+  import KeywordSea from "lib/components/KeywordSea.svelte";
   export let data: tDPSIR | undefined;
   export let links: tVisLink[] | undefined;
   const svgId = "model-svg";
@@ -37,15 +38,8 @@
 
   onMount(async () => {
     await tick();
-    const handlers = {
-      // ["VarOrLinkSelected"]: handleVarOrLinkSelected,
-      ["EnableLinks"]: enableLinks,
-      // ["add"]: curation.handleAddVar,
-      // ["remove"]: curation.handleRemoveVar,
-      // ["edit"]: curation.handleEditVar,
-    };
 
-    DPSIR.init(svgId, utilities, handlers);
+    DPSIR.init(svgId, utilities);
     DPSIR.on("VarOrLinkSelected", handleVarOrLinkSelected);
     update_vars(data, links, showLinks);
   });
@@ -84,6 +78,13 @@
   <svg id={svgId} class="varbox-svg h-full w-full">
     <defs></defs>
   </svg>
+  <!-- <div class="flex flex-wrap">
+    <KeywordSea data={data["driver"].keyword_data} key="driver" />
+    <KeywordSea data={data["pressure"].keyword_data} key="pressure" />
+    <KeywordSea data={data["state"].keyword_data} key="state" />
+    <KeywordSea data={data["impact"].keyword_data} key="impact" />
+    <KeywordSea data={data["response"].keyword_data} key="response" />
+  </div> -->
 </div>
 
 <style lang="postcss">

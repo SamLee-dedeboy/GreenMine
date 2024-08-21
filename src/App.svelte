@@ -72,15 +72,7 @@
         pipeline_result = res.pipeline_result; //set the initial pipeline result
         // console.log({pipeline_result})
         data_loading = false;
-        // Process each group of variables to add factor_type
-        Object.keys(res.nodes).forEach((varType: string) => {
-          const nodes: tVariableType = res.nodes[varType];
-          const defs: tVarTypeDef = res.variable_definitions[varType];
-          if (!var_data) var_data = {};
-          var_data[varType] = utils.integrateTypes(nodes, defs);
-        });
-        var_data = var_data;
-        // console.log({ var_data });
+        var_data = res.DPSIR_data;
         // vis_links = utils.link_to_vis_link(res.links);
         vis_links = utils.link_to_vis_link(res.pipeline_links);
         // console.log(vis_links)
@@ -99,7 +91,7 @@
           0.91,
           chunk_coordinates,
         );
-        console.log({ chunk_graph });
+        // console.log({ chunk_graph });
         // timeline_data = res.reports;
         keyword_data = {
           keyword_coordinates: res.v1.keyword_coordinates,
