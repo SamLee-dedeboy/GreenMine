@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
   import * as d3 from "d3";
-  import { DPSIR } from "lib/renderers/DPSIR";
+  import { DPSIR } from "lib/renderers/DetailDPSIR";
+  import { OverviewDPSIR } from "lib/renderers/OverviewDPSIR";
   import Curation from "lib/components/Curation.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
@@ -23,34 +24,39 @@
 
   let container;
   let selectedVar: tVariable | undefined = undefined;
+  let selectedType = { source: "", target: "" };
   let showLinks = true;
   let enable = false;
+  let currentRenderer = "OverviewDPSIR";
   // let trigger_times = 0;
   // $: update_vars(data, links, showLinks);
   async function update_vars(
     vars: tDPSIR,
     links: tVisLink[],
     showLinks: boolean,
+    selectedType: { source: string; target: string },
   ) {
-    if (!vars || !links) {
-      return;
+    if (currentRenderer == "OverviewDPSIR") {
+      OverviewDPSIR.update_vars(vars, links, $varTypeColorScale);
+    } else {
+      DPSIR.update_vars(vars, links, $varTypeColorScale, selectedType);
     }
-    DPSIR.update_vars(vars, links, $varTypeColorScale);
   }
 
   onMount(async () => {
     await tick();
-
-    DPSIR.init(svgId, utilities);
-    DPSIR.on("VarOrLinkSelected", handleVarOrLinkSelected);
-    update_vars(data, links, showLinks);
+    // const handlers = {
+    //   // ["VarOrLinkSelected"]: handleVarOrLinkSelected,
+    //   ["EnableLinks"]: enableLinks,
+    // };
+    initializeRenderer(currentRenderer, selectedType);
   });
   function toggleLinks() {
     if (enable) {
       showLinks = !showLinks;
-      DPSIR.toggleLinks(showLinks);
-    } else {
-      alert("Please wait until links is complete");
+      if (currentRenderer == "DPSIR") {
+        DPSIR.toggleLinks(showLinks);
+      }
     }
   }
   function handleVarOrLinkSelected(e) {
@@ -61,9 +67,41 @@
     // console.log({ selectedVar });
     dispatch("var-selected", selectedVar); // for App.svelte to hightlight the chunks
   }
-
+  function handleVarTypeLinkSelected(e) {
+    console.log(e);
+    if (e !== null) {
+      currentRenderer = "DPSIR";
+      initializeRenderer(currentRenderer, {
+        source: e.source,
+        target: e.target,
+      });
+    }
+  }
   function enableLinks(e) {
     enable = e;
+  }
+
+  function switchRenderer() {
+    currentRenderer =
+      currentRenderer === "OverviewDPSIR" ? "DPSIR" : "OverviewDPSIR";
+    initializeRenderer(currentRenderer, selectedType);
+  }
+
+  function initializeRenderer(renderer, selectedType) {
+    d3.select(`#${svgId}`).selectAll("*").remove();
+
+    if (renderer === "DPSIR") {
+      DPSIR.init(svgId, utilities, { ["EnableLinks"]: enableLinks });
+      DPSIR.on("VarOrLinkSelected", handleVarOrLinkSelected);
+      d3.select("body").selectAll(".tooltip-content").remove();
+    } else {
+      OverviewDPSIR.init(svgId);
+      OverviewDPSIR.on("VarTypeLinkSelected", handleVarTypeLinkSelected);
+    }
+
+    update_vars(data, links, showLinks, selectedType);
+
+    // Remove tooltip if it exists
   }
 </script>
 
@@ -71,12 +109,19 @@
   <!-- <div class="absolute right-0 top-1">
     <Curation bind:this={curation} {metadata} />
   </div> -->
+  <!-- <button
+      class="absolute top-20 right-20 bg-gray-200 p-1 rounded-sm"
+      on:click={() => {
+        toggleLinks();
+      }}
+      >{showLinks ? 'Hide Other Links' : 'Show Other Links'}</button
+    > -->
   <button
-    class="absolute right-2 top-2 rounded-sm bg-gray-100 p-1 outline outline-1 outline-gray-200 hover:bg-gray-200 hover:shadow-md"
-    on:click={() => {
-      toggleLinks();
-    }}>{showLinks ? "Hide Other Links" : "Show Other Links"}</button
+    class="absolute right-4 top-4 rounded-md bg-gray-400 p-2 text-white transition-colors hover:bg-gray-500"
+    on:click={switchRenderer}
   >
+    Switch to {currentRenderer === "OverviewDPSIR" ? "DPSIR" : "Overview"}
+  </button>
   <svg id={svgId} class="varbox-svg h-full w-full">
     <defs></defs>
   </svg>

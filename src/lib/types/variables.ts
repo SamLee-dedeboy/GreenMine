@@ -122,6 +122,14 @@ export type tLinkObject = {
   frequency: number;
   mentions: Mention[];
 };
+
+export type tLinkObjectOverview = {
+  source: string;
+  target: string;
+  source_center: number[];
+  target_center: number[];
+  count: number;
+}
 export type tUtilityHandlers = {
   [key: string]: Function;
 };
