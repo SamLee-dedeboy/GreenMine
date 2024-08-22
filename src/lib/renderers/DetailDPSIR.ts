@@ -41,18 +41,13 @@ export const DPSIR = {
     this.width = 1550;
     this.height = 950;
     this.padding = { top: 10, right: 50, bottom: 10, left: 50 };
-    // this.rows = 240;
-    // this.columns = 210;
     this.global_rects = [];
-    // this.global_grid = Array.from({ length: this.columns + 1 }, () =>
-    //   Array(this.rows + 1).fill("0000"),
-    // );
     this.bboxes = {
-      driver:{center:[58,70],size:[0,0]},
-      pressure:{center:[230,61],size:[0,0]},
-      impact:{center:[200,185],size:[0,0]},
-      response:{center:[63,190],size:[0,0]},
-      state:{center:[260,132],size:[0,0]}
+      driver:{center:[58,90],size:[0,0]},
+      pressure:{center:[160,50],size:[0,0]},
+      state:{center:[260,100],size:[0,0]},
+      impact:{center:[220,185],size:[0,0]},
+      response:{center:[100,190],size:[0,0]}
     }
     this.grid_renderer = grid_layout.grid_renderer;
     this.grid_renderer.init(300,240);
@@ -90,13 +85,12 @@ export const DPSIR = {
             .attr("stroke", "gray")
             .attr("marker-end", "");
           self.dispatch.call("VarOrLinkSelected", null, null);
-          // self.handlers.VarOrLinkSelected(null);
           self.clicked_link = null;
           self.clicked_rect = null;
         }
       });
 
-    this.drawGids(svg, svgId);
+    // this.drawGids(svg, svgId);
 
     svg.append("g").attr("class", "link_group");
     // .attr("transform", `translate(${padding.left}, ${padding.top})`);
@@ -115,7 +109,7 @@ export const DPSIR = {
   toggleLinks(showLinks: boolean) {
     this.showLinks = showLinks;
   },
-  update_vars(vars: tDPSIR, links: tVisLink[], varTypeColorScale: Function) {
+  update_vars(vars: tDPSIR, links: tVisLink[], varTypeColorScale: Function, selectedType:{source:string, target:string}) {
     this.grid_renderer?.reset_global_grid(300,240);
     // console.log(this.grid_renderer.global_grid)
     this.varTypeColorScale = varTypeColorScale;
@@ -193,19 +187,14 @@ export const DPSIR = {
     //   this.cellWidth,
     //   this.cellHeight,
     // );
-    // bboxes = {
-    //   driver:{center:[49,59]},
-    //   pressure:{center:[151,61]},
-    //   impact:{center:[129,185]},
-    //   response:{center:[57,173]},
-    //   state:{center:[176,132]}
-    // }
-    // console.log({bboxes});
+
+
+    // TODO: feed the selected varType to drawVars and drawLinks
     Object.values(var_type_names).forEach((varType) => {
       console.log(varType);
         this.drawVars(vars[varType], this.bboxes[varType],categorizedLinks[varType]);
     });
-    // this.drawLinks(links, this.bboxes);
+    this.drawLinks(links, this.bboxes,selectedType);
   },
   drawGids(svg, svgId) {
     // Get the dimensions of the SVG
@@ -331,7 +320,8 @@ export const DPSIR = {
 
   drawLinks(
     links: tVisLink[],
-    bboxes: { [key: string]: { center: [number, number] } },
+    bboxes: { center: [number, number]; size: [number, number] },
+    selectedType:{source:string, target:string}
   ) {
     const self = this;
     // let global_grid: string[][] = this.grid_renderer.global_grid;
@@ -360,7 +350,9 @@ export const DPSIR = {
 
       return xDistance + yDistance;
     }
-
+    links = links.filter((link) => {
+      return link.source.var_type === selectedType.source && link.target.var_type === selectedType.target;
+    });
     // Sort the links
     links.sort((a, b) => {
       const aOrder = getVarTypePairOrder(a.source.var_type, a.target.var_type);
@@ -504,6 +496,7 @@ export const DPSIR = {
         linkCounts[targetVarName].OutGroup_links += 1;
       }
     });
+    console.log(filteredMergeData)
     // // filteredMergeData = filteredMergeData.slice(0, 10);
     // console.log("link filtered");
     const points = grid_layout.generatePoints(linkCounts);
@@ -736,35 +729,35 @@ export const DPSIR = {
       .select(`.${var_type_name}_region`);
 
     // group bounding box
-    group
-      .select("g.bbox-group")
-      .append("rect")
-      .attr("class", "bbox")
-      .attr("id", var_type_name)
-      .attr(
-        "x",
-        grid_layout.gridToSvgCoordinate(
-          bbox_center[0] - bboxWidth / 2,
-          bbox_center[1] - bboxHeight / 2,
-          cellWidth,
-          cellHeight,
-        ).x,
-      )
-      .attr(
-        "y",
-        grid_layout.gridToSvgCoordinate(
-          bbox_center[0] - bboxWidth / 2,
-          bbox_center[1] - bboxHeight / 2,
-          cellWidth,
-          cellHeight,
-        ).y,
-      )
-      .attr("width", bboxWidth * cellWidth)
-      .attr("height", bboxHeight * cellHeight)
-      .attr("fill", "none")
-      .attr("stroke", "grey")
-      .attr("stroke-width", 2)
-      .attr("opacity", "0.1"); //do not show the bounding box
+    // group
+    //   .select("g.bbox-group")
+    //   .append("rect")
+    //   .attr("class", "bbox")
+    //   .attr("id", var_type_name)
+    //   .attr(
+    //     "x",
+    //     grid_layout.gridToSvgCoordinate(
+    //       bbox_center[0] - bboxWidth / 2,
+    //       bbox_center[1] - bboxHeight / 2,
+    //       cellWidth,
+    //       cellHeight,
+    //     ).x,
+    //   )
+    //   .attr(
+    //     "y",
+    //     grid_layout.gridToSvgCoordinate(
+    //       bbox_center[0] - bboxWidth / 2,
+    //       bbox_center[1] - bboxHeight / 2,
+    //       cellWidth,
+    //       cellHeight,
+    //     ).y,
+    //   )
+    //   .attr("width", bboxWidth * cellWidth)
+    //   .attr("height", bboxHeight * cellHeight)
+    //   .attr("fill", "none")
+    //   .attr("stroke", "grey")
+    //   .attr("stroke-width", 2)
+    //   .attr("opacity", "0.1"); //do not show the bounding box
 
     //group name for clicking
     // group
