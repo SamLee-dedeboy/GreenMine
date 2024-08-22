@@ -36,6 +36,11 @@
   onMount(() => {
     console.log("links:", { data });
   });
+  function sort_by_uncertainty(data: tIdentifyLinks[]) {
+    return data.sort(
+      (a, b) => -(a.uncertainty.identify_links - b.uncertainty.identify_links),
+    );
+  }
 </script>
 
 <div
@@ -43,74 +48,84 @@
 >
   <h2 class="text-lg font-medium capitalize text-black">{title}</h2>
   <div class="flex grow flex-col divide-y divide-black">
-    <div class="flex gap-x-2 divide-x">
-      <div class="w-[3rem] shrink-0">ID</div>
+    <div class="flex divide-x">
+      <div class="w-[4rem] shrink-0">ID</div>
       <div class="flex pl-2">Links</div>
     </div>
-    <div class="flex h-1 grow flex-col divide-y divide-black overflow-y-auto">
-      {#each sort_by_id(data) as datum, index}
+    <div
+      class="flex h-1 grow flex-col divide-y divide-black overflow-y-auto pr-3"
+    >
+      {#each sort_by_uncertainty(data) as datum, index}
         {@const isNone = Object.keys(datum.identify_links_result).length === 0}
-        <div class="relative flex gap-x-2" class:isNone>
-          <div class="w-[3rem] shrink-0 text-[0.9rem]">
+        <div class="relative flex" class:isNone>
+          <div class="w-[4rem] shrink-0 text-[0.9rem]">
             {datum.id}
           </div>
           {#if isNone}
             <div class="border-l border-l-gray-300 pl-1 text-sm">None</div>
+          {:else if show_graph[index]}
+            <div>
+              <LinkResultGraph
+                svgId={`link-graph-${index}`}
+                data={datum.identify_links_result}
+                {max_degree}
+              />
+            </div>
           {:else}
             <div
-              tabindex="0"
-              role="button"
-              class="absolute right-3 top-1 w-fit rounded-sm px-1 text-center text-[0.7rem] italic text-gray-500 outline-double outline-1 outline-gray-300 hover:bg-gray-400"
-              on:click={() => (show_graph[index] = !show_graph[index])}
-              on:keyup={() => {}}
+              class="result flex w-full flex-col divide-y divide-dashed divide-gray-400 border-l border-l-gray-300"
             >
-              graph
-            </div>
-            {#if show_graph[index]}
-              <div>
-                <LinkResultGraph
-                  svgId={`link-graph-${index}`}
-                  data={datum.identify_links_result}
-                  {max_degree}
-                />
+              <div class="flex bg-gray-200 py-0.5">
+                <div
+                  tabindex="0"
+                  class="ml-1 w-fit rounded-sm bg-gray-100 px-1 text-center text-[0.7rem] italic text-gray-500 outline-double outline-1 outline-gray-300 hover:bg-gray-300 hover:shadow-md"
+                  role="button"
+                  on:click={() => (show_graph[index] = !show_graph[index])}
+                  on:keyup={() => {}}
+                >
+                  graph view
+                </div>
+                <div
+                  class="ml-auto flex items-center pl-1 text-xs italic text-gray-600"
+                >
+                  Overall uncertainty: {datum.uncertainty.identify_links.toFixed(
+                    2,
+                  )}
+                </div>
               </div>
-            {:else}
-              <div
-                class="result flex w-full flex-col divide-y divide-dashed divide-gray-400 border-l border-l-gray-300"
-              >
-                {#each datum.identify_links_result as link}
-                  <div class="flex flex-col gap-y-1 bg-gray-200 py-1 pl-1 pr-3">
-                    <div class="flex items-center">
-                      <div
-                        class="h-fit shrink-0 rounded-sm px-0.5 text-xs italic opacity-70 outline-double outline-1 outline-gray-300"
-                        style={`background-color: ${$varTypeColorScale(link.indicator1)}`}
-                      >
-                        {link.var1}
-                      </div>
-                      <div class="w-6 text-sm font-light">---</div>
-                      <div
-                        class="h-fit shrink-0 rounded-sm px-0.5 text-xs italic opacity-70 outline-double outline-1 outline-gray-300"
-                        style={`background-color: ${$varTypeColorScale(link.indicator2)}`}
-                      >
-                        {link.var2}
-                      </div>
+              {#each datum.identify_links_result as link}
+                <div class="flex flex-col gap-y-1 bg-gray-100 py-1 pl-1 pr-3">
+                  <div class="flex items-center">
+                    <div
+                      class="h-fit shrink-0 rounded-sm px-0.5 text-xs italic opacity-70 outline-double outline-1 outline-gray-300"
+                      style={`background-color: ${$varTypeColorScale(link.indicator1)}`}
+                    >
+                      {link.var1}
                     </div>
-                    <div class="flex w-full text-sm">
-                      <div class="flex flex-col">
-                        {#each link.response.relationship as relationship}
-                          <div
-                            class="flex items-center gap-x-1 italic text-gray-500"
-                          >
-                            <div class="px-0.5 text-left capitalize">
-                              {relationship.label}
-                            </div>
-                            <div class="mt-[0.125rem] text-xs">
-                              {relationship.confidence}
-                            </div>
+                    <div class="w-6 text-sm font-light">---</div>
+                    <div
+                      class="h-fit shrink-0 rounded-sm px-0.5 text-xs italic opacity-70 outline-double outline-1 outline-gray-300"
+                      style={`background-color: ${$varTypeColorScale(link.indicator2)}`}
+                    >
+                      {link.var2}
+                    </div>
+                  </div>
+                  <div class="flex w-full text-sm">
+                    <div class="flex flex-col">
+                      {#each link.response.relationship as relationship}
+                        <div
+                          class="flex items-center gap-x-1 italic text-gray-500"
+                        >
+                          <div class="px-0.5 text-left capitalize">
+                            {relationship.label}
                           </div>
-                        {/each}
-                      </div>
-                      <!-- <div
+                          <div class="mt-[0.125rem] text-xs">
+                            {relationship.confidence}
+                          </div>
+                        </div>
+                      {/each}
+                    </div>
+                    <!-- <div
                         role="button"
                         tabindex="0"
                         class="ml-auto flex h-fit items-center rounded-sm px-1 py-0.5 text-[0.7rem] normal-case italic leading-3 text-gray-600 outline-double outline-1 outline-gray-300 hover:bg-gray-300"
@@ -119,11 +134,10 @@
                       >
                         evidence
                       </div> -->
-                    </div>
                   </div>
-                {/each}
-              </div>
-            {/if}
+                </div>
+              {/each}
+            </div>
           {/if}
         </div>
       {/each}

@@ -49,17 +49,22 @@ export type tServerPipelineData = {
   identify_vars: tIdentifyVars[];
   identify_links: tIdentifyLinks[];
 };
+export type tUncertainty = {
+  identify_var_types: number;
+  identify_vars: number;
+  identify_links: number;
+};
 export type tIdentifyVarTypes = tChunk & {
   identify_var_types_result: tVarTypeResult;
-  uncertainty: {
-    identify_var_types: number;
-  };
+  uncertainty: tUncertainty;
 };
 export type tIdentifyVars = tChunk & {
   identify_vars_result: tVarResult;
+  uncertainty: tUncertainty;
 };
 export type tIdentifyLinks = tChunk & {
   identify_links_result: tLink[];
+  uncertainty: tUncertainty;
 };
 export type tVarTypeResult = {
   var_type: string;

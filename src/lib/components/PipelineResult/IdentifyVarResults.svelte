@@ -9,31 +9,45 @@
   onMount(() => {
     console.log({ data });
   });
+  function sort_by_uncertainty(data: tIdentifyVars[]) {
+    return data.sort(
+      (a, b) => -(a.uncertainty.identify_vars - b.uncertainty.identify_vars),
+    );
+  }
 </script>
 
 <div class="flex h-full min-w-[25rem] flex-col bg-gray-100 px-1 shadow-lg">
   <h2 class="text-lg font-medium capitalize text-black">{title}</h2>
   <div class="flex grow flex-col divide-y divide-black">
-    <div class="flex gap-x-2 divide-x">
-      <div class="w-[3rem] shrink-0">Snippet</div>
+    <div class="flex divide-x">
+      <div class="w-[4rem] shrink-0">Snippet</div>
       <div class="flex pl-2">Variables</div>
     </div>
-    <div class="flex h-1 grow flex-col divide-y divide-black overflow-y-auto">
-      {#each sort_by_id(data) as datum}
+    <div
+      class="flex h-1 grow flex-col divide-y divide-black overflow-y-auto pr-3"
+    >
+      {#each sort_by_uncertainty(data) as datum}
         {@const isNone = Object.keys(datum.identify_vars_result).length === 0}
-        <div class="flex gap-x-2 divide-x" class:isNone>
-          <div class="w-[3rem] shrink-0 text-[0.9rem]">
+        <div class="flex divide-x" class:isNone>
+          <div class="w-[4rem] shrink-0 text-[0.9rem]">
             {datum.id}
           </div>
           {#if isNone}
             <div class="pl-1 text-sm">None</div>
           {:else}
             <div class="result flex w-full flex-col divide-gray-300">
+              <div
+                class=" flex w-full items-center justify-end bg-gray-200 pl-1 text-xs italic text-gray-600"
+              >
+                Overall Uncertainty: {datum.uncertainty.identify_vars.toFixed(
+                  2,
+                )}
+              </div>
               {#each sort_by_var_type(Object.keys(datum.identify_vars_result)) as var_type}
                 {@const isEmpty =
                   datum.identify_vars_result[var_type].length === 0}
                 <div
-                  class="flex items-center bg-gray-200 pl-1 pr-3 capitalize"
+                  class="flex items-center bg-gray-100 pl-1 pr-3 capitalize"
                   style={`background-color: ${setOpacity($varTypeColorScale(var_type), 0.7)}`}
                   class:isEmpty
                 >

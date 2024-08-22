@@ -97,8 +97,8 @@
     </h2>
   {/if}
   <div class="flex grow flex-col divide-y divide-black">
-    <div class="flex gap-x-2 divide-x">
-      <div class="w-[3rem] shrink-0">Snippet</div>
+    <div class="flex divide-x">
+      <div class="w-[4rem] shrink-0">Snippet</div>
       <div class="flex pl-2">Indicators</div>
       <div
         role="button"
@@ -119,13 +119,10 @@
         {#each sort_by_uncertainty(data) as datum, i}
           {#if datum.identify_var_types_result}
             {@const isNone = datum.identify_var_types_result.length === 0}
-            <div
-              class="flex items-center gap-x-2 divide-x bg-gray-200"
-              class:isNone
-            >
-              <div class="w-[3rem] shrink-0 text-[0.9rem]">{datum.id}</div>
+            <div class="flex items-center divide-x bg-gray-200" class:isNone>
+              <div class="w-[4rem] shrink-0 text-[0.9rem]">{datum.id}</div>
               <div
-                class="flex grow items-center gap-x-1 py-0.5 pl-1 pr-3 capitalize"
+                class="flex grow flex-col items-center gap-x-1 py-0.5 pl-1 pr-3 capitalize"
               >
                 {#if isNone}
                   <div class="text-sm">None</div>
@@ -142,66 +139,72 @@
                     on:blur={(event) => handleBlur(datum.id, event)}
                   ></div>
                 {:else}
-                  {#each datum.identify_var_types_result
-                    // .filter((item) => item.evidence && item.evidence.length > 0)
-                    .sort( (a, b) => compare_var_types(a.var_type, b.var_type), ) as var_type_wrapper, i}
-                    <div class="flex flex-col">
-                      <div
-                        role="button"
-                        tabindex="0"
-                        class="flex rounded-sm px-0.5 text-sm italic opacity-70 outline-double outline-0 outline-gray-300 hover:outline-gray-600"
-                        style={`background-color: ${$varTypeColorScale(var_type_wrapper.var_type)}; box-shadow: ${varTypeConfidenceShadow(var_type_wrapper.confidence)}`}
-                        on:click={() => {
-                          if (
-                            var_type_wrapper.evidence &&
-                            var_type_wrapper.evidence.length > 0
-                          ) {
-                            dispatch("fetch_var_types_evidence", {
-                              result: datum.identify_var_types_result,
-                              id: datum.id,
-                              var_type: var_type_wrapper.var_type,
-                            });
-                          } else {
-                            alert("No evidence. Add manually.");
-                          }
-                        }}
-                        on:keyup={() => {}}
-                      >
-                        <span>{var_type_wrapper.var_type}</span>
-                        <button
-                          class="font-bold hover:text-white focus:outline-none"
-                          on:click={(event) => {
-                            event.stopPropagation();
-                            dispatch("remove_var_type", {
-                              id: datum.id,
-                              variable: var_type_wrapper,
-                            });
-                          }}
-                          on:keyup={() => {}}
-                        >
-                          ×
-                        </button>
-                      </div>
-                      <div class="text-xs italic text-gray-600">
-                        {var_type_wrapper.confidence}
-                      </div>
+                  <div class="flex w-full flex-col">
+                    <div class="ml-auto text-xs italic text-gray-600">
+                      Overall Uncertainty: {datum.uncertainty.identify_var_types.toFixed(
+                        2,
+                      )}
                     </div>
-                  {/each}
-                  {#if datum.identify_var_types_result.length < 5}
-                    <div
-                      class="editable-area min-w-[50px] rounded-sm px-1 text-sm italic outline-dashed outline-1 outline-gray-300"
-                      style="flex: 1;"
-                      contenteditable="true"
-                      role="textbox"
-                      tabindex="0"
-                      aria-label="Enter var type"
-                      on:input={(event) => handleInput(datum.id, event)}
-                      on:keydown={(event) => handleKeydown(datum.id, event)}
-                      on:blur={(event) => handleBlur(datum.id, event)}
-                    ></div>
-                  {/if}
-                  <div class="ml-auto text-xs italic text-gray-600">
-                    {datum.uncertainty.identify_var_types.toFixed(2)}
+                    <div class="flex gap-x-2">
+                      {#each datum.identify_var_types_result
+                        // .filter((item) => item.evidence && item.evidence.length > 0)
+                        .sort( (a, b) => compare_var_types(a.var_type, b.var_type), ) as var_type_wrapper, i}
+                        <div class="flex flex-col">
+                          <div
+                            role="button"
+                            tabindex="0"
+                            class="flex rounded-sm px-0.5 text-sm italic opacity-70 outline-double outline-0 outline-gray-300 hover:outline-gray-600"
+                            style={`background-color: ${$varTypeColorScale(var_type_wrapper.var_type)}; box-shadow: ${varTypeConfidenceShadow(var_type_wrapper.confidence)}`}
+                            on:click={() => {
+                              if (
+                                var_type_wrapper.evidence &&
+                                var_type_wrapper.evidence.length > 0
+                              ) {
+                                dispatch("fetch_var_types_evidence", {
+                                  result: datum.identify_var_types_result,
+                                  id: datum.id,
+                                  var_type: var_type_wrapper.var_type,
+                                });
+                              } else {
+                                alert("No evidence. Add manually.");
+                              }
+                            }}
+                            on:keyup={() => {}}
+                          >
+                            <span>{var_type_wrapper.var_type}</span>
+                            <button
+                              class="font-bold hover:text-white focus:outline-none"
+                              on:click={(event) => {
+                                event.stopPropagation();
+                                dispatch("remove_var_type", {
+                                  id: datum.id,
+                                  variable: var_type_wrapper,
+                                });
+                              }}
+                              on:keyup={() => {}}
+                            >
+                              ×
+                            </button>
+                          </div>
+                          <div class="mt-0.5 text-xs italic text-gray-600">
+                            {var_type_wrapper.confidence}
+                          </div>
+                        </div>
+                      {/each}
+                      {#if datum.identify_var_types_result.length < 5}
+                        <div
+                          class="editable-area min-w-[50px] rounded-sm px-1 text-sm italic outline-dashed outline-1 outline-gray-300"
+                          style="flex: 1;"
+                          contenteditable="true"
+                          role="textbox"
+                          tabindex="0"
+                          aria-label="Enter var type"
+                          on:input={(event) => handleInput(datum.id, event)}
+                          on:keydown={(event) => handleKeydown(datum.id, event)}
+                          on:blur={(event) => handleBlur(datum.id, event)}
+                        ></div>
+                      {/if}
+                    </div>
                   </div>
                 {/if}
               </div>
