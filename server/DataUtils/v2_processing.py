@@ -17,9 +17,10 @@ def generate_DPSIR_data(
     if userdict is not None:
         jieba.load_userdict(userdict)
     chunks_dict = {chunk["id"]: chunk for chunk in chunks}
+    variable_definitions_dict = {}
     for var_type, variables in variable_definitions.items():
         variables = {var_data["var_name"]: var_data for var_data in variables}
-        variable_definitions[var_type] = variables
+        variable_definitions_dict[var_type] = variables
     res = {}
     mentioned_chunk_ids = set()
     for var_type, var_type_data in var_type_mentions.items():
@@ -38,13 +39,15 @@ def generate_DPSIR_data(
                 res[var_type]["variable_mentions"][variable_name] = {
                     "variable_name": variable_name,
                     "definition": (
-                        variable_definitions[var_type][variable_name]["definition"]
-                        if variable_name in variable_definitions[var_type]
+                        variable_definitions_dict[var_type][variable_name]["definition"]
+                        if variable_name in variable_definitions_dict[var_type]
                         else "unknown"
                     ),
                     "factor_type": (
-                        variable_definitions[var_type][variable_name]["factor_type"]
-                        if variable_name in variable_definitions[var_type]
+                        variable_definitions_dict[var_type][variable_name][
+                            "factor_type"
+                        ]
+                        if variable_name in variable_definitions_dict[var_type]
                         else "unknown"
                     ),
                     "mentions": [],

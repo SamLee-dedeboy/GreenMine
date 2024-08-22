@@ -37,7 +37,7 @@
       <div
         class="flex w-[6rem] flex-col items-end gap-y-0.5 divide-y border-r border-gray-300"
       >
-        {#each Object.entries(data) as [var_type, vars], index}
+        {#each Object.keys(data) as var_type, index}
           <div
             role="button"
             tabindex="0"
