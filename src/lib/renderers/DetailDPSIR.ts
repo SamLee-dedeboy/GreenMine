@@ -91,7 +91,12 @@ export const DPSIR = {
   toggleLinks(showLinks: boolean) {
     this.showLinks = showLinks;
   },
-  update_vars(vars: tDPSIR, links: tVisLink[], varTypeColorScale: Function) {
+  update_vars(
+    vars: tDPSIR,
+    links: tVisLink[],
+    varTypeColorScale: Function,
+    selectedType: { source: string; target: string },
+  ) {
     console.log("update vars");
     this.grid_renderer?.reset_global_grid(this.rows, this.columns);
     // console.log(this.grid_renderer.global_grid)

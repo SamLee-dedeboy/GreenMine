@@ -19,7 +19,6 @@
   export let links: tVisLink[];
   const svgId = "model-svg";
 
-  let curation: any;
   const utilities = ["add", "remove", "edit"];
 
   let container;
@@ -91,7 +90,7 @@
     d3.select(`#${svgId}`).selectAll("*").remove();
 
     if (renderer === "DPSIR") {
-      DPSIR.init(svgId, utilities, { ["EnableLinks"]: enableLinks });
+      DPSIR.init(svgId, utilities);
       DPSIR.on("VarOrLinkSelected", handleVarOrLinkSelected);
       d3.select("body").selectAll(".tooltip-content").remove();
     } else {
