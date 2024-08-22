@@ -96,12 +96,21 @@
                       </div>
                     </div>
                     <div class="flex w-full text-sm">
-                      <div
-                        class="px-0.5 text-left capitalize italic text-gray-500"
-                      >
-                        {link.response.relationship}
+                      <div class="flex flex-col">
+                        {#each link.response.relationship as relationship}
+                          <div
+                            class="flex items-center gap-x-1 italic text-gray-500"
+                          >
+                            <div class="px-0.5 text-left capitalize">
+                              {relationship.label}
+                            </div>
+                            <div class="mt-[0.125rem] text-xs">
+                              {relationship.confidence}
+                            </div>
+                          </div>
+                        {/each}
                       </div>
-                      <div
+                      <!-- <div
                         role="button"
                         tabindex="0"
                         class="ml-auto flex h-fit items-center rounded-sm px-1 py-0.5 text-[0.7rem] normal-case italic leading-3 text-gray-600 outline-double outline-1 outline-gray-300 hover:bg-gray-300"
@@ -109,7 +118,7 @@
                         on:keyup={() => {}}
                       >
                         evidence
-                      </div>
+                      </div> -->
                     </div>
                   </div>
                 {/each}

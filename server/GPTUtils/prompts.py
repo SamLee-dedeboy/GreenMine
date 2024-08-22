@@ -1,4 +1,6 @@
 import json
+
+
 def inject_data(prompt_str, data_dict):
     for key, value in data_dict.items():
         # skip if value is not str
@@ -7,14 +9,22 @@ def inject_data(prompt_str, data_dict):
         prompt_str = prompt_str.replace(f"${{{key}}}", value)
     return prompt_str
 
-def identify_var_type_prompt_factory(system_prompt_blocks, user_prompt_blocks, prompt_variables):
-    prompt_blocks = list(map(lambda block: inject_data(block, prompt_variables), system_prompt_blocks))
-    user_prompt_blocks = list(map(lambda block: inject_data(block, prompt_variables), user_prompt_blocks))
+
+def identify_var_type_prompt_factory(
+    system_prompt_blocks, user_prompt_blocks, prompt_variables
+):
+    prompt_blocks = list(
+        map(lambda block: inject_data(block, prompt_variables), system_prompt_blocks)
+    )
+    user_prompt_blocks = list(
+        map(lambda block: inject_data(block, prompt_variables), user_prompt_blocks)
+    )
     messages = [
         {
             "role": "system",
-            "content": "\n".join(prompt_blocks) + "\n" + 
-                """Reply with the following JSON format:
+            "content": "\n".join(prompt_blocks)
+            + "\n"
+            + """Reply with the following JSON format:
                     {{
                         "result": [
                             {{
@@ -25,35 +35,51 @@ def identify_var_type_prompt_factory(system_prompt_blocks, user_prompt_blocks, p
                         ]
                     }}
                 """,
-                # """Reply with the following JSON format:
-                #     {{
-                #         "var_types": [] (list of "driver" or "pressure" or "state" or "impact" or "response", or ["none"]),
-                #         "evidence": [] (list of sentence indices, empty if var_type is "none"),
-                #         "explanation": string (explain why the evidence indicates the variable type), or "none" if var_type is "none"
-                #     }}
-                # """,
+            # """Reply with the following JSON format:
+            #     {{
+            #         "var_types": [] (list of "driver" or "pressure" or "state" or "impact" or "response", or ["none"]),
+            #         "evidence": [] (list of sentence indices, empty if var_type is "none"),
+            #         "explanation": string (explain why the evidence indicates the variable type), or "none" if var_type is "none"
+            #     }}
+            # """,
         },
-        {
-            "role": "user",
-            "content": "\n".join(user_prompt_blocks)
-        }
+        {"role": "user", "content": "\n".join(user_prompt_blocks)},
     ]
+
     def extract_response_func(response):
-        response = json.loads(response)['result']
-        response = list(map(lambda x: {"var_type": x["concept"], "evidence": x["evidence"], "explanation": x["explanation"]}, response))
+        response = json.loads(response)["result"]
+        response = list(
+            map(
+                lambda x: {
+                    "var_type": x["concept"],
+                    "evidence": x["evidence"],
+                    "explanation": x["explanation"],
+                },
+                response,
+            )
+        )
         response = list(filter(lambda x: x["var_type"] != "none", response))
         return response
+
     response_format = "json"
     return messages, response_format, extract_response_func
 
-def identify_var_prompt_factory(system_prompt_blocks, user_prompt_blocks, prompt_variables):
-    prompt_blocks = list(map(lambda block: inject_data(block, prompt_variables), system_prompt_blocks))
-    user_prompt_blocks = list(map(lambda block: inject_data(block, prompt_variables), user_prompt_blocks))
+
+def identify_var_prompt_factory(
+    system_prompt_blocks, user_prompt_blocks, prompt_variables
+):
+    prompt_blocks = list(
+        map(lambda block: inject_data(block, prompt_variables), system_prompt_blocks)
+    )
+    user_prompt_blocks = list(
+        map(lambda block: inject_data(block, prompt_variables), user_prompt_blocks)
+    )
     messages = [
         {
             "role": "system",
-            "content": "\n".join(prompt_blocks) + "\n" + 
-                """Reply with the following JSON format:
+            "content": "\n".join(prompt_blocks)
+            + "\n"
+            + """Reply with the following JSON format:
                     {{
                         "result": [
                             {{
@@ -65,27 +91,43 @@ def identify_var_prompt_factory(system_prompt_blocks, user_prompt_blocks, prompt
                     }}
                 """,
         },
-        {
-            "role": "user",
-            "content": "\n".join(user_prompt_blocks)
-        }
+        {"role": "user", "content": "\n".join(user_prompt_blocks)},
     ]
+
     def extract_response_func(response):
-        response = json.loads(response)['result']
-        response = list(map(lambda x: {"var": x["tag"], "evidence": x["evidence"], "explanation": x["explanation"]}, response))
+        response = json.loads(response)["result"]
+        response = list(
+            map(
+                lambda x: {
+                    "var": x["tag"],
+                    "evidence": x["evidence"],
+                    "explanation": x["explanation"],
+                },
+                response,
+            )
+        )
         response = list(filter(lambda x: x["var"] != "none", response))
         return response
+
     response_format = "json"
     return messages, response_format, extract_response_func
 
-def identify_link_prompt_factory(system_prompt_blocks, user_prompt_blocks, prompt_variables):
-    prompt_blocks = list(map(lambda block: inject_data(block, prompt_variables), system_prompt_blocks))
-    user_prompt_blocks = list(map(lambda block: inject_data(block, prompt_variables), user_prompt_blocks))
+
+def identify_link_prompt_factory(
+    system_prompt_blocks, user_prompt_blocks, prompt_variables
+):
+    prompt_blocks = list(
+        map(lambda block: inject_data(block, prompt_variables), system_prompt_blocks)
+    )
+    user_prompt_blocks = list(
+        map(lambda block: inject_data(block, prompt_variables), user_prompt_blocks)
+    )
     messages = [
         {
             "role": "system",
-            "content": "\n".join(prompt_blocks) + "\n" + 
-                """Reply with the following JSON format:
+            "content": "\n".join(prompt_blocks)
+            + "\n"
+            + """Reply with the following JSON format:
                     {{
                         "result": 
                             {{
@@ -97,32 +139,33 @@ def identify_link_prompt_factory(system_prompt_blocks, user_prompt_blocks, promp
                     }}
                 """,
         },
-        {
-            "role": "user",
-            "content": "\n".join(user_prompt_blocks)
-        }
+        {"role": "user", "content": "\n".join(user_prompt_blocks)},
     ]
+
     def extract_response_func(response):
-        response = json.loads(response)['result']
-        if response['relationship'] == "none":
+        response = json.loads(response)["result"]
+        if response["relationship"] == "none":
             return None
         return response
+
     response_format = "json"
     return messages, response_format, extract_response_func
 
     return
+
+
 def node_extraction_prompt_factory(paragraph, var_name, definition):
 
     # 驅動變數是基本的人為原因，引起環境中的某些影響，以滿足基本的人類需求。
     # 壓力是對環境或生態系統的負面現象或活動，這些是由驅動變數引起的或自然發生的。
     # 狀態指的是特定時間框架和區域內的物理、化學和生物現象的數量和質量。
-    # 影響指的是環境條件、生態系統功能或人類福祉方面的不良變化。 
+    # 影響指的是環境條件、生態系統功能或人類福祉方面的不良變化。
     # 回應指的是保護環境、應對環境問題或友善環境的任何行為、行動或努力。
 
     messages = [
         {
-            "role":"system",
-            "content":""" You are a variables identification system.
+            "role": "system",
+            "content": """ You are a variables identification system.
             The user wants you to identify if there are any {var_name} in the monologue.
             It may include the following objects: {definition}
             The user will give you a monologue in Chinese.
@@ -131,17 +174,20 @@ def node_extraction_prompt_factory(paragraph, var_name, definition):
             {{
                 "mentioned": yes or no
             }}
-            """.format(var_name=var_name, definition=definition)
+            """.format(
+                var_name=var_name, definition=definition
+            ),
         },
         {
-            "role":"user",
-            "content":"Monologue: {paragraph}.  ".format(paragraph=paragraph)
+            "role": "user",
+            "content": "Monologue: {paragraph}.  ".format(paragraph=paragraph),
         },
     ]
     return messages
-   
+
+
 def mention_extraction_prompt_factory(sentences, extracted_var, var_definition):
-    sentences_str = "" 
+    sentences_str = ""
     for index, sentence in enumerate(sentences):
         sentences_str += f"{index}: {sentence} \n"
     messages = [
@@ -155,20 +201,25 @@ def mention_extraction_prompt_factory(sentences, extracted_var, var_definition):
             {
                 "mentions": [] (list of sentence indices)
             }
-            """
-        }, 
+            """,
+        },
         {
             "role": "user",
-            "content": "Concept: {extracted_var} \n Definition: {var_definition} \n Monologue: {sentences_str}".format(extracted_var=extracted_var, var_definition=var_definition, sentences_str=sentences_str)
-        }
+            "content": "Concept: {extracted_var} \n Definition: {var_definition} \n Monologue: {sentences_str}".format(
+                extracted_var=extracted_var,
+                var_definition=var_definition,
+                sentences_str=sentences_str,
+            ),
+        },
     ]
     return messages
 
+
 def find_relationships_chunk_prompts_factory(chunk_content, comb, var1_def, var2_def):
     messages = [
-                        {
-                            "role": "system",
-                            "content": """You are an expert to find the relationship between {var1}, and {var2}.
+        {
+            "role": "system",
+            "content": """You are an expert to find the relationship between {var1}, and {var2}.
                             Some examples of {var1} are: {var1_def}
                             Some examples of {var2} are: {var2_def}
 
@@ -179,11 +230,10 @@ def find_relationships_chunk_prompts_factory(chunk_content, comb, var1_def, var2
                             {{"relationship": "Yes" or "No,
                               "evidence": string[] (Sentences extracted from the chunk_content)
                             }} 
-                        """.format(var1=comb[0], var1_def=var1_def, var2=comb[1], var2_def=var2_def)
-                        },
-                        {
-                            "role": "user",
-                            "content": chunk_content
-                        }
-                ]
+                        """.format(
+                var1=comb[0], var1_def=var1_def, var2=comb[1], var2_def=var2_def
+            ),
+        },
+        {"role": "user", "content": chunk_content},
+    ]
     return messages

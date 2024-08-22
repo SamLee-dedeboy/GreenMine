@@ -95,7 +95,8 @@
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(data[key]),
+      // body: JSON.stringify(data[key]),
+      body: JSON.stringify({ ...data[key], compute_uncertainty: true }),
     })
       .then((res) => res.json())
       .then((res) => {

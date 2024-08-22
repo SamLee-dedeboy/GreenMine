@@ -282,8 +282,6 @@ def curate_identify_var_types():
         )
         return json.dumps(all_chunks, default=vars)
     else:
-        # test only
-        # chunks_w_uncertainty = json.load(open(pipeline_result_path + "identify_var_types/chunk_w_var_types.json", encoding='utf-8'))
         all_chunks = uncertainty.identify_var_types_uncertainty(
             all_chunks,
             openai_client,
@@ -369,8 +367,6 @@ def curate_identify_vars():
         )
         return json.dumps(all_chunks, default=vars)
     else:
-        # test only
-        # chunks_w_uncertainty = json.load(open(pipeline_result_path + "identify_vars/chunk_w_vars_w_uncertainty.json", encoding='utf-8'))
         all_chunks = uncertainty.identify_vars_uncertainty(
             all_chunks,
             openai_client,
@@ -430,15 +426,36 @@ def curate_identify_links():
         "links": candidate_links,
         "variable_definitions": variable_definitions,
     }
-    all_chunks = query.identify_links(
-        all_chunks,
-        candidate_links,
-        openai_client,
-        system_prompt_blocks,
-        user_prompt_blocks,
-        prompt_variables,
+
+    compute_uncertainty = (
+        request.json["compute_uncertainty"]
+        if "compute_uncertainty" in request.json
+        else False
     )
-    return json.dumps(all_chunks, default=vars)
+    if not compute_uncertainty:
+        all_chunks = query.identify_links(
+            all_chunks,
+            candidate_links,
+            openai_client,
+            system_prompt_blocks,
+            user_prompt_blocks,
+            prompt_variables,
+        )
+        return json.dumps(all_chunks, default=vars)
+    else:
+        all_chunks = uncertainty.identify_links_uncertainty(
+            all_chunks,
+            candidate_links,
+            openai_client,
+            system_prompt_blocks,
+            user_prompt_blocks,
+            prompt_variables,
+        )
+        local.save_json(
+            all_chunks,
+            pipeline_result_path + "identify_links/chunk_w_links_uncertainty.json",
+        )
+        return json.dumps(all_chunks, default=vars)
 
 
 @app.route("/curation/identify_links/save", methods=["POST"])

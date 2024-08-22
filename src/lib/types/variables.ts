@@ -30,7 +30,10 @@ export type tLink = {
   indicator1: string;
   indicator2: string;
   response: {
-    relationship: string;
+    relationship: {
+      label: string;
+      confidence: number;
+    }[];
     evidence: string[];
     explanation: string;
   };
