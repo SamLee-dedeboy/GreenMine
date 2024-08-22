@@ -24,14 +24,13 @@ export const grid_renderer = {
     this.rows = rows;
     this.columns = columns;
     // console.log("init grid", this.rows, this.columns);
-  
   },
   reset_global_grid(columns, rows) {
     this.global_grid = Array.from({ length: columns + 1 }, () =>
       Array(rows + 1).fill("0000"),
     );
   },
-}
+};
 
 export function radialBboxes(
   groups: string[],
@@ -90,10 +89,10 @@ export function radialBboxes(
     //     size: bboxesSizes[group],
     //   };
     // } else {
-      bboxes[group] = {
-        center: [x - 7, y],
-        size: bboxesSizes[group],
-      };
+    bboxes[group] = {
+      center: [x - 7, y],
+      size: bboxesSizes[group],
+    };
     // }
   });
   return bboxes;
@@ -258,7 +257,7 @@ export function markOccupiedGrid(
 //   // Rearrange rectangles to put top 4 at corners and selectedMiddleRectangles in the middle
 //   const topFour = rectangles.slice(0, 4);
 //   const otherRectangles = rectangles.filter(rect => !topFour.includes(rect) && !selectedMiddleRectangles.includes(rect));
-  
+
 //   const rearrangedRectangles = [
 //     topFour[0],
 //     ...otherRectangles.slice(0, first_row_rect_number - 2),
@@ -408,8 +407,11 @@ export function markOccupiedGrid(
 
 //   return rectangleCoordinates;
 // }
-export function adjustRectangleHeights(rectangles: tRectangle[], middle_row_number: number) {
-  const defaultHeight = 6;
+export function adjustRectangleHeights(
+  rectangles: tRectangle[],
+  middle_row_number: number,
+) {
+  const defaultHeight = rectangles[0].height;
 
   // Rule 1: Adjust top four elements
   for (let i = 0; i < 4 && i < rectangles.length; i++) {
@@ -421,25 +423,30 @@ export function adjustRectangleHeights(rectangles: tRectangle[], middle_row_numb
 
   // Rule 2: Adjust middle rows
   const middleRowCount = middle_row_number * 2;
-  
+
   // Sort the remaining rectangles by the difference between height and outgroup_degree
-  const sortedRemainingRectangles = rectangles.slice(4)
-    .sort((a, b) => {
-      const aLessThanHeight = a.outgroup_degree < a.height;
-      const bLessThanHeight = b.outgroup_degree < b.height;
-      
-      if (aLessThanHeight && !bLessThanHeight) return -1;
-      if (!aLessThanHeight && bLessThanHeight) return 1;
-      
-      if (aLessThanHeight && bLessThanHeight) {
-        return a.outgroup_degree - b.outgroup_degree;
-      }
-      
-      return Math.abs(a.height - a.outgroup_degree) - Math.abs(b.height - b.outgroup_degree);
-    });
+  const sortedRemainingRectangles = rectangles.slice(4).sort((a, b) => {
+    const aLessThanHeight = a.outgroup_degree < a.height;
+    const bLessThanHeight = b.outgroup_degree < b.height;
+
+    if (aLessThanHeight && !bLessThanHeight) return -1;
+    if (!aLessThanHeight && bLessThanHeight) return 1;
+
+    if (aLessThanHeight && bLessThanHeight) {
+      return a.outgroup_degree - b.outgroup_degree;
+    }
+
+    return (
+      Math.abs(a.height - a.outgroup_degree) -
+      Math.abs(b.height - b.outgroup_degree)
+    );
+  });
 
   // Select the middleRowCount number of rectangles from the sorted list
-  const selectedMiddleRectangles = sortedRemainingRectangles.slice(0, middleRowCount);
+  const selectedMiddleRectangles = sortedRemainingRectangles.slice(
+    0,
+    middleRowCount,
+  );
   for (let rect of selectedMiddleRectangles) {
     if (rect.outgroup_degree !== 0) {
       rect.height = Math.round(Math.max(defaultHeight, rect.outgroup_degree));
@@ -458,22 +465,21 @@ export function adjustRectangleHeights(rectangles: tRectangle[], middle_row_numb
 }
 
 export function squareLayout(
-  varname: string,
-  rectangles: tRectangle[],
-  cellWidth: number,
-  cellHeight: number,
+  _rectangles: tRectangle[],
   bboxes: { center: [number, number]; size: [number, number] },
 ) {
+  // create a local rectangle array to avoid modifying the original array
+  const rectangles = _rectangles.map((rect) => {
+    return {
+      ...rect,
+      width: Math.round(rect.width),
+      height: Math.round(rect.height),
+    };
+  });
   const center = bboxes.center;
   const y_offset = 2;
-  const rect_width = Math.round(rectangles[0].width);
-  
-  // Ensure all rectangle widths and heights are integers
-  rectangles.forEach(rect => {
-    rect.width = Math.round(rect.width);
-    rect.height = Math.round(rect.height);
-  });
-  
+  const rect_width = rectangles[0].width;
+
   let first_row_rect_number = rectangles.length <= 7 ? 2 : 3;
   let middle_row_number: number;
   // Adjust first_row_rect_number until middle_row_number is 3 or less
@@ -481,7 +487,7 @@ export function squareLayout(
     middle_row_number = Math.floor(
       rectangles.length % 2 === 0
         ? (rectangles.length - first_row_rect_number * 2) / 2
-        : (rectangles.length - first_row_rect_number * 2 - 1) / 2
+        : (rectangles.length - first_row_rect_number * 2 - 1) / 2,
     );
 
     if (middle_row_number > 3) {
@@ -489,11 +495,17 @@ export function squareLayout(
     }
   } while (middle_row_number > 3);
 
-  const { selectedMiddleRectangles } = adjustRectangleHeights(rectangles, middle_row_number);
+  const { selectedMiddleRectangles } = adjustRectangleHeights(
+    rectangles,
+    middle_row_number,
+  );
 
   const topFour = rectangles.slice(0, 4);
-  const otherRectangles = rectangles.filter(rect => !topFour.includes(rect) && !selectedMiddleRectangles.includes(rect));
-  
+  const otherRectangles = rectangles.filter(
+    (rect) =>
+      !topFour.includes(rect) && !selectedMiddleRectangles.includes(rect),
+  );
+
   const rearrangedRectangles = [
     topFour[0],
     ...otherRectangles.slice(0, first_row_rect_number - 2),
@@ -501,7 +513,7 @@ export function squareLayout(
     ...selectedMiddleRectangles,
     topFour[2],
     ...otherRectangles.slice(first_row_rect_number - 2),
-    topFour[3]
+    topFour[3],
   ];
 
   let last_row_rect_number =
@@ -509,58 +521,104 @@ export function squareLayout(
 
   // Correct box_height calculation
   let box_height = 0;
-  
+
   // First row height
-  box_height += Math.max(...rearrangedRectangles.slice(0, first_row_rect_number).map(r => r.height));
-  
+  box_height += Math.max(
+    ...rearrangedRectangles
+      .slice(0, first_row_rect_number)
+      .map((r) => r.height),
+  );
+
   // Middle rows height
   for (let i = 0; i < middle_row_number; i++) {
     let leftIndex = first_row_rect_number + i * 2;
     let rightIndex = leftIndex + 1;
-    box_height += Math.max(rearrangedRectangles[leftIndex].height, rearrangedRectangles[rightIndex].height);
+    box_height += Math.max(
+      rearrangedRectangles[leftIndex].height,
+      rearrangedRectangles[rightIndex].height,
+    );
   }
-  
+
   // Last row height
   if (last_row_rect_number > 0) {
-    box_height += Math.max(...rearrangedRectangles.slice(-last_row_rect_number).map(r => r.height));
+    box_height += Math.max(
+      ...rearrangedRectangles.slice(-last_row_rect_number).map((r) => r.height),
+    );
   }
-  
+
   // Add y_offset between rows
-  box_height += (first_row_rect_number > 0 ? 1 : 0 + middle_row_number + (last_row_rect_number > 0 ? 1 : 0) - 1) * y_offset;
+  box_height +=
+    (first_row_rect_number > 0
+      ? 1
+      : 0 + middle_row_number + (last_row_rect_number > 0 ? 1 : 0) - 1) *
+    y_offset;
 
   box_height = Math.round(box_height);
 
-  const box_width = Math.round(Math.max(
-    first_row_rect_number * rect_width + (first_row_rect_number - 1) * 2,
-    last_row_rect_number * rect_width + (last_row_rect_number - 1) * 2
-  ));
+  const box_width = Math.round(
+    Math.max(
+      first_row_rect_number * rect_width + (first_row_rect_number - 1) * 2,
+      last_row_rect_number * rect_width + (last_row_rect_number - 1) * 2,
+    ),
+  );
   console.log(bboxes);
   bboxes.size = [box_width, box_height];
 
-  let first_space_between_rectangles = Math.round((box_width - rect_width * first_row_rect_number) / (first_row_rect_number - 1));
-  let second_space_between_rectangles = Math.round((box_width - rect_width * last_row_rect_number) / (last_row_rect_number - 1));
+  let first_space_between_rectangles = Math.round(
+    (box_width - rect_width * first_row_rect_number) /
+      (first_row_rect_number - 1),
+  );
+  let second_space_between_rectangles = Math.round(
+    (box_width - rect_width * last_row_rect_number) /
+      (last_row_rect_number - 1),
+  );
 
   const bbox_origin: [number, number] = [
     Math.round(center[0] - box_width / 2),
-    Math.round(center[1] - box_height / 2)
+    Math.round(center[1] - box_height / 2),
   ];
 
-  let rectangleCoordinates: [number, number, number, number, string, string, number][] = [];
+  let rectangleCoordinates: [
+    number,
+    number,
+    number,
+    number,
+    string,
+    string,
+    number,
+  ][] = [];
   let accumulative_y_offset = 0;
 
   // First row
   for (let i = 0; i < first_row_rect_number; i++) {
-    let x = Math.round(bbox_origin[0] + i * (rect_width + first_space_between_rectangles));
+    let x = Math.round(
+      bbox_origin[0] + i * (rect_width + first_space_between_rectangles),
+    );
     let y = Math.round(bbox_origin[1] + accumulative_y_offset);
-    let type = i === 0 ? "top-left" : i === first_row_rect_number - 1 ? "top-right" : "top";
+    let type =
+      i === 0
+        ? "top-left"
+        : i === first_row_rect_number - 1
+          ? "top-right"
+          : "top";
 
     rectangleCoordinates.push([
-      x, y, rearrangedRectangles[i].width, rearrangedRectangles[i].height,
-      rearrangedRectangles[i].name, type, rearrangedRectangles[i].outgroup_degree
+      x,
+      y,
+      rearrangedRectangles[i].width,
+      rearrangedRectangles[i].height,
+      rearrangedRectangles[i].name,
+      type,
+      rearrangedRectangles[i].outgroup_degree,
     ]);
   }
 
-  accumulative_y_offset += Math.max(...rearrangedRectangles.slice(0, first_row_rect_number).map(r => r.height)) + y_offset;
+  accumulative_y_offset +=
+    Math.max(
+      ...rearrangedRectangles
+        .slice(0, first_row_rect_number)
+        .map((r) => r.height),
+    ) + y_offset;
 
   // Middle rows
   for (let i = 0; i < middle_row_number; i++) {
@@ -568,30 +626,54 @@ export function squareLayout(
     let rightIndex = leftIndex + 1;
 
     rectangleCoordinates.push([
-      bbox_origin[0], Math.round(bbox_origin[1] + accumulative_y_offset),
-      rearrangedRectangles[leftIndex].width, rearrangedRectangles[leftIndex].height,
-      rearrangedRectangles[leftIndex].name, "left", rearrangedRectangles[leftIndex].outgroup_degree
+      bbox_origin[0],
+      Math.round(bbox_origin[1] + accumulative_y_offset),
+      rearrangedRectangles[leftIndex].width,
+      rearrangedRectangles[leftIndex].height,
+      rearrangedRectangles[leftIndex].name,
+      "left",
+      rearrangedRectangles[leftIndex].outgroup_degree,
     ]);
 
     rectangleCoordinates.push([
-      bbox_origin[0] + box_width - rect_width, Math.round(bbox_origin[1] + accumulative_y_offset),
-      rearrangedRectangles[rightIndex].width, rearrangedRectangles[rightIndex].height,
-      rearrangedRectangles[rightIndex].name, "right", rearrangedRectangles[rightIndex].outgroup_degree
+      bbox_origin[0] + box_width - rect_width,
+      Math.round(bbox_origin[1] + accumulative_y_offset),
+      rearrangedRectangles[rightIndex].width,
+      rearrangedRectangles[rightIndex].height,
+      rearrangedRectangles[rightIndex].name,
+      "right",
+      rearrangedRectangles[rightIndex].outgroup_degree,
     ]);
 
-    accumulative_y_offset += Math.max(rearrangedRectangles[leftIndex].height, rearrangedRectangles[rightIndex].height) + y_offset;
+    accumulative_y_offset +=
+      Math.max(
+        rearrangedRectangles[leftIndex].height,
+        rearrangedRectangles[rightIndex].height,
+      ) + y_offset;
   }
 
   // Last row
   for (let i = 0; i < last_row_rect_number; i++) {
-    let x = Math.round(bbox_origin[0] + i * (rect_width + second_space_between_rectangles));
+    let x = Math.round(
+      bbox_origin[0] + i * (rect_width + second_space_between_rectangles),
+    );
     let y = Math.round(bbox_origin[1] + accumulative_y_offset);
-    let type = i === 0 ? "bottom-left" : i === last_row_rect_number - 1 ? "bottom-right" : "bottom";
+    let type =
+      i === 0
+        ? "bottom-left"
+        : i === last_row_rect_number - 1
+          ? "bottom-right"
+          : "bottom";
 
     let index = first_row_rect_number + middle_row_number * 2 + i;
     rectangleCoordinates.push([
-      x, y, rearrangedRectangles[index].width, rearrangedRectangles[index].height,
-      rearrangedRectangles[index].name, type, rearrangedRectangles[index].outgroup_degree
+      x,
+      y,
+      rearrangedRectangles[index].width,
+      rearrangedRectangles[index].height,
+      rearrangedRectangles[index].name,
+      type,
+      rearrangedRectangles[index].outgroup_degree,
     ]);
   }
 
@@ -905,403 +987,405 @@ export function add_utility_button({
 }
 
 export function pathFinding(link, grid: string[][], points) {
-    // console.log("dijkstra", start, goal);
-    class Cell {
-      parent_i: number;
-      parent_j: number;
-      f: number;
-      g: number;
-      h: number;
-  
-      constructor() {
-        this.parent_i = 0;
-        this.parent_j = 0;
-        this.f = 0;
-        this.g = 0;
-        this.h = 0;
+  // console.log("dijkstra", start, goal);
+  class Cell {
+    parent_i: number;
+    parent_j: number;
+    f: number;
+    g: number;
+    h: number;
+
+    constructor() {
+      this.parent_i = 0;
+      this.parent_j = 0;
+      this.f = 0;
+      this.g = 0;
+      this.h = 0;
+    }
+  }
+  let start,
+    goal,
+    inGroup = false;
+
+  if (link.source.var_type == link.target.var_type) {
+    start = getNextStartPoint(link.source.var_name, points, true);
+    goal = getNextEndPoint(link.target.var_name, points, true);
+    inGroup = true;
+    let path = [start, goal];
+    return path;
+  } else {
+    start = getNextStartPoint(link.source.var_name, points, false);
+    goal = getNextEndPoint(link.target.var_name, points, false);
+    const rows = grid[0].length;
+    const cols = grid.length;
+    let closedList = new Array(cols);
+    for (let i = 0; i < cols; i++) {
+      closedList[i] = new Array(rows).fill(false);
+    }
+
+    // Declare a 2D array of structure to hold the details
+    // of that Cell
+    let cellDetails = new Array(cols);
+    for (let i = 0; i < cols; i++) {
+      cellDetails[i] = new Array(rows);
+    }
+
+    for (let i = 0; i < cols; i++) {
+      for (let j = 0; j < rows; j++) {
+        cellDetails[i][j] = new Cell();
+        // Initialising the parameters of the starting node
+        cellDetails[i][j].f = i === start[0] && j === start[1] ? 0 : 2147483647;
+        cellDetails[i][j].g = i === start[0] && j === start[1] ? 0 : 2147483647;
+        cellDetails[i][j].h = i === start[0] && j === start[1] ? 0 : 2147483647;
+        cellDetails[i][j].parent_i = -1;
+        cellDetails[i][j].parent_j = -1;
       }
     }
-    let start,
-      goal,
-      inGroup = false;
-  
-    if (link.source.var_type == link.target.var_type) {
-      start = getNextStartPoint(link.source.var_name, points, true);
-      goal = getNextEndPoint(link.target.var_name, points, true);
-      inGroup = true;
-      let path = [start, goal];
-      return path;
-    } else {
-      start = getNextStartPoint(link.source.var_name, points, false);
-      goal = getNextEndPoint(link.target.var_name, points, false);
-      const rows = grid[0].length;
-      const cols = grid.length;
-      let closedList = new Array(cols);
-      for (let i = 0; i < cols; i++) {
-        closedList[i] = new Array(rows).fill(false);
-      }
-  
-      // Declare a 2D array of structure to hold the details
-      // of that Cell
-      let cellDetails = new Array(cols);
-      for (let i = 0; i < cols; i++) {
-        cellDetails[i] = new Array(rows);
-      }
-  
-      for (let i = 0; i < cols; i++) {
-        for (let j = 0; j < rows; j++) {
-          cellDetails[i][j] = new Cell();
-          // Initialising the parameters of the starting node
-          cellDetails[i][j].f = i === start[0] && j === start[1] ? 0 : 2147483647;
-          cellDetails[i][j].g = i === start[0] && j === start[1] ? 0 : 2147483647;
-          cellDetails[i][j].h = i === start[0] && j === start[1] ? 0 : 2147483647;
-          cellDetails[i][j].parent_i = -1;
-          cellDetails[i][j].parent_j = -1;
-        }
-      }
-  
-      let openList = new PriorityQueue();
-      openList.enqueue(0, [start[0], start[1]]);
-      let foundDest = false;
-  
-      while (!openList.isEmpty()) {
-        let p = openList.dequeue();
-  
-        let i = p[0];
-        let j = p[1];
-        // console.log("i,j",i,j)
-  
-        closedList[i][j] = true;
-        let gNew, hNew, fNew;
-  
-        const directions = [
-          [0, 1],
-          [-1, 0],
-          [0, -1],
-          [1, 0],
-        ];
-        //North
-        for (const [di, dj] of directions) {
-          const ni = i + di; // neighbor i
-          const nj = j + dj; // neighbor j
-          if (isValid(ni, nj, rows, cols)) {
-            if (isDestination(ni, nj, goal)) {
+
+    let openList = new PriorityQueue();
+    openList.enqueue(0, [start[0], start[1]]);
+    let foundDest = false;
+
+    while (!openList.isEmpty()) {
+      let p = openList.dequeue();
+
+      let i = p[0];
+      let j = p[1];
+      // console.log("i,j",i,j)
+
+      closedList[i][j] = true;
+      let gNew, hNew, fNew;
+
+      const directions = [
+        [0, 1],
+        [-1, 0],
+        [0, -1],
+        [1, 0],
+      ];
+      //North
+      for (const [di, dj] of directions) {
+        const ni = i + di; // neighbor i
+        const nj = j + dj; // neighbor j
+        if (isValid(ni, nj, rows, cols)) {
+          if (isDestination(ni, nj, goal)) {
+            cellDetails[ni][nj].parent_i = i;
+            cellDetails[ni][nj].parent_j = j;
+            // console.log("The destination cell is found");
+            // console.log(cellDetails)
+            let path = tracePath(cellDetails, start, goal, grid);
+            foundDest = true;
+            // console.log({path})
+            return path;
+          } else if (
+            !closedList[ni][nj] &&
+            isUnBlocked(grid, ni, nj, inGroup)
+          ) {
+            let status = parseInt(grid[ni][nj], 2);
+            // allow crossing but not overlapping
+            if (i == ni) {
+              //check if there are vertical obstacles
+              const nonWalkableMasks = 0b1010;
+              if (status & nonWalkableMasks) {
+                continue;
+              }
+            } else if (j == nj) {
+              //check if there are horizontal obstacles
+              const nonWalkableMasks = 0b0101;
+              if (status & nonWalkableMasks) {
+                continue;
+              }
+            }
+
+            // console.log("if the neighbor not in the closed list and is not blocked")
+            if (
+              (cellDetails[i][j].parent_i == i && i == ni) ||
+              (cellDetails[i][j].parent_j == j && j == nj)
+            ) {
+              gNew = cellDetails[i][j].g + 1.0;
+            } else {
+              gNew = cellDetails[i][j].g + 2.0; //add the turn cost
+            }
+            // gNew = cellDetails[i][j].g + 1.0;
+            hNew = calculateHValue(ni, nj, goal);
+            fNew = gNew + hNew;
+
+            if (
+              cellDetails[ni][nj].f == Number.MAX_VALUE ||
+              cellDetails[ni][nj].f > fNew
+            ) {
+              openList.enqueue(fNew, [ni, nj]);
+              cellDetails[ni][nj].f = fNew;
+              cellDetails[ni][nj].g = gNew;
+              cellDetails[ni][nj].h = hNew;
               cellDetails[ni][nj].parent_i = i;
               cellDetails[ni][nj].parent_j = j;
-              // console.log("The destination cell is found");
-              // console.log(cellDetails)
-              let path = tracePath(cellDetails, start, goal, grid);
-              foundDest = true;
-              // console.log({path})
-              return path;
-            } else if (
-              !closedList[ni][nj] &&
-              isUnBlocked(grid, ni, nj, inGroup)
-            ) {
-              let status = parseInt(grid[ni][nj], 2);
-              // allow crossing but not overlapping
-              if (i == ni) {
-                //check if there are vertical obstacles
-                const nonWalkableMasks = 0b1010;
-                if (status & nonWalkableMasks) {
-                  continue;
-                }
-              } else if (j == nj) {
-                //check if there are horizontal obstacles
-                const nonWalkableMasks = 0b0101;
-                if (status & nonWalkableMasks) {
-                  continue;
-                }
-              }
-  
-              // console.log("if the neighbor not in the closed list and is not blocked")
-              if (
-                (cellDetails[i][j].parent_i == i && i == ni) ||
-                (cellDetails[i][j].parent_j == j && j == nj)
-              ) {
-                gNew = cellDetails[i][j].g + 1.0;
-              } else {
-                gNew = cellDetails[i][j].g + 2.0; //add the turn cost
-              }
-              // gNew = cellDetails[i][j].g + 1.0;
-              hNew = calculateHValue(ni, nj, goal);
-              fNew = gNew + hNew;
-  
-              if (
-                cellDetails[ni][nj].f == Number.MAX_VALUE ||
-                cellDetails[ni][nj].f > fNew
-              ) {
-                openList.enqueue(fNew, [ni, nj]);
-                cellDetails[ni][nj].f = fNew;
-                cellDetails[ni][nj].g = gNew;
-                cellDetails[ni][nj].h = hNew;
-                cellDetails[ni][nj].parent_i = i;
-                cellDetails[ni][nj].parent_j = j;
-              }
             }
           }
         }
       }
-      if (foundDest == false) {
-        let path = [start, goal];
-        
+    }
+    if (foundDest == false) {
+      let path = [start, goal];
 
-        function incrementLinkTypeCount(sourceType: string, targetType: string) {
-          const key = `${sourceType}-${targetType}`;
-          linkTypeCounts.set(key, (linkTypeCounts.get(key) || 0) + 1);
-        }
-        incrementLinkTypeCount(link.source.var_type, link.target.var_type);
+      function incrementLinkTypeCount(sourceType: string, targetType: string) {
+        const key = `${sourceType}-${targetType}`;
+        linkTypeCounts.set(key, (linkTypeCounts.get(key) || 0) + 1);
+      }
+      incrementLinkTypeCount(link.source.var_type, link.target.var_type);
 
-        // Calculate total unfound count
-        const unfoundCount = Array.from(linkTypeCounts.values()).reduce((sum, count) => sum + count, 0);
-    
-        // Create an object to hold all counts
-        const allCounts = {
-          total: unfoundCount,
-          ...Object.fromEntries(linkTypeCounts)
-        };
-    
-        // Log all counts in a single console.log statement
-        console.log("Unfound Counts:", allCounts);
-        // return null;
-        return path;
-      }
-    }
-  
-    // console.log({ start, goal });
-  }
-  
-export function isValid(col, row, rows, cols) {
-    return row >= 0 && row < rows && col >= 0 && col < cols;
-  }
-export function isUnBlocked(grid, col, row, inGroup) {
-    if (!inGroup) {
-      return grid[col][row] != "*" && grid[col][row] != "-"; //set block for outGroup links
-    }
-    return grid[col][row] != "*";
-  }
-export function isDestination(col, row, dest) {
-    return row == dest[1] && col == dest[0];
-  }
-export function calculateHValue(row, col, dest) {
-    return Math.abs(row - dest[1]) + Math.abs(col - dest[0]);
-  }
-export function tracePath(cellDetails, start, goal, grid) {
-    // console.log("The Path is ");
-    let col = goal[0];
-    let row = goal[1];
-    // console.log(cellDetails[col][row])
-    let Path: [number, number][] = [];
-    while (true) {
-      // if start is reached, break out of the loop
-      if (col == start[0] && row == start[1]) {
-        Path.push([start[0], start[1]]);
-        break;
-      }
-      Path.push([col, row]);
-      // console.log(Path)
-      let temp_col = cellDetails[col][row].parent_i;
-      let temp_row = cellDetails[col][row].parent_j;
-      console.assert(Math.abs(temp_col - col) + Math.abs(temp_row - row) == 1);
-      row = temp_row;
-      col = temp_col;
-    }
-    Path.reverse();
-  
-    for (let k = 1; k < Path.length - 1; k++) {
-      //skip the start and goal point
-      const [cur_col, cur_row] = Path[k];
-      const [prev_col, prev_row] = Path[k - 1];
-      const [next_col, next_row] = Path[k + 1];
-  
-      let status = parseInt(grid[cur_col][cur_row], 2);
-  
-      // Handle corners
-      if (
-        !(prev_col === cur_col && cur_col === next_col) &&
-        !(prev_row === cur_row && cur_row === next_row)
-      ) {
-        if (
-          (prev_col > cur_col && next_row > cur_row) ||
-          (prev_row > cur_row && next_col > cur_col)
-        ) {
-          status |= 0b1010;
-        }
-        if (
-          (prev_col > cur_col && next_row < cur_row) ||
-          (prev_row < cur_row && next_col > cur_col)
-        ) {
-          status |= 0b1100;
-        }
-        if (
-          (prev_col < cur_col && next_row > cur_row) ||
-          (prev_row > cur_row && next_col < cur_col)
-        ) {
-          status |= 0b0011;
-        }
-        if (
-          (prev_col < cur_col && next_row < cur_row) ||
-          (prev_row < cur_row && next_col < cur_col)
-        ) {
-          status |= 0b0110;
-        }
-      }
-      if (
-        (prev_col > cur_col && prev_row === cur_row) ||
-        (next_col > cur_col && next_row === cur_row)
-      ) {
-        status |= 0b0100; // from or to right
-      } else if (
-        (prev_col < cur_col && prev_row === cur_row) ||
-        (next_col < cur_col && next_row === cur_row)
-      ) {
-        status |= 0b0001; // from or to left
-      } else if (
-        (prev_col === cur_col && prev_row > cur_row) ||
-        (next_col === cur_col && next_row > cur_row)
-      ) {
-        status |= 0b1000; // from or to below
-      } else if (
-        (prev_col === cur_col && prev_row < cur_row) ||
-        (next_col === cur_col && next_row < cur_row)
-      ) {
-        status |= 0b0010; // from or to above
-      }
-  
-      grid[cur_col][cur_row] = status.toString(2).padStart(4, "0");
-      // console.log({cur_col, cur_row, status: grid[cur_col][cur_row]})
-    }
-  
-    return Path;
-  }
-  
-export  function generatePoints(linkCounts) {
-    const result: {
-      [varName: string]: {
-        inGroup_startPoints: [number, number][];
-        inGroup_endPoints: [number, number][];
-        outGroup_startPoints: [number, number][];
-        outGroup_endPoints: [number, number][];
+      // Calculate total unfound count
+      const unfoundCount = Array.from(linkTypeCounts.values()).reduce(
+        (sum, count) => sum + count,
+        0,
+      );
+
+      // Create an object to hold all counts
+      const allCounts = {
+        total: unfoundCount,
+        ...Object.fromEntries(linkTypeCounts),
       };
-    } = {};
-  
-    for (const varName in linkCounts) {
-      const {
-        InGroup_inLinks,
-        InGroup_outLinks,
-        OutGroup_inLinks,
-        OutGroup_outLinks,
-        x,
-        y,
-        width,
-        height,
-        position,
-      } = linkCounts[varName];
-  
-      const inGroup_startPoints: [number, number][] = [];
-      const inGroup_endPoints: [number, number][] = [];
-      const outGroup_startPoints: [number, number][] = [];
-      const outGroup_endPoints: [number, number][] = [];
-  
-      // Helper function to add points based on position
-      const addPoints = (
-        startPoints: [number, number][],
-        endPoints: [number, number][],
-        outLinks: number,
-        inLinks: number,
-        primaryStartX: number,
-        primaryStartY: number,
-        primaryIncrementX: number,
-        primaryIncrementY: number,
-        primaryMaxX: number,
-        primaryMaxY: number,
-        secondaryStartX: number,
-        secondaryStartY: number,
-        secondaryIncrementX: number,
-        secondaryIncrementY: number,
-        secondaryMaxX: number,
-        secondaryMaxY: number,
-      ) => {
-        let remainingOutLinks = outLinks;
-        let usedSecondaryEdge = false;
-        let lastPrimaryPoint = [primaryStartX, primaryStartY];
-        let lastSecondaryPoint = [secondaryStartX, secondaryStartY];
-  
-        // Assign start points for outLinks
-        while (remainingOutLinks > 0) {
-          let i, j;
-          i = primaryStartX;
-          j = primaryStartY;
+
+      // Log all counts in a single console.log statement
+      console.log("Unfound Counts:", allCounts);
+      // return null;
+      return path;
+    }
+  }
+
+  // console.log({ start, goal });
+}
+
+export function isValid(col, row, rows, cols) {
+  return row >= 0 && row < rows && col >= 0 && col < cols;
+}
+export function isUnBlocked(grid, col, row, inGroup) {
+  if (!inGroup) {
+    return grid[col][row] != "*" && grid[col][row] != "-"; //set block for outGroup links
+  }
+  return grid[col][row] != "*";
+}
+export function isDestination(col, row, dest) {
+  return row == dest[1] && col == dest[0];
+}
+export function calculateHValue(row, col, dest) {
+  return Math.abs(row - dest[1]) + Math.abs(col - dest[0]);
+}
+export function tracePath(cellDetails, start, goal, grid) {
+  // console.log("The Path is ");
+  let col = goal[0];
+  let row = goal[1];
+  // console.log(cellDetails[col][row])
+  let Path: [number, number][] = [];
+  while (true) {
+    // if start is reached, break out of the loop
+    if (col == start[0] && row == start[1]) {
+      Path.push([start[0], start[1]]);
+      break;
+    }
+    Path.push([col, row]);
+    // console.log(Path)
+    let temp_col = cellDetails[col][row].parent_i;
+    let temp_row = cellDetails[col][row].parent_j;
+    console.assert(Math.abs(temp_col - col) + Math.abs(temp_row - row) == 1);
+    row = temp_row;
+    col = temp_col;
+  }
+  Path.reverse();
+
+  for (let k = 1; k < Path.length - 1; k++) {
+    //skip the start and goal point
+    const [cur_col, cur_row] = Path[k];
+    const [prev_col, prev_row] = Path[k - 1];
+    const [next_col, next_row] = Path[k + 1];
+
+    let status = parseInt(grid[cur_col][cur_row], 2);
+
+    // Handle corners
+    if (
+      !(prev_col === cur_col && cur_col === next_col) &&
+      !(prev_row === cur_row && cur_row === next_row)
+    ) {
+      if (
+        (prev_col > cur_col && next_row > cur_row) ||
+        (prev_row > cur_row && next_col > cur_col)
+      ) {
+        status |= 0b1010;
+      }
+      if (
+        (prev_col > cur_col && next_row < cur_row) ||
+        (prev_row < cur_row && next_col > cur_col)
+      ) {
+        status |= 0b1100;
+      }
+      if (
+        (prev_col < cur_col && next_row > cur_row) ||
+        (prev_row > cur_row && next_col < cur_col)
+      ) {
+        status |= 0b0011;
+      }
+      if (
+        (prev_col < cur_col && next_row < cur_row) ||
+        (prev_row < cur_row && next_col < cur_col)
+      ) {
+        status |= 0b0110;
+      }
+    }
+    if (
+      (prev_col > cur_col && prev_row === cur_row) ||
+      (next_col > cur_col && next_row === cur_row)
+    ) {
+      status |= 0b0100; // from or to right
+    } else if (
+      (prev_col < cur_col && prev_row === cur_row) ||
+      (next_col < cur_col && next_row === cur_row)
+    ) {
+      status |= 0b0001; // from or to left
+    } else if (
+      (prev_col === cur_col && prev_row > cur_row) ||
+      (next_col === cur_col && next_row > cur_row)
+    ) {
+      status |= 0b1000; // from or to below
+    } else if (
+      (prev_col === cur_col && prev_row < cur_row) ||
+      (next_col === cur_col && next_row < cur_row)
+    ) {
+      status |= 0b0010; // from or to above
+    }
+
+    grid[cur_col][cur_row] = status.toString(2).padStart(4, "0");
+    // console.log({cur_col, cur_row, status: grid[cur_col][cur_row]})
+  }
+
+  return Path;
+}
+
+export function generatePoints(linkCounts) {
+  const result: {
+    [varName: string]: {
+      inGroup_startPoints: [number, number][];
+      inGroup_endPoints: [number, number][];
+      outGroup_startPoints: [number, number][];
+      outGroup_endPoints: [number, number][];
+    };
+  } = {};
+
+  for (const varName in linkCounts) {
+    const {
+      InGroup_inLinks,
+      InGroup_outLinks,
+      OutGroup_inLinks,
+      OutGroup_outLinks,
+      x,
+      y,
+      width,
+      height,
+      position,
+    } = linkCounts[varName];
+
+    const inGroup_startPoints: [number, number][] = [];
+    const inGroup_endPoints: [number, number][] = [];
+    const outGroup_startPoints: [number, number][] = [];
+    const outGroup_endPoints: [number, number][] = [];
+
+    // Helper function to add points based on position
+    const addPoints = (
+      startPoints: [number, number][],
+      endPoints: [number, number][],
+      outLinks: number,
+      inLinks: number,
+      primaryStartX: number,
+      primaryStartY: number,
+      primaryIncrementX: number,
+      primaryIncrementY: number,
+      primaryMaxX: number,
+      primaryMaxY: number,
+      secondaryStartX: number,
+      secondaryStartY: number,
+      secondaryIncrementX: number,
+      secondaryIncrementY: number,
+      secondaryMaxX: number,
+      secondaryMaxY: number,
+    ) => {
+      let remainingOutLinks = outLinks;
+      let usedSecondaryEdge = false;
+      let lastPrimaryPoint = [primaryStartX, primaryStartY];
+      let lastSecondaryPoint = [secondaryStartX, secondaryStartY];
+
+      // Assign start points for outLinks
+      while (remainingOutLinks > 0) {
+        let i, j;
+        i = primaryStartX;
+        j = primaryStartY;
+        for (
+          ;
+          (primaryIncrementX > 0 ? i <= primaryMaxX : i >= primaryMaxX) &&
+          (primaryIncrementY > 0 ? j <= primaryMaxY : j >= primaryMaxY) &&
+          remainingOutLinks > 0;
+          primaryIncrementX
+            ? (i += primaryIncrementX)
+            : (j += primaryIncrementY)
+        ) {
+          startPoints.push([i, j]);
+          lastPrimaryPoint = [i, j];
+          remainingOutLinks--;
+        }
+
+        // If primary edge is used up, use secondary edge
+        if (remainingOutLinks > 0) {
+          usedSecondaryEdge = true;
+          for (
+            let i = secondaryStartX, j = secondaryStartY;
+            (secondaryIncrementX > 0
+              ? i <= secondaryMaxX
+              : i >= secondaryMaxX) &&
+            (secondaryIncrementY > 0
+              ? j <= secondaryMaxY
+              : j >= secondaryMaxY) &&
+            remainingOutLinks > 0;
+            secondaryIncrementX
+              ? (i += secondaryIncrementX)
+              : (j += secondaryIncrementY)
+          ) {
+            startPoints.push([i, j]);
+            lastSecondaryPoint = [i, j];
+            remainingOutLinks--;
+          }
+        }
+      }
+
+      // Assign end points for inLinks
+      let remainingInLinks = inLinks;
+      let i, j;
+
+      if (!usedSecondaryEdge) {
+        // Start from the next point of the last point used by start points on the primary edge
+        [i, j] = lastPrimaryPoint;
+        primaryIncrementX ? (i += primaryIncrementX) : (j += primaryIncrementY);
+      }
+      // if (varName == "恢復") {
+      //   i = secondaryStartX;
+      //   j = secondaryStartY;
+      // }
+      while (remainingInLinks > 0) {
+        if (!usedSecondaryEdge) {
           for (
             ;
             (primaryIncrementX > 0 ? i <= primaryMaxX : i >= primaryMaxX) &&
             (primaryIncrementY > 0 ? j <= primaryMaxY : j >= primaryMaxY) &&
-            remainingOutLinks > 0;
+            remainingInLinks > 0;
             primaryIncrementX
               ? (i += primaryIncrementX)
               : (j += primaryIncrementY)
           ) {
-            startPoints.push([i, j]);
-            lastPrimaryPoint = [i, j];
-            remainingOutLinks--;
-          }
-  
-          // If primary edge is used up, use secondary edge
-          if (remainingOutLinks > 0) {
-            usedSecondaryEdge = true;
-            for (
-              let i = secondaryStartX, j = secondaryStartY;
-              (secondaryIncrementX > 0
-                ? i <= secondaryMaxX
-                : i >= secondaryMaxX) &&
-              (secondaryIncrementY > 0
-                ? j <= secondaryMaxY
-                : j >= secondaryMaxY) &&
-              remainingOutLinks > 0;
-              secondaryIncrementX
-                ? (i += secondaryIncrementX)
-                : (j += secondaryIncrementY)
-            ) {
-              startPoints.push([i, j]);
-              lastSecondaryPoint = [i, j];
-              remainingOutLinks--;
-            }
+            endPoints.push([i, j]);
+            remainingInLinks--;
           }
         }
-  
-        // Assign end points for inLinks
-        let remainingInLinks = inLinks;
-        let i, j;
-  
-        if (!usedSecondaryEdge) {
-          // Start from the next point of the last point used by start points on the primary edge
-          [i, j] = lastPrimaryPoint;
-          primaryIncrementX ? (i += primaryIncrementX) : (j += primaryIncrementY);
-        }
-        // if (varName == "恢復") {
-        //   i = secondaryStartX;
-        //   j = secondaryStartY;
-        // }
-        while (remainingInLinks > 0) {
+
+        if (remainingInLinks > 0) {
           if (!usedSecondaryEdge) {
-            for (
-              ;
-              (primaryIncrementX > 0 ? i <= primaryMaxX : i >= primaryMaxX) &&
-              (primaryIncrementY > 0 ? j <= primaryMaxY : j >= primaryMaxY) &&
-              remainingInLinks > 0;
-              primaryIncrementX
-                ? (i += primaryIncrementX)
-                : (j += primaryIncrementY)
-            ) {
-              endPoints.push([i, j]);
-              remainingInLinks--;
-            }
-          }
-  
-          if (remainingInLinks > 0) {
-            if (!usedSecondaryEdge) {
-              i = secondaryStartX;
-              j = secondaryStartY;
+            i = secondaryStartX;
+            j = secondaryStartY;
             // } else if (varName == "海洋酸化") {
             //   //put all endpoint on the secondary edge
             //   i = secondaryStartX;
@@ -1311,256 +1395,256 @@ export  function generatePoints(linkCounts) {
             //   j = secondaryMaxY - 1;
             //   // secondaryIncrementY = 1;
             //   secondaryMaxY = secondaryMaxY - 4;
-            } else {
-              [i, j] = lastSecondaryPoint;
-              secondaryIncrementX
-                ? (i += secondaryIncrementX)
-                : (j += secondaryIncrementY);
-            }
-  
-            for (
-              ;
-              (secondaryIncrementX > 0
-                ? i <= secondaryMaxX
-                : i >= secondaryMaxX) &&
-              (secondaryIncrementY > 0
-                ? j <= secondaryMaxY
-                : j >= secondaryMaxY) &&
-              remainingInLinks > 0;
-              secondaryIncrementX
-                ? (i += secondaryIncrementX)
-                : (j += secondaryIncrementY)
-            ) {
-              endPoints.push([i, j]);
-              remainingInLinks--;
-            }
+          } else {
+            [i, j] = lastSecondaryPoint;
+            secondaryIncrementX
+              ? (i += secondaryIncrementX)
+              : (j += secondaryIncrementY);
           }
-          //those who needs the third edge
-          // if (remainingInLinks > 0) {
-          //   if (varName == "教育和意識" || varName == "恢復") {
-          //     i = primaryMaxX;
-          //     j = varName == "教育和意識" ? secondaryStartY - 1 : secondaryStartY;
-          //     for (
-          //       ;
-          //       (secondaryIncrementY > 0
-          //         ? j <= secondaryMaxY
-          //         : j >= primaryMaxY) && remainingInLinks > 0;
-          //       j += secondaryIncrementY
-          //     ) {
-          //       endPoints.push([i, j]);
-          //       remainingInLinks--;
-          //     }
-          //   } else if (varName == "生態狀態（生物品質）") {
-          //     i = secondaryMaxX;
-          //     j = secondaryMaxY;
-          //     secondaryIncrementY = 1;
-          //     for (
-          //       ;
-          //       (secondaryIncrementY > 0
-          //         ? j <= primaryStartY
-          //         : j >= secondaryMaxY) && remainingInLinks > 0;
-          //       j += secondaryIncrementY
-          //     ) {
-          //       endPoints.push([i, j]);
-          //       remainingInLinks--;
-          //     }
-          //   }
-          // }
+
+          for (
+            ;
+            (secondaryIncrementX > 0
+              ? i <= secondaryMaxX
+              : i >= secondaryMaxX) &&
+            (secondaryIncrementY > 0
+              ? j <= secondaryMaxY
+              : j >= secondaryMaxY) &&
+            remainingInLinks > 0;
+            secondaryIncrementX
+              ? (i += secondaryIncrementX)
+              : (j += secondaryIncrementY)
+          ) {
+            endPoints.push([i, j]);
+            remainingInLinks--;
+          }
         }
-      };
-  
-      const addPoints_InGroup = (
-        startPoints: [number, number][],
-        endPoints: [number, number][],
-        outLinks: number,
-        inLinks: number,
-        centerX: number,
-        centerY: number,
-      ) => {
-        let remainingOutLinks = outLinks;
-        let remainingInLinks = inLinks;
-        let i = centerX;
-        let j = centerY;
-        while (remainingOutLinks > 0) {
-          startPoints.push([i, j]);
-          remainingOutLinks--;
-        }
-        while (remainingInLinks > 0) {
-          endPoints.push([i, j]);
-          remainingInLinks--;
-        }
-      };
-      addPoints_InGroup(
-        inGroup_startPoints,
-        inGroup_endPoints,
-        InGroup_outLinks,
-        InGroup_inLinks,
-        x + width / 2,
-        y + height / 2,
-      );
-  
-      // Set points for outGroup links
-      if (position === "top" || position === "top-left") {  
-        addPoints(
-          outGroup_startPoints,
-          outGroup_endPoints,
-          OutGroup_outLinks,
-          OutGroup_inLinks,
-          x,
-          y,
-          1,
-          0,
-          x + width,
-          y, // Primary edge: top )(left to right)
-          x,
-          y,
-          0,
-          1,
-          x,
-          y + height, // Secondary edge: left (top to bottom
-        );
-      } else if (position === "left") {
-        addPoints(
-          outGroup_startPoints,
-          outGroup_endPoints,
-          OutGroup_outLinks,
-          OutGroup_inLinks,
-          x,
-          y,
-          0,
-          1,
-          x,
-          y + height, // Primary edge: left (top to bottom)
-          x,
-          y,
-          1,
-          0,
-          x + width,
-          y, // Secondary edge: top (left to right)
-        );
-      } else if (position === "top-right"){
-        addPoints(
-          outGroup_startPoints,
-          outGroup_endPoints,
-          OutGroup_outLinks,
-          OutGroup_inLinks,
-          x,
-          y,
-          1,
-          0,
-          x + width,
-          y, // Secondary edge: top (left to right)
-          x + width,
-          y,
-          0,
-          1,
-          x + width,
-          y + height, // Primary edge: right (top to bottom)         
-        );
-      } else if (position === "right") {
-        addPoints(
-          outGroup_startPoints,
-          outGroup_endPoints,
-          OutGroup_outLinks,
-          OutGroup_inLinks,
-          x + width,
-          y,
-          0,
-          1,
-          x + width,
-          y + height, // Primary edge: right (top to bottom)
-          x + width,
-          y,
-          -1,
-          0,
-          x,
-          y, // Secondary edge: top (right to left)
-        );
-      } else if (position === "bottom") {
-        addPoints(
-          outGroup_startPoints,
-          outGroup_endPoints,
-          OutGroup_outLinks,
-          OutGroup_inLinks,
-          x,
-          y + height,
-          1,
-          0,
-          x + width,
-          y + height, // Primary edge: bottom (left to right)
-          x,
-          y + height,
-          0,
-          -1,
-          x,
-          y, // Secondary edge: left (bottom to top)
-        );
-      } else if (position === "bottom-left") {
-        addPoints(
-          outGroup_startPoints,
-          outGroup_endPoints,
-          OutGroup_outLinks,
-          OutGroup_inLinks,
-          x,
-          y,
-          0,
-          1,
-          x,
-          y + height, // Primary edge: left (top to bottom)
-          x,
-          y + height,
-          1,
-          0,
-          x + width,
-          y + height, // Secondary edge: bottom (left to right)
-        );
-      } else if (position === "bottom-right") {
-        addPoints(
-          outGroup_startPoints,
-          outGroup_endPoints,
-          OutGroup_outLinks,
-          OutGroup_inLinks,
-          x + width,
-          y,
-          0,
-          1,
-          x + width,
-          y + height, // Primary edge: right (top to bottom)
-          x,
-          y + height,
-          1,
-          0,
-          x + width,
-          y + height, // Secondary edge: bottom (left to right)
-        );
+        //those who needs the third edge
+        // if (remainingInLinks > 0) {
+        //   if (varName == "教育和意識" || varName == "恢復") {
+        //     i = primaryMaxX;
+        //     j = varName == "教育和意識" ? secondaryStartY - 1 : secondaryStartY;
+        //     for (
+        //       ;
+        //       (secondaryIncrementY > 0
+        //         ? j <= secondaryMaxY
+        //         : j >= primaryMaxY) && remainingInLinks > 0;
+        //       j += secondaryIncrementY
+        //     ) {
+        //       endPoints.push([i, j]);
+        //       remainingInLinks--;
+        //     }
+        //   } else if (varName == "生態狀態（生物品質）") {
+        //     i = secondaryMaxX;
+        //     j = secondaryMaxY;
+        //     secondaryIncrementY = 1;
+        //     for (
+        //       ;
+        //       (secondaryIncrementY > 0
+        //         ? j <= primaryStartY
+        //         : j >= secondaryMaxY) && remainingInLinks > 0;
+        //       j += secondaryIncrementY
+        //     ) {
+        //       endPoints.push([i, j]);
+        //       remainingInLinks--;
+        //     }
+        //   }
+        // }
       }
-  
-      result[varName] = {
-        inGroup_startPoints,
-        inGroup_endPoints,
+    };
+
+    const addPoints_InGroup = (
+      startPoints: [number, number][],
+      endPoints: [number, number][],
+      outLinks: number,
+      inLinks: number,
+      centerX: number,
+      centerY: number,
+    ) => {
+      let remainingOutLinks = outLinks;
+      let remainingInLinks = inLinks;
+      let i = centerX;
+      let j = centerY;
+      while (remainingOutLinks > 0) {
+        startPoints.push([i, j]);
+        remainingOutLinks--;
+      }
+      while (remainingInLinks > 0) {
+        endPoints.push([i, j]);
+        remainingInLinks--;
+      }
+    };
+    addPoints_InGroup(
+      inGroup_startPoints,
+      inGroup_endPoints,
+      InGroup_outLinks,
+      InGroup_inLinks,
+      x + width / 2,
+      y + height / 2,
+    );
+
+    // Set points for outGroup links
+    if (position === "top" || position === "top-left") {
+      addPoints(
         outGroup_startPoints,
         outGroup_endPoints,
-      };
+        OutGroup_outLinks,
+        OutGroup_inLinks,
+        x,
+        y,
+        1,
+        0,
+        x + width,
+        y, // Primary edge: top )(left to right)
+        x,
+        y,
+        0,
+        1,
+        x,
+        y + height, // Secondary edge: left (top to bottom
+      );
+    } else if (position === "left") {
+      addPoints(
+        outGroup_startPoints,
+        outGroup_endPoints,
+        OutGroup_outLinks,
+        OutGroup_inLinks,
+        x,
+        y,
+        0,
+        1,
+        x,
+        y + height, // Primary edge: left (top to bottom)
+        x,
+        y,
+        1,
+        0,
+        x + width,
+        y, // Secondary edge: top (left to right)
+      );
+    } else if (position === "top-right") {
+      addPoints(
+        outGroup_startPoints,
+        outGroup_endPoints,
+        OutGroup_outLinks,
+        OutGroup_inLinks,
+        x,
+        y,
+        1,
+        0,
+        x + width,
+        y, // Secondary edge: top (left to right)
+        x + width,
+        y,
+        0,
+        1,
+        x + width,
+        y + height, // Primary edge: right (top to bottom)
+      );
+    } else if (position === "right") {
+      addPoints(
+        outGroup_startPoints,
+        outGroup_endPoints,
+        OutGroup_outLinks,
+        OutGroup_inLinks,
+        x + width,
+        y,
+        0,
+        1,
+        x + width,
+        y + height, // Primary edge: right (top to bottom)
+        x + width,
+        y,
+        -1,
+        0,
+        x,
+        y, // Secondary edge: top (right to left)
+      );
+    } else if (position === "bottom") {
+      addPoints(
+        outGroup_startPoints,
+        outGroup_endPoints,
+        OutGroup_outLinks,
+        OutGroup_inLinks,
+        x,
+        y + height,
+        1,
+        0,
+        x + width,
+        y + height, // Primary edge: bottom (left to right)
+        x,
+        y + height,
+        0,
+        -1,
+        x,
+        y, // Secondary edge: left (bottom to top)
+      );
+    } else if (position === "bottom-left") {
+      addPoints(
+        outGroup_startPoints,
+        outGroup_endPoints,
+        OutGroup_outLinks,
+        OutGroup_inLinks,
+        x,
+        y,
+        0,
+        1,
+        x,
+        y + height, // Primary edge: left (top to bottom)
+        x,
+        y + height,
+        1,
+        0,
+        x + width,
+        y + height, // Secondary edge: bottom (left to right)
+      );
+    } else if (position === "bottom-right") {
+      addPoints(
+        outGroup_startPoints,
+        outGroup_endPoints,
+        OutGroup_outLinks,
+        OutGroup_inLinks,
+        x + width,
+        y,
+        0,
+        1,
+        x + width,
+        y + height, // Primary edge: right (top to bottom)
+        x,
+        y + height,
+        1,
+        0,
+        x + width,
+        y + height, // Secondary edge: bottom (left to right)
+      );
     }
-  
-    return result;
+
+    result[varName] = {
+      inGroup_startPoints,
+      inGroup_endPoints,
+      outGroup_startPoints,
+      outGroup_endPoints,
+    };
   }
-  
+
+  return result;
+}
+
 export function getNextStartPoint(varName, points, isSameGroup) {
-    const pointData = points[varName];
-    // console.log({ pointData });
-    if (isSameGroup) {
-      return pointData.inGroup_startPoints.shift();
-    } else {
-      return pointData.outGroup_startPoints.shift();
-    }
+  const pointData = points[varName];
+  // console.log({ pointData });
+  if (isSameGroup) {
+    return pointData.inGroup_startPoints.shift();
+  } else {
+    return pointData.outGroup_startPoints.shift();
   }
-  
+}
+
 export function getNextEndPoint(varName, points, isSameGroup) {
-    const pointData = points[varName];
-    if (isSameGroup) {
-      return pointData.inGroup_endPoints.shift();
-    } else {
-      return pointData.outGroup_endPoints.shift();
-    }
+  const pointData = points[varName];
+  if (isSameGroup) {
+    return pointData.inGroup_endPoints.shift();
+  } else {
+    return pointData.outGroup_endPoints.shift();
   }
+}

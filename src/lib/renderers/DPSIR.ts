@@ -1,6 +1,4 @@
 import * as d3 from "d3";
-// import {tick} from 'svelte';
-// import { scale } from 'svelte/transition';
 import type {
   tVariable,
   tVariableType,
@@ -14,42 +12,21 @@ import type {
   tLink,
 } from "../types/variables";
 import * as Constants from "../constants";
-// import { dispatch } from "d3";
-// import {
-//   radialBboxes,
-//   gridToSvgCoordinate,
-//   svgToGridCoordinate,
-//   markOccupiedGrid,
-//   squareLayout,
-//   combineData,
-//   createArrow,
-//   wrap,
-//   add_utility_button,
-//   pathFinding,
-//   generatePoints,
-// } from "./grid_layout";
 import * as grid_layout from "./grid_layout";
-import { toggle } from "@melt-ui/svelte/internal/helpers";
-// import type { tVarTypeDef } from "lib/types";
-// import { space } from "postcss/lib/list";
-// import { name } from "@melt-ui/svelte";
 
 export const DPSIR = {
   init(svgId: string, utilities: string[]) {
     console.log("init");
     this.clicked_rect = null;
     this.clicked_link = null;
-    // this.width = 1550;
-    // this.height = 950;
-    this.width = document.querySelector("#" + svgId)?.clientWidth;
-    this.height = document.querySelector("#" + svgId)?.clientHeight;
+    this.width = 1550;
+    this.height = 950;
+    // this.width = document.querySelector("#" + svgId)?.clientWidth;
+    // this.height = document.querySelector("#" + svgId)?.clientHeight;
     this.padding = { top: 10, right: 50, bottom: 10, left: 50 };
-    // this.rows = 240;
-    // this.columns = 210;
+    this.rows = 300;
+    this.columns = 240;
     this.global_rects = [];
-    // this.global_grid = Array.from({ length: this.columns + 1 }, () =>
-    //   Array(this.rows + 1).fill("0000"),
-    // );
     this.bboxes = {
       driver: { center: [58, 70], size: [0, 0] },
       pressure: { center: [230, 61], size: [0, 0] },
@@ -58,7 +35,7 @@ export const DPSIR = {
       state: { center: [260, 132], size: [0, 0] },
     };
     this.grid_renderer = grid_layout.grid_renderer;
-    this.grid_renderer.init(300, 240);
+    this.grid_renderer.init(this.rows, this.columns);
     // console.log(this.grid_renderer.columns, this.grid_renderer.rows);
     this.cellWidth = this.width / this.grid_renderer.columns;
     this.cellHeight = this.height / this.grid_renderer.rows;
@@ -117,7 +94,7 @@ export const DPSIR = {
   },
   update_vars(vars: tDPSIR, links: tVisLink[], varTypeColorScale: Function) {
     console.log("update vars");
-    this.grid_renderer?.reset_global_grid(300, 240);
+    this.grid_renderer?.reset_global_grid(this.rows, this.columns);
     // console.log(this.grid_renderer.global_grid)
     this.varTypeColorScale = varTypeColorScale;
     const var_type_names = Constants.var_type_names;
@@ -268,17 +245,14 @@ export const DPSIR = {
     const var_type_name = vars.variable_type;
     const rectWidth = 18; //(g)
 
-    console.log(linkCount);
     // sort the rect by outgroup link count
 
     const rectangles = Object.entries(linkCount)
       .map(([name, counts]) => {
-        let calculate_height = 6;
-
         return {
           name,
           width: rectWidth,
-          height: calculate_height, // Adjust height calculation as needed
+          height: 6, // height might be adjusted later as needed
           outgroup_degree: linkCount[name].outGroup_link,
         };
       })
@@ -286,7 +260,7 @@ export const DPSIR = {
         (a, b) =>
           linkCount[b.name].outGroup_link - linkCount[a.name].outGroup_link,
       );
-
+    console.log({ rectangles });
     // const bbox_center = box_coor.center;
     // const bboxWidth = box_coor.size[0];
     // const bboxHeight = box_coor.size[1];
@@ -296,10 +270,7 @@ export const DPSIR = {
     // ];
 
     const rectangleCoordinates = grid_layout.squareLayout(
-      var_type_name,
       rectangles,
-      cellWidth,
-      cellHeight,
       bbox_info,
     );
     console.log(rectangleCoordinates);
@@ -972,7 +943,7 @@ export const DPSIR = {
       rectWithVar,
       "*",
     );
-
+    console.log({ rectWithVar });
     group
       .select("g.tag-group")
       .selectAll("g.tag")

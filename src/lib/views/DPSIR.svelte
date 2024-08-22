@@ -32,6 +32,9 @@
     links: tVisLink[],
     showLinks: boolean,
   ) {
+    if (!vars || !links) {
+      return;
+    }
     DPSIR.update_vars(vars, links, $varTypeColorScale);
   }
 
