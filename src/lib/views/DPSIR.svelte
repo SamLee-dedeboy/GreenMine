@@ -3,6 +3,7 @@
   import * as d3 from "d3";
   import { DPSIR } from "lib/renderers/DetailDPSIR";
   import { OverviewDPSIR } from "lib/renderers/OverviewDPSIR";
+  import * as Constants from "lib/constants";
   import Curation from "lib/components/Curation.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
@@ -20,7 +21,14 @@
   const svgId = "model-svg";
 
   const utilities = ["add", "remove", "edit"];
-
+  let bboxes = {
+      driver: { center: [58, 90], size: [0, 0] },
+      pressure: { center: [160, 50], size: [0, 0] },
+      state: { center: [260, 100], size: [0, 0] },
+      impact: { center: [220, 185], size: [0, 0] },
+      response: { center: [100, 190], size: [0, 0] },
+    };
+  let rectangleCoordinates = [];
   let container;
   let selectedVar: tVariable | undefined = undefined;
   let selectedType = { source: "", target: "" };
@@ -29,7 +37,6 @@
   let currentRenderer = "OverviewDPSIR";
   let keywordsea_var_type: string | undefined = undefined;
   // let trigger_times = 0;
-  // $: update_vars(data, links, showLinks);
   async function update_vars(
     vars: tDPSIR,
     links: tVisLink[],
@@ -37,9 +44,9 @@
     selectedType: { source: string; target: string },
   ) {
     if (currentRenderer == "OverviewDPSIR") {
-      OverviewDPSIR.update_vars(vars, links, $varTypeColorScale);
+      OverviewDPSIR.update_vars(vars, links, $varTypeColorScale,bboxes);
     } else {
-      DPSIR.update_vars(vars, links, $varTypeColorScale, selectedType);
+      DPSIR.update_vars(vars, links, $varTypeColorScale, selectedType,rectangleCoordinates,bboxes,false);
     }
   }
 
@@ -49,6 +56,10 @@
     //   // ["VarOrLinkSelected"]: handleVarOrLinkSelected,
     //   ["EnableLinks"]: enableLinks,
     // };
+
+    // calculate box info and small rectangle info
+    [rectangleCoordinates,bboxes] = DPSIR.calculateBoxInfo(data,links,Constants.var_type_names,bboxes)
+    // console.log({rectangleCoordinates,bboxes})
     initializeRenderer(currentRenderer, selectedType);
   });
   function toggleLinks() {
@@ -60,15 +71,12 @@
     }
   }
   function handleVarOrLinkSelected(e) {
-    console.log(e);
-    // e.preventDefault();
+    console.log(e)
     const variable: tVariable = e;
     selectedVar = variable;
-    // console.log({ selectedVar });
     dispatch("var-selected", selectedVar); // for App.svelte to hightlight the chunks
   }
   function handleVarTypeLinkSelected(e) {
-    console.log(e);
     if (e !== null) {
       currentRenderer = "DPSIR";
       initializeRenderer(currentRenderer, {
@@ -76,6 +84,21 @@
         target: e.target,
       });
     }
+  }
+  function handleOverviewVarTypeSelected(e) {
+    // console.log(e);
+    const var_type = e
+    d3.select(`rect.bbox#`+`${var_type}`).remove();
+    d3.select(`text.bbox-label#`+`${var_type}`+`_label`).remove();
+    DPSIR.drawVars($varTypeColorScale,data[var_type],rectangleCoordinates[var_type],bboxes[var_type],true);
+  }
+  function handleOverviewVarTypeUnSelected(e){
+    const var_type = e
+    const group = d3.select(`g.${var_type}_region`);
+    group.selectAll('g.tag').remove();
+    group.selectAll('image').remove();
+    d3.select(`text.bbox-label#`+`${var_type}`+`_label`).remove();
+    OverviewDPSIR.drawVars(data[var_type],bboxes[var_type]);
   }
   function enableLinks(e) {
     enable = e;
@@ -89,20 +112,18 @@
 
   function initializeRenderer(renderer, selectedType) {
     d3.select(`#${svgId}`).selectAll("*").remove();
-
-    if (renderer === "DPSIR") {
-      DPSIR.init(svgId, utilities);
-      DPSIR.on("VarOrLinkSelected", handleVarOrLinkSelected);
-      d3.select("body").selectAll(".tooltip-content").remove();
-    } else {
-      OverviewDPSIR.init(svgId);
-      OverviewDPSIR.on("VarTypeLinkSelected", handleVarTypeLinkSelected);
-      OverviewDPSIR.on("VarTypeHovered", handleOverviewVarTypeHovered);
-    }
-
+    DPSIR.init(svgId, utilities);
+    OverviewDPSIR.init(svgId);
+    DPSIR.on("VarOrLinkSelected", handleVarOrLinkSelected);
+    DPSIR.on("VarTypeUnSelected", handleOverviewVarTypeUnSelected);
+    // Remove tooltip if it exists
+    d3.select("body").selectAll(".tooltip-content").remove();
+    OverviewDPSIR.on("VarTypeLinkSelected", handleVarTypeLinkSelected);
+    OverviewDPSIR.on("VarTypeHovered", handleOverviewVarTypeHovered);
+    OverviewDPSIR.on("VarTypeSelected", handleOverviewVarTypeSelected);
     update_vars(data, links, showLinks, selectedType);
 
-    // Remove tooltip if it exists
+
   }
 
   function handleOverviewVarTypeHovered(var_type: string) {
@@ -122,7 +143,7 @@
       >{showLinks ? 'Hide Other Links' : 'Show Other Links'}</button
     > -->
   <button
-    class="absolute right-4 top-4 rounded-md bg-gray-400 p-2 text-white transition-colors hover:bg-gray-500"
+    class="absolute right-4 top-4 rounded-md bg-gray-300 p-2 text-black transition-colors hover:bg-gray-500 hover:text-white"
     on:click={switchRenderer}
   >
     Switch to {currentRenderer === "OverviewDPSIR" ? "DPSIR" : "Overview"}

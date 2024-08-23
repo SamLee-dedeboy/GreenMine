@@ -25,21 +25,15 @@ export const OverviewDPSIR = {
     this.width = 1550;
     this.height = 950;
     this.padding = { top: 10, right: 50, bottom: 10, left: 50 };
-    this.bboxes = {
-      driver: { center: [58, 90], size: [58, 48] },
-      pressure: { center: [160, 50], size: [58, 56] },
-      state: { center: [260, 100], size: [38, 21] },
-      impact: { center: [220, 185], size: [58, 50] },
-      response: { center: [100, 190], size: [58, 53] },
-    };
     this.grid_renderer = grid_layout.grid_renderer;
     this.grid_renderer.init(300, 240);
     // console.log(this.grid_renderer.columns, this.grid_renderer.rows);
     this.cellWidth = this.width / this.grid_renderer.columns;
     this.cellHeight = this.height / this.grid_renderer.rows;
+    // console.log(this.cellWidth, this.cellHeight);
     this.svgId = svgId;
     // this.dispatch = d3.dispatch("VarOrLinkSelected");
-    this.dispatch = d3.dispatch("VarTypeLinkSelected", "VarTypeHovered");
+    this.dispatch = d3.dispatch("VarTypeLinkSelected", "VarTypeHovered","VarTypeSelected");
     // this.utilities = utilities;
     // this.handlers = handlers;
     this.varTypeColorScale = null;
@@ -89,12 +83,13 @@ export const OverviewDPSIR = {
     });
   },
   on(event, handler) {
+    console.log(event, handler);
     this.dispatch.on(event, handler);
   },
   //   toggleLinks(showLinks: boolean) {
   //     this.showLinks = showLinks;
   //   },
-  update_vars(vars: tDPSIR, links: tVisLink[], varTypeColorScale: Function) {
+  update_vars(vars: tDPSIR, links: tVisLink[], varTypeColorScale: Function,bboxes) {
     this.grid_renderer?.reset_global_grid(300, 240);
     // console.log(this.grid_renderer.global_grid)
     this.varTypeColorScale = varTypeColorScale;
@@ -103,12 +98,12 @@ export const OverviewDPSIR = {
 
     Object.values(var_type_names).forEach((varType) => {
       //   console.log(varType);
-      if (vars?.[varType] && this.bboxes?.[varType]) {
-        this.drawVars(vars[varType], this.bboxes[varType]);
+      if (vars?.[varType] && bboxes?.[varType]) {
+        this.drawVars(vars[varType], bboxes[varType]);
       }
     });
     // console.log({links})
-    this.drawLinks(links, this.bboxes);
+    this.drawLinks(links, bboxes);
   },
   drawGids(svg, svgId) {
     // Get the dimensions of the SVG
@@ -196,6 +191,7 @@ export const OverviewDPSIR = {
         };
       });
 
+    // Modify the pairInfo reduction to add the direction property
     const pairInfo = Object.values(
       mappedLinks.reduce(
         (acc, curr) => {
@@ -213,12 +209,8 @@ export const OverviewDPSIR = {
       ),
     );
 
-    const svg = d3.select("#" + this.svgId);
-
+    // Modify the lineGenerator function to handle the direction
     const lineGenerator = (link) => {
-      const d3Path = d3.path();
-
-      // Convert all points to SVG coordinates
       const sourcePoint = grid_layout.gridToSvgCoordinate(
         link.source_center[0],
         link.source_center[1],
@@ -233,54 +225,14 @@ export const OverviewDPSIR = {
         cellHeight,
       );
 
-      const givenPoint = grid_layout.gridToSvgCoordinate(
-        150,
-        120,
-        cellWidth,
-        cellHeight,
-      );
+      const dx = targetPoint.x - sourcePoint.x;
+      const dy = targetPoint.y - sourcePoint.y;
+      const dr = Math.sqrt(dx * dx + dy * dy) * 1.2; // Increase radius by 20% for more pronounced curves
 
-      // Calculate the vector from source to target
-      const vectorX = targetPoint.x - sourcePoint.x;
-      const vectorY = targetPoint.y - sourcePoint.y;
-
-      // Calculate the length of the vector
-      const vectorLength = Math.sqrt(vectorX * vectorX + vectorY * vectorY);
-
-      // Normalize the vector
-      const normalizedVectorX = vectorX / vectorLength;
-      const normalizedVectorY = vectorY / vectorLength;
-
-      // Calculate the projection of the given point onto the source-target line
-      const dotProduct =
-        (givenPoint.x - sourcePoint.x) * normalizedVectorX +
-        (givenPoint.y - sourcePoint.y) * normalizedVectorY;
-
-      const projectionX = sourcePoint.x + dotProduct * normalizedVectorX;
-      const projectionY = sourcePoint.y + dotProduct * normalizedVectorY;
-
-      // Calculate the reflected point (twice the projection minus the given point)
-      const reflectedX = 2 * projectionX - givenPoint.x;
-      const reflectedY = 2 * projectionY - givenPoint.y;
-
-      // Draw the path
-      d3Path.moveTo(sourcePoint.x, sourcePoint.y);
-      // d3Path.quadraticCurveTo(
-      //     reflectedX,
-      //     reflectedY,
-      //     targetPoint.x,
-      //     targetPoint.y
-      // );
-      // d3Path.quadraticCurveTo(
-      //     givenPoint.x,
-      //     givenPoint.y,
-      //     targetPoint.x,
-      //     targetPoint.y
-      // );
-      d3Path.lineTo(targetPoint.x, targetPoint.y);
-
-      return d3Path.toString();
+      return `M${sourcePoint.x},${sourcePoint.y}A${dr},${dr} 0 0,0 ${targetPoint.x},${targetPoint.y}`;
     };
+
+    const svg = d3.select("#" + this.svgId);
     const tooltip = d3
       .select("body")
       .append("div")
@@ -299,40 +251,42 @@ export const OverviewDPSIR = {
     if (svg.select("defs").empty()) {
       svg.append("defs");
     }
+    svg.select("g.link_group").attr("id", "link_group");
     const link_paths = svg
       .select("g.link_group")
       .selectAll(".link")
       .data(pairInfo)
       .join("path")
       .attr("class", "link")
-      .attr(
-        "id",
-        (d: tLinkObjectOverview) => `${d.source}` + "-" + `${d.target}`,
-      )
-      .attr("d", function (d: tLinkObjectOverview) {
-        // console.log(d);
-        return lineGenerator(d);
-      })
+      .attr("id", (d) => `${d.source}-${d.target}`)
+      .attr("d", lineGenerator)
       .attr("cursor", "pointer")
       .attr("fill", "none")
-      //   .attr("stroke", (d) => {
-      //     const svg = d3.select("#" + self.svgId);
-      //     return createOrUpdateGradient(svg, d, this)
-      //   })
-      .attr("stroke", (d) => {
-        return "gray";
-      })
+      .attr("stroke", "gray")
       .attr("stroke-width", function (d) {
-        const widthSacle = d3
+        const widthScale = d3
           .scaleLinear()
           .domain([
-            Math.min(...Object.values(pairInfo).map((d) => d.count)),
-            Math.max(...Object.values(pairInfo).map((d) => d.count)),
+            Math.min(...pairInfo.map((d) => d.count)),
+            Math.max(...pairInfo.map((d) => d.count)),
           ])
           .range([2, 15]);
-        return widthSacle(d.count);
+        return widthScale(d.count);
       })
+      .attr("opacity", 0.5)
+    //   .attr("stroke-dasharray", "5,5")
       .on("mouseover", function (event, d) {
+        // const svgRoot = d3.select(this.ownerSVGElement);
+        // const linkCopy = d3.select(this.cloneNode())
+        // .attr("class", "link-hover")
+        // // .attr("stroke-dasharray", null) // Removes dash
+        // .attr("opacity", 1)
+        // .attr("stroke", "gray"); // Optional: change color on hover
+
+        // svgRoot.node().appendChild(linkCopy.node());
+
+        // // Hide the original link
+        // d3.select(this).attr("opacity", 0);
         tooltip
           .html(
             `
@@ -351,6 +305,13 @@ export const OverviewDPSIR = {
       })
       .on("mouseout", function () {
         tooltip.style("visibility", "hidden");
+        // d3.select(this.ownerSVGElement).select(".link-hover").remove();
+
+        // // Restore original styles
+        // d3.select(this)
+        // // .attr("stroke-dasharray", "5,5") // Restores dash
+        // .attr("opacity", 0.5)
+        // .attr("stroke", "gray"); // Restores original color
       })
       .on("click", function (event, d: tLinkObjectOverview) {
         event.preventDefault();
@@ -372,7 +333,6 @@ export const OverviewDPSIR = {
       .select("#" + this.svgId)
       .select(`.${var_type_name}_region`);
 
-    // group bounding box
     group
       .select("g.bbox-group")
       .append("rect")
@@ -400,15 +360,20 @@ export const OverviewDPSIR = {
       .attr("height", bboxHeight * cellHeight)
       .attr("fill", varTypeColorScale(var_type_name))
       .attr("rx", "0.4%")
+      .attr("cursor", "pointer")
       .on("mouseover", function () {
-        self.dispatch.call("VarTypeHovered", null, var_type_name);
+        // self.dispatch.call("VarTypeHovered", null, var_type_name);
 
         // apply hovering effect
-        d3.select(this).classed("overview-var-type-hover", true);
+        // d3.select(this).classed("overview-var-type-hover", true);
       })
       .on("mouseout", function () {
         self.dispatch.call("VarTypeHovered", null, undefined);
         d3.select(this).classed("overview-var-type-hover", false);
+      })
+      .on("click",function (event) {
+        event.preventDefault();
+        self.dispatch.call("VarTypeSelected", null, var_type_name);
       });
     //   .attr("stroke", "grey")
     //   .attr("stroke-width", 2)

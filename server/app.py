@@ -147,7 +147,7 @@ def get_data(version="baseline"):
             link for chunk in identify_links for link in chunk["identify_links_result"]
         ]  # TBM
 
-    keyword_embeddings = json.load(open(keyword_data_path + "keywords.json"))
+    keyword_embeddings = json.load(open(keyword_data_path + "keywords.json",encoding="utf-8"))
     userdict = keyword_data_path + "userdict.txt"
     stopwords = ["綠島"]
     kpca_reducer = dr.init_kpca_reducer(

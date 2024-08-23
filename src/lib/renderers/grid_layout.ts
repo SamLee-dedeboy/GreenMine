@@ -477,10 +477,11 @@ export function squareLayout(
     };
   });
   const center = bboxes.center;
-  const y_offset = 2;
+  const y_offset = 1;
   const rect_width = rectangles[0].width;
 
-  let first_row_rect_number = rectangles.length <= 7 ? 2 : 3;
+  //TODO: adjust the number of rectangles in the first row based on the ratio of w and h
+  let first_row_rect_number = rectangles.length <= 7 ? 2 : 4;
   let middle_row_number: number;
   // Adjust first_row_rect_number until middle_row_number is 3 or less
   do {
@@ -561,7 +562,7 @@ export function squareLayout(
       last_row_rect_number * rect_width + (last_row_rect_number - 1) * 2,
     ),
   );
-  console.log(bboxes);
+  // console.log(bboxes);
   bboxes.size = [box_width, box_height];
 
   let first_space_between_rectangles = Math.round(
