@@ -541,6 +541,7 @@
             </div>
           </div>
         {/each}
+        <div class="h-[20rem]"></div>
       </div>
     </div>
   {/key}
@@ -574,8 +575,9 @@
     background: #ff8f00;
   }
   .highlighted_evidence {
-    text-decoration: underline;
-    text-decoration-color: red;
+    /* text-decoration: underline;
+    text-decoration-color: red; */
+    background: #ff8f00;
   }
   .conversation-wrapper {
     position: relative;
@@ -583,10 +585,12 @@
 
   .tooltip {
     position: absolute;
-    z-index: 1000;
     left: 50%;
+    /* z-index: 1000; */
+    /* right: 100%; */
     transform: translateX(-50%);
     top: 100%; /* This positions the tooltip just outside the bottom edge of the conversation-container */
+    z-index: 9999;
   }
 
   .tooltip-content {
