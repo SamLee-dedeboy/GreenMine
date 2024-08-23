@@ -14,11 +14,18 @@
         .scaleLinear()
         .domain([0, max_degree])
         .range([2, 30]);
+      this.confidenceOpacityScale = d3
+        .scaleLinear()
+        .domain([0, 1])
+        .range([0.2, 0.8]);
+      this.confidenceStrokeWidthScale = d3
+        .scaleLinear()
+        .domain([0, 1])
+        .range([0.5, 1.5]);
       d3.select(`#${svgId}`).append("g").attr("class", "node-label-group");
       d3.select(`#${svgId}`).append("g").attr("class", "node-group");
       d3.select(`#${svgId}`).append("g").attr("class", "link-group");
       d3.select(`#${svgId}`).append("g").attr("class", "link-label-group");
-      console.log(max_degree);
     },
     update(link_data: tLink[]) {
       const svg = d3.select(`#${svgId}`);
@@ -84,7 +91,10 @@
         .join("path")
         .attr("class", "link")
         .attr("stroke", "gray")
-        .attr("opacity", 0.8);
+        .attr("stroke-width", (d) =>
+          this.confidenceStrokeWidthScale(d.confidence),
+        )
+        .attr("opacity", (d) => this.confidenceOpacityScale(d.confidence));
       const link_labels = svg
         .select("g.link-label-group")
         .selectAll("g.link-label")
@@ -308,9 +318,6 @@
     & .node-hovered {
       stroke: black;
       filter: drop-shadow(2px 3px 2px rgba(0, 0, 0, 0.3));
-    }
-    & .link-highlighted {
-      opacity: 0.8;
     }
     & .link-not-highlighted {
       opacity: 0.05;

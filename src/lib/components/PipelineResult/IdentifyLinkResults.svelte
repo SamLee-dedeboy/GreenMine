@@ -65,6 +65,24 @@
             <div class="border-l border-l-gray-300 pl-1 text-sm">None</div>
           {:else if show_graph[index]}
             <div class="w-full">
+              <div class="flex bg-gray-200 py-0.5">
+                <div
+                  tabindex="0"
+                  class="ml-1 w-fit rounded-sm bg-gray-100 px-1 text-center text-[0.7rem] italic text-gray-500 outline-double outline-1 outline-gray-300 hover:bg-gray-300 hover:shadow-md"
+                  role="button"
+                  on:click={() => (show_graph[index] = !show_graph[index])}
+                  on:keyup={() => {}}
+                >
+                  list view
+                </div>
+                <div
+                  class="ml-auto flex items-center pl-1 text-xs italic text-gray-600"
+                >
+                  Overall uncertainty: {datum.uncertainty.identify_links.toFixed(
+                    2,
+                  )}
+                </div>
+              </div>
               <LinkResultGraph
                 svgId={`link-graph-${index}`}
                 data={datum.identify_links_result}
