@@ -131,7 +131,13 @@
   }
   function handleEvidenceSelected(e) {
     // console.log("evidence selected", e.detail);
-    interview_viewer_component.handleEvidenceSelected(e.detail);
+    // interview_viewer_component.handleEvidenceSelected(e.detail);
+    const { chunk_id, evidence, explanation } = e.detail;
+    interview_viewer_component.handleEvidenceSelected(
+      chunk_id,
+      evidence,
+      explanation,
+    );
   }
   function handleVarOrLinkSelected(e) {
     if (!interview_data) return;
@@ -234,7 +240,7 @@
             {selectedTitle}
             {titleOptions}
             on:close={() => (show_prompts = false)}
-            on:var_types_evidence={handleEvidenceSelected}
+            on:navigate_evidence={handleEvidenceSelected}
             on:remove_var_type={handleRemoveVarType}
             on:add_var_type={handleAddVarType}
             on:versions_changed={(e) => updateVersion(e, "versions_changed")}

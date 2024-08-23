@@ -1,10 +1,11 @@
 <script lang="ts">
   import type { tIdentifyLinks, tLink } from "lib/types";
-  import { onMount } from "svelte";
+  import { onMount, createEventDispatcher } from "svelte";
   import { varTypeColorScale } from "lib/store";
   import { sort_by_id, setOpacity, sort_by_var_type } from "lib/utils";
   import LinkResultGraph from "./LinkResultGraph.svelte";
 
+  const dispatch = createEventDispatcher();
   export let data: tIdentifyLinks[];
   export let title: string = "baseline";
   let show_graph = Array(data.length).fill(false);
@@ -40,6 +41,23 @@
     return data.sort(
       (a, b) => -(a.uncertainty.identify_links - b.uncertainty.identify_links),
     );
+  }
+  function generate_explanation_html(
+    indicator1: string,
+    indicator2: string,
+    var1: string,
+    var2: string,
+    relationship: { label: string; confidence: number }[],
+    explanation: string,
+  ) {
+    return `
+    <span style="background-color: ${$varTypeColorScale(indicator1)}; text-transform: capitalize; padding-left: 0.125rem; padding-right: 0.125rem;">${var1}</span>
+    -
+    <span style="background-color: ${$varTypeColorScale(indicator2)}; text-transform: capitalize; padding-left: 0.125rem; padding-right: 0.125rem;">${var2}</span>
+    <br>
+    <span style="color: gray; text-transform: capitalize">${relationship.map((r) => `${r.label}(${r.confidence})`).join("/")}</span>
+    <br>
+    - ${explanation}`;
   }
 </script>
 
@@ -113,8 +131,30 @@
               </div>
               {#each datum.identify_links_result as link}
                 <div
+                  role="button"
+                  tabindex="0"
                   class="flex cursor-pointer flex-col gap-y-1 bg-gray-100 py-1 pl-1 pr-3 hover:bg-gray-200"
                   title="check evidence"
+                  on:click={() => {
+                    if (
+                      link.response.evidence &&
+                      link.response.evidence.length > 0
+                    ) {
+                      dispatch("navigate_evidence", {
+                        chunk_id: datum.id,
+                        evidence: link.response.evidence,
+                        explanation: generate_explanation_html(
+                          link.indicator1,
+                          link.indicator2,
+                          link.var1,
+                          link.var2,
+                          link.response.relationship,
+                          link.response.explanation,
+                        ),
+                      });
+                    }
+                  }}
+                  on:keyup={() => {}}
                 >
                   <div class="flex items-center">
                     <div

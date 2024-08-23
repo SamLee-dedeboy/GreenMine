@@ -1,9 +1,10 @@
 <script lang="ts">
   import type { tIdentifyVars, tVarResult } from "lib/types";
-  import { onMount } from "svelte";
+  import { onMount, createEventDispatcher } from "svelte";
   import { varTypeColorScale } from "lib/store";
   import { sort_by_id, setOpacity, sort_by_var_type } from "lib/utils";
 
+  const dispatch = createEventDispatcher();
   export let data: tIdentifyVars[];
   export let title: string = "baseline";
   onMount(() => {
@@ -13,6 +14,14 @@
     return data.sort(
       (a, b) => -(a.uncertainty.identify_vars - b.uncertainty.identify_vars),
     );
+  }
+
+  function generate_explanation_html(
+    var_type: string,
+    var_name: string,
+    explanation: string,
+  ) {
+    return `<span style="background-color: ${$varTypeColorScale(var_type)}; text-transform: capitalize; padding-left: 0.125rem; padding-right: 0.125rem;">${var_name}</span>:${explanation}`;
   }
 </script>
 
@@ -68,11 +77,22 @@
                           tabindex="0"
                           class={`flex rounded-sm px-1 text-xs opacity-100 shadow-sm outline-double outline-1 outline-gray-500 hover:bg-stone-400`}
                           title="check evidence"
-                          on:click={() =>
-                            console.log(
-                              var_data.evidence,
-                              var_data.explanation,
-                            )}
+                          on:click={() => {
+                            if (
+                              var_data.evidence &&
+                              var_data.evidence.length > 0
+                            ) {
+                              dispatch("navigate_evidence", {
+                                chunk_id: datum.id,
+                                evidence: var_data.evidence,
+                                explanation: generate_explanation_html(
+                                  var_type,
+                                  var_data.var,
+                                  var_data.explanation,
+                                ),
+                              });
+                            }
+                          }}
                           on:keyup={() => {}}
                         >
                           {var_data.var}

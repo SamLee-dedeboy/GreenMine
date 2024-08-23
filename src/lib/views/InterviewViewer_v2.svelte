@@ -153,8 +153,30 @@
     });
     return;
   }
-
-  export function handleEvidenceSelected(e) {
+  export async function handleEvidenceSelected(
+    chunk_id: string,
+    evidence_index: number[],
+    explanation: string,
+  ) {
+    init_highlight_evidence(); //set all evidence to false
+    show_interview = []; //clear and not show the previous evidence interview index
+    const interview_index_match = chunk_id.match(/N(\d+)/);
+    const chunk_index = chunk_id.split("_")[1];
+    if (!interview_index_match) return;
+    const interview_index = parseInt(interview_index_match[1], 10) - 1;
+    // show transcript
+    show_interview[interview_index] = true;
+    // highlight evidences
+    evidence_index.forEach((message_index) => {
+      highlight_evidence[chunk_id][message_index] = true;
+      evidence[message_index] = explanation;
+    });
+    console.log(evidence);
+    await tick();
+    const target = document.querySelector(`#${chunk_id}-${evidence_index[0]}`);
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  export function _handleEvidenceSelected(e) {
     init_highlight_evidence(); //set all evidence to false
     show_interview = []; //clear and not show the previous evidence interview index
     // console.log(e);
@@ -468,7 +490,7 @@
                         <div class="grow">
                           {#each aggregateMessages(interview) as message, index}
                             <div
-                              id={`${interview_index}-${message.chunkIndex}-${message.messageIndex}`}
+                              id={`${message.chunkIndex}-${message.messageIndex}`}
                               class="interview-message border-r border-dashed border-black p-1 {speaker_background[
                                 message.speaker
                               ]}"

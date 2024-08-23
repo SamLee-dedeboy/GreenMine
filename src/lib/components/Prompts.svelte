@@ -55,10 +55,9 @@
   let removeVar: VarTypeItem[] = [];
   let addVar: VarTypeItem[] = [];
 
-  function fetch_var_types_evidence(data) {
-    if (!data) return;
-    console.log({ data });
-    dispatch("var_types_evidence", data); //To App.sevelte
+  function navigate_evidence(e) {
+    if (!e) return;
+    dispatch("navigate_evidence", e); //To App.sevelte
   }
   function update_rules() {
     if (log_record) {
@@ -310,8 +309,7 @@
           buttonText="Update Rules"
           data_loading={pipeline_result ? false : true}
           on:base_or_new_button_click={() => update_rules()}
-          on:fetch_var_types_evidence={(e) =>
-            fetch_var_types_evidence(e.detail)}
+          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
           on:remove_var_type={(e) => remove_var_type(e.detail, "base")}
           on:add_var_type={(e) => add_var_type(e.detail, "base")}
           on:title_change={(e) => handle_title_change(e.detail)}
@@ -321,8 +319,7 @@
           title={`${selectedTitle} after run (new)`}
           buttonText="Save Version"
           {data_loading}
-          on:fetch_var_types_evidence={(e) =>
-            fetch_var_types_evidence(e.detail)}
+          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
           on:remove_var_type={(e) => remove_var_type(e.detail, "new")}
           on:add_var_type={(e) => add_var_type(e.detail, "new")}
           on:base_or_new_button_click={() => handle_save()}
@@ -348,8 +345,13 @@
         <IdentifyVarResults
           title="baseline"
           data={pipeline_result?.identify_vars || []}
+          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
-        <IdentifyVarResults title="new" data={tmp_data?.identify_vars || []} />
+        <IdentifyVarResults
+          title="new"
+          data={tmp_data?.identify_vars || []}
+          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+        />
       </div>
     {:else if show_step === 3}
       <div in:slide|global class="step-2 flex grow">
@@ -371,10 +373,12 @@
         <IdentifyLinkResults
           title="baseline"
           data={pipeline_result?.identify_links || []}
+          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
         <IdentifyLinkResults
           title="new"
           data={tmp_data?.identify_links || []}
+          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
       </div>
     {/if}

@@ -71,6 +71,10 @@
     console.log({ sorted });
     return sorted;
   }
+
+  function generate_explanation_html(var_type: string, explanation: string) {
+    return `<span style="background-color: ${$varTypeColorScale(var_type)}; text-transform: capitalize; padding-left: 0.125rem; padding-right: 0.125rem;">${var_type}</span>:${explanation}`;
+  }
 </script>
 
 <div
@@ -160,10 +164,14 @@
                                 var_type_wrapper.evidence &&
                                 var_type_wrapper.evidence.length > 0
                               ) {
-                                dispatch("fetch_var_types_evidence", {
-                                  result: datum.identify_var_types_result,
-                                  id: datum.id,
-                                  var_type: var_type_wrapper.var_type,
+                                dispatch("navigate_evidence", {
+                                  // result: datum.identify_var_types_result,
+                                  chunk_id: datum.id,
+                                  evidence: var_type_wrapper.evidence,
+                                  explanation: generate_explanation_html(
+                                    var_type_wrapper.var_type,
+                                    var_type_wrapper.explanation,
+                                  ),
                                 });
                               } else {
                                 alert("No evidence. Add manually.");
