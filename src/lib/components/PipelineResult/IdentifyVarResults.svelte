@@ -65,6 +65,7 @@
                           role="button"
                           tabindex="0"
                           class={`flex rounded-sm px-1 text-xs opacity-100 shadow-sm outline-double outline-1 outline-gray-500 hover:bg-stone-400`}
+                          title="check evidence"
                           on:click={() =>
                             console.log(
                               var_data.evidence,

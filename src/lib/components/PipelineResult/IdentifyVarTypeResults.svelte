@@ -171,7 +171,9 @@
                             }}
                             on:keyup={() => {}}
                           >
-                            <span>{var_type_wrapper.var_type}</span>
+                            <span title="check evidence"
+                              >{var_type_wrapper.var_type}</span
+                            >
                             <button
                               class="font-bold hover:text-white focus:outline-none"
                               on:click={(event) => {

@@ -64,7 +64,7 @@
           {#if isNone}
             <div class="border-l border-l-gray-300 pl-1 text-sm">None</div>
           {:else if show_graph[index]}
-            <div>
+            <div class="w-full">
               <LinkResultGraph
                 svgId={`link-graph-${index}`}
                 data={datum.identify_links_result}
@@ -94,7 +94,10 @@
                 </div>
               </div>
               {#each datum.identify_links_result as link}
-                <div class="flex flex-col gap-y-1 bg-gray-100 py-1 pl-1 pr-3">
+                <div
+                  class="flex cursor-pointer flex-col gap-y-1 bg-gray-100 py-1 pl-1 pr-3 hover:bg-gray-200"
+                  title="check evidence"
+                >
                   <div class="flex items-center">
                     <div
                       class="h-fit shrink-0 rounded-sm px-0.5 text-xs italic opacity-70 outline-double outline-1 outline-gray-300"
