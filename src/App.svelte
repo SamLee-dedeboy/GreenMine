@@ -225,7 +225,7 @@
     <div class="page flex h-full space-x-1">
       {#if show_prompts}
         <div
-          class="absolute left-1/4 top-1/2 z-10 flex w-fit -translate-x-1/4 -translate-y-1/2 items-stretch rounded-md bg-gray-200 pt-6 shadow-md outline outline-1 outline-gray-300"
+          class="absolute left-1/4 top-1/2 z-10 flex h-[80vh] w-[70vw] min-w-[85rem] -translate-x-1/4 -translate-y-1/2 items-stretch rounded-md bg-gray-200 pt-6 shadow-md outline outline-1 outline-gray-300"
           use:draggable
         >
           <Prompts

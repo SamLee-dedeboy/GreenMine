@@ -16,7 +16,9 @@
   }
 </script>
 
-<div class="flex h-full min-w-[25rem] flex-col bg-gray-100 px-1 shadow-lg">
+<div
+  class="flex h-full min-w-[25rem] flex-1 flex-col bg-gray-100 px-1 shadow-lg"
+>
   <h2 class="text-lg font-medium capitalize text-black">{title}</h2>
   <div class="flex grow flex-col divide-y divide-black">
     <div class="flex divide-x">

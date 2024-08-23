@@ -76,7 +76,7 @@
 <div
   class="relative z-50 flex
      min-w-[30rem]
-            max-w-[30rem] flex-col
+            flex-1 flex-col
             bg-gray-100 px-1 shadow-lg"
   transition:fade={{
     duration: 100,

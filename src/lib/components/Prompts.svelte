@@ -247,9 +247,9 @@
   }
 </script>
 
-<div class="flex flex-col">
+<div class="flex cursor-auto flex-col">
   <!-- side panel -->
-  <div class="mt-[-1.4rem] flex w-fit items-end gap-y-0.5 px-1 text-sm">
+  <div class="mt-[-1.4rem] flex w-fit items-end gap-y-0.5 px-0.5 text-sm">
     <div
       tabindex="0"
       role="button"
@@ -284,7 +284,7 @@
 
   {#key show_step}
     {#if show_step === 1}
-      <div in:slide|global class="step-1 flex max-h-[40rem]">
+      <div in:slide|global class="step-1 flex grow">
         <div
           class="flex min-w-[25rem] max-w-[30rem] flex-col gap-y-1 overflow-y-auto bg-gray-100"
         >
@@ -329,8 +329,8 @@
         />
       </div>
     {:else if show_step === 2}
-      <div in:slide|global class="step-2 flex">
-        <div class="flex min-w-[30rem] flex-col gap-y-1 bg-gray-100">
+      <div in:slide|global class="step-2 flex grow">
+        <div class="flex min-w-[25] max-w-[30rem] flex-col gap-y-1 bg-gray-100">
           <PromptHeader
             title="Identify Variables"
             on:run={() => execute_prompt(data, "identify_vars")}
@@ -352,8 +352,10 @@
         <IdentifyVarResults title="new" data={tmp_data?.identify_vars || []} />
       </div>
     {:else if show_step === 3}
-      <div in:slide|global class="step-2 flex">
-        <div class="flex min-w-[30rem] flex-col gap-y-1 bg-gray-100">
+      <div in:slide|global class="step-2 flex grow">
+        <div
+          class="flex min-w-[25rem] max-w-[30rem] flex-col gap-y-1 bg-gray-100"
+        >
           <PromptHeader
             title="Identify Links"
             on:run={() => execute_prompt(data, "identify_links")}
