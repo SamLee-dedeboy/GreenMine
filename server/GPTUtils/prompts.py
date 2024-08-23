@@ -30,7 +30,7 @@ def identify_var_type_prompt_factory(
                             {{
                                 "concept": string ("driver" or "pressure" or "state" or "impact" or "response", or "none"),
                                 "evidence": [] (list of transcript conversation indices, empty if concept is "none"),
-                                "explanation": string (explain why the evidence indicates the concept), or "none" if concept is "none"
+                                "explanation": string (explain why the evidence indicates the concept in Traditional Chinese), or "none" if concept is "none"
                             }}
                         ]
                     }}
@@ -85,7 +85,7 @@ def identify_var_prompt_factory(
                             {{
                                 "tag": string (one of the above or "none")
                                 "evidence": [] (list of transcript conversation indices, empty if tag is "none"),
-                                "explanation": string (explain why the evidence indicates the tag), or "none" if tag is "none"
+                                "explanation": string (explain why the evidence indicates the tag in Traditional Chinese), or "none" if tag is "none"
                             }}
                         ]
                     }}
@@ -133,7 +133,7 @@ def identify_link_prompt_factory(
                             {{
                                 "relationship": string (relationship between the two variables, or "none"),
                                 "evidence": [] (list of transcript conversation indices, empty if relationship is "none"),
-                                "explanation": string (explain why the evidence indicates the relationship), or "none" if relationship is "none"
+                                "explanation": string (explain why the evidence indicates the relationship in Traditional Chinese), or "none" if relationship is "none"
                             }}
                         
                     }}
