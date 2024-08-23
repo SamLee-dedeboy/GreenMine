@@ -59,11 +59,11 @@
                   datum.identify_vars_result[var_type].length === 0}
                 <div
                   class="flex items-center bg-gray-100 pl-1 pr-3 capitalize"
-                  style={`background-color: ${setOpacity($varTypeColorScale(var_type), 0.7)}`}
                   class:isEmpty
                 >
                   <div
-                    class="h-fit w-[4.5rem] shrink-0 rounded-sm px-0.5 text-sm italic opacity-70 outline-double outline-0 outline-gray-300"
+                    class="var-type-tag h-fit w-[4.5rem] shrink-0 rounded-sm px-0.5 text-sm italic text-gray-600 outline-double outline-0 outline-gray-300"
+                    style={`background-color: ${setOpacity($varTypeColorScale(var_type), 0.7)}`}
                   >
                     {var_type}
                   </div>
@@ -107,7 +107,7 @@
                       evidence
                     </div> -->
                   {:else}
-                    <div class="ml-2 text-xs italic text-gray-500">
+                    <div class="ml-2 text-xs italic text-gray-500 no-underline">
                       No Variable Identified
                     </div>
                   {/if}
@@ -130,5 +130,8 @@
   }
   .isEmpty {
     @apply opacity-60;
+    & .var-type-tag {
+      @apply line-through;
+    }
   }
 </style>
