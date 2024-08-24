@@ -16,27 +16,17 @@ import * as grid_layout from "./grid_layout";
 
 export const DPSIR = {
   init(svgId: string, utilities: string[]) {
-    console.log("init");
+    console.log("init detailed");
     this.clicked_rect = null;
     this.clicked_link = null;
     this.width = 1550;
     this.height = 950;
-    // this.width = document.querySelector("#" + svgId)?.clientWidth;
-    // this.height = document.querySelector("#" + svgId)?.clientHeight;
     this.padding = { top: 10, right: 50, bottom: 10, left: 50 };
     this.rows = 300;
     this.columns = 240;
     this.global_rects = [];
-    // this.bboxes = {
-    //   driver: { center: [58, 90], size: [0, 0] },
-    //   pressure: { center: [160, 50], size: [0, 0] },
-    //   state: { center: [260, 100], size: [0, 0] },
-    //   impact: { center: [220, 185], size: [0, 0] },
-    //   response: { center: [100, 190], size: [0, 0] },
-    // };
     this.grid_renderer = grid_layout.grid_renderer;
     this.grid_renderer.init(this.rows, this.columns);
-    // console.log(this.grid_renderer.columns, this.grid_renderer.rows);
     this.cellWidth = this.width / this.grid_renderer.columns;
     this.cellHeight = this.height / this.grid_renderer.rows;
     this.svgId = svgId;
@@ -50,6 +40,7 @@ export const DPSIR = {
       .select("#" + svgId)
       .attr("viewBox", `0 0 ${this.width} ${this.height}`)
       .on("click", function (e) {
+        console.log("click on svg");
         if (!e.defaultPrevented) {
           d3.selectAll("rect.box")
             .classed("box-highlight", false)
@@ -65,8 +56,10 @@ export const DPSIR = {
             .classed("link-not-highlight", false)
             // .classed("not-show-link-not-highlight", false)
             .attr("stroke", "gray")
-            .attr("marker-end", "");
+            // .attr("marker-end", "");
+          console.log("click on svg");
           self.dispatch.call("VarOrLinkSelected", null, null);
+          self.dispatch.call("VarTypeUnSelected", null, null);
           self.clicked_link = null;
           self.clicked_rect = null;
         }
@@ -821,7 +814,6 @@ export const DPSIR = {
       .attr("fill", varTypeColorScale(var_type_name))
       .attr("opacity", "0.5")
       .on("click",function (event) {
-        console.log("Text clicked:", var_type_name);
         event.preventDefault();
         self.dispatch.call("VarTypeUnSelected", null, var_type_name);
       })

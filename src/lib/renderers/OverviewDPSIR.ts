@@ -61,9 +61,9 @@ export const OverviewDPSIR = {
             .classed("link-not-highlight", false)
             .classed("not-show-link-not-highlight", false)
             .attr("stroke", "gray")
-            .attr("marker-end", "");
-          //   self.dispatch.call("VarOrLinkSelected", null, null);
           self.dispatch.call("VarTypeLinkSelected", null, null);
+          self.dispatch.call("VarTypeHovered", null, null);
+          self.dispatch.call("VarTypeSelected", null, null);
           self.clicked_link = null;
           //   self.clicked_rect = null;
         }
@@ -83,7 +83,7 @@ export const OverviewDPSIR = {
     });
   },
   on(event, handler) {
-    console.log(event, handler);
+    // console.log(event, handler);
     this.dispatch.on(event, handler);
   },
   //   toggleLinks(showLinks: boolean) {
@@ -171,23 +171,40 @@ export const OverviewDPSIR = {
     bboxes: { center: [number, number]; size: [number, number] },
   ) {
     const self = this;
-    // let global_grid: string[][] = this.grid_renderer.global_grid;
+    console.log(bboxes )
     let cellWidth: number = self.cellWidth;
     let cellHeight: number = self.cellHeight;
     // const frequencyList = calculateFrequencyList(links); // includes variables frequency and link frequency among all groups
-
+    const Ports = generatePorts(bboxes);
+    // console.log(Port);
     const mappedLinks = links
       .filter((link) => link.source.var_type !== link.target.var_type)
       .map((link) => {
         const sourceType = link.source.var_type;
         const targetType = link.target.var_type;
+        const linkKey = `${sourceType}-${targetType}`;
+        const inverseKey = `${targetType}-${sourceType}`;
+  
+        let sourceCenter, targetCenter;
+  
+        if (Ports[linkKey]) {
+          sourceCenter = [Ports[linkKey].source.x, Ports[linkKey].source.y];
+          targetCenter = [Ports[linkKey].target.x, Ports[linkKey].target.y];
+        } else if (Ports[inverseKey]) {
+          // If only the inverse link pair exists, swap source and target
+          sourceCenter = [Ports[inverseKey].target.x, Ports[inverseKey].target.y];
+          targetCenter = [Ports[inverseKey].source.x, Ports[inverseKey].source.y];
+        } else {
+          // Fallback to bboxes centers if neither direct nor inverse link exists in Ports
+          sourceCenter = bboxes[sourceType]?.center || [0, 0];
+          targetCenter = bboxes[targetType]?.center || [0, 0];
+        }
+  
         return {
           source: sourceType,
           target: targetType,
-          source_center: bboxes[sourceType]?.center || [0, 0],
-          target_center: bboxes[targetType]?.center || [0, 0],
-          source_size: bboxes[sourceType]?.size || [0, 0],
-          target_size: bboxes[targetType]?.size || [0, 0],
+          source_center: sourceCenter,
+          target_center: targetCenter,
         };
       });
 
@@ -227,9 +244,26 @@ export const OverviewDPSIR = {
 
       const dx = targetPoint.x - sourcePoint.x;
       const dy = targetPoint.y - sourcePoint.y;
-      const dr = Math.sqrt(dx * dx + dy * dy) * 1.2; // Increase radius by 20% for more pronounced curves
+      const dr = Math.sqrt(dx * dx + dy * dy) *2; // Increase radius by 20% for more pronounced curves
+      const dScale = d3.scaleLinear()
+                        .domain([
+                            Math.min(...pairInfo.map(d => d.count)),
+                            Math.max(...pairInfo.map(d => d.count))
+                        ])
+                        .range([0.99, 0.84]); // Adjust this range as needed
+      const startPoint = {
+        x: sourcePoint.x + dx * 0.05,
+        y: sourcePoint.y + dy * 0.05
+      };
+      const endPoint = {
+        x: sourcePoint.x + dx * dScale(link.count),
+        y: sourcePoint.y + dy * dScale(link.count)
+      };
+    
+      // Create the partial arc path
+      return `M${startPoint.x},${startPoint.y}A${dr},${dr} 0 0,0 ${endPoint.x},${endPoint.y}`;
 
-      return `M${sourcePoint.x},${sourcePoint.y}A${dr},${dr} 0 0,0 ${targetPoint.x},${targetPoint.y}`;
+    //   return `M${sourcePoint.x},${sourcePoint.y}A${dr},${dr} 0 0,0 ${targetPoint.x},${targetPoint.y}`;
     };
 
     const svg = d3.select("#" + this.svgId);
@@ -251,6 +285,7 @@ export const OverviewDPSIR = {
     if (svg.select("defs").empty()) {
       svg.append("defs");
     }
+
     svg.select("g.link_group").attr("id", "link_group");
     const link_paths = svg
       .select("g.link_group")
@@ -274,19 +309,22 @@ export const OverviewDPSIR = {
         return widthScale(d.count);
       })
       .attr("opacity", 0.5)
+      .attr("marker-end", (d:tLinkObject) => {
+        const svg = d3.select("#"+self.svgId)
+        return createArrow(svg,d,self)
+      })
     //   .attr("stroke-dasharray", "5,5")
       .on("mouseover", function (event, d) {
-        // const svgRoot = d3.select(this.ownerSVGElement);
-        // const linkCopy = d3.select(this.cloneNode())
-        // .attr("class", "link-hover")
-        // // .attr("stroke-dasharray", null) // Removes dash
-        // .attr("opacity", 1)
-        // .attr("stroke", "gray"); // Optional: change color on hover
-
-        // svgRoot.node().appendChild(linkCopy.node());
-
-        // // Hide the original link
-        // d3.select(this).attr("opacity", 0);
+        d3.selectAll("path.link").classed("link-not-highlight", true);
+        d3.select(this).classed("link-highlight", true).classed("link-not-highlight", false).raise()
+        .attr("stroke", (d:tLinkObject) => {                   
+            return self.varTypeColorScale(d.source);
+        })
+        d3.select(`#arrow-${d.source}-${d.target} path`)
+            .attr('fill', self.varTypeColorScale(d.source));
+        // .attr("marker-end", (d:tLinkObject) => {
+        //     return createArrow(svg,d,self)
+        // });
         tooltip
           .html(
             `
@@ -303,7 +341,13 @@ export const OverviewDPSIR = {
           .style("top", event.pageY - 10 + "px")
           .style("left", event.pageX + 10 + "px");
       })
-      .on("mouseout", function () {
+      .on("mouseout", function (event,d) {
+        d3.selectAll("path.link").classed("link-not-highlight", false);
+        d3.select(this).classed("link-highlight", false).classed("link-not-highlight", false).raise()
+        .attr("stroke", "gray")
+        d3.select(`#arrow-${d.source}-${d.target} path`)
+            .attr('fill', 'gray');
+
         tooltip.style("visibility", "hidden");
         // d3.select(this.ownerSVGElement).select(".link-hover").remove();
 
@@ -424,48 +468,138 @@ export const OverviewDPSIR = {
   },
 };
 
-function createOrUpdateGradient(svg, link_data, self) {
-  const gradientId = `gradient-${link_data.source}-${link_data.target}`;
-  // Attempt to select an existing gradient
-  console.log(self.cellWidth, self.cellHeight);
-  let gradient = svg.select(`#${gradientId}`);
-  // If the gradient does not exist, create it
-  if (gradient.empty()) {
-    gradient = svg
-      .select("defs")
-      .append("linearGradient")
-      .attr("id", gradientId)
-      .attr("gradientUnits", "userSpaceOnUse");
+function createArrow(svg,d: tLinkObject,self){
+    const arrowId = `arrow-${d.source}-${d.target}`
+    let arrow = svg.select(`#${arrowId}`);
+    if(arrow.empty()){
+        svg.select('defs')
+        .append('marker')
+        .attr('id', arrowId)
+        .attr('viewBox', [0, 0, 10, 10])
+        .attr('refX', 5)
+        .attr('refY', 5)
+        .attr('markerWidth', 4)
+        .attr('markerHeight', 4)
+        .attr('orient', 'auto-start-reverse')
+        .append('path')
+        .attr('d', d3.line()([[0, 0], [10, 5], [0, 10]]))
+        // .attr('fill',self.varTypeColorScale(d.source));
+        .attr('fill', 'gray')
+    }
 
-    gradient
-      .append("stop")
-      .attr("offset", "0%")
-      .attr("stop-color", self.varTypeColorScale(link_data.source));
-
-    gradient
-      .append("stop")
-      .attr("offset", "100%")
-      .attr("stop-color", self.varTypeColorScale(link_data.target));
-  }
-  const sourcePoint = grid_layout.gridToSvgCoordinate(
-    link_data.source_center[0],
-    link_data.source_center[1],
-    self.cellWidth,
-    self.cellHeight,
-  );
-
-  const targetPoint = grid_layout.gridToSvgCoordinate(
-    link_data.target_center[0],
-    link_data.target_center[1],
-    self.cellWidth,
-    self.cellHeight,
-  );
-  // Update gradient coordinates
-  gradient
-    .attr("x1", sourcePoint.x)
-    .attr("y1", sourcePoint.y)
-    .attr("x2", targetPoint.x)
-    .attr("y2", targetPoint.y);
-
-  return `url(#${gradientId})`;
+    return `url(#${arrowId})`
 }
+
+function generatePorts(bboxes) {
+    // First, add 'original' property to each object
+    for (let key in bboxes) {
+      bboxes[key].original = [
+        bboxes[key].center[0] - bboxes[key].size[0] / 2,
+        bboxes[key].center[1] - bboxes[key].size[1] / 2
+      ];
+    }
+  
+    return {
+      "driver-pressure": {
+        source: {
+          x: bboxes.driver.original[0] + bboxes.driver.size[0] *2 / 3,
+          y: bboxes.driver.original[1] 
+        },
+        target: {
+          x: bboxes.pressure.original[0],
+          y: bboxes.pressure.original[1] + bboxes.pressure.size[1] / 4
+        }
+      },
+      "pressure-state": {
+        source: {
+          x: bboxes.pressure.original[0] + bboxes.pressure.size[0],
+          y: bboxes.pressure.original[1] + bboxes.pressure.size[1] / 4
+        },
+        target: {
+          x: bboxes.state.original[0] + bboxes.state.size[0] * 1 / 4,
+          y: bboxes.state.original[1]
+        }
+      },
+      "state-impact": {
+        source: {
+          x: bboxes.state.original[0] + bboxes.state.size[0] * 3 / 4,
+          y: bboxes.state.original[1] + bboxes.state.size[1]
+        },
+        target: {
+          x: bboxes.impact.original[0] + bboxes.impact.size[0],
+          y: bboxes.impact.original[1] + bboxes.impact.size[1] * 2/ 3
+        }
+      },
+      "impact-response": {
+        source: {
+          x: bboxes.impact.original[0] ,
+          y: bboxes.impact.original[1] + bboxes.impact.size[1] / 2
+        },
+        target: {
+          x: bboxes.response.original[0] + bboxes.response.size[0],
+          y: bboxes.response.original[1] + bboxes.response.size[1] / 2
+        }
+      },
+      "response-driver": {
+        source: {
+          x: bboxes.response.original[0],
+          y: bboxes.response.original[1] + bboxes.response.size[1] / 2
+        },
+        target: {
+          x: bboxes.driver.original[0] + bboxes.driver.size[0] / 4,
+          y: bboxes.driver.original[1] + bboxes.driver.size[1]
+        }
+      },
+      "driver-impact": {
+        source: {
+          x: bboxes.driver.original[0] + bboxes.driver.size[0],
+          y: bboxes.driver.original[1] + bboxes.driver.size[1] / 2
+        },
+        target: {
+          x: bboxes.impact.original[0] + bboxes.impact.size[0] *0.3,
+          y: bboxes.impact.original[1]
+        }
+      },
+      "pressure-impact": {
+        source: {
+          x: bboxes.pressure.original[0] + bboxes.pressure.size[0] / 2,
+          y: bboxes.pressure.original[1] + bboxes.pressure.size[1]
+        },
+        target: {
+          x: bboxes.impact.original[0] + bboxes.impact.size[0] *0.3,
+          y: bboxes.impact.original[1]
+        }
+      },
+      "state-driver": {
+        source: {
+          x: bboxes.state.original[0] ,
+          y: bboxes.state.original[1] + bboxes.state.size[1] / 2
+        },
+        target: {
+          x: bboxes.driver.original[0] + bboxes.driver.size[0],
+          y: bboxes.driver.original[1] + bboxes.driver.size[1] / 2
+        }
+      },
+      "response-pressure": {
+        source: {
+          x: bboxes.response.original[0] + bboxes.response.size[0] *3 / 4,
+          y: bboxes.response.original[1]
+        },
+        target: {
+          x: bboxes.pressure.original[0] + bboxes.pressure.size[0] / 2,
+          y: bboxes.pressure.original[1] + bboxes.pressure.size[1]
+        }
+      },
+      "response-state": {
+        source: {
+          x: bboxes.response.original[0] + bboxes.response.size[0] *3 / 4,
+          y: bboxes.response.original[1]
+        },
+        target: {
+          x: bboxes.state.original[0] ,
+          y: bboxes.state.original[1] + bboxes.state.size[1] / 2
+        }
+      }
+
+    };
+  }

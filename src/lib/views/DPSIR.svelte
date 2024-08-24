@@ -22,11 +22,11 @@
 
   const utilities = ["add", "remove", "edit"];
   let bboxes = {
-      driver: { center: [58, 90], size: [0, 0] },
-      pressure: { center: [160, 50], size: [0, 0] },
+      driver: { center: [58, 100], size: [0, 0] },
+      pressure: { center: [170, 50], size: [0, 0] },
       state: { center: [260, 100], size: [0, 0] },
-      impact: { center: [220, 185], size: [0, 0] },
-      response: { center: [100, 190], size: [0, 0] },
+      impact: { center: [210, 190], size: [0, 0] },
+      response: { center: [90, 190], size: [0, 0] },
     };
   let rectangleCoordinates = [];
   let container;
@@ -35,6 +35,7 @@
   let showLinks = true;
   let enable = false;
   let currentRenderer = "OverviewDPSIR";
+  let dpsirSvg, overviewSvg;
   let keywordsea_var_type: string | undefined = undefined;
   // let trigger_times = 0;
   async function update_vars(
@@ -77,6 +78,8 @@
     dispatch("var-selected", selectedVar); // for App.svelte to hightlight the chunks
   }
   function handleVarTypeLinkSelected(e) {
+    // console.log(e)
+
     if (e !== null) {
       currentRenderer = "DPSIR";
       initializeRenderer(currentRenderer, {
@@ -87,18 +90,34 @@
   }
   function handleOverviewVarTypeSelected(e) {
     // console.log(e);
-    const var_type = e
-    d3.select(`rect.bbox#`+`${var_type}`).remove();
-    d3.select(`text.bbox-label#`+`${var_type}`+`_label`).remove();
-    DPSIR.drawVars($varTypeColorScale,data[var_type],rectangleCoordinates[var_type],bboxes[var_type],true);
+    if(e !== null){
+      const var_type = e
+      d3.select(`rect.bbox#`+`${var_type}`).remove();
+      d3.select(`text.bbox-label#`+`${var_type}`+`_label`).remove();
+      DPSIR.drawVars($varTypeColorScale,data[var_type],rectangleCoordinates[var_type],bboxes[var_type],true);
+    }
+    
   }
   function handleOverviewVarTypeUnSelected(e){
-    const var_type = e
-    const group = d3.select(`g.${var_type}_region`);
-    group.selectAll('g.tag').remove();
-    group.selectAll('image').remove();
-    d3.select(`text.bbox-label#`+`${var_type}`+`_label`).remove();
-    OverviewDPSIR.drawVars(data[var_type],bboxes[var_type]);
+    console.log(e)
+    if(e !== null){
+      const var_type = e
+      const group = d3.select(`g.${var_type}_region`);
+      group.selectAll('g.tag').remove();
+      group.selectAll('image').remove();
+      d3.select(`text.bbox-label#`+`${var_type}`+`_label`).remove();
+      OverviewDPSIR.drawVars(data[var_type],bboxes[var_type]);
+    }
+    else{
+      Constants.var_type_names.forEach((var_type) => {
+        const group = d3.select(`g.${var_type}_region`);
+        group.selectAll('g.tag').remove();
+        group.selectAll('image').remove();
+        d3.select(`text.bbox-label#`+`${var_type}`+`_label`).remove();
+        OverviewDPSIR.drawVars(data[var_type],bboxes[var_type]);
+      }); 
+    }
+    
   }
   function enableLinks(e) {
     enable = e;
@@ -114,6 +133,7 @@
     d3.select(`#${svgId}`).selectAll("*").remove();
     DPSIR.init(svgId, utilities);
     OverviewDPSIR.init(svgId);
+    
     DPSIR.on("VarOrLinkSelected", handleVarOrLinkSelected);
     DPSIR.on("VarTypeUnSelected", handleOverviewVarTypeUnSelected);
     // Remove tooltip if it exists
@@ -122,8 +142,6 @@
     OverviewDPSIR.on("VarTypeHovered", handleOverviewVarTypeHovered);
     OverviewDPSIR.on("VarTypeSelected", handleOverviewVarTypeSelected);
     update_vars(data, links, showLinks, selectedType);
-
-
   }
 
   function handleOverviewVarTypeHovered(var_type: string) {
@@ -173,11 +191,11 @@
   }
   .varbox-svg {
     & .link-highlight {
-      opacity: 0.6;
+      opacity: 1;
       /* filter: drop-shadow(2px 3px 2px rgba(0, 0, 0, 0.3)); */
     }
     & .link-not-highlight {
-      opacity: 0.05;
+      opacity: 0.1;
     }
     & .not-show-link-not-highlight {
       opacity: 0;
