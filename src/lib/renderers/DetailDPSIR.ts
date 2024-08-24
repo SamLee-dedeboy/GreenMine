@@ -30,7 +30,7 @@ export const DPSIR = {
     this.cellWidth = this.width / this.grid_renderer.columns;
     this.cellHeight = this.height / this.grid_renderer.rows;
     this.svgId = svgId;
-    this.dispatch = d3.dispatch("VarOrLinkSelected","VarTypeUnSelected");
+    this.dispatch = d3.dispatch("VarOrLinkSelected", "VarTypeUnSelected");
     this.utilities = utilities;
     this.varTypeColorScale = null;
     this.showLinks = true;
@@ -38,33 +38,7 @@ export const DPSIR = {
     const self = this;
     const svg = d3
       .select("#" + svgId)
-      .attr("viewBox", `0 0 ${this.width} ${this.height}`)
-      .on("click", function (e) {
-        console.log("click on svg");
-        if (!e.defaultPrevented) {
-          d3.selectAll("rect.box")
-            .classed("box-highlight", false)
-            .classed("box-not-highlight", false)
-            .transition()
-            .duration(250)
-            .attr("transform", ""); // Reset transformation on all boxes to remove any previous magnification
-          d3.selectAll("text.label")
-            .classed("box-label-highlight", false)
-            .classed("box-label-not-highlight", false);
-          d3.selectAll("path.link")
-            .classed("link-highlight", false)
-            .classed("link-not-highlight", false)
-            // .classed("not-show-link-not-highlight", false)
-            .attr("stroke", "gray")
-            // .attr("marker-end", "");
-          console.log("click on svg");
-          self.dispatch.call("VarOrLinkSelected", null, null);
-          self.dispatch.call("VarTypeUnSelected", null, null);
-          self.clicked_link = null;
-          self.clicked_rect = null;
-        }
-      });
-
+      .attr("viewBox", `0 0 ${this.width} ${this.height}`);
     // this.drawGids(svg, svgId);
 
     svg.append("g").attr("class", "link_group");
@@ -81,14 +55,44 @@ export const DPSIR = {
   on(event, handler) {
     this.dispatch.on(event, handler);
   },
+
+  resetHighlights() {
+    d3.selectAll("rect.box")
+      .classed("box-highlight", false)
+      .classed("box-not-highlight", false)
+      .transition()
+      .duration(250)
+      .attr("transform", ""); // Reset transformation on all boxes to remove any previous magnification
+    d3.selectAll("text.label")
+      .classed("box-label-highlight", false)
+      .classed("box-label-not-highlight", false);
+    d3.selectAll("path.link")
+      .classed("link-highlight", false)
+      .classed("link-not-highlight", false)
+      // .classed("not-show-link-not-highlight", false)
+      .attr("stroke", "gray");
+    // .attr("marker-end", "");
+    console.log("click on svg");
+    this.dispatch.call("VarOrLinkSelected", null, null);
+    this.dispatch.call("VarTypeUnSelected", null, null);
+    this.clicked_link = null;
+    this.clicked_rect = null;
+  },
+
   toggleLinks(showLinks: boolean) {
     this.showLinks = showLinks;
   },
   categorizedLinkByVarType(
     vars: Record<string, { variable_mentions: Record<string, any> }>,
-    links: Array<{ source: { var_type: string; variable_name: string }, target: { var_type: string; variable_name: string } }>,
-    var_type_names: Array<string>
-  ): Record<string, Record<string, { inGroup_link: number; outGroup_link: number }>> {
+    links: Array<{
+      source: { var_type: string; variable_name: string };
+      target: { var_type: string; variable_name: string };
+    }>,
+    var_type_names: Array<string>,
+  ): Record<
+    string,
+    Record<string, { inGroup_link: number; outGroup_link: number }>
+  > {
     type VarTypeNames = string;
 
     let categorizedLinks: Record<
@@ -131,20 +135,28 @@ export const DPSIR = {
 
       // Increment link counts
       if (isInGroup) {
-        categorizedLinks[source.var_type][source.variable_name].inGroup_link += 1;
-        categorizedLinks[target.var_type][target.variable_name].inGroup_link += 1;
+        categorizedLinks[source.var_type][source.variable_name].inGroup_link +=
+          1;
+        categorizedLinks[target.var_type][target.variable_name].inGroup_link +=
+          1;
       } else {
-        categorizedLinks[source.var_type][source.variable_name].outGroup_link += 1;
-        categorizedLinks[target.var_type][target.variable_name].outGroup_link += 1;
+        categorizedLinks[source.var_type][source.variable_name].outGroup_link +=
+          1;
+        categorizedLinks[target.var_type][target.variable_name].outGroup_link +=
+          1;
       }
     });
 
     return categorizedLinks;
   },
-  calculateBoxInfo(vars, links, var_type_names:string[],bboxes) {
-    const categorizedLinks = this.categorizedLinkByVarType(vars, links, var_type_names);
+  calculateBoxInfo(vars, links, var_type_names: string[], bboxes) {
+    const categorizedLinks = this.categorizedLinkByVarType(
+      vars,
+      links,
+      var_type_names,
+    );
     const rects = {};
-    Object.values(var_type_names).forEach((varType:string) => {
+    Object.values(var_type_names).forEach((varType: string) => {
       let linkCount = categorizedLinks[varType];
       const rectWidth = 20; //(g)
       const rectangles = Object.entries(linkCount)
@@ -165,10 +177,9 @@ export const DPSIR = {
         rectangles,
         bboxes[varType],
       );
-      rects[varType] = (rectangleCoordinates);
-    })
-    return [rects,bboxes];
-
+      rects[varType] = rectangleCoordinates;
+    });
+    return [rects, bboxes];
   },
   update_vars(
     vars: tDPSIR,
@@ -177,9 +188,8 @@ export const DPSIR = {
     selectedType: { source: string; target: string },
     rectangleCoordinates,
     bboxes,
-    clickable:boolean
+    clickable: boolean,
   ) {
-
     this.grid_renderer?.reset_global_grid(this.rows, this.columns);
     // console.log(this.grid_renderer.global_grid)
     // this.varTypeColorScale = varTypeColorScale;
@@ -193,7 +203,7 @@ export const DPSIR = {
         vars[varType],
         rectangleCoordinates[varType],
         bboxes[varType],
-        clickable
+        clickable,
       );
     });
     this.drawLinks(links, bboxes, selectedType);
@@ -246,7 +256,7 @@ export const DPSIR = {
     vars: tVariableType,
     rectangleCoordinates,
     bbox_info: { center: [number, number]; size: [number, number] },
-    clickable:boolean
+    clickable: boolean,
   ) {
     // console.log(vars);
     this.varTypeColorScale = varTypeColorScale;
@@ -284,7 +294,7 @@ export const DPSIR = {
       bbox_info.center,
       bbox_info.size[0],
       bbox_info.size[1],
-      clickable
+      clickable,
     );
     const scaleVarColor = d3
       .scaleLinear()
@@ -330,8 +340,8 @@ export const DPSIR = {
     links = links.filter((link) => {
       return (
         (link.source.var_type === selectedType.source &&
-        link.target.var_type === selectedType.target)||
-        (link.source.var_type === link.target.var_type)
+          link.target.var_type === selectedType.target) ||
+        link.source.var_type === link.target.var_type
       );
     });
     // Sort the links
@@ -700,7 +710,7 @@ export const DPSIR = {
     bbox_center: number[],
     bboxWidth: number,
     bboxHeight: number,
-    clickable:boolean
+    clickable: boolean,
   ) {
     const self = this;
     let cellWidth: number = self.cellWidth;
@@ -799,7 +809,7 @@ export const DPSIR = {
       )
       .attr("text-anchor", "middle")
       .attr("dominant-baseline", "middle")
-      .attr("cursor", clickable?"pointer":"default")
+      .attr("cursor", clickable ? "pointer" : "default")
       .text(
         var_type_name.charAt(0).toUpperCase() + var_type_name.slice(1) + "s",
       )
@@ -813,7 +823,7 @@ export const DPSIR = {
       .attr("fill", "#636363")
       .attr("fill", varTypeColorScale(var_type_name))
       .attr("opacity", "0.5")
-      .on("click",function (event) {
+      .on("click", function (event) {
         event.preventDefault();
         self.dispatch.call("VarTypeUnSelected", null, var_type_name);
       })
@@ -854,8 +864,8 @@ export const DPSIR = {
         ).y,
       )
       .attr("width", 30)
-      .attr("height", 30)
-      // .attr("opacity", 0.5);
+      .attr("height", 30);
+    // .attr("opacity", 0.5);
 
     // this.drawUtilities(
     //   var_type_name,
