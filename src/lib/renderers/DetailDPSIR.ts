@@ -16,31 +16,21 @@ import * as grid_layout from "./grid_layout";
 
 export const DPSIR = {
   init(svgId: string, utilities: string[]) {
-    console.log("init");
+    console.log("init detailed");
     this.clicked_rect = null;
     this.clicked_link = null;
     this.width = 1550;
     this.height = 950;
-    // this.width = document.querySelector("#" + svgId)?.clientWidth;
-    // this.height = document.querySelector("#" + svgId)?.clientHeight;
     this.padding = { top: 10, right: 50, bottom: 10, left: 50 };
     this.rows = 300;
     this.columns = 240;
     this.global_rects = [];
-    this.bboxes = {
-      driver: { center: [58, 90], size: [0, 0] },
-      pressure: { center: [160, 50], size: [0, 0] },
-      state: { center: [260, 100], size: [0, 0] },
-      impact: { center: [220, 185], size: [0, 0] },
-      response: { center: [100, 190], size: [0, 0] },
-    };
     this.grid_renderer = grid_layout.grid_renderer;
     this.grid_renderer.init(this.rows, this.columns);
-    // console.log(this.grid_renderer.columns, this.grid_renderer.rows);
     this.cellWidth = this.width / this.grid_renderer.columns;
     this.cellHeight = this.height / this.grid_renderer.rows;
     this.svgId = svgId;
-    this.dispatch = d3.dispatch("VarOrLinkSelected");
+    this.dispatch = d3.dispatch("VarOrLinkSelected","VarTypeUnSelected");
     this.utilities = utilities;
     this.varTypeColorScale = null;
     this.showLinks = true;
@@ -50,6 +40,7 @@ export const DPSIR = {
       .select("#" + svgId)
       .attr("viewBox", `0 0 ${this.width} ${this.height}`)
       .on("click", function (e) {
+        console.log("click on svg");
         if (!e.defaultPrevented) {
           d3.selectAll("rect.box")
             .classed("box-highlight", false)
@@ -63,10 +54,12 @@ export const DPSIR = {
           d3.selectAll("path.link")
             .classed("link-highlight", false)
             .classed("link-not-highlight", false)
-            .classed("not-show-link-not-highlight", false)
+            // .classed("not-show-link-not-highlight", false)
             .attr("stroke", "gray")
-            .attr("marker-end", "");
+            // .attr("marker-end", "");
+          console.log("click on svg");
           self.dispatch.call("VarOrLinkSelected", null, null);
+          self.dispatch.call("VarTypeUnSelected", null, null);
           self.clicked_link = null;
           self.clicked_rect = null;
         }
@@ -91,31 +84,24 @@ export const DPSIR = {
   toggleLinks(showLinks: boolean) {
     this.showLinks = showLinks;
   },
-  update_vars(
-    vars: tDPSIR,
-    links: tVisLink[],
-    varTypeColorScale: Function,
-    selectedType: { source: string; target: string },
-  ) {
-    console.log("update vars");
-    this.grid_renderer?.reset_global_grid(this.rows, this.columns);
-    // console.log(this.grid_renderer.global_grid)
-    this.varTypeColorScale = varTypeColorScale;
-    const var_type_names = Constants.var_type_names;
-    type VarTypeNames = (typeof var_type_names)[number];
+  categorizedLinkByVarType(
+    vars: Record<string, { variable_mentions: Record<string, any> }>,
+    links: Array<{ source: { var_type: string; variable_name: string }, target: { var_type: string; variable_name: string } }>,
+    var_type_names: Array<string>
+  ): Record<string, Record<string, { inGroup_link: number; outGroup_link: number }>> {
+    type VarTypeNames = string;
 
     let categorizedLinks: Record<
       VarTypeNames,
       Record<string, { inGroup_link: number; outGroup_link: number }>
-    > = {} as Record<
-      VarTypeNames,
-      Record<string, { inGroup_link: number; outGroup_link: number }>
-    >;
+    > = {};
 
+    // Initialize categorizedLinks with var_type_names
     var_type_names.forEach((name) => {
       categorizedLinks[name] = {};
     });
 
+    // Initialize categorizedLinks with variable names
     Object.keys(vars).forEach((varType) => {
       const type = vars[varType];
       Object.keys(type.variable_mentions).forEach((varName) => {
@@ -128,65 +114,89 @@ export const DPSIR = {
       });
     });
 
+    // Categorize links
     links.forEach((link) => {
       const { source, target } = link;
       const isInGroup = source.var_type === target.var_type;
-      if (!categorizedLinks[source.var_type][source.variable_name]) {
-        categorizedLinks[source.var_type][source.variable_name] = {
-          inGroup_link: 0,
-          outGroup_link: 0,
-        };
-      }
 
-      if (!categorizedLinks[target.var_type][target.variable_name]) {
-        categorizedLinks[target.var_type][target.variable_name] = {
-          inGroup_link: 0,
-          outGroup_link: 0,
-        };
-      }
+      // Ensure source and target entries exist
+      [source, target].forEach((node) => {
+        if (!categorizedLinks[node.var_type][node.variable_name]) {
+          categorizedLinks[node.var_type][node.variable_name] = {
+            inGroup_link: 0,
+            outGroup_link: 0,
+          };
+        }
+      });
 
+      // Increment link counts
       if (isInGroup) {
-        categorizedLinks[source.var_type][source.variable_name].inGroup_link +=
-          1;
-        categorizedLinks[target.var_type][target.variable_name].inGroup_link +=
-          1;
+        categorizedLinks[source.var_type][source.variable_name].inGroup_link += 1;
+        categorizedLinks[target.var_type][target.variable_name].inGroup_link += 1;
       } else {
-        categorizedLinks[source.var_type][source.variable_name].outGroup_link +=
-          1;
-        categorizedLinks[target.var_type][target.variable_name].outGroup_link +=
-          1;
+        categorizedLinks[source.var_type][source.variable_name].outGroup_link += 1;
+        categorizedLinks[target.var_type][target.variable_name].outGroup_link += 1;
       }
     });
 
-    // const bboxes_sizes: { [key in string]: [number, number] } = {
-    //   [var_type_names[0]]: [38, 62],
-    //   [var_type_names[1]]: [38, 70],
-    //   [var_type_names[2]]: [28, 28],
-    //   [var_type_names[3]]: [38, 68],
-    //   [var_type_names[4]]: [40, 48],
-    // };
+    return categorizedLinks;
+  },
+  calculateBoxInfo(vars, links, var_type_names:string[],bboxes) {
+    const categorizedLinks = this.categorizedLinkByVarType(vars, links, var_type_names);
+    const rects = {};
+    Object.values(var_type_names).forEach((varType:string) => {
+      let linkCount = categorizedLinks[varType];
+      const rectWidth = 20; //(g)
+      const rectangles = Object.entries(linkCount)
+        .map(([name, counts]) => {
+          return {
+            name,
+            width: rectWidth,
+            height: 6, // height might be adjusted later as needed
+            outgroup_degree: linkCount[name].outGroup_link,
+          };
+        })
+        .sort(
+          (a, b) =>
+            linkCount[b.name].outGroup_link - linkCount[a.name].outGroup_link,
+        );
+      // console.log({ rectangles });
+      const rectangleCoordinates = grid_layout.squareLayout(
+        rectangles,
+        bboxes[varType],
+      );
+      rects[varType] = (rectangleCoordinates);
+    })
+    return [rects,bboxes];
 
-    // const bboxes = grid_layout.radialBboxes(
-    //   var_type_names,
-    //   this.grid_renderer?.columns,
-    //   this.grid_renderer?.rows,
-    //   bboxes_sizes,
-    //   this.padding,
-    //   this.cellWidth,
-    //   this.cellHeight,
-    // );
+  },
+  update_vars(
+    vars: tDPSIR,
+    links: tVisLink[],
+    varTypeColorScale: Function,
+    selectedType: { source: string; target: string },
+    rectangleCoordinates,
+    bboxes,
+    clickable:boolean
+  ) {
 
+    this.grid_renderer?.reset_global_grid(this.rows, this.columns);
+    // console.log(this.grid_renderer.global_grid)
+    // this.varTypeColorScale = varTypeColorScale;
+    const var_type_names = Constants.var_type_names;
+    // type VarTypeNames = (typeof var_type_names)[number];
     const self = this;
     // TODO: feed the selected varType to drawVars and drawLinks
     Object.values(var_type_names).forEach((varType) => {
-      console.log(varType);
       self.drawVars(
+        varTypeColorScale,
         vars[varType],
-        self.bboxes[varType],
-        categorizedLinks[varType],
+        rectangleCoordinates[varType],
+        bboxes[varType],
+        clickable
       );
     });
-    this.drawLinks(links, this.bboxes, selectedType);
+    this.drawLinks(links, bboxes, selectedType);
   },
   drawGids(svg, svgId) {
     // Get the dimensions of the SVG
@@ -232,45 +242,16 @@ export const DPSIR = {
 
   //center(gridX,gridY), size(x grids,y grids)
   drawVars(
+    varTypeColorScale: Function,
     vars: tVariableType,
+    rectangleCoordinates,
     bbox_info: { center: [number, number]; size: [number, number] },
-    linkCount,
+    clickable:boolean
   ) {
     // console.log(vars);
+    this.varTypeColorScale = varTypeColorScale;
     const self = this;
-    let cellWidth: number = self.cellWidth;
-    let cellHeight: number = self.cellHeight;
     const var_type_name = vars.variable_type;
-    const rectWidth = 18; //(g)
-
-    // sort the rect by outgroup link count
-
-    const rectangles = Object.entries(linkCount)
-      .map(([name, counts]) => {
-        return {
-          name,
-          width: rectWidth,
-          height: 6, // height might be adjusted later as needed
-          outgroup_degree: linkCount[name].outGroup_link,
-        };
-      })
-      .sort(
-        (a, b) =>
-          linkCount[b.name].outGroup_link - linkCount[a.name].outGroup_link,
-      );
-    console.log({ rectangles });
-    // const bbox_center = box_coor.center;
-    // const bboxWidth = box_coor.size[0];
-    // const bboxHeight = box_coor.size[1];
-    // const bbox_origin = [
-    //   bbox_center[0] - bboxWidth / 2,
-    //   bbox_center[1] - bboxHeight / 2,
-    // ];
-
-    const rectangleCoordinates = grid_layout.squareLayout(
-      rectangles,
-      bbox_info,
-    );
     console.log(rectangleCoordinates);
     const rectWithVar = grid_layout.combineData(
       vars,
@@ -303,6 +284,7 @@ export const DPSIR = {
       bbox_info.center,
       bbox_info.size[0],
       bbox_info.size[1],
+      clickable
     );
     const scaleVarColor = d3
       .scaleLinear()
@@ -347,8 +329,9 @@ export const DPSIR = {
     }
     links = links.filter((link) => {
       return (
-        link.source.var_type === selectedType.source &&
-        link.target.var_type === selectedType.target
+        (link.source.var_type === selectedType.source &&
+        link.target.var_type === selectedType.target)||
+        (link.source.var_type === link.target.var_type)
       );
     });
     // Sort the links
@@ -620,8 +603,8 @@ export const DPSIR = {
         const links = d3
           .selectAll("path.link")
           .classed("link-highlight", false)
-          .classed("link-not-highlight", this.showLinks === true)
-          .classed("not-show-link-not-highlight", this.showLinks === false)
+          .classed("link-not-highlight", true)
+          // .classed("not-show-link-not-highlight", true)
           .attr("stroke", "gray")
           .attr("marker-end", "");
 
@@ -646,7 +629,7 @@ export const DPSIR = {
           d3.select(this)
             .classed("link-highlight", true)
             .classed("link-not-highlight", false)
-            .classed("not-show-link-not-highlight", false)
+            // .classed("not-show-link-not-highlight", false)
             .classed("line-hover", false)
             .raise()
             .attr("stroke", (d: tLinkObject) => {
@@ -687,7 +670,7 @@ export const DPSIR = {
     const t = d3.timer(() => {
       if (!isTimerRunning) {
         isTimerRunning = true;
-        self.handlers.EnableLinks(false);
+        // self.handlers.EnableLinks(false);
       }
       const next_path = link_paths.filter((d, i) => i === next_path_index);
       next_path
@@ -707,7 +690,7 @@ export const DPSIR = {
         t.stop();
         // this.enable = !this.enable;
         isTimerRunning = false;
-        self.handlers.EnableLinks(true);
+        // self.handlers.EnableLinks(true);
       }
     });
   },
@@ -717,6 +700,7 @@ export const DPSIR = {
     bbox_center: number[],
     bboxWidth: number,
     bboxHeight: number,
+    clickable:boolean
   ) {
     const self = this;
     let cellWidth: number = self.cellWidth;
@@ -815,11 +799,12 @@ export const DPSIR = {
       )
       .attr("text-anchor", "middle")
       .attr("dominant-baseline", "middle")
+      .attr("cursor", clickable?"pointer":"default")
       .text(
         var_type_name.charAt(0).toUpperCase() + var_type_name.slice(1) + "s",
       )
       .attr("text-transform", "capitalize")
-      .attr("pointer-events", "none")
+      .attr("pointer-events", clickable ? "auto" : "none")
       .attr("font-family", "serif")
       // .attr("font-family", "Montserrat Alternate")
       .attr("font-style", "italic")
@@ -827,7 +812,17 @@ export const DPSIR = {
       .attr("font-weight", "bold")
       .attr("fill", "#636363")
       .attr("fill", varTypeColorScale(var_type_name))
-      .attr("opacity", "0.5");
+      .attr("opacity", "0.5")
+      .on("click",function (event) {
+        event.preventDefault();
+        self.dispatch.call("VarTypeUnSelected", null, var_type_name);
+      })
+      .on("mouseover", function () {
+        d3.select(this).attr("opacity", "1");
+      })
+      .on("mouseout", function () {
+        d3.select(this).attr("opacity", "0.5");
+      });
 
     //group icon
     group
@@ -860,7 +855,7 @@ export const DPSIR = {
       )
       .attr("width", 30)
       .attr("height", 30)
-      .attr("opacity", 0.5);
+      // .attr("opacity", 0.5);
 
     // this.drawUtilities(
     //   var_type_name,
@@ -1016,7 +1011,7 @@ export const DPSIR = {
               d3.selectAll(".link")
                 .classed("link-highlight", false)
                 .classed("link-not-highlight", false)
-                .classed("not-show-link-not-highlight", false)
+                // .classed("not-show-link-not-highlight", false)
                 .attr("stroke", "gray")
                 .attr("marker-end", "");
               rects
@@ -1047,11 +1042,11 @@ export const DPSIR = {
                 .raise();
               d3.selectAll(".link")
                 .classed("link-highlight", false)
-                .classed("link-not-highlight", this.showLinks === true)
-                .classed(
-                  "not-show-link-not-highlight",
-                  this.showLinks === false,
-                )
+                .classed("link-not-highlight", true)
+                // .classed(
+                //   "not-show-link-not-highlight",
+                //   this.showLinks === false,
+                // )
                 .attr("stroke", "gray")
                 .attr("marker-end", "")
                 .filter(
@@ -1061,7 +1056,7 @@ export const DPSIR = {
                 )
                 .classed("link-highlight", true)
                 .classed("link-not-highlight", false)
-                .classed("not-show-link-not-highlight", false)
+                // .classed("not-show-link-not-highlight", false)
                 .raise()
                 .attr("stroke", (link_data: tLinkObject) => {
                   // const svg = d3.select("#" + self.svgId);
