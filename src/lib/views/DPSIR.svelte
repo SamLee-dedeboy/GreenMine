@@ -16,6 +16,7 @@
   } from "../types";
   import { varTypeColorScale } from "lib/store";
   import KeywordSea from "lib/components/KeywordSea.svelte";
+    // import { group } from "console";
   export let data: tDPSIR;
   export let links: tVisLink[];
   const svgId = "model-svg";
@@ -28,11 +29,20 @@
     impact: { center: [210, 190], size: [0, 0] },
     response: { center: [90, 190], size: [0, 0] },
   };
+  let box_states = {
+    driver: { selected: false },
+    pressure: { selected: false },
+    state: { selected: false },
+    impact: { selected: false },
+    response: { selected: false },
+  };
+  let vartypeunselected_flag = true;
+  let group_name_clickable = true;
   let rectangleCoordinates = [];
   let container;
   let selectedVar: tVariable | undefined = undefined;
   let selectedType = { source: "", target: "" };
-  let showLinks = true;
+  // let showLinks = true;
   let enable = false;
   let currentRenderer = "OverviewDPSIR";
   let dpsirSvg, overviewSvg;
@@ -41,12 +51,13 @@
   async function update_vars(
     vars: tDPSIR,
     links: tVisLink[],
-    showLinks: boolean,
+    // showLinks: boolean,
     selectedType: { source: string; target: string },
   ) {
     if (currentRenderer == "OverviewDPSIR") {
       OverviewDPSIR.update_vars(vars, links, $varTypeColorScale, bboxes);
     } else {
+      group_name_clickable = false;
       DPSIR.update_vars(
         vars,
         links,
@@ -54,7 +65,7 @@
         selectedType,
         rectangleCoordinates,
         bboxes,
-        false,
+        group_name_clickable,
       );
     }
   }
@@ -76,24 +87,24 @@
     // console.log({rectangleCoordinates,bboxes})
     initializeRenderer(currentRenderer, selectedType);
   });
-  function toggleLinks() {
-    if (enable) {
-      showLinks = !showLinks;
-      if (currentRenderer == "DPSIR") {
-        DPSIR.toggleLinks(showLinks);
-      }
-    }
-  }
+  // function toggleLinks() {
+  //   if (enable) {
+  //     showLinks = !showLinks;
+  //     if (currentRenderer == "DPSIR") {
+  //       DPSIR.toggleLinks(showLinks);
+  //     }
+  //   }
+  // }
 
   function handleEmptySpaceClicked(e) {
     if (!e.defaultPrevented) {
-      DPSIR.resetHighlights();
+      DPSIR.resetHighlights(vartypeunselected_flag);
       OverviewDPSIR.resetHighlights();
     }
   }
 
   function handleVarOrLinkSelected(e) {
-    console.log(e);
+    console.log("varOrLink",e);
     const variable: tVariable = e;
     selectedVar = variable;
     dispatch("var-selected", selectedVar); // for App.svelte to hightlight the chunks
@@ -115,31 +126,37 @@
       const var_type = e;
       d3.select(`rect.bbox#` + `${var_type}`).remove();
       d3.select(`text.bbox-label#` + `${var_type}` + `_label`).remove();
+      box_states[var_type].selected = true;
+      group_name_clickable = true;
       DPSIR.drawVars(
         $varTypeColorScale,
         data[var_type],
         rectangleCoordinates[var_type],
         bboxes[var_type],
-        true,
+        group_name_clickable,
       );
     }
   }
   function handleOverviewVarTypeUnSelected(e) {
-    console.log(e);
+    console.log("unselected",e);
     if (e !== null) {
       const var_type = e;
       const group = d3.select(`g.${var_type}_region`);
       group.selectAll("g.tag").remove();
       group.selectAll("image").remove();
       d3.select(`text.bbox-label#` + `${var_type}` + `_label`).remove();
+      box_states[var_type].selected = false;
       OverviewDPSIR.drawVars(data[var_type], bboxes[var_type]);
     } else {
       Constants.var_type_names.forEach((var_type) => {
-        const group = d3.select(`g.${var_type}_region`);
-        group.selectAll("g.tag").remove();
-        group.selectAll("image").remove();
-        d3.select(`text.bbox-label#` + `${var_type}` + `_label`).remove();
-        OverviewDPSIR.drawVars(data[var_type], bboxes[var_type]);
+        if(box_states[var_type].selected){
+          const group = d3.select(`g.${var_type}_region`);
+          group.selectAll("g.tag").remove();
+          group.selectAll("image").remove();
+          d3.select(`text.bbox-label#` + `${var_type}` + `_label`).remove();
+          box_states[var_type].selected = false;
+          OverviewDPSIR.drawVars(data[var_type], bboxes[var_type]);
+        }
       });
     }
   }
@@ -150,6 +167,15 @@
   function switchRenderer() {
     currentRenderer =
       currentRenderer === "OverviewDPSIR" ? "DPSIR" : "OverviewDPSIR";
+    if(currentRenderer === "DPSIR"){
+      vartypeunselected_flag = false;
+      console.log("VarTypeUnSelected will not be triggered in detail mode")
+    }
+    else{
+      vartypeunselected_flag = true;
+      console.log("VarTypeUnSelected will be triggered in overview mode")
+    }
+   
     initializeRenderer(currentRenderer, selectedType);
   }
 
@@ -168,7 +194,7 @@
     document
       .querySelector(`#${svgId}`)
       ?.addEventListener("click", handleEmptySpaceClicked);
-    update_vars(data, links, showLinks, selectedType);
+    update_vars(data, links, selectedType);
   }
 
   function handleOverviewVarTypeHovered(var_type: string) {
