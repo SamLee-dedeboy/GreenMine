@@ -41,7 +41,7 @@ export const DPSIR = {
       .attr("viewBox", `0 0 ${this.width} ${this.height}`);
     // this.drawGids(svg, svgId);
 
-    svg.append("g").attr("class", "link_group");
+    svg.append("g").attr("class", "detail_link_group");
     // .attr("transform", `translate(${padding.left}, ${padding.top})`);
     Constants.var_type_names.forEach((var_type_name) => {
       const var_type_region = svg
@@ -555,7 +555,7 @@ export const DPSIR = {
     };
 
     const link_paths = svg
-      .select("g.link_group")
+      .select("g.detail_link_group")
       .selectAll(".link")
       .data(filteredMergeData)
       .join("path")
@@ -589,9 +589,9 @@ export const DPSIR = {
       })
       .attr("opacity", (d) => {
         if (d.source.var_type == d.target.var_type) {
-          return 0.2
+          return 0.2;
         } else {
-          return 0.5
+          return 0.5;
         }
       })
       .on("mouseover", function (e, d: tLinkObject) {

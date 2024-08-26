@@ -17,6 +17,7 @@ import type {
 import * as Constants from "../constants";
 import * as grid_layout from "./grid_layout";
 import { toggle } from "@melt-ui/svelte/internal/helpers";
+import ReportViewer from "lib/v1/ReportViewer.svelte";
 
 export const OverviewDPSIR = {
   init(svgId: string) {
@@ -51,13 +52,13 @@ export const OverviewDPSIR = {
       .attr("height", this.height);
 
     // this.drawGids(svg, svgId);
+    svg.append("g").attr("class", "overview_link_group");
 
-    svg.append("g").attr("class", "link_group");
     // .attr("transform", `translate(${padding.left}, ${padding.top})`);
     Constants.var_type_names.forEach((var_type_name) => {
       const var_type_region = svg
         .append("g")
-        .attr("class", `${var_type_name}_region`);
+        .attr("class", `overview_${var_type_name}_region`);
       // .attr("transform", `translate(${padding.left}, ${padding.top})`);
       var_type_region.append("g").attr("class", "tag-group");
       var_type_region.append("g").attr("class", "bbox-group");
@@ -80,7 +81,7 @@ export const OverviewDPSIR = {
     d3.selectAll("path.link")
       .classed("link-highlight", false)
       .classed("link-not-highlight", false)
-    //   .classed("not-show-link-not-highlight", false)
+      //   .classed("not-show-link-not-highlight", false)
       .attr("stroke", "gray");
     this.dispatch.call("VarTypeLinkSelected", null, null);
     this.dispatch.call("VarTypeHovered", null, null);
@@ -192,10 +193,12 @@ export const OverviewDPSIR = {
         const inverseKey = `${targetType}-${sourceType}`;
 
         let sourceCenter, targetCenter;
+        let reverse = false;
 
         if (Ports[linkKey]) {
           sourceCenter = [Ports[linkKey].source.x, Ports[linkKey].source.y];
           targetCenter = [Ports[linkKey].target.x, Ports[linkKey].target.y];
+          reverse = Ports[linkKey].reverse;
         } else if (Ports[inverseKey]) {
           // If only the inverse link pair exists, swap source and target
           sourceCenter = [
@@ -206,6 +209,7 @@ export const OverviewDPSIR = {
             Ports[inverseKey].source.x,
             Ports[inverseKey].source.y,
           ];
+          reverse = Ports[inverseKey].reverse;
         } else {
           // Fallback to bboxes centers if neither direct nor inverse link exists in Ports
           sourceCenter = bboxes[sourceType]?.center || [0, 0];
@@ -217,6 +221,7 @@ export const OverviewDPSIR = {
           target: targetType,
           source_center: sourceCenter,
           target_center: targetCenter,
+          reverse: reverse,
         };
       });
 
@@ -256,7 +261,7 @@ export const OverviewDPSIR = {
 
       const dx = targetPoint.x - sourcePoint.x;
       const dy = targetPoint.y - sourcePoint.y;
-      const dr = Math.sqrt(dx * dx + dy * dy) * 2; // Increase radius by 20% for more pronounced curves
+      const dr = Math.sqrt(dx * dx + dy * dy) * 0.8; // Increase radius by 20% for more pronounced curves
       const dScale = d3
         .scaleLinear()
         .domain([
@@ -273,8 +278,9 @@ export const OverviewDPSIR = {
         y: sourcePoint.y + dy * dScale(link.count),
       };
 
+      const sweepFlag = link.reverse ? 1 : 0;
       // Create the partial arc path
-      return `M${startPoint.x},${startPoint.y}A${dr},${dr} 0 0,0 ${endPoint.x},${endPoint.y}`;
+      return `M${startPoint.x},${startPoint.y}A${dr},${dr} 0 0 ${sweepFlag} ${endPoint.x},${endPoint.y}`;
 
       //   return `M${sourcePoint.x},${sourcePoint.y}A${dr},${dr} 0 0,0 ${targetPoint.x},${targetPoint.y}`;
     };
@@ -299,9 +305,23 @@ export const OverviewDPSIR = {
       svg.append("defs");
     }
 
-    svg.select("g.link_group").attr("id", "link_group");
+    const widthScale = d3
+      .scaleLinear()
+      .domain([
+        Math.min(...pairInfo.map((d) => d.count)),
+        Math.max(...pairInfo.map((d) => d.count)),
+      ])
+      .range([3, 15]);
+    const opacityScale = d3
+      .scaleLinear()
+      .domain([
+        Math.min(...pairInfo.map((d) => d.count)),
+        Math.max(...pairInfo.map((d) => d.count)),
+      ])
+      .range([0.4, 0.8]);
+    svg.select("g.overview_link_group");
     const link_paths = svg
-      .select("g.link_group")
+      .select("g.overview_link_group")
       .selectAll(".link")
       .data(pairInfo)
       .join("path")
@@ -310,18 +330,11 @@ export const OverviewDPSIR = {
       .attr("d", lineGenerator)
       .attr("cursor", "pointer")
       .attr("fill", "none")
-      .attr("stroke", "gray")
-      .attr("stroke-width", function (d) {
-        const widthScale = d3
-          .scaleLinear()
-          .domain([
-            Math.min(...pairInfo.map((d) => d.count)),
-            Math.max(...pairInfo.map((d) => d.count)),
-          ])
-          .range([2, 15]);
-        return widthScale(d.count);
-      })
-      .attr("opacity", 0.5)
+      .attr("stroke", "#777777")
+      .attr("stroke-width", (d) => widthScale(d.count))
+      // .attr("opacity", 0.5)
+      .attr("opacity", (d) => opacityScale(d.count))
+      .attr("filter", "drop-shadow( 2px 2px 2px rgba(255, 255, 255, 1))")
       .attr("marker-end", (d: tLinkObject) => {
         const svg = d3.select("#" + self.svgId);
         return createArrow(svg, d, self);
@@ -395,7 +408,7 @@ export const OverviewDPSIR = {
     let varTypeColorScale = self.varTypeColorScale;
     const group = d3
       .select("#" + this.svgId)
-      .select(`.${var_type_name}_region`);
+      .select(`.overview_${var_type_name}_region`);
 
     group
       .select("g.bbox-group")
@@ -512,7 +525,7 @@ function createArrow(svg, d: tLinkObject, self) {
         ]),
       )
       // .attr('fill',self.varTypeColorScale(d.source));
-      .attr("fill", "gray");
+      .attr("fill", "#777777");
   }
 
   return `url(#${arrowId})`;
@@ -530,15 +543,38 @@ function generatePorts(bboxes) {
   return {
     "driver-pressure": {
       source: {
-        x: bboxes.driver.original[0] + (bboxes.driver.size[0] * 2) / 3,
-        y: bboxes.driver.original[1],
+        x: bboxes.driver.original[0] + bboxes.driver.size[0] / 2,
+        y: bboxes.driver.original[1] + bboxes.driver.size[1] / 4,
       },
       target: {
         x: bboxes.pressure.original[0],
-        y: bboxes.pressure.original[1] + bboxes.pressure.size[1] / 4,
+        y: bboxes.pressure.original[1] + bboxes.pressure.size[1] / 2,
       },
+      reverse: true,
+    },
+    "pressure-driver": {
+      source: {
+        x: bboxes.pressure.original[0] + bboxes.pressure.size[0] / 4,
+        y: bboxes.pressure.original[1] + bboxes.pressure.size[1] / 6,
+      },
+      target: {
+        x: bboxes.driver.original[0] + bboxes.driver.size[0] / 6,
+        y: bboxes.driver.original[1] - bboxes.driver.size[1] / 10,
+      },
+      reverse: false,
     },
     "pressure-state": {
+      source: {
+        x: bboxes.pressure.original[0] + (3 * bboxes.pressure.size[0]) / 4,
+        y: bboxes.pressure.original[1] + bboxes.pressure.size[1] / 4,
+      },
+      target: {
+        x: bboxes.state.original[0] + (3 * bboxes.state.size[0]) / 4,
+        y: bboxes.state.original[1] - bboxes.state.size[1] / 10,
+      },
+      reverse: true,
+    },
+    "state-pressure": {
       source: {
         x: bboxes.pressure.original[0] + bboxes.pressure.size[0],
         y: bboxes.pressure.original[1] + bboxes.pressure.size[1] / 4,
@@ -547,6 +583,7 @@ function generatePorts(bboxes) {
         x: bboxes.state.original[0] + (bboxes.state.size[0] * 1) / 4,
         y: bboxes.state.original[1],
       },
+      reverse: false,
     },
     "state-impact": {
       source: {
@@ -560,73 +597,141 @@ function generatePorts(bboxes) {
     },
     "impact-response": {
       source: {
-        x: bboxes.impact.original[0],
-        y: bboxes.impact.original[1] + bboxes.impact.size[1] / 2,
+        x: bboxes.impact.original[0] + bboxes.impact.size[0] / 4,
+        y: bboxes.impact.original[1] + (3 * bboxes.impact.size[1]) / 4,
       },
       target: {
-        x: bboxes.response.original[0] + bboxes.response.size[0],
-        y: bboxes.response.original[1] + bboxes.response.size[1] / 2,
+        x: bboxes.response.original[0] + (7 * bboxes.response.size[0]) / 8,
+        y: bboxes.response.original[1] + (3 * bboxes.response.size[1]) / 4,
       },
+      reverse: false,
+    },
+    "response-impact": {
+      source: {
+        x: bboxes.response.original[0] + bboxes.response.size[0] / 2,
+        y: bboxes.response.original[1] + (4 * bboxes.response.size[1]) / 4,
+      },
+      target: {
+        x: bboxes.impact.original[0],
+        y: bboxes.impact.original[1] + (4 * bboxes.impact.size[1]) / 4,
+      },
+      reverse: false,
     },
     "response-driver": {
       source: {
-        x: bboxes.response.original[0],
-        y: bboxes.response.original[1] + bboxes.response.size[1] / 2,
+        x: bboxes.response.original[0] + bboxes.response.size[0] / 4,
+        y: bboxes.response.original[1] + bboxes.response.size[1] / 4,
       },
       target: {
-        x: bboxes.driver.original[0] + bboxes.driver.size[0] / 4,
+        x: bboxes.driver.original[0] + (2 * bboxes.driver.size[0]) / 4,
         y: bboxes.driver.original[1] + bboxes.driver.size[1],
+      },
+      reverse: false,
+    },
+    "driver-response": {
+      source: {
+        x: bboxes.driver.original[0] + bboxes.driver.size[0] / 4,
+        y: bboxes.driver.original[1] + bboxes.driver.size[1] / 3,
+      },
+      target: {
+        x: bboxes.response.original[0] - bboxes.response.size[0] / 10,
+        y: bboxes.response.original[1] + bboxes.response.size[1] / 2,
       },
     },
     "driver-impact": {
       source: {
-        x: bboxes.driver.original[0] + bboxes.driver.size[0],
-        y: bboxes.driver.original[1] + bboxes.driver.size[1] / 2,
+        x: bboxes.driver.original[0] + bboxes.driver.size[0] / 3,
+        y: bboxes.driver.original[1] + (3 * bboxes.driver.size[1]) / 4,
       },
       target: {
         x: bboxes.impact.original[0] + bboxes.impact.size[0] * 0.3,
         y: bboxes.impact.original[1],
       },
+      reverse: true,
+    },
+    "impact-driver": {
+      source: {
+        x: bboxes.impact.original[0] + bboxes.impact.size[0] / 4,
+        y: bboxes.impact.original[1] + bboxes.impact.size[1] / 4,
+      },
+      target: {
+        x: bboxes.driver.original[0] + (3 * bboxes.driver.size[0]) / 4,
+        y: bboxes.driver.original[1] + (4 * bboxes.driver.size[1]) / 4,
+      },
+      reverse: true,
     },
     "pressure-impact": {
       source: {
-        x: bboxes.pressure.original[0] + bboxes.pressure.size[0] / 2,
-        y: bboxes.pressure.original[1] + bboxes.pressure.size[1],
+        x: bboxes.pressure.original[0] + (3 * bboxes.pressure.size[0]) / 4,
+        y: bboxes.pressure.original[1] + bboxes.pressure.size[1] / 2,
       },
       target: {
-        x: bboxes.impact.original[0] + bboxes.impact.size[0] * 0.3,
+        x: bboxes.impact.original[0] + (2 * bboxes.impact.size[0]) / 4,
         y: bboxes.impact.original[1],
+      },
+    },
+    "impact-pressure": {
+      source: {
+        x: bboxes.impact.original[0] + (4 * bboxes.impact.size[0]) / 5,
+        y: bboxes.impact.original[1] + bboxes.impact.size[1] / 4,
+      },
+      target: {
+        x: bboxes.pressure.original[0] + (4 * bboxes.pressure.size[0]) / 5,
+        y: bboxes.pressure.original[1] + (4 * bboxes.pressure.size[1]) / 5,
       },
     },
     "state-driver": {
       source: {
-        x: bboxes.state.original[0],
-        y: bboxes.state.original[1] + bboxes.state.size[1] / 2,
+        x: bboxes.state.original[0] + bboxes.state.size[0] / 5,
+        y: bboxes.state.original[1] + bboxes.state.size[1] / 10,
       },
       target: {
         x: bboxes.driver.original[0] + bboxes.driver.size[0],
-        y: bboxes.driver.original[1] + bboxes.driver.size[1] / 2,
+        y: bboxes.driver.original[1] + bboxes.driver.size[1] / 20,
+      },
+      reverse: true,
+    },
+    "driver-state": {
+      source: {
+        x: bboxes.driver.original[0] + (3 * bboxes.driver.size[0]) / 4,
+        y: bboxes.driver.original[1] + (3 * bboxes.driver.size[1]) / 4,
+      },
+      target: {
+        x: bboxes.state.original[0] + (1 * bboxes.state.size[0]) / 3,
+        y: bboxes.state.original[1] + (5 * bboxes.state.size[1]) / 4,
       },
     },
     "response-pressure": {
       source: {
         x: bboxes.response.original[0] + (bboxes.response.size[0] * 3) / 4,
-        y: bboxes.response.original[1],
+        y: bboxes.response.original[1] + (3 * bboxes.response.size[1]) / 4,
       },
       target: {
         x: bboxes.pressure.original[0] + bboxes.pressure.size[0] / 2,
         y: bboxes.pressure.original[1] + bboxes.pressure.size[1],
       },
     },
-    "response-state": {
+    "pressure-response": {
       source: {
+        x: bboxes.pressure.original[0] + bboxes.pressure.size[0] / 3,
+        y: bboxes.pressure.original[1] + (3 * bboxes.pressure.size[1]) / 4,
+      },
+      target: {
         x: bboxes.response.original[0] + (bboxes.response.size[0] * 3) / 4,
         y: bboxes.response.original[1],
       },
+      reverse: true,
+    },
+    "response-state": {
+      source: {
+        x: bboxes.response.original[0] + (bboxes.response.size[0] * 7) / 8,
+        y: bboxes.response.original[1] + bboxes.response.size[1] / 3,
+      },
       target: {
         x: bboxes.state.original[0],
-        y: bboxes.state.original[1] + bboxes.state.size[1] / 2,
+        y: bboxes.state.original[1] + bboxes.state.size[1] / 1,
       },
+      reverse: true,
     },
   };
 }

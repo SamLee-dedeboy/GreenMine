@@ -16,18 +16,18 @@
   } from "../types";
   import { varTypeColorScale } from "lib/store";
   import KeywordSea from "lib/components/KeywordSea.svelte";
-    // import { group } from "console";
+  // import { group } from "console";
   export let data: tDPSIR;
   export let links: tVisLink[];
   const svgId = "model-svg";
 
   const utilities = ["add", "remove", "edit"];
   let bboxes = {
-    driver: { center: [58, 100], size: [0, 0] },
-    pressure: { center: [170, 50], size: [0, 0] },
-    state: { center: [260, 100], size: [0, 0] },
-    impact: { center: [210, 190], size: [0, 0] },
-    response: { center: [90, 190], size: [0, 0] },
+    driver: { center: [58, 90], size: [0, 0] },
+    pressure: { center: [170, 30], size: [0, 0] },
+    state: { center: [270, 75], size: [0, 0] },
+    impact: { center: [240, 190], size: [0, 0] },
+    response: { center: [70, 210], size: [0, 0] },
   };
   let box_states = {
     driver: { selected: false },
@@ -104,7 +104,7 @@
   }
 
   function handleVarOrLinkSelected(e) {
-    console.log("varOrLink",e);
+    console.log("varOrLink", e);
     const variable: tVariable = e;
     selectedVar = variable;
     dispatch("var-selected", selectedVar); // for App.svelte to hightlight the chunks
@@ -138,7 +138,7 @@
     }
   }
   function handleOverviewVarTypeUnSelected(e) {
-    console.log("unselected",e);
+    console.log("unselected", e);
     if (e !== null) {
       const var_type = e;
       const group = d3.select(`g.${var_type}_region`);
@@ -149,7 +149,7 @@
       OverviewDPSIR.drawVars(data[var_type], bboxes[var_type]);
     } else {
       Constants.var_type_names.forEach((var_type) => {
-        if(box_states[var_type].selected){
+        if (box_states[var_type].selected) {
           const group = d3.select(`g.${var_type}_region`);
           group.selectAll("g.tag").remove();
           group.selectAll("image").remove();
@@ -167,15 +167,14 @@
   function switchRenderer() {
     currentRenderer =
       currentRenderer === "OverviewDPSIR" ? "DPSIR" : "OverviewDPSIR";
-    if(currentRenderer === "DPSIR"){
+    if (currentRenderer === "DPSIR") {
       vartypeunselected_flag = false;
-      console.log("VarTypeUnSelected will not be triggered in detail mode")
-    }
-    else{
+      console.log("VarTypeUnSelected will not be triggered in detail mode");
+    } else {
       vartypeunselected_flag = true;
-      console.log("VarTypeUnSelected will be triggered in overview mode")
+      console.log("VarTypeUnSelected will be triggered in overview mode");
     }
-   
+
     initializeRenderer(currentRenderer, selectedType);
   }
 
