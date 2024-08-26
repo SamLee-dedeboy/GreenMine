@@ -65,6 +65,7 @@ export class KeyWordSea {
     filter_min_stat: number,
     color: string,
   ) {
+    color = "#0d6db1";
     const xScale = this.xScale_keywords;
     const yScale = this.yScale_keywords;
     // console.log(this.keyword_region_size.width)
