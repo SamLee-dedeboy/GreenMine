@@ -185,7 +185,7 @@
     DPSIR.on("VarOrLinkSelected", handleVarOrLinkSelected);
     DPSIR.on("VarTypeUnSelected", handleOverviewVarTypeUnSelected);
     // Remove tooltip if it exists
-    d3.select("body").selectAll(".tooltip-content").remove();
+    // d3.select("body").selectAll(".tooltip-content").remove();
     OverviewDPSIR.on("VarTypeLinkSelected", handleVarTypeLinkSelected);
     OverviewDPSIR.on("VarTypeHovered", handleOverviewVarTypeHovered);
     OverviewDPSIR.on("VarTypeSelected", handleOverviewVarTypeSelected);
@@ -218,6 +218,7 @@
   <svg id={svgId} class="varbox-svg relative h-full w-full">
     <defs></defs>
   </svg>
+  <div class="tooltip-content"></div>
 </div>
 
 <style lang="postcss">
@@ -265,6 +266,22 @@
       stroke: gray;
       stroke-width: 1;
       filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.7));
+    }
+  }
+  .tooltip-content {
+    position: absolute;
+    background: rgb(249, 250, 251);
+    width: fit;
+    white-space: nowrap;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 5px;
+    outline: 1.5px solid gray;
+    /* box-shadow: 0px 1px 2px rgba(0, 0, 0, 1); */
+    margin-left: 10px;
+    font-size: 1rem;
+    & span {
+      @apply rounded px-1 capitalize text-[#222222];
     }
   }
 </style>

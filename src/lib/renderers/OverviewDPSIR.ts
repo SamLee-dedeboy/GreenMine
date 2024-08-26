@@ -286,20 +286,20 @@ export const OverviewDPSIR = {
     };
 
     const svg = d3.select("#" + this.svgId);
-    const tooltip = d3
-      .select("body")
-      .append("div")
-      .attr("class", "tooltip-content")
-      .style("position", "absolute")
-      .style("visibility", "hidden")
-      .style("background", "rgb(249 250 251)")
-      .style("width", "170px")
-      .style("text-align", "center")
-      .style("border-radius", "6px")
-      .style("padding", "5px 5px")
-      .style("border", "2px solid grey")
-      .style("margin-left", "10px")
-      .style("font-size", "0.8rem");
+    const tooltip = d3.select(".tooltip-content");
+    // .select("body")
+    // .append("div")
+    // .attr("class", "tooltip-content")
+    // .style("position", "absolute")
+    // .style("visibility", "hidden")
+    // .style("background", "rgb(249 250 251)")
+    // .style("width", "170px")
+    // .style("text-align", "center")
+    // .style("border-radius", "6px")
+    // .style("padding", "5px 5px")
+    // .style("border", "2px solid grey")
+    // .style("margin-left", "10px")
+    // .style("font-size", "0.8rem");
 
     if (svg.select("defs").empty()) {
       svg.append("defs");
@@ -359,10 +359,10 @@ export const OverviewDPSIR = {
         tooltip
           .html(
             `
-            <span style="background-color: ${self.varTypeColorScale(d.source)}">${d.source}</span>
+            <span style="background-color: ${setOpacity(self.varTypeColorScale(d.source), 0.7, "rgbHex")}">${d.source}</span>
             &rarr;
-            <span style="background-color: ${self.varTypeColorScale(d.target)}">${d.target}</span>
-            : ${d.count}
+            <span style="background-color: ${setOpacity(self.varTypeColorScale(d.target), 0.7, "rgbHex")}">${d.target}</span>
+            : ${d.count} occurrences
           `,
           )
           .style("visibility", "visible");

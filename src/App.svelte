@@ -275,7 +275,9 @@
           }}
         ></ControlPanel>
       </div>
-      <div class="flex h-full w-[75%] flex-col items-center justify-center">
+      <div
+        class="z-10 flex h-full w-[75%] flex-col items-center justify-center"
+      >
         <div class="relative h-full w-full">
           <!-- <div
             class="title absolute left-6 top-1 w-fit rounded px-4 py-4 text-left text-sky-600"
