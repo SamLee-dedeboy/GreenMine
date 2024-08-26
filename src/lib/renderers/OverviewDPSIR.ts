@@ -488,9 +488,8 @@ export const OverviewDPSIR = {
       .attr("text-transform", "capitalize")
       .attr("pointer-events", "none")
       .attr("font-family", "serif")
-      // .attr("font-family", "Montserrat Alternate")
       .attr("font-style", "italic")
-      .attr("font-size", "2.5rem")
+      .attr("font-size", "3rem")
       .attr("font-weight", "bold")
       .attr("fill", "#636363");
     //   .attr("stroke", "black")  // Add black stroke

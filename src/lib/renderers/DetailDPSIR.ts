@@ -48,8 +48,8 @@ export const DPSIR = {
         .append("g")
         .attr("class", `${var_type_name}_region`);
       // .attr("transform", `translate(${padding.left}, ${padding.top})`);
-      var_type_region.append("g").attr("class", "tag-group");
       var_type_region.append("g").attr("class", "bbox-group");
+      var_type_region.append("g").attr("class", "tag-group");
     });
   },
   on(event, handler) {
@@ -755,14 +755,22 @@ export const DPSIR = {
     //   .attr("opacity", "0.1"); //do not show the bounding box
 
     //group name for clicking
-    // group
-    //   .select("g.bbox-group")
-    //   .append("rect")
-    //   .attr("class", "bbox-label-container")
-    //   .attr("x", bbox_center[0] - ((var_type_name.length + 1) * 25) / 2)
-    //   .attr("y", bbox_center[1] - bboxHeight / 2 - 38)
-    //   .attr("width", (var_type_name.length + 1) * 25)
-    //   .attr("height", 45)
+    const bbox_coordinates = grid_layout.gridToSvgCoordinate(
+      bbox_center[0],
+      bbox_center[1],
+      cellWidth,
+      cellHeight,
+    );
+    group
+      .select("g.bbox-group")
+      .append("rect")
+      .attr("class", "bbox-label-container")
+      .attr("x", bbox_coordinates.x - (bboxWidth * cellWidth) / 2)
+      .attr("y", bbox_coordinates.y - (bboxHeight * cellHeight) / 2)
+      .attr("width", bboxWidth * cellWidth)
+      .attr("height", bboxHeight * cellHeight)
+      .attr("fill", "white")
+      .lower();
     //   .attr("fill", varTypeColorScale(var_type_name))
     //   .attr("rx", "0.5%")
     //   .attr("opacity", 0)

@@ -179,8 +179,8 @@
 
   function initializeRenderer(renderer, selectedType) {
     d3.select(`#${svgId}`).selectAll("*").remove();
-    DPSIR.init(svgId, utilities);
     OverviewDPSIR.init(svgId);
+    DPSIR.init(svgId, utilities);
 
     DPSIR.on("VarOrLinkSelected", handleVarOrLinkSelected);
     DPSIR.on("VarTypeUnSelected", handleOverviewVarTypeUnSelected);
