@@ -412,12 +412,16 @@ export function adjustRectangleHeights(
   middle_row_number: number,
 ) {
   const defaultHeight = rectangles[0].height;
+  const max_height = 20;
 
   // Rule 1: Adjust top four elements
   for (let i = 0; i < 4 && i < rectangles.length; i++) {
     let rect = rectangles[i];
-    while (rect.height + rect.width < rect.outgroup_degree) {
-      rect.height = Math.round(rect.outgroup_degree - rect.width);
+    if (rect.height + rect.width < rect.outgroup_degree) {
+      rect.height = Math.min(
+        max_height,
+        Math.round(rect.outgroup_degree - rect.width),
+      );
     }
   }
 
@@ -449,7 +453,10 @@ export function adjustRectangleHeights(
   );
   for (let rect of selectedMiddleRectangles) {
     if (rect.outgroup_degree !== 0) {
-      rect.height = Math.round(Math.max(defaultHeight, rect.outgroup_degree));
+      rect.height = Math.min(
+        max_height,
+        Math.round(Math.max(defaultHeight, rect.outgroup_degree)),
+      );
     } else {
       rect.height = defaultHeight;
     }
@@ -466,7 +473,7 @@ export function adjustRectangleHeights(
 
 export function squareLayout(
   _rectangles: tRectangle[],
-  bboxes: { center: [number, number]; size: [number, number] },
+  bbox: { center: [number, number]; size: [number, number] },
 ) {
   // create a local rectangle array to avoid modifying the original array
   const rectangles = _rectangles.map((rect) => {
@@ -476,8 +483,8 @@ export function squareLayout(
       height: Math.round(rect.height),
     };
   });
-  const center = bboxes.center;
-  const y_offset = 1;
+  const center = bbox.center;
+  const y_offset = 3;
   const rect_width = rectangles[0].width;
 
   //TODO: adjust the number of rectangles in the first row based on the ratio of w and h
@@ -516,10 +523,10 @@ export function squareLayout(
     ...otherRectangles.slice(first_row_rect_number - 2),
     topFour[3],
   ];
+  // return;
 
   let last_row_rect_number =
     rearrangedRectangles.length - first_row_rect_number - middle_row_number * 2;
-
   // Correct box_height calculation
   let box_height = 0;
 
@@ -549,12 +556,7 @@ export function squareLayout(
 
   // Add y_offset between rows
   box_height +=
-    (first_row_rect_number > 0
-      ? 1
-      : 0 + middle_row_number + (last_row_rect_number > 0 ? 1 : 0) - 1) *
-    y_offset;
-
-  box_height = Math.round(box_height);
+    (middle_row_number > 0 ? y_offset : 0) + middle_row_number * y_offset;
 
   const box_width = Math.round(
     Math.max(
@@ -563,7 +565,7 @@ export function squareLayout(
     ),
   );
   // console.log(bboxes);
-  bboxes.size = [box_width, box_height];
+  bbox.size = [box_width, box_height];
 
   let first_space_between_rectangles = Math.round(
     (box_width - rect_width * first_row_rect_number) /
@@ -678,7 +680,7 @@ export function squareLayout(
     ]);
   }
 
-  return rectangleCoordinates;
+  return { rectangleCoordinates, bbox };
 }
 export function combineData(
   vars: tVariableType,

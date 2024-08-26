@@ -167,7 +167,7 @@ export const DPSIR = {
           return {
             name,
             width: rectWidth,
-            height: 6, // height might be adjusted later as needed
+            height: 12, // height might be adjusted later as needed
             outgroup_degree: linkCount[name].outGroup_link,
           };
         })
@@ -176,10 +176,11 @@ export const DPSIR = {
             linkCount[b.name].outGroup_link - linkCount[a.name].outGroup_link,
         );
       // console.log({ rectangles });
-      const rectangleCoordinates = grid_layout.squareLayout(
+      const { rectangleCoordinates, bbox } = grid_layout.squareLayout(
         rectangles,
         bboxes[varType],
       );
+      bboxes[varType] = bbox;
       rects[varType] = rectangleCoordinates;
     });
     return [rects, bboxes];
