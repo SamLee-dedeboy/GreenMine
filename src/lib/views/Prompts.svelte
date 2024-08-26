@@ -1,11 +1,11 @@
 <script lang="ts">
-  import PromptEntry from "./DataEntry/PromptEntry.svelte";
+  import PromptEntry from "../components/DataEntry/PromptEntry.svelte";
   import IdentifyVarTypeResults from "lib/components/PipelineResult/IdentifyVarTypeResults.svelte";
   import IdentifyVarResults from "lib/components/PipelineResult/IdentifyVarResults.svelte";
   import IdentifyLinkResults from "lib/components/PipelineResult/IdentifyLinkResults.svelte";
   import VarTypeDataEntry from "lib/components/DataEntry/VarTypeDataEntry.svelte";
   import VarDataEntry from "lib/components/DataEntry/VarDataEntry.svelte";
-  import PromptHeader from "./PromptHeader.svelte";
+  import PromptHeader from "../components/PromptHeader.svelte";
   import { fade, slide, fly, blur, draw, crossfade } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
 

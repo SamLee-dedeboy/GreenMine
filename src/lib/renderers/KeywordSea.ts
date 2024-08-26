@@ -29,6 +29,10 @@ export class KeyWordSea {
     this.dispatch = d3.dispatch("keywordsSelected");
     this.width = svgWidth;
     this.height = svgHeight;
+    d3.select("#" + this.svgId).attr(
+      "viewBox",
+      "0 0 " + this.width + " " + this.height,
+    );
     // bin radius is the distance from the center to the vertex of a hexagon, so vertical and horizontal distances are different
     // the width of each hexagon is radius × 2 × sin(π / 3) and the height of each hexagon is radius × 3 / 2.
     this.paddings = {
@@ -59,6 +63,7 @@ export class KeyWordSea {
     keyword_data: tKeywordData,
     stat_key: string,
     filter_min_stat: number,
+    color: string,
   ) {
     const xScale = this.xScale_keywords;
     const yScale = this.yScale_keywords;
@@ -85,10 +90,14 @@ export class KeyWordSea {
         (keyword) => keyword_data.keyword_statistics[keyword][stat_key],
       );
     const binMaxStat = d3.max(data_bins, binSumStat);
-    const scaleColor = d3.scaleSequential(
-      [0, Math.sqrt(binMaxStat)],
-      d3.interpolateBlues,
-    );
+    // const scaleColor = d3.scaleSequential(
+    //   [0, Math.sqrt(binMaxStat)],
+    //   d3.interpolateBlues,
+    // );
+    const scaleColor = d3
+      .scaleLinear()
+      .domain([0, Math.sqrt(binMaxStat)])
+      .range(["#f7f7f7", color]);
     const hex_centers = hexbin.centers();
     const find_closest_hex_index = (x, y) => {
       let min_dist = 100000;
@@ -125,8 +134,8 @@ export class KeyWordSea {
       .attr("cursor", "pointer")
       .on("mousemove", function (e) {
         d3.select(".tooltip")
-          .style("left", e.clientX + 10 + "px")
-          .style("top", e.clientY - 30 + "px");
+          .style("left", e.layerX + 10 + "px")
+          .style("top", e.layerY - 30 + "px");
       })
       .on("mouseover", function (e, d) {
         d3.select(this).classed("hex-hover", true).raise();

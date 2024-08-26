@@ -24,7 +24,8 @@
   import { server_address } from "lib/constants";
   import * as d3 from "d3";
   import { varTypeColorScale } from "lib/store";
-  import Prompts from "lib/components/Prompts.svelte";
+  import Prompts from "lib/views/Prompts.svelte";
+  import KeywordSeaViewer from "lib/views/KeywordSeaViewer.svelte";
   // import { version } from "os";
 
   let interview_data: tTranscript[];
@@ -38,6 +39,7 @@
   let data_loading: boolean = true;
   let show_dpsir: boolean = true;
   let show_prompts: boolean = false;
+  let show_keywordsea: boolean = false;
   // let versions: string[] = [];
   let log_record: any;
   let selectedTitle = "baseline";
@@ -248,6 +250,17 @@
           ></Prompts>
         </div>
       {/if}
+      {#if show_keywordsea}
+        <div
+          class="absolute left-1/4 top-1/2 z-10 flex h-[80vh] w-[70vw] min-w-[85rem] -translate-x-1/4 -translate-y-1/2 items-stretch rounded-md bg-gray-200 pt-6 shadow-md outline outline-1 outline-gray-300"
+          use:draggable
+        >
+          <KeywordSeaViewer
+            data={var_data}
+            on:close={() => (show_keywordsea = false)}
+          ></KeywordSeaViewer>
+        </div>
+      {/if}
       <div
         class="ml-1 mt-2 flex flex-col bg-gray-200 pt-2 outline-double outline-2 outline-gray-300"
         use:draggable
@@ -256,6 +269,9 @@
           on:toggle-viz={() => (show_dpsir = !show_dpsir)}
           on:toggle-prompt={() => {
             show_prompts = !show_prompts;
+          }}
+          on:toggle-keywordsea={() => {
+            show_keywordsea = !show_keywordsea;
           }}
         ></ControlPanel>
       </div>

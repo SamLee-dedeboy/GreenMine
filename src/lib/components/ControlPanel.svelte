@@ -8,6 +8,15 @@
     tabindex="0"
     role="button"
     class="controller-button"
+    on:click={() => dispatch("toggle-keywordsea")}
+    on:keyup={() => {}}
+  >
+    <img src="hex.svg" alt="tab" class="h-6 w-6" />
+  </div>
+  <div
+    tabindex="0"
+    role="button"
+    class="controller-button"
     on:click={() => dispatch("toggle-viz")}
     on:keyup={() => {}}
   >

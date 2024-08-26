@@ -17,7 +17,7 @@ import type {
 import * as Constants from "../constants";
 import * as grid_layout from "./grid_layout";
 import { toggle } from "@melt-ui/svelte/internal/helpers";
-import ReportViewer from "lib/v1/ReportViewer.svelte";
+import { setOpacity } from "lib/utils";
 
 export const OverviewDPSIR = {
   init(svgId: string) {
@@ -435,16 +435,16 @@ export const OverviewDPSIR = {
       )
       .attr("width", bboxWidth * cellWidth)
       .attr("height", bboxHeight * cellHeight)
-      .attr("fill", varTypeColorScale(var_type_name))
+      .attr("fill", setOpacity(varTypeColorScale(var_type_name), 0.8, "rgbHex"))
       .attr("rx", "0.4%")
       .attr("cursor", "pointer")
       .on("mouseover", function () {
         // self.dispatch.call("VarTypeHovered", null, var_type_name);
         // apply hovering effect
-        // d3.select(this).classed("overview-var-type-hover", true);
+        d3.select(this).classed("overview-var-type-hover", true);
       })
       .on("mouseout", function () {
-        self.dispatch.call("VarTypeHovered", null, undefined);
+        // self.dispatch.call("VarTypeHovered", null, undefined);
         d3.select(this).classed("overview-var-type-hover", false);
       })
       .on("click", function (event) {

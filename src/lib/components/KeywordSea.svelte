@@ -7,13 +7,32 @@
   export let data: tKeywordData;
   export let key: string = "keyword";
   const svgId = `keyword-sea-${key}-svg`;
-  const svgSize = { width: 800, height: 600 };
   const keyword_sea_renderer = new KeyWordSea();
+  let mounted = false;
 
+  $: if (mounted) {
+    keyword_sea_renderer.update_keywords(
+      data,
+      "tf_idf",
+      0.5,
+      $varTypeColorScale(key),
+    );
+  }
   onMount(() => {
     console.log("keyword sea: ", { data });
+    const container = document.querySelector(".keywordsea-container")!;
+    const svgSize = {
+      width: container.clientWidth,
+      height: container.clientHeight,
+    };
     keyword_sea_renderer.init(svgId, svgSize.width, svgSize.height);
-    keyword_sea_renderer.update_keywords(data, "tf_idf", 0.5);
+    keyword_sea_renderer.update_keywords(
+      data,
+      "tf_idf",
+      0.5,
+      $varTypeColorScale(key),
+    );
+    mounted = true;
   });
 </script>
 
@@ -27,5 +46,5 @@
   <div
     class="tooltip pointer-events-none absolute h-fit w-fit rounded border border-black bg-white py-1 pl-0.5 pr-1 text-xs opacity-0"
   ></div>
-  <svg id={svgId} viewBox={`0 0 ${svgSize.width} ${svgSize.height}`}></svg>
+  <svg id={svgId}></svg>
 </div>
