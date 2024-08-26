@@ -16,7 +16,7 @@ import * as grid_layout from "./grid_layout";
 
 export const DPSIR = {
   init(svgId: string, utilities: string[]) {
-    console.log("init detailed");
+    // console.log("init detailed");
     this.clicked_rect = null;
     this.clicked_link = null;
     this.width = 1550;
@@ -33,7 +33,7 @@ export const DPSIR = {
     this.dispatch = d3.dispatch("VarOrLinkSelected", "VarTypeUnSelected");
     this.utilities = utilities;
     this.varTypeColorScale = null;
-    this.showLinks = true;
+    // this.showLinks = true;
     // this.enable = false;
     const self = this;
     const svg = d3
@@ -56,7 +56,7 @@ export const DPSIR = {
     this.dispatch.on(event, handler);
   },
 
-  resetHighlights() {
+  resetHighlights(flag: boolean) {
     d3.selectAll("rect.box")
       .classed("box-highlight", false)
       .classed("box-not-highlight", false)
@@ -74,14 +74,17 @@ export const DPSIR = {
     // .attr("marker-end", "");
     console.log("click on svg");
     this.dispatch.call("VarOrLinkSelected", null, null);
-    this.dispatch.call("VarTypeUnSelected", null, null);
+    if (flag) {
+      this.dispatch.call("VarTypeUnSelected", null, null);
+    }
+    // this.dispatch.call("VarTypeUnSelected", null, null);
     this.clicked_link = null;
     this.clicked_rect = null;
   },
 
-  toggleLinks(showLinks: boolean) {
-    this.showLinks = showLinks;
-  },
+  // toggleLinks(showLinks: boolean) {
+  //   this.showLinks = showLinks;
+  // },
   categorizedLinkByVarType(
     vars: Record<string, { variable_mentions: Record<string, any> }>,
     links: Array<{
@@ -262,13 +265,13 @@ export const DPSIR = {
     this.varTypeColorScale = varTypeColorScale;
     const self = this;
     const var_type_name = vars.variable_type;
-    console.log(rectangleCoordinates);
+    // console.log(rectangleCoordinates);
     const rectWithVar = grid_layout.combineData(
       vars,
       rectangleCoordinates,
       this.grid_renderer?.global_grid,
     ); //return as an object
-    console.log(rectWithVar);
+    // console.log(rectWithVar);
     //merge all rects info(grid coordinate position and size) to a global var
     rectWithVar.forEach((rect) => {
       self.global_rects?.push(rect);
@@ -374,7 +377,7 @@ export const DPSIR = {
         return aDistance - bDistance;
       }
     });
-    console.log("link sort done");
+    // console.log("link sort done");
 
     const svg = d3.select("#" + this.svgId);
     const mergedData: (tLinkObject | undefined)[] = links.map((link) => {
@@ -427,7 +430,7 @@ export const DPSIR = {
         mentions: link.mentions,
       };
     });
-    console.log("link merged");
+    // console.log("link merged");
     let filteredMergeData: tLinkObject[] = mergedData.filter(
       (data) => data !== null,
     ) as tLinkObject[];
@@ -487,7 +490,7 @@ export const DPSIR = {
         linkCounts[targetVarName].OutGroup_links += 1;
       }
     });
-    console.log(filteredMergeData);
+    // console.log(filteredMergeData);
     // // filteredMergeData = filteredMergeData.slice(0, 10);
     // console.log("link filtered");
     const points = grid_layout.generatePoints(linkCounts);
@@ -586,13 +589,13 @@ export const DPSIR = {
       })
       .attr("opacity", (d) => {
         if (d.source.var_type == d.target.var_type) {
-          return self.showLinks ? 0.2 : 0;
+          return 0.2
         } else {
-          return self.showLinks ? 0.5 : 0;
+          return 0.5
         }
       })
       .on("mouseover", function (e, d: tLinkObject) {
-        d3.select(this).classed("line-hover", self.showLinks === true);
+        d3.select(this).classed("line-hover", true);
         // .attr("stroke", (d: tLinkObject) => {
         //   // const svg = d3.select("#" + self.svgId);
         //   // return createOrUpdateGradient(svg, d, self);
@@ -696,7 +699,7 @@ export const DPSIR = {
         });
       next_path_index++;
       if (next_path_index >= link_paths.size()) {
-        console.log("done");
+        // console.log("done");
         t.stop();
         // this.enable = !this.enable;
         isTimerRunning = false;
@@ -953,7 +956,7 @@ export const DPSIR = {
       rectWithVar,
       "*",
     );
-    console.log({ rectWithVar });
+    // console.log({ rectWithVar });
     group
       .select("g.tag-group")
       .selectAll("g.tag")
@@ -997,7 +1000,7 @@ export const DPSIR = {
             d3.select(this.parentNode).select(".tooltip").attr("opacity", 0);
           })
           .on("click", function (e) {
-            console.log("show links", self.showLinks);
+            // console.log("show links", self.showLinks);
             e.preventDefault();
             d3.selectAll("rect.box")
               .transition()
@@ -1034,7 +1037,7 @@ export const DPSIR = {
               self.clicked_rect = d;
 
               // self.handlers.VarOrLinkSelected(d);
-              console.log(d);
+              // console.log(d);
               self.dispatch.call("VarOrLinkSelected", null, d); //this refer to the context of the event
               d3.select(this)
                 .classed("box-highlight", true)

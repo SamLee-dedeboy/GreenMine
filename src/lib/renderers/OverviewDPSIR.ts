@@ -80,13 +80,12 @@ export const OverviewDPSIR = {
     d3.selectAll("path.link")
       .classed("link-highlight", false)
       .classed("link-not-highlight", false)
-      .classed("not-show-link-not-highlight", false)
+    //   .classed("not-show-link-not-highlight", false)
       .attr("stroke", "gray");
     this.dispatch.call("VarTypeLinkSelected", null, null);
     this.dispatch.call("VarTypeHovered", null, null);
     this.dispatch.call("VarTypeSelected", null, null);
     this.clicked_link = null;
-    //   self.clicked_rect = null;
   },
   //   toggleLinks(showLinks: boolean) {
   //     this.showLinks = showLinks;
@@ -178,7 +177,7 @@ export const OverviewDPSIR = {
     bboxes: { center: [number, number]; size: [number, number] },
   ) {
     const self = this;
-    console.log(bboxes);
+    // console.log(bboxes);
     let cellWidth: number = self.cellWidth;
     let cellHeight: number = self.cellHeight;
     // const frequencyList = calculateFrequencyList(links); // includes variables frequency and link frequency among all groups
@@ -437,7 +436,7 @@ export const OverviewDPSIR = {
       })
       .on("click", function (event) {
         event.preventDefault();
-        console.log("click", var_type_name);
+        // console.log("click", var_type_name);
         self.dispatch.call("VarTypeSelected", null, var_type_name);
       });
     //   .attr("stroke", "grey")
