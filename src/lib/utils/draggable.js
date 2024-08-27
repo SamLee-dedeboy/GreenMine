@@ -9,7 +9,7 @@ export function draggable(node) {
   node.style.position = "absolute";
   node.style.cursor = "move";
   node.style.userSelect = "none";
-  node.style.zIndex = "10";
+  node.style.zIndex = "20";
   node.childNodes.forEach((child) => {
     child.addEventListener("mousedown", (e) => {
       e.stopPropagation();

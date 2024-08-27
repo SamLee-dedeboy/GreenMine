@@ -137,24 +137,21 @@
     }
   }
   function handleOverviewVarTypeUnSelected(e) {
+    function removeVarTypeBbox(var_type) {
+      const group = d3.select(`g.${var_type}_region`);
+      group.select("g.bbox-group").selectAll("*").remove();
+      group.select("g.tag-group").selectAll("*").remove();
+      box_states[var_type].selected = false;
+      OverviewDPSIR.drawVars(data[var_type], bboxes[var_type]);
+    }
     console.log("unselected", e);
     if (e !== null) {
       const var_type = e;
-      const group = d3.select(`g.${var_type}_region`);
-      group.selectAll("g.tag").remove();
-      group.selectAll("image").remove();
-      d3.select(`text.bbox-label#` + `${var_type}` + `_label`).remove();
-      box_states[var_type].selected = false;
-      OverviewDPSIR.drawVars(data[var_type], bboxes[var_type]);
+      removeVarTypeBbox(var_type);
     } else {
       Constants.var_type_names.forEach((var_type) => {
         if (box_states[var_type].selected) {
-          const group = d3.select(`g.${var_type}_region`);
-          group.selectAll("g.tag").remove();
-          group.selectAll("image").remove();
-          d3.select(`text.bbox-label#` + `${var_type}` + `_label`).remove();
-          box_states[var_type].selected = false;
-          OverviewDPSIR.drawVars(data[var_type], bboxes[var_type]);
+          removeVarTypeBbox(var_type);
         }
       });
     }
@@ -209,15 +206,15 @@
       }}
       >{showLinks ? 'Hide Other Links' : 'Show Other Links'}</button
     > -->
+  <svg id={svgId} class="varbox-svg relative h-full w-full">
+    <defs></defs>
+  </svg>
   <button
     class="absolute right-4 top-4 rounded-md bg-gray-300 p-2 text-black transition-colors hover:bg-gray-500 hover:text-white"
     on:click={switchRenderer}
   >
-    Switch to {currentRenderer === "OverviewDPSIR" ? "DPSIR" : "Overview"}
+    Show {currentRenderer === "OverviewDPSIR" ? "Full Detail" : "Overview"}
   </button>
-  <svg id={svgId} class="varbox-svg relative h-full w-full">
-    <defs></defs>
-  </svg>
   <div class="tooltip-content"></div>
 </div>
 
