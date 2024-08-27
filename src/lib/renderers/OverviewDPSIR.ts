@@ -256,7 +256,7 @@ export const OverviewDPSIR = {
 
     // Modify the lineGenerator function to handle the direction
     const lineGenerator = (link) => {
-    //   console.log({ link });
+      //   console.log({ link });
       const sourcePoint = grid_layout.gridToSvgCoordinate(
         link.source_center[0],
         link.source_center[1],
@@ -412,7 +412,7 @@ export const OverviewDPSIR = {
     const group = d3
       .select("#" + this.svgId)
       .select(`.overview_${var_type_name}_region`);
-
+    group.select("g.bbox-group").select("rect").remove();
     group
       .select("g.bbox-group")
       .append("rect")

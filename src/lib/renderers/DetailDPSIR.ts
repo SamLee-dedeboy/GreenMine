@@ -42,15 +42,17 @@ export const DPSIR = {
 
     // this.drawGids(svg, svgId);
     // .attr("transform", `translate(${padding.left}, ${padding.top})`);
+    const bbox_group = svg.append("g").attr("class", "detail-bbox-group");
+    const link_group = svg.append("g").attr("class", "detail-link-group");
+    const tag_group = svg.append("g").attr("class", "detail-tag-group");
     Constants.var_type_names.forEach((var_type_name) => {
-      const var_type_region = svg
-        .append("g")
-        .attr("class", `${var_type_name}_region`);
+      bbox_group.append("g").attr("class", `${var_type_name}`);
+      tag_group.append("g").attr("class", `${var_type_name}`);
+      // const var_type_region = svg
+      //   .append("g")
+      //   .attr("class", `${var_type_name}_region`);
       // .attr("transform", `translate(${padding.left}, ${padding.top})`);
-      var_type_region.append("g").attr("class", "bbox-group");
-      var_type_region.append("g").attr("class", "tag-group");
     });
-    svg.append("g").attr("class", "detail_link_group");
   },
   on(event, handler) {
     this.dispatch.on(event, handler);
@@ -559,7 +561,7 @@ export const DPSIR = {
     };
 
     const link_paths = svg
-      .select("g.detail_link_group")
+      .select("g.detail-link-group")
       .selectAll(".link")
       .data(filteredMergeData)
       .join("path")
@@ -733,7 +735,8 @@ export const DPSIR = {
     let varTypeColorScale = self.varTypeColorScale;
     const group = d3
       .select("#" + this.svgId)
-      .select(`.${var_type_name}_region`);
+      .select("g.detail-bbox-group")
+      .select(`.${var_type_name}`);
 
     // group bounding box
     // group
@@ -774,7 +777,6 @@ export const DPSIR = {
       cellHeight,
     );
     group
-      .select("g.bbox-group")
       .append("rect")
       .attr("class", "bbox-label-container")
       .attr("x", bbox_coordinates.x - (bboxWidth * cellWidth) / 2)
@@ -808,7 +810,7 @@ export const DPSIR = {
 
     //group name
     group
-      .select("g.bbox-group")
+      // .select("g.detail-bbox-group")
       .append("text")
       .attr("class", "bbox-label")
       .attr("id", `${var_type_name}` + `_label`)
@@ -859,7 +861,7 @@ export const DPSIR = {
 
     //group icon
     group
-      .select("g.bbox-group")
+      // .select("g.detail-bbox-group")
       .append("image")
       .attr("xlink:href", function () {
         return var_type_name === "driver"
@@ -910,7 +912,7 @@ export const DPSIR = {
       .select("#" + this.svgId)
       .select(`.${var_type_name}_region`);
     const utility_group = group
-      .select("g.bbox-group")
+      .select("g.detail-bbox-group")
       .append("g")
       .attr("class", "utility-group")
       .attr("opacity", 0)
@@ -969,7 +971,8 @@ export const DPSIR = {
     let cellHeight: number = self.cellHeight;
     const group = d3
       .select("#" + this.svgId)
-      .select(`.${var_type_name}_region`);
+      .select("g.detail-tag-group")
+      .select(`.${var_type_name}`);
     // mark rect with "*" in the grid
     grid_layout.markOccupiedGrid(
       this.grid_renderer?.global_grid,
@@ -978,7 +981,6 @@ export const DPSIR = {
     );
     // console.log({ rectWithVar });
     group
-      .select("g.tag-group")
       .selectAll("g.tag")
       .data(rectWithVar)
       .join("g")
@@ -1008,7 +1010,7 @@ export const DPSIR = {
             d.degree !== 0 ? scaleVarColor(d.degree) : "#cdcdcd",
           )
           .attr("rx", "0.2%")
-          .attr("opacity", "0.8")
+          .attr("opacity", "1")
           .attr("cursor", "pointer")
           .on("mouseover", function () {
             d3.select(this).classed("box-hover", true);

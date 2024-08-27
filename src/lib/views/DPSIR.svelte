@@ -166,12 +166,10 @@
       DPSIR.drawLinks(links, bboxes, all_selected_types);
     }
   }
-  function handleOverviewVarTypeSelected(varTypeName: string) {
-    console.log("selected", varTypeName);
-    if (varTypeName !== null) {
-      const var_type = varTypeName;
-      const group = d3.select(`g.${var_type}_region`);
-      group.select("g.bbox-group").selectAll("*").remove();
+  function handleOverviewVarTypeSelected(var_type: string) {
+    console.log("selected", var_type);
+    if (var_type !== null) {
+      // d3.select("g.detail-bbox-group").select(`g.${varTypeName}`).remove();
       box_states[var_type].selected = true;
       group_name_clickable = true;
       DPSIR.drawVars(
@@ -192,14 +190,13 @@
   }
   function handleOverviewVarTypeUnSelected(var_type_name: string | null) {
     function removeVarTypeBbox(_var_type) {
-      const group = d3.select(`g.${_var_type}_region`);
-      group.select("g.bbox-group").selectAll("*").remove();
-      group.select("g.tag-group").selectAll("*").remove();
+      d3.select("g.detail-bbox-group").selectAll("g").selectAll("*").remove();
+      d3.select("g.detail-tag-group").selectAll("g").selectAll("*").remove();
       box_states[_var_type].selected = false;
       OverviewDPSIR.drawVars(data[_var_type], bboxes[_var_type]);
     }
     function removeVarTypeLinks(_var_type) {
-      const link_group = d3.select(".detail_link_group");
+      const link_group = d3.select(".detail-link-group");
       link_group.selectAll(`path.link.${_var_type}-${_var_type}`).remove();
     }
     console.log("unselected", var_type_name);
@@ -309,12 +306,12 @@
       stroke-width: 3;
     }
     & .box-highlight {
-      opacity: 1;
-      /* stroke: black; */
-      /* stroke-width: 3; */
+      /* opacity: 1; */
+      stroke: black;
+      stroke-width: 3;
     }
     & .box-not-highlight {
-      opacity: 0.5;
+      /* opacity: 0.5; */
     }
     & .box-label-highlight {
       opacity: 1;
