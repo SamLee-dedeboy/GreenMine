@@ -107,14 +107,14 @@
   }
 
   function handleVarOrLinkSelected(e) {
-    console.log("varOrLink", e);
+    // console.log("varOrLink", e);
     const variable: tVariable = e;
     selectedVar = variable;
     dispatch("var-selected", selectedVar); // for App.svelte to hightlight the chunks
   }
   function handleVarTypeLinkSelected(varTypeLink: tLinkObjectOverview) {
     // console.log(e)
-    vartypeunselected_flag = false;
+    // vartypeunselected_flag = false;
     if (varTypeLink !== null) {
       const var_type_source = varTypeLink.source;
       const var_type_target = varTypeLink.target;
@@ -167,11 +167,11 @@
     }
   }
   function handleOverviewVarTypeSelected(varTypeName: string) {
-    // console.log("handleOverviewVarTypeSelected", e);
+    console.log("selected", varTypeName);
     if (varTypeName !== null) {
       const var_type = varTypeName;
-      d3.select(`rect.bbox#` + `${var_type}`).remove();
-      d3.select(`text.bbox-label#` + `${var_type}` + `_label`).remove();
+      const group = d3.select(`g.${var_type}_region`);
+      group.select("g.bbox-group").selectAll("*").remove();
       box_states[var_type].selected = true;
       group_name_clickable = true;
       DPSIR.drawVars(
@@ -198,13 +198,20 @@
       box_states[_var_type].selected = false;
       OverviewDPSIR.drawVars(data[_var_type], bboxes[_var_type]);
     }
+    function removeVarTypeLinks(_var_type) {
+      const link_group = d3.select(".detail_link_group");
+      link_group.selectAll(`path.link.${_var_type}-${_var_type}`).remove();
+    }
     console.log("unselected", var_type_name);
     if (var_type_name !== null) {
       removeVarTypeBbox(var_type_name);
+      removeVarTypeLinks(var_type_name);
     } else {
       Constants.var_type_names.forEach((_var_type) => {
         if (box_states[_var_type].selected) {
+          console.log("remove", _var_type);
           removeVarTypeBbox(_var_type);
+          removeVarTypeLinks(_var_type);
         }
       });
     }
