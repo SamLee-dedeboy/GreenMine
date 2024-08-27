@@ -169,7 +169,7 @@
   function handleOverviewVarTypeSelected(var_type: string) {
     console.log("selected", var_type);
     if (var_type !== null) {
-      // d3.select("g.detail-bbox-group").select(`g.${varTypeName}`).remove();
+      // d3.select("g.detail-bbox-group").select(`g.${var_type}`).remove();
       box_states[var_type].selected = true;
       group_name_clickable = true;
       DPSIR.drawVars(
@@ -190,8 +190,8 @@
   }
   function handleOverviewVarTypeUnSelected(var_type_name: string | null) {
     function removeVarTypeBbox(_var_type) {
-      d3.select("g.detail-bbox-group").selectAll("g").selectAll("*").remove();
-      d3.select("g.detail-tag-group").selectAll("g").selectAll("*").remove();
+      d3.select("g.detail-bbox-group").selectAll(`g.${_var_type}`).selectAll("*").remove();
+      d3.select("g.detail-tag-group").selectAll(`g.${_var_type}`).selectAll("*").remove();
       box_states[_var_type].selected = false;
       OverviewDPSIR.drawVars(data[_var_type], bboxes[_var_type]);
     }
