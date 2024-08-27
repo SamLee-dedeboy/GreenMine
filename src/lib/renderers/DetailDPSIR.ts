@@ -41,7 +41,6 @@ export const DPSIR = {
       .attr("viewBox", `0 0 ${this.width} ${this.height}`);
     // this.drawGids(svg, svgId);
 
-    svg.append("g").attr("class", "detail_link_group");
     // .attr("transform", `translate(${padding.left}, ${padding.top})`);
     Constants.var_type_names.forEach((var_type_name) => {
       const var_type_region = svg
@@ -51,6 +50,7 @@ export const DPSIR = {
       var_type_region.append("g").attr("class", "bbox-group");
       var_type_region.append("g").attr("class", "tag-group");
     });
+    svg.append("g").attr("class", "detail_link_group");
   },
   on(event, handler) {
     this.dispatch.on(event, handler);
@@ -309,11 +309,7 @@ export const DPSIR = {
     this.drawTags(var_type_name, rectWithVar, scaleVarColor);
   },
 
-  drawLinks(
-    links: tVisLink[],
-    bboxes,
-    all_selected_types,
-  ) {
+  drawLinks(links: tVisLink[], bboxes, all_selected_types) {
     const self = this;
     // let global_grid: string[][] = this.grid_renderer.global_grid;
     let cellWidth: number = self.cellWidth;
@@ -342,19 +338,19 @@ export const DPSIR = {
       return xDistance + yDistance;
     }
 
-    console.log(all_selected_types)
+    console.log(all_selected_types);
     links = links.filter((link) => {
       const linkSourceType = link.source.var_type;
       const linkTargetType = link.target.var_type;
 
       // Check if the link matches any of the selected types
-      return all_selected_types.some(({ source, target }) => 
-        linkSourceType === source && linkTargetType === target
+      return all_selected_types.some(
+        ({ source, target }) =>
+          linkSourceType === source && linkTargetType === target,
       );
     });
 
-    
-    console.log(links)
+    console.log(links);
     // Sort the links
     links.sort((a, b) => {
       const aOrder = getVarTypePairOrder(a.source.var_type, a.target.var_type);
@@ -626,8 +622,8 @@ export const DPSIR = {
           .classed("link-highlight", false)
           .classed("link-not-highlight", true)
           // .classed("not-show-link-not-highlight", true)
-          .attr("stroke", "gray")
-          // .attr("marker-end", "");
+          .attr("stroke", "gray");
+        // .attr("marker-end", "");
 
         const rects = d3
           .selectAll("rect.box")
@@ -684,7 +680,7 @@ export const DPSIR = {
             .raise();
         }
       });
-    
+
     link_paths
       .filter((d) => d.source.var_type === d.target.var_type)
       .attr("d", function (d, i) {
@@ -699,13 +695,17 @@ export const DPSIR = {
     // draw links with animation
     let next_path_index = 0;
     let isTimerRunning = false;
-    const differentTypePaths = link_paths.filter(d => d.source.var_type !== d.target.var_type);
+    const differentTypePaths = link_paths.filter(
+      (d) => d.source.var_type !== d.target.var_type,
+    );
     const t = d3.timer(() => {
       if (!isTimerRunning) {
         isTimerRunning = true;
         // self.handlers.EnableLinks(false);
       }
-      const next_path = differentTypePaths.filter((d, i) => i === next_path_index);
+      const next_path = differentTypePaths.filter(
+        (d, i) => i === next_path_index,
+      );
       next_path
         .transition()
         .duration(0)
@@ -1053,8 +1053,8 @@ export const DPSIR = {
                 .classed("link-highlight", false)
                 .classed("link-not-highlight", false)
                 // .classed("not-show-link-not-highlight", false)
-                .attr("stroke", "gray")
-                // .attr("marker-end", "");
+                .attr("stroke", "gray");
+              // .attr("marker-end", "");
               rects
                 .classed("box-highlight", false)
                 .classed("box-not-highlight", false);
