@@ -532,8 +532,9 @@ export const DPSIR = {
         );
 
         const d3Path = d3.path();
-        d3Path.moveTo(svgPath[0].x, svgPath[0].y);
+        // d3Path.moveTo(svgPath[0].x, svgPath[0].y);
         if (link.source.var_type == link.target.var_type) {
+          d3Path.moveTo(svgPath[0].x, svgPath[0].y);
           d3Path.quadraticCurveTo(
             grid_layout.gridToSvgCoordinate(
               bboxes[link.source.var_type].center[0],
@@ -550,13 +551,37 @@ export const DPSIR = {
             svgPath[1].x,
             svgPath[1].y,
           );
+          return d3Path.toString();
         } else {
-          for (let i = 1; i < svgPath.length; i++) {
-            d3Path.lineTo(svgPath[i].x, svgPath[i].y);
-          }
+          // for (let i = 1; i < svgPath.length; i++) {
+          //   d3Path.lineTo(svgPath[i].x, svgPath[i].y);
+          // }
+          const sourcePoint = svgPath[0];
+          const targetPoint = svgPath[1];
+          const dx = targetPoint.x - sourcePoint.x;
+          const dy = targetPoint.y - sourcePoint.y;
+          const dr = Math.sqrt(dx * dx + dy * dy) * 0.8; // Increase radius by 20% for more pronounced curves
+          // const dScale = d3
+          //   .scaleLinear()
+          //   .domain([
+          //     Math.min(...pairInfo.map((d) => d.count)),
+          //     Math.max(...pairInfo.map((d) => d.count)),
+          //   ])
+          //   .range([0.99, 0.84]); // Adjust this range as needed
+          // const startPoint = {
+          //   x: sourcePoint.x + dx * 0.05,
+          //   y: sourcePoint.y + dy * 0.05,
+          // };
+          // const endPoint = {
+          //   x: sourcePoint.x + dx * 0.95,
+          //   y: sourcePoint.y + dy * 0.95,
+          // };
+          // const sweepFlag = link.reverse ? 1 : 0;
+          // Create the partial arc path
+          return `M${sourcePoint.x},${sourcePoint.y}A${dr},${dr} 0 0 0 ${targetPoint.x},${targetPoint.y}`;
         }
 
-        return d3Path.toString();
+        // return d3Path.toString();
       }
     };
 
@@ -589,7 +614,7 @@ export const DPSIR = {
         if (d.source.var_type == d.target.var_type) {
           return 0.2;
         } else {
-          return 0.5;
+          return 0.2;
         }
       })
       .on("mouseover", function (e, d: tLinkObject) {
@@ -676,7 +701,7 @@ export const DPSIR = {
       });
 
     link_paths
-      .filter((d) => d.source.var_type === d.target.var_type)
+      // .filter((d) => d.source.var_type === d.target.var_type)
       .attr("d", function (d, i) {
         return lineGenerator(
           d,
@@ -687,39 +712,35 @@ export const DPSIR = {
       });
 
     // draw links with animation
-    let next_path_index = 0;
-    let isTimerRunning = false;
-    const differentTypePaths = link_paths.filter(
-      (d) => d.source.var_type !== d.target.var_type,
-    );
-    const t = d3.timer(() => {
-      if (!isTimerRunning) {
-        isTimerRunning = true;
-        // self.handlers.EnableLinks(false);
-      }
-      const next_path = differentTypePaths.filter(
-        (d, i) => i === next_path_index,
-      );
-      next_path
-        .transition()
-        .duration(0)
-        .attr("d", function (d, i) {
-          return lineGenerator(
-            d,
-            i,
-            bboxes[d.source.var_type],
-            bboxes[d.target.var_type],
-          );
-        });
-      next_path_index++;
-      if (next_path_index >= link_paths.size()) {
-        console.log("done");
-        t.stop();
-        // this.enable = !this.enable;
-        isTimerRunning = false;
-        // self.handlers.EnableLinks(true);
-      }
-    });
+    // let next_path_index = 0;
+    // let isTimerRunning = false;
+    // const differentTypePaths = link_paths.filter(d => d.source.var_type !== d.target.var_type);
+    // const t = d3.timer(() => {
+    //   if (!isTimerRunning) {
+    //     isTimerRunning = true;
+    //     // self.handlers.EnableLinks(false);
+    //   }
+    //   const next_path = differentTypePaths.filter((d, i) => i === next_path_index);
+    //   next_path
+    //     .transition()
+    //     .duration(0)
+    //     .attr("d", function (d, i) {
+    //       return lineGenerator(
+    //         d,
+    //         i,
+    //         bboxes[d.source.var_type],
+    //         bboxes[d.target.var_type],
+    //       );
+    //     });
+    //   next_path_index++;
+    //   if (next_path_index >= link_paths.size()) {
+    //     console.log("done");
+    //     t.stop();
+    //     // this.enable = !this.enable;
+    //     isTimerRunning = false;
+    //     // self.handlers.EnableLinks(true);
+    //   }
+    // });
   },
 
   drawBbox(

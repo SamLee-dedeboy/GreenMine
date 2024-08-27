@@ -1019,6 +1019,8 @@ export function pathFinding(link, grid: string[][], points) {
   } else {
     start = getNextStartPoint(link.source.var_name, points, false);
     goal = getNextEndPoint(link.target.var_name, points, false);
+    let path = [start, goal];
+    return path;
     const rows = grid[0].length;
     const cols = grid.length;
     let closedList = new Array(cols);
@@ -1485,142 +1487,151 @@ export function generatePoints(linkCounts) {
       x + width / 2,
       y + height / 2,
     );
+    addPoints_InGroup(
+      outGroup_startPoints,
+      outGroup_endPoints,
+      OutGroup_outLinks,
+      OutGroup_inLinks,
+      x + width / 2,
+      y + height / 2,
+    );
+    
 
-    // Set points for outGroup links
-    if (position === "top" || position === "top-left") {
-      addPoints(
-        outGroup_startPoints,
-        outGroup_endPoints,
-        OutGroup_outLinks,
-        OutGroup_inLinks,
-        x,
-        y,
-        1,
-        0,
-        x + width,
-        y, // Primary edge: top )(left to right)
-        x,
-        y,
-        0,
-        1,
-        x,
-        y + height, // Secondary edge: left (top to bottom
-      );
-    } else if (position === "left") {
-      addPoints(
-        outGroup_startPoints,
-        outGroup_endPoints,
-        OutGroup_outLinks,
-        OutGroup_inLinks,
-        x,
-        y,
-        0,
-        1,
-        x,
-        y + height, // Primary edge: left (top to bottom)
-        x,
-        y,
-        1,
-        0,
-        x + width,
-        y, // Secondary edge: top (left to right)
-      );
-    } else if (position === "top-right") {
-      addPoints(
-        outGroup_startPoints,
-        outGroup_endPoints,
-        OutGroup_outLinks,
-        OutGroup_inLinks,
-        x,
-        y,
-        1,
-        0,
-        x + width,
-        y, // Secondary edge: top (left to right)
-        x + width,
-        y,
-        0,
-        1,
-        x + width,
-        y + height, // Primary edge: right (top to bottom)
-      );
-    } else if (position === "right") {
-      addPoints(
-        outGroup_startPoints,
-        outGroup_endPoints,
-        OutGroup_outLinks,
-        OutGroup_inLinks,
-        x + width,
-        y,
-        0,
-        1,
-        x + width,
-        y + height, // Primary edge: right (top to bottom)
-        x + width,
-        y,
-        -1,
-        0,
-        x,
-        y, // Secondary edge: top (right to left)
-      );
-    } else if (position === "bottom") {
-      addPoints(
-        outGroup_startPoints,
-        outGroup_endPoints,
-        OutGroup_outLinks,
-        OutGroup_inLinks,
-        x,
-        y + height,
-        1,
-        0,
-        x + width,
-        y + height, // Primary edge: bottom (left to right)
-        x,
-        y + height,
-        0,
-        -1,
-        x,
-        y, // Secondary edge: left (bottom to top)
-      );
-    } else if (position === "bottom-left") {
-      addPoints(
-        outGroup_startPoints,
-        outGroup_endPoints,
-        OutGroup_outLinks,
-        OutGroup_inLinks,
-        x,
-        y,
-        0,
-        1,
-        x,
-        y + height, // Primary edge: left (top to bottom)
-        x,
-        y + height,
-        1,
-        0,
-        x + width,
-        y + height, // Secondary edge: bottom (left to right)
-      );
-    } else if (position === "bottom-right") {
-      addPoints(
-        outGroup_startPoints,
-        outGroup_endPoints,
-        OutGroup_outLinks,
-        OutGroup_inLinks,
-        x + width,
-        y,
-        0,
-        1,
-        x + width,
-        y + height, // Primary edge: right (top to bottom)
-        x,
-        y + height,
-        1,
-        0,
-        x + width,
-        y + height, // Secondary edge: bottom (left to right)
-      );
-    }
+    // // Set points for outGroup links
+    // if (position === "top" || position === "top-left") {
+    //   addPoints(
+    //     outGroup_startPoints,
+    //     outGroup_endPoints,
+    //     OutGroup_outLinks,
+    //     OutGroup_inLinks,
+    //     x,
+    //     y,
+    //     1,
+    //     0,
+    //     x + width,
+    //     y, // Primary edge: top )(left to right)
+    //     x,
+    //     y,
+    //     0,
+    //     1,
+    //     x,
+    //     y + height, // Secondary edge: left (top to bottom
+    //   );
+    // } else if (position === "left") {
+    //   addPoints(
+    //     outGroup_startPoints,
+    //     outGroup_endPoints,
+    //     OutGroup_outLinks,
+    //     OutGroup_inLinks,
+    //     x,
+    //     y,
+    //     0,
+    //     1,
+    //     x,
+    //     y + height, // Primary edge: left (top to bottom)
+    //     x,
+    //     y,
+    //     1,
+    //     0,
+    //     x + width,
+    //     y, // Secondary edge: top (left to right)
+    //   );
+    // } else if (position === "top-right") {
+    //   addPoints(
+    //     outGroup_startPoints,
+    //     outGroup_endPoints,
+    //     OutGroup_outLinks,
+    //     OutGroup_inLinks,
+    //     x,
+    //     y,
+    //     1,
+    //     0,
+    //     x + width,
+    //     y, // Secondary edge: top (left to right)
+    //     x + width,
+    //     y,
+    //     0,
+    //     1,
+    //     x + width,
+    //     y + height, // Primary edge: right (top to bottom)
+    //   );
+    // } else if (position === "right") {
+    //   addPoints(
+    //     outGroup_startPoints,
+    //     outGroup_endPoints,
+    //     OutGroup_outLinks,
+    //     OutGroup_inLinks,
+    //     x + width,
+    //     y,
+    //     0,
+    //     1,
+    //     x + width,
+    //     y + height, // Primary edge: right (top to bottom)
+    //     x + width,
+    //     y,
+    //     -1,
+    //     0,
+    //     x,
+    //     y, // Secondary edge: top (right to left)
+    //   );
+    // } else if (position === "bottom") {
+    //   addPoints(
+    //     outGroup_startPoints,
+    //     outGroup_endPoints,
+    //     OutGroup_outLinks,
+    //     OutGroup_inLinks,
+    //     x,
+    //     y + height,
+    //     1,
+    //     0,
+    //     x + width,
+    //     y + height, // Primary edge: bottom (left to right)
+    //     x,
+    //     y + height,
+    //     0,
+    //     -1,
+    //     x,
+    //     y, // Secondary edge: left (bottom to top)
+    //   );
+    // } else if (position === "bottom-left") {
+    //   addPoints(
+    //     outGroup_startPoints,
+    //     outGroup_endPoints,
+    //     OutGroup_outLinks,
+    //     OutGroup_inLinks,
+    //     x,
+    //     y,
+    //     0,
+    //     1,
+    //     x,
+    //     y + height, // Primary edge: left (top to bottom)
+    //     x,
+    //     y + height,
+    //     1,
+    //     0,
+    //     x + width,
+    //     y + height, // Secondary edge: bottom (left to right)
+    //   );
+    // } else if (position === "bottom-right") {
+    //   addPoints(
+    //     outGroup_startPoints,
+    //     outGroup_endPoints,
+    //     OutGroup_outLinks,
+    //     OutGroup_inLinks,
+    //     x + width,
+    //     y,
+    //     0,
+    //     1,
+    //     x + width,
+    //     y + height, // Primary edge: right (top to bottom)
+    //     x,
+    //     y + height,
+    //     1,
+    //     0,
+    //     x + width,
+    //     y + height, // Secondary edge: bottom (left to right)
+    //   );
+    // }
 
     result[varName] = {
       inGroup_startPoints,

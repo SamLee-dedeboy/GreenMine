@@ -222,8 +222,8 @@
       currentRenderer === "OverviewDPSIR" ? "DPSIR" : "OverviewDPSIR";
 
     if (currentRenderer === "DPSIR") {
-      // all_selected_types = OverviewDPSIR.extractUniquePairs(links);
-      all_selected_types = [];
+      all_selected_types = OverviewDPSIR.extractUniquePairs(links);
+      // all_selected_types = [];
       vartypeunselected_flag = false;
       console.log("VarTypeUnSelected will not be triggered in detail mode");
     } else {
