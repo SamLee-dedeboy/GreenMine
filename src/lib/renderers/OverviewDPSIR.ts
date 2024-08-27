@@ -222,10 +222,12 @@ export const OverviewDPSIR = {
         const inverseKey = `${targetType}-${sourceType}`;
 
         let sourceCenter, targetCenter;
+        let reverse = false;
 
         if (Ports[linkKey]) {
           sourceCenter = [Ports[linkKey].source.x, Ports[linkKey].source.y];
           targetCenter = [Ports[linkKey].target.x, Ports[linkKey].target.y];
+          reverse = Ports[linkKey].reverse;
         } else if (Ports[inverseKey]) {
           sourceCenter = [
             Ports[inverseKey].target.x,
@@ -235,6 +237,7 @@ export const OverviewDPSIR = {
             Ports[inverseKey].source.x,
             Ports[inverseKey].source.y,
           ];
+          reverse = Ports[inverseKey].reverse;
         } else {
           sourceCenter = bboxes[sourceType]?.center || [0, 0];
           targetCenter = bboxes[targetType]?.center || [0, 0];
@@ -246,12 +249,14 @@ export const OverviewDPSIR = {
           source_center: sourceCenter,
           target_center: targetCenter,
           count: pairCounts[linkKey] || 0,
+          reverse: reverse,
         };
       },
     );
 
     // Modify the lineGenerator function to handle the direction
     const lineGenerator = (link) => {
+      console.log({ link });
       const sourcePoint = grid_layout.gridToSvgCoordinate(
         link.source_center[0],
         link.source_center[1],
@@ -268,7 +273,7 @@ export const OverviewDPSIR = {
 
       const dx = targetPoint.x - sourcePoint.x;
       const dy = targetPoint.y - sourcePoint.y;
-      const dr = Math.sqrt(dx * dx + dy * dy) * 2; // Increase radius by 20% for more pronounced curves
+      const dr = Math.sqrt(dx * dx + dy * dy) * 0.8; // Increase radius by 20% for more pronounced curves
       const dScale = d3
         .scaleLinear()
         .domain([
@@ -284,24 +289,27 @@ export const OverviewDPSIR = {
         x: sourcePoint.x + dx * dScale(link.count),
         y: sourcePoint.y + dy * dScale(link.count),
       };
-      return `M${startPoint.x},${startPoint.y}A${dr},${dr} 0 0 0 ${endPoint.x},${endPoint.y}`;
+      const sweepFlag = link.reverse ? 1 : 0;
+      // Create the partial arc path
+      return `M${startPoint.x},${startPoint.y}A${dr},${dr} 0 0 ${sweepFlag} ${endPoint.x},${endPoint.y}`;
+      // return `M${startPoint.x},${startPoint.y}A${dr},${dr} 0 0 0 ${endPoint.x},${endPoint.y}`;
     };
 
     const svg = d3.select("#" + this.svgId);
-    const tooltip = d3
-      .select("body")
-      .append("div")
-      .attr("class", "tooltip-content")
-      .style("position", "absolute")
-      .style("visibility", "hidden")
-      .style("background", "rgb(249 250 251)")
-      .style("width", "170px")
-      .style("text-align", "center")
-      .style("border-radius", "6px")
-      .style("padding", "5px 5px")
-      .style("border", "2px solid grey")
-      .style("margin-left", "10px")
-      .style("font-size", "0.8rem");
+    const tooltip = d3.select(".tooltip-content");
+    // .select("body")
+    // .append("div")
+    // .attr("class", "tooltip-content")
+    // .style("position", "absolute")
+    // .style("visibility", "hidden")
+    // .style("background", "rgb(249 250 251)")
+    // .style("width", "170px")
+    // .style("text-align", "center")
+    // .style("border-radius", "6px")
+    // .style("padding", "5px 5px")
+    // .style("border", "2px solid grey")
+    // .style("margin-left", "10px")
+    // .style("font-size", "0.8rem");
 
     if (svg.select("defs").empty()) {
       svg.append("defs");
@@ -361,10 +369,10 @@ export const OverviewDPSIR = {
         tooltip
           .html(
             `
-            <span style="background-color: ${self.varTypeColorScale(d.source)}">${d.source}</span>
+            <span style="background-color: ${setOpacity(self.varTypeColorScale(d.source), 0.7, "rgbHex")}">${d.source}</span>
             &rarr;
-            <span style="background-color: ${self.varTypeColorScale(d.target)}">${d.target}</span>
-            : ${d.count}
+            <span style="background-color: ${setOpacity(self.varTypeColorScale(d.target), 0.7, "rgbHex")}">${d.target}</span>
+            : ${d.count} occurrences
           `,
           )
           .style("visibility", "visible");
@@ -521,9 +529,8 @@ export const OverviewDPSIR = {
       .attr("text-transform", "capitalize")
       .attr("pointer-events", "none")
       .attr("font-family", "serif")
-      // .attr("font-family", "Montserrat Alternate")
       .attr("font-style", "italic")
-      .attr("font-size", "2.5rem")
+      .attr("font-size", "3rem")
       .attr("font-weight", "bold")
       .attr("fill", "#636363");
     //   .attr("stroke", "black")  // Add black stroke

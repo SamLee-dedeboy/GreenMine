@@ -25,11 +25,11 @@
 
   const utilities = ["add", "remove", "edit"];
   let bboxes = {
-    driver: { center: [58, 100], size: [0, 0] },
-    pressure: { center: [170, 50], size: [0, 0] },
-    state: { center: [260, 100], size: [0, 0] },
-    impact: { center: [210, 190], size: [0, 0] },
-    response: { center: [90, 190], size: [0, 0] },
+    driver: { center: [58, 90], size: [0, 0] },
+    pressure: { center: [170, 30], size: [0, 0] },
+    state: { center: [270, 75], size: [0, 0] },
+    impact: { center: [240, 190], size: [0, 0] },
+    response: { center: [70, 210], size: [0, 0] },
   };
   let box_states = {
     driver: { selected: false },
@@ -39,7 +39,7 @@
     response: { selected: false },
   };
   // type SelectedType = { source: string; target: string };
-  let all_selected_types:SelectedType[] = [];
+  let all_selected_types: SelectedType[] = [];
   let vartypeunselected_flag = true;
   let group_name_clickable = true;
   let rectangleCoordinates = [];
@@ -58,13 +58,13 @@
     if (currentRenderer == "OverviewDPSIR") {
       Constants.var_type_names.forEach((var_type) => {
         box_states[var_type].selected = false;
-      })
+      });
       OverviewDPSIR.update_vars(vars, links, $varTypeColorScale, bboxes);
     } else {
       group_name_clickable = false;
       Constants.var_type_names.forEach((var_type) => {
         box_states[var_type].selected = true;
-      })
+      });
       DPSIR.update_vars(
         vars,
         links,
@@ -120,17 +120,21 @@
       const var_type_target = varTypeLink.target;
       currentRenderer = "DPSIR";
       d3.select("body").selectAll(".tooltip-content").remove();
-      const linkGroup = d3.select('.overview_link_group');
+      const linkGroup = d3.select(".overview_link_group");
       // Remove all path elements (links) within the group
-      linkGroup.selectAll('path').remove();
+      linkGroup.selectAll("path").remove();
 
       Constants.var_type_names.forEach((var_type) => {
         if (var_type !== var_type_source && var_type !== var_type_target) {
-          d3.select(`rect.bbox#` + `${var_type}`).attr("opacity", 0).attr("pointer-events", "none");
-          d3.select(`text.bbox-label#` + `${var_type}` + `_label`).attr("opacity", 0);
+          d3.select(`rect.bbox#` + `${var_type}`)
+            .attr("opacity", 0)
+            .attr("pointer-events", "none");
+          d3.select(`text.bbox-label#` + `${var_type}` + `_label`).attr(
+            "opacity",
+            0,
+          );
           box_states[var_type].selected = false;
-        }
-        else{
+        } else {
           d3.select(`rect.bbox#` + `${var_type}`).remove();
           d3.select(`text.bbox-label#` + `${var_type}` + `_label`).remove();
           box_states[var_type].selected = true;
@@ -145,16 +149,24 @@
         }
       });
 
-
       all_selected_types = [];
-      all_selected_types.push({ source: varTypeLink.source, target: varTypeLink.target });
-      all_selected_types.push({ source: varTypeLink.source, target: varTypeLink.source });
-      all_selected_types.push({ source: varTypeLink.target, target: varTypeLink.target });
+      all_selected_types.push({
+        source: varTypeLink.source,
+        target: varTypeLink.target,
+      });
+      all_selected_types.push({
+        source: varTypeLink.source,
+        target: varTypeLink.source,
+      });
+      all_selected_types.push({
+        source: varTypeLink.target,
+        target: varTypeLink.target,
+      });
       // initializeRenderer(currentRenderer, all_selected_types);
       DPSIR.drawLinks(links, bboxes, all_selected_types);
     }
   }
-  function handleOverviewVarTypeSelected(varTypeName:string) {
+  function handleOverviewVarTypeSelected(varTypeName: string) {
     // console.log("handleOverviewVarTypeSelected", e);
     if (varTypeName !== null) {
       const var_type = varTypeName;
@@ -178,25 +190,21 @@
       DPSIR.drawLinks(links, bboxes, all_selected_types);
     }
   }
-  function handleOverviewVarTypeUnSelected(varTypeName:string) {
-    // console.log("unselected",e);
-    if (varTypeName !== null) {
-      const var_type = varTypeName;
-      const group = d3.select(`g.${var_type}_region`);
-      group.selectAll("g.tag").remove();
-      group.selectAll("image").remove();
-      d3.select(`text.bbox-label#` + `${var_type}` + `_label`).remove();
-      box_states[var_type].selected = false;
-      OverviewDPSIR.drawVars(data[var_type], bboxes[var_type]);
+  function handleOverviewVarTypeUnSelected(var_type_name: string | null) {
+    function removeVarTypeBbox(_var_type) {
+      const group = d3.select(`g.${_var_type}_region`);
+      group.select("g.bbox-group").selectAll("*").remove();
+      group.select("g.tag-group").selectAll("*").remove();
+      box_states[_var_type].selected = false;
+      OverviewDPSIR.drawVars(data[_var_type], bboxes[_var_type]);
+    }
+    console.log("unselected", var_type_name);
+    if (var_type_name !== null) {
+      removeVarTypeBbox(var_type_name);
     } else {
-      Constants.var_type_names.forEach((var_type) => {
-        if (box_states[var_type].selected) {
-          const group = d3.select(`g.${var_type}_region`);
-          group.selectAll("g.tag").remove();
-          group.selectAll("image").remove();
-          d3.select(`text.bbox-label#` + `${var_type}` + `_label`).remove();
-          box_states[var_type].selected = false;
-          OverviewDPSIR.drawVars(data[var_type], bboxes[var_type]);
+      Constants.var_type_names.forEach((_var_type) => {
+        if (box_states[_var_type].selected) {
+          removeVarTypeBbox(_var_type);
         }
       });
     }
@@ -224,13 +232,13 @@
 
   function initializeRenderer(renderer, all_selected_types) {
     d3.select(`#${svgId}`).selectAll("*").remove();
-    DPSIR.init(svgId, utilities);
     OverviewDPSIR.init(svgId);
+    DPSIR.init(svgId, utilities);
 
     DPSIR.on("VarOrLinkSelected", handleVarOrLinkSelected);
     DPSIR.on("VarTypeUnSelected", handleOverviewVarTypeUnSelected);
     // Remove tooltip if it exists
-    d3.select("body").selectAll(".tooltip-content").remove();
+    // d3.select("body").selectAll(".tooltip-content").remove();
     OverviewDPSIR.on("VarTypeLinkSelected", handleVarTypeLinkSelected);
     // OverviewDPSIR.on("VarTypeHovered", handleOverviewVarTypeHovered);
     OverviewDPSIR.on("VarTypeSelected", handleOverviewVarTypeSelected);
@@ -254,15 +262,16 @@
       }}
       >{showLinks ? 'Hide Other Links' : 'Show Other Links'}</button
     > -->
-  <button
-    class="absolute right-4 top-4  z-10 rounded-md bg-gray-300 p-2 text-black transition-colors hover:bg-gray-500 hover:text-white"
-    on:click={switchRenderer}
-  >
-    Switch to {currentRenderer === "OverviewDPSIR" ? "DPSIR" : "Overview"}
-  </button>
-  <svg id={svgId} class="varbox-svg absolute inset-0 h-full w-full">
+  <svg id={svgId} class="varbox-svg relative h-full w-full">
     <defs></defs>
   </svg>
+  <button
+    class="absolute right-4 top-4 z-10 rounded-md bg-gray-300 p-2 text-black transition-colors hover:bg-gray-500 hover:text-white"
+    on:click={switchRenderer}
+  >
+    Show {currentRenderer === "OverviewDPSIR" ? "Full Detail" : "Overview"}
+  </button>
+  <div class="tooltip-content"></div>
 </div>
 
 <style lang="postcss">
@@ -313,6 +322,22 @@
       stroke: gray;
       stroke-width: 1;
       filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.7));
+    }
+  }
+  .tooltip-content {
+    position: absolute;
+    background: rgb(249, 250, 251);
+    width: fit;
+    white-space: nowrap;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 5px;
+    outline: 1.5px solid gray;
+    /* box-shadow: 0px 1px 2px rgba(0, 0, 0, 1); */
+    margin-left: 10px;
+    font-size: 1rem;
+    & span {
+      @apply rounded px-1 capitalize text-[#222222];
     }
   }
 </style>
