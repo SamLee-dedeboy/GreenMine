@@ -39,9 +39,7 @@ export const DPSIR = {
     const svg = d3
       .select("#" + svgId)
       .attr("viewBox", `0 0 ${this.width} ${this.height}`);
-    // this.drawGids(svg, svgId);
-
-    svg.append("g").attr("class", "detail_link_group");
+    // this.drawGids(svg, svgId);   
     // .attr("transform", `translate(${padding.left}, ${padding.top})`);
     Constants.var_type_names.forEach((var_type_name) => {
       const var_type_region = svg
@@ -51,6 +49,7 @@ export const DPSIR = {
       var_type_region.append("g").attr("class", "bbox-group");
       var_type_region.append("g").attr("class", "tag-group");
     });
+    svg.append("g").attr("class", "detail_link_group");
   },
   on(event, handler) {
     this.dispatch.on(event, handler);
@@ -567,16 +566,8 @@ export const DPSIR = {
       .selectAll(".link")
       .data(filteredMergeData)
       .join("path")
-      .attr("class", "link")
+      .attr("class", (d)=>`link ${d.source.var_type}-${d.target.var_type}`)
       .attr("id", (d) => `${d.source.var_name}` + "-" + `${d.target.var_name}`)
-      // .attr("d", function (d, i) {
-      //   return lineGenerator(
-      //     d,
-      //     i,
-      //     bboxes[d.source.var_type],
-      //     bboxes[d.target.var_type],
-      //   );
-      // })
       .attr("cursor", "pointer")
       .attr("fill", "none")
       // .attr("stroke", "url(#grad)")

@@ -256,7 +256,7 @@ export const OverviewDPSIR = {
 
     // Modify the lineGenerator function to handle the direction
     const lineGenerator = (link) => {
-      console.log({ link });
+    //   console.log({ link });
       const sourcePoint = grid_layout.gridToSvgCoordinate(
         link.source_center[0],
         link.source_center[1],
@@ -395,7 +395,7 @@ export const OverviewDPSIR = {
       })
       .on("click", function (event, d: tLinkObjectOverview) {
         event.preventDefault();
-        self.dispatch.call("VarTypeLinkSelected", null, d);
+        // self.dispatch.call("VarTypeLinkSelected", null, d);
       });
   },
 
