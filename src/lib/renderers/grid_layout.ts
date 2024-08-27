@@ -819,6 +819,7 @@ export function createArrow(svg, d: tLinkObject, self) {
 
 // includes variables frequency and link frequency among all groups
 export function calculateFrequencyList(new_links: tVisLink[]) {
+  // console.log(new_links);
   // let { minLength, maxLength } = variables.reduce((result, item) => {
   //     if (item.variable_mentions) {
   //     Object.values(item.variable_mentions).forEach((variable:any) => {
