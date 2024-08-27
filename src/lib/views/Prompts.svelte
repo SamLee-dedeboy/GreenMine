@@ -246,7 +246,7 @@
   }
 </script>
 
-<div class="flex cursor-auto flex-col">
+<div class="flex grow cursor-auto flex-col">
   <!-- side panel -->
   <div class="mt-[-1.4rem] flex w-fit items-end gap-y-0.5 px-0.5 text-sm">
     <div
