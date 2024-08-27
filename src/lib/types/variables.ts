@@ -133,3 +133,5 @@ export type tLinkObjectOverview = {
 export type tUtilityHandlers = {
   [key: string]: Function;
 };
+
+export type SelectedType = { source: string; target: string };

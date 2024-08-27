@@ -1126,7 +1126,7 @@ export function pathFinding(link, grid: string[][], points) {
       }
     }
     if (foundDest == false) {
-      let path = [start, goal];
+      // let path = [start, goal];
 
       function incrementLinkTypeCount(sourceType: string, targetType: string) {
         const key = `${sourceType}-${targetType}`;
@@ -1148,8 +1148,8 @@ export function pathFinding(link, grid: string[][], points) {
 
       // Log all counts in a single console.log statement
       console.log("Unfound Counts:", allCounts);
-      // return null;
-      return path;
+      return null;
+      // return path;
     }
   }
 

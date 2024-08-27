@@ -11,13 +11,15 @@ import type {
   tRectObject,
   tLinkObject,
   tVisLink,
-  tLink,
+  tLink, 
   tLinkObjectOverview,
+  SelectedType,
 } from "../types/variables";
 import * as Constants from "../constants";
 import * as grid_layout from "./grid_layout";
 import { toggle } from "@melt-ui/svelte/internal/helpers";
 import { setOpacity } from "lib/utils";
+// import { link } from "fs";
 
 export const OverviewDPSIR = {
   init(svgId: string) {
@@ -36,7 +38,7 @@ export const OverviewDPSIR = {
     // this.dispatch = d3.dispatch("VarOrLinkSelected");
     this.dispatch = d3.dispatch(
       "VarTypeLinkSelected",
-      "VarTypeHovered",
+      //   "VarTypeHovered",
       "VarTypeSelected",
     );
     // this.utilities = utilities;
@@ -83,8 +85,10 @@ export const OverviewDPSIR = {
       .classed("link-not-highlight", false)
       //   .classed("not-show-link-not-highlight", false)
       .attr("stroke", "gray");
+
+    d3.selectAll("marker").select("path").attr("fill", "gray");
     this.dispatch.call("VarTypeLinkSelected", null, null);
-    this.dispatch.call("VarTypeHovered", null, null);
+    // this.dispatch.call("VarTypeHovered", null, null);
     this.dispatch.call("VarTypeSelected", null, null);
     this.clicked_link = null;
   },
@@ -172,7 +176,21 @@ export const OverviewDPSIR = {
       bbox_info.size[1],
     );
   },
-
+  extractUniquePairs(links: any[]): SelectedType[] {
+    const uniquePairs = new Set<string>();
+    
+    links.forEach(link => {
+      if (link.source && link.source.var_type && link.target && link.target.var_type) {
+        const pair = `${link.source.var_type}-${link.target.var_type}`;
+        uniquePairs.add(pair);
+      }
+    });
+  
+    return Array.from(uniquePairs).map(pair => {
+      const [source, target] = pair.split('-');
+      return { source, target };
+    });
+  },
   drawLinks(
     links: tVisLink[],
     bboxes: { center: [number, number]; size: [number, number] },
@@ -183,65 +201,39 @@ export const OverviewDPSIR = {
     let cellHeight: number = self.cellHeight;
     // const frequencyList = calculateFrequencyList(links); // includes variables frequency and link frequency among all groups
     const Ports = generatePorts(bboxes);
-    // console.log(Port);
-    const mappedLinks = links
-      .filter((link) => link.source.var_type !== link.target.var_type)
-      .map((link) => {
-        const sourceType = link.source.var_type;
-        const targetType = link.target.var_type;
+    links = links.filter((link) => link.source.var_type !== link.target.var_type)
+    const uniquePairs = this.extractUniquePairs(links);
+    const pairCounts: Record<string, number> = {};
+    links.forEach(link => {
+          const key = `${link.source.var_type}-${link.target.var_type}`;
+          pairCounts[key] = (pairCounts[key] || 0) + 1;
+    });
+
+    const pairInfo = uniquePairs.map(({ source: sourceType, target: targetType }) => {
         const linkKey = `${sourceType}-${targetType}`;
         const inverseKey = `${targetType}-${sourceType}`;
 
         let sourceCenter, targetCenter;
-        let reverse = false;
 
         if (Ports[linkKey]) {
-          sourceCenter = [Ports[linkKey].source.x, Ports[linkKey].source.y];
-          targetCenter = [Ports[linkKey].target.x, Ports[linkKey].target.y];
-          reverse = Ports[linkKey].reverse;
+            sourceCenter = [Ports[linkKey].source.x, Ports[linkKey].source.y];
+            targetCenter = [Ports[linkKey].target.x, Ports[linkKey].target.y];
         } else if (Ports[inverseKey]) {
-          // If only the inverse link pair exists, swap source and target
-          sourceCenter = [
-            Ports[inverseKey].target.x,
-            Ports[inverseKey].target.y,
-          ];
-          targetCenter = [
-            Ports[inverseKey].source.x,
-            Ports[inverseKey].source.y,
-          ];
-          reverse = Ports[inverseKey].reverse;
+            sourceCenter = [Ports[inverseKey].target.x, Ports[inverseKey].target.y];
+            targetCenter = [Ports[inverseKey].source.x, Ports[inverseKey].source.y];
         } else {
-          // Fallback to bboxes centers if neither direct nor inverse link exists in Ports
-          sourceCenter = bboxes[sourceType]?.center || [0, 0];
-          targetCenter = bboxes[targetType]?.center || [0, 0];
+            sourceCenter = bboxes[sourceType]?.center || [0, 0];
+            targetCenter = bboxes[targetType]?.center || [0, 0];
         }
 
         return {
-          source: sourceType,
-          target: targetType,
-          source_center: sourceCenter,
-          target_center: targetCenter,
-          reverse: reverse,
+            source: sourceType,
+            target: targetType,
+            source_center: sourceCenter,
+            target_center: targetCenter,
+            count: pairCounts[linkKey] || 0
         };
-      });
-
-    // Modify the pairInfo reduction to add the direction property
-    const pairInfo = Object.values(
-      mappedLinks.reduce(
-        (acc, curr) => {
-          const key = `${curr.source}-${curr.target}`;
-          if (!acc[key]) {
-            acc[key] = {
-              ...curr,
-              count: 0,
-            };
-          }
-          acc[key].count++;
-          return acc;
-        },
-        {} as Record<string, tLinkObjectOverview>,
-      ),
-    );
+    });
 
     // Modify the lineGenerator function to handle the direction
     const lineGenerator = (link) => {
@@ -261,7 +253,7 @@ export const OverviewDPSIR = {
 
       const dx = targetPoint.x - sourcePoint.x;
       const dy = targetPoint.y - sourcePoint.y;
-      const dr = Math.sqrt(dx * dx + dy * dy) * 0.8; // Increase radius by 20% for more pronounced curves
+      const dr = Math.sqrt(dx * dx + dy * dy) * 2; // Increase radius by 20% for more pronounced curves
       const dScale = d3
         .scaleLinear()
         .domain([
@@ -277,12 +269,7 @@ export const OverviewDPSIR = {
         x: sourcePoint.x + dx * dScale(link.count),
         y: sourcePoint.y + dy * dScale(link.count),
       };
-
-      const sweepFlag = link.reverse ? 1 : 0;
-      // Create the partial arc path
-      return `M${startPoint.x},${startPoint.y}A${dr},${dr} 0 0 ${sweepFlag} ${endPoint.x},${endPoint.y}`;
-
-      //   return `M${sourcePoint.x},${sourcePoint.y}A${dr},${dr} 0 0,0 ${targetPoint.x},${targetPoint.y}`;
+      return `M${startPoint.x},${startPoint.y}A${dr},${dr} 0 0 0 ${endPoint.x},${endPoint.y}`;
     };
 
     const svg = d3.select("#" + this.svgId);
@@ -382,13 +369,6 @@ export const OverviewDPSIR = {
         d3.select(`#arrow-${d.source}-${d.target} path`).attr("fill", "gray");
 
         tooltip.style("visibility", "hidden");
-        // d3.select(this.ownerSVGElement).select(".link-hover").remove();
-
-        // // Restore original styles
-        // d3.select(this)
-        // // .attr("stroke-dasharray", "5,5") // Restores dash
-        // .attr("opacity", 0.5)
-        // .attr("stroke", "gray"); // Restores original color
       })
       .on("click", function (event, d: tLinkObjectOverview) {
         event.preventDefault();
@@ -439,22 +419,60 @@ export const OverviewDPSIR = {
       .attr("rx", "0.4%")
       .attr("cursor", "pointer")
       .on("mouseover", function () {
-        // self.dispatch.call("VarTypeHovered", null, var_type_name);
         // apply hovering effect
+        d3.selectAll(".link")
+          .classed("overview-link-highlight", false)
+          .classed("link-not-highlight", true)
+          .attr("stroke", "gray")
+          .filter(
+            (link_data) =>
+              link_data.source === var_type_name ||
+              link_data.target === var_type_name,
+          )
+          .classed("overview-link-highlight", true)
+          .classed("link-not-highlight", false)
+          .raise()
+          .attr("stroke", (d: tLinkObject) => {
+            return self.varTypeColorScale(d.source);
+          });
+
+        d3.selectAll("marker")
+          .filter(function () {
+            const [, source, target] = this.id.split("-");
+            // console.log(source, target);
+            return source === var_type_name || target === var_type_name;
+          })
+          .select("path")
+          .attr("fill", function () {
+            const [, source, target] = this.parentElement.id.split("-");
+            return self.varTypeColorScale(source);
+          });
+
         d3.select(this).classed("overview-var-type-hover", true);
       })
       .on("mouseout", function () {
         // self.dispatch.call("VarTypeHovered", null, undefined);
+        d3.selectAll(".link")
+          .classed("overview-link-highlight", false)
+          .classed("link-not-highlight", false)
+          .attr("stroke", "gray");
+
+        d3.selectAll("marker").select("path").attr("fill", "gray");
+
         d3.select(this).classed("overview-var-type-hover", false);
       })
       .on("click", function (event) {
         event.preventDefault();
         // console.log("click", var_type_name);
         self.dispatch.call("VarTypeSelected", null, var_type_name);
+
+        d3.selectAll(".link")
+          .classed("overview-link-highlight", false)
+          .classed("link-not-highlight", false)
+          .attr("stroke", "gray");
+
+        d3.selectAll("marker").select("path").attr("fill", "gray");
       });
-    //   .attr("stroke", "grey")
-    //   .attr("stroke-width", 2)
-    //   .attr("opacity", "0.1"); //do not show the bounding box
 
     //group name
     group
@@ -543,38 +561,15 @@ function generatePorts(bboxes) {
   return {
     "driver-pressure": {
       source: {
-        x: bboxes.driver.original[0] + bboxes.driver.size[0] / 2,
-        y: bboxes.driver.original[1] + bboxes.driver.size[1] / 4,
+        x: bboxes.driver.original[0] + (bboxes.driver.size[0] * 2) / 3,
+        y: bboxes.driver.original[1],
       },
       target: {
         x: bboxes.pressure.original[0],
-        y: bboxes.pressure.original[1] + bboxes.pressure.size[1] / 2,
-      },
-      reverse: true,
-    },
-    "pressure-driver": {
-      source: {
-        x: bboxes.pressure.original[0] + bboxes.pressure.size[0] / 4,
-        y: bboxes.pressure.original[1] + bboxes.pressure.size[1] / 6,
-      },
-      target: {
-        x: bboxes.driver.original[0] + bboxes.driver.size[0] / 6,
-        y: bboxes.driver.original[1] - bboxes.driver.size[1] / 10,
-      },
-      reverse: false,
-    },
-    "pressure-state": {
-      source: {
-        x: bboxes.pressure.original[0] + (3 * bboxes.pressure.size[0]) / 4,
         y: bboxes.pressure.original[1] + bboxes.pressure.size[1] / 4,
       },
-      target: {
-        x: bboxes.state.original[0] + (3 * bboxes.state.size[0]) / 4,
-        y: bboxes.state.original[1] - bboxes.state.size[1] / 10,
-      },
-      reverse: true,
     },
-    "state-pressure": {
+    "pressure-state": {
       source: {
         x: bboxes.pressure.original[0] + bboxes.pressure.size[0],
         y: bboxes.pressure.original[1] + bboxes.pressure.size[1] / 4,
@@ -583,7 +578,6 @@ function generatePorts(bboxes) {
         x: bboxes.state.original[0] + (bboxes.state.size[0] * 1) / 4,
         y: bboxes.state.original[1],
       },
-      reverse: false,
     },
     "state-impact": {
       source: {
@@ -597,141 +591,73 @@ function generatePorts(bboxes) {
     },
     "impact-response": {
       source: {
-        x: bboxes.impact.original[0] + bboxes.impact.size[0] / 4,
-        y: bboxes.impact.original[1] + (3 * bboxes.impact.size[1]) / 4,
-      },
-      target: {
-        x: bboxes.response.original[0] + (7 * bboxes.response.size[0]) / 8,
-        y: bboxes.response.original[1] + (3 * bboxes.response.size[1]) / 4,
-      },
-      reverse: false,
-    },
-    "response-impact": {
-      source: {
-        x: bboxes.response.original[0] + bboxes.response.size[0] / 2,
-        y: bboxes.response.original[1] + (4 * bboxes.response.size[1]) / 4,
-      },
-      target: {
         x: bboxes.impact.original[0],
-        y: bboxes.impact.original[1] + (4 * bboxes.impact.size[1]) / 4,
+        y: bboxes.impact.original[1] + bboxes.impact.size[1] / 2,
       },
-      reverse: false,
+      target: {
+        x: bboxes.response.original[0] + bboxes.response.size[0],
+        y: bboxes.response.original[1] + bboxes.response.size[1] / 2,
+      },
     },
     "response-driver": {
       source: {
-        x: bboxes.response.original[0] + bboxes.response.size[0] / 4,
-        y: bboxes.response.original[1] + bboxes.response.size[1] / 4,
-      },
-      target: {
-        x: bboxes.driver.original[0] + (2 * bboxes.driver.size[0]) / 4,
-        y: bboxes.driver.original[1] + bboxes.driver.size[1],
-      },
-      reverse: false,
-    },
-    "driver-response": {
-      source: {
-        x: bboxes.driver.original[0] + bboxes.driver.size[0] / 4,
-        y: bboxes.driver.original[1] + bboxes.driver.size[1] / 3,
-      },
-      target: {
-        x: bboxes.response.original[0] - bboxes.response.size[0] / 10,
+        x: bboxes.response.original[0],
         y: bboxes.response.original[1] + bboxes.response.size[1] / 2,
+      },
+      target: {
+        x: bboxes.driver.original[0] + bboxes.driver.size[0] / 4,
+        y: bboxes.driver.original[1] + bboxes.driver.size[1],
       },
     },
     "driver-impact": {
       source: {
-        x: bboxes.driver.original[0] + bboxes.driver.size[0] / 3,
-        y: bboxes.driver.original[1] + (3 * bboxes.driver.size[1]) / 4,
+        x: bboxes.driver.original[0] + bboxes.driver.size[0],
+        y: bboxes.driver.original[1] + bboxes.driver.size[1] / 2,
       },
       target: {
         x: bboxes.impact.original[0] + bboxes.impact.size[0] * 0.3,
         y: bboxes.impact.original[1],
       },
-      reverse: true,
-    },
-    "impact-driver": {
-      source: {
-        x: bboxes.impact.original[0] + bboxes.impact.size[0] / 4,
-        y: bboxes.impact.original[1] + bboxes.impact.size[1] / 4,
-      },
-      target: {
-        x: bboxes.driver.original[0] + (3 * bboxes.driver.size[0]) / 4,
-        y: bboxes.driver.original[1] + (4 * bboxes.driver.size[1]) / 4,
-      },
-      reverse: true,
     },
     "pressure-impact": {
       source: {
-        x: bboxes.pressure.original[0] + (3 * bboxes.pressure.size[0]) / 4,
-        y: bboxes.pressure.original[1] + bboxes.pressure.size[1] / 2,
+        x: bboxes.pressure.original[0] + bboxes.pressure.size[0] / 2,
+        y: bboxes.pressure.original[1] + bboxes.pressure.size[1],
       },
       target: {
-        x: bboxes.impact.original[0] + (2 * bboxes.impact.size[0]) / 4,
+        x: bboxes.impact.original[0] + bboxes.impact.size[0] * 0.3,
         y: bboxes.impact.original[1],
-      },
-    },
-    "impact-pressure": {
-      source: {
-        x: bboxes.impact.original[0] + (4 * bboxes.impact.size[0]) / 5,
-        y: bboxes.impact.original[1] + bboxes.impact.size[1] / 4,
-      },
-      target: {
-        x: bboxes.pressure.original[0] + (4 * bboxes.pressure.size[0]) / 5,
-        y: bboxes.pressure.original[1] + (4 * bboxes.pressure.size[1]) / 5,
       },
     },
     "state-driver": {
       source: {
-        x: bboxes.state.original[0] + bboxes.state.size[0] / 5,
-        y: bboxes.state.original[1] + bboxes.state.size[1] / 10,
+        x: bboxes.state.original[0],
+        y: bboxes.state.original[1] + bboxes.state.size[1] / 2,
       },
       target: {
         x: bboxes.driver.original[0] + bboxes.driver.size[0],
-        y: bboxes.driver.original[1] + bboxes.driver.size[1] / 20,
-      },
-      reverse: true,
-    },
-    "driver-state": {
-      source: {
-        x: bboxes.driver.original[0] + (3 * bboxes.driver.size[0]) / 4,
-        y: bboxes.driver.original[1] + (3 * bboxes.driver.size[1]) / 4,
-      },
-      target: {
-        x: bboxes.state.original[0] + (1 * bboxes.state.size[0]) / 3,
-        y: bboxes.state.original[1] + (5 * bboxes.state.size[1]) / 4,
+        y: bboxes.driver.original[1] + bboxes.driver.size[1] / 2,
       },
     },
     "response-pressure": {
       source: {
         x: bboxes.response.original[0] + (bboxes.response.size[0] * 3) / 4,
-        y: bboxes.response.original[1] + (3 * bboxes.response.size[1]) / 4,
+        y: bboxes.response.original[1],
       },
       target: {
         x: bboxes.pressure.original[0] + bboxes.pressure.size[0] / 2,
         y: bboxes.pressure.original[1] + bboxes.pressure.size[1],
       },
     },
-    "pressure-response": {
+    "response-state": {
       source: {
-        x: bboxes.pressure.original[0] + bboxes.pressure.size[0] / 3,
-        y: bboxes.pressure.original[1] + (3 * bboxes.pressure.size[1]) / 4,
-      },
-      target: {
         x: bboxes.response.original[0] + (bboxes.response.size[0] * 3) / 4,
         y: bboxes.response.original[1],
       },
-      reverse: true,
-    },
-    "response-state": {
-      source: {
-        x: bboxes.response.original[0] + (bboxes.response.size[0] * 7) / 8,
-        y: bboxes.response.original[1] + bboxes.response.size[1] / 3,
-      },
       target: {
         x: bboxes.state.original[0],
-        y: bboxes.state.original[1] + bboxes.state.size[1] / 1,
+        y: bboxes.state.original[1] + bboxes.state.size[1] / 2,
       },
-      reverse: true,
     },
   };
 }
