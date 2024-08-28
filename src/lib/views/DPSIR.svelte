@@ -304,6 +304,7 @@
     }
     & .detail-link-not-highlight {
       opacity: 0;
+      pointer-events: none;
     }
     & .line-hover {
       stroke: black;
