@@ -19,6 +19,8 @@ export const DPSIR = {
     // console.log("init detailed");
     this.clicked_rect = null;
     this.clicked_link = null;
+    this.rectClicked = false;
+    this.linkClicked = false;
     this.width = 1550;
     this.height = 950;
     this.padding = { top: 10, right: 50, bottom: 10, left: 50 };
@@ -61,19 +63,23 @@ export const DPSIR = {
   resetHighlights(flag: boolean) {
     d3.selectAll("rect.box")
       .classed("box-highlight", false)
+      .classed("clicked-box-highlight", false)
       .classed("box-not-highlight", false)
-      .transition()
-      .duration(250)
-      .attr("transform", ""); // Reset transformation on all boxes to remove any previous magnification
+      // .transition()
+      // .duration(250)
+      // .attr("transform", ""); // Reset transformation on all boxes to remove any previous magnification
     d3.selectAll("text.label")
       .classed("box-label-highlight", false)
       .classed("box-label-not-highlight", false);
     d3.selectAll("path.link")
       .classed("link-highlight", false)
-      .classed("link-not-highlight", false)
-      // .classed("not-show-link-not-highlight", false)
-      .attr("stroke", "gray");
+      .classed("detail-link-not-highlight", false)
+      .attr("stroke", "gray")
+      .attr("pointer-events","default")
     // .attr("marker-end", "");
+    d3.selectAll("g.tag").select("image")
+      .classed("box-icon-highlight", false)
+      .classed("box-icon-not-highlight", false);
     console.log("click on svg");
     this.dispatch.call("VarOrLinkSelected", null, null);
     if (flag) {
@@ -82,6 +88,8 @@ export const DPSIR = {
     // this.dispatch.call("VarTypeUnSelected", null, null);
     this.clicked_link = null;
     this.clicked_rect = null;
+    this.rectClicked = false;
+    this.linkClicked = false;
   },
 
   // toggleLinks(showLinks: boolean) {
@@ -316,7 +324,8 @@ export const DPSIR = {
     // let global_grid: string[][] = this.grid_renderer.global_grid;
     let cellWidth: number = self.cellWidth;
     let cellHeight: number = self.cellHeight;
-    // const frequencyList = calculateFrequencyList(links); // includes variables frequency and link frequency among all groups
+    const frequencyList = grid_layout.calculateFrequencyList(links); // includes variables frequency and link frequency among all groups
+    // console.log(frequencyList);
     const varTypeOrder = {
       "driver-pressure": 1,
       "pressure-state": 2,
@@ -600,25 +609,24 @@ export const DPSIR = {
         return "gray";
       })
       .attr("stroke-width", function (d: tLinkObject) {
-        // const widthSacle = d3
-        //   .scaleLinear()
-        //   .domain([
-        //     frequencyList.minLinkFrequency,
-        //     frequencyList.maxLinkFrequency,
-        //   ])
-        //   .range([2, 15]);
-        // return widthSacle(d.frequency);
+        const widthSacle = d3
+          .scaleLinear()
+          .domain([
+            frequencyList.minLinkFrequency,
+            frequencyList.maxLinkFrequency,
+          ])
+          .range([2, 10]);
+        return widthSacle(d.frequency);
         return 1;
       })
       .attr("opacity", (d) => {
-        if (d.source.var_type == d.target.var_type) {
-          return 0.2;
-        } else {
-          return 0.2;
-        }
+        return d.source.var_type == d.target.var_type ? 0.1 : 0.1;
       })
       .on("mouseover", function (e, d: tLinkObject) {
-        d3.select(this).classed("line-hover", true);
+        if(!self.rectClicked && !self.linkClicked){
+        // if(!self.rectClicked ){
+          d3.select(this).classed("line-hover", true);
+        }
         // .attr("stroke", (d: tLinkObject) => {
         //   // const svg = d3.select("#" + self.svgId);
         //   // return createOrUpdateGradient(svg, d, self);
@@ -636,17 +644,19 @@ export const DPSIR = {
       .on("click", function (e, d: tLinkObject) {
         e.preventDefault();
 
-        const links = d3
+        const detailLinks = d3.select("g.detail-link-group")
+        const links = detailLinks
           .selectAll("path.link")
           .classed("link-highlight", false)
-          .classed("link-not-highlight", true)
-          // .classed("not-show-link-not-highlight", true)
-          .attr("stroke", "gray");
+          .classed("detail-link-not-highlight", true)
+          .attr("stroke", "gray")
+          .attr("pointer-events","none")
         // .attr("marker-end", "");
 
         const rects = d3
           .selectAll("rect.box")
           .classed("box-highlight", false)
+          .classed("clciked-box-highlight", false)
           .classed("box-not-highlight", true);
 
         const labels = d3
@@ -654,19 +664,23 @@ export const DPSIR = {
           .classed("box-label-highlight", false)
           .classed("box-label-not-highlight", true);
 
+        const icons = d3.selectAll("g.tag").select("image")
+        .classed("box-icon-highlight", false)
+        .classed("box-icon-not-highlight", true);
+
         if (self.clicked_link === d) {
           self.clicked_link = null;
+          self.linkClicked = false;
           // self.handlers.VarOrLinkSelected(null);
           self.dispatch.call("VarOrLinkSelected", null, null);
         } else {
           self.clicked_link = d;
+          self.linkClicked = true;
           // self.handlers.VarOrLinkSelected(d);
           self.dispatch.call("VarOrLinkSelected", null, d);
           d3.select(this)
             .classed("link-highlight", true)
-            .classed("link-not-highlight", false)
-            // .classed("not-show-link-not-highlight", false)
-            .classed("line-hover", false)
+            .classed("detail-link-not-highlight", false)
             .raise()
             .attr("stroke", (d: tLinkObject) => {
               // const svg = d3.select("#" + self.svgId);
@@ -684,9 +698,16 @@ export const DPSIR = {
                 box_data.variable_name === d.source.var_name ||
                 box_data.variable_name === d.target.var_name,
             )
-            .classed("box-highlight", true)
+            .classed("clicked-box-highlight", true)
             .classed("box-not-highlight", false)
-            .raise();
+
+          d3.select(`image#${d.source.var_name}`)
+            .classed("clicked-box-highlight", true)
+            .classed("box-not-highlight", false);
+
+          d3.select(`image#${d.target.var_name}`)
+            .classed("clicked-box-highlight", true)
+            .classed("box-not-highlight", false);
 
           labels
             .filter(
@@ -1045,49 +1066,68 @@ export const DPSIR = {
           .on("click", function (e) {
             // console.log("show links", self.showLinks);
             e.preventDefault();
-            d3.selectAll("rect.box")
-              .transition()
-              .duration(250)
-              .attr("transform", ""); // Reset transformation on all boxes to remove any previous magnification
+            // d3.selectAll("rect.box")
+            //   .transition()
+            //   .duration(250)
+            //   .attr("transform", ""); // Reset transformation on all boxes to remove any previous magnification
 
             const rects = d3
               .selectAll("rect.box")
               .classed("box-highlight", false)
+              .classed("clciked-box-highlight", false)
               .classed("box-not-highlight", true);
             const labels = d3
               .selectAll("text.label")
               .classed("box-label-highlight", false)
               .classed("box-label-not-highlight", true);
+            
+            //icons
+            d3.selectAll("g.tag").select("image")
+              .classed("box-icon-highlight", false)
+              .classed("box-icon-not-highlight", true);
+            //links
+
+            const detailLinks = d3.select("g.detail-link-group")
+            const links = detailLinks
+              .selectAll("path.link")
+              .classed("link-highlight", false)
+              .classed("detail-link-not-highlight", true)
+              .attr("stroke", "gray")
+              .attr("pointer-events","none")
+          
+
 
             // style changing after select a variable, including the links and labels
             if (self.clicked_rect === d) {
-              self.clicked_rect = null;
-              // self.handlers.VarOrLinkSelected(null);
+              self.clicked_rect = null;              
+              self.rectClicked = false;
               self.dispatch.call("VarOrLinkSelected", null, null);
-              d3.selectAll(".link")
-                .classed("link-highlight", false)
-                .classed("link-not-highlight", false)
-                // .classed("not-show-link-not-highlight", false)
-                .attr("stroke", "gray");
-              // .attr("marker-end", "");
-              rects
+              d3.selectAll("rect.box")
                 .classed("box-highlight", false)
+                .classed("clicked-box-highlight", false)
                 .classed("box-not-highlight", false);
-              labels
-                .classed("box-label-highlight", false)
-                .classed("box-label-not-highlight", false);
+              // .attr("marker-end", "");
+              d3.selectAll("text.label")
+              .classed("box-label-highlight", false)
+              .classed("box-label-not-highlight", false);
+              links
+                .classed("link-highlight", false)
+                .classed("detail-link-not-highlight", false)
+                .attr("link-not-highlight", false)
+              d3.selectAll("g.tag").select("image")
+                .classed("box-icon-highlight", false)
+                .classed("box-icon-not-highlight", false);
             } else {
               self.clicked_rect = d;
-
-              // self.handlers.VarOrLinkSelected(d);
-              // console.log(d);
+              self.rectClicked = true;
               self.dispatch.call("VarOrLinkSelected", null, d); //this refer to the context of the event
+
               d3.select(this)
-                .classed("box-highlight", true)
+                .classed("clicked-box-highlight", true)
                 .classed("box-not-highlight", false)
-                // .raise()
-                .transition()
-                .duration(250);
+              //   // .raise()
+              //   .transition()
+              //   .duration(250);
               labels
                 .filter(
                   (label_data: tRectObject) =>
@@ -1096,13 +1136,14 @@ export const DPSIR = {
                 .classed("box-label-highlight", true)
                 .classed("box-label-not-highlight", false)
                 .raise();
-              d3.selectAll(".link")
+
+              d3.select(`image#${d.variable_name}`)
+              .classed("box-icon-highlight", true)
+              .classed("box-icon-not-highlight", false);           
+
+              links
                 .classed("link-highlight", false)
-                .classed("link-not-highlight", true)
-                // .classed(
-                //   "not-show-link-not-highlight",
-                //   this.showLinks === false,
-                // )
+                .classed("detail-link-not-highlight", true)
                 .attr("stroke", "gray")
                 // .attr("marker-end", "")
                 .filter(
@@ -1111,17 +1152,51 @@ export const DPSIR = {
                     link_data.target.var_name === d.variable_name,
                 )
                 .classed("link-highlight", true)
-                .classed("link-not-highlight", false)
-                // .classed("not-show-link-not-highlight", false)
+                .classed("detail-link-not-highlight", false)
+
                 .raise()
                 .attr("stroke", (link_data: tLinkObject) => {
-                  // const svg = d3.select("#" + self.svgId);
-                  // return createOrUpdateGradient(svg, link_data, self);
                   return self.varTypeColorScale(link_data.source.var_type);
                 })
                 .attr("marker-end", (d: tLinkObject) => {
                   const svg = d3.select("#" + self.svgId);
                   return grid_layout.createArrow(svg, d, self);
+                })
+                .each(function(link_data: tLinkObject) {
+                  // Highlight the target rect of each related link
+                  const targetRectId = link_data.target.var_name;
+                  const sourceRectId = link_data.source.var_name;
+
+                  if(sourceRectId !== d.variable_name){
+                      d3.select(`rect#${sourceRectId}`)
+                        .classed("box-highlight", true)
+                        .classed("box-not-highlight", false);
+                      
+                      d3.select(`image#${sourceRectId}`)
+                        .classed("box-icon-highlight", true)
+                        .classed("box-icon-not-highlight", false);
+                      
+                  }
+                  else if(targetRectId !== d.variable_name){
+                    d3.select(`rect#${targetRectId}`)
+                      .classed("box-highlight", true)
+                      .classed("box-not-highlight", false);
+
+                    d3.select(`image#${targetRectId}`)
+                      .classed("box-icon-highlight", true)
+                      .classed("box-icon-not-highlight", false);   
+                  } 
+                  
+                  // Highlight the label of the target rect
+                  labels
+                    .filter(
+                      (label_data: tRectObject) =>
+                        targetRectId === label_data.variable_name ||
+                        sourceRectId === label_data.variable_name,
+                    )
+                    .classed("box-label-highlight", true)
+                    .classed("box-label-not-highlight", false)
+                    .raise();
                 });
             }
           });
@@ -1166,6 +1241,7 @@ export const DPSIR = {
               "xlink:href",
               d.factor_type === "social" ? "social.svg" : "ecological.svg",
             )
+            .attr("id", d.variable_name)
             .attr(
               "x",
               grid_layout.gridToSvgCoordinate(

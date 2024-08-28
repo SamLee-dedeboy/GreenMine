@@ -284,8 +284,8 @@
   }
   .varbox-svg {
     & .link-highlight {
-      opacity: 1;
-      /* filter: drop-shadow(2px 3px 2px rgba(0, 0, 0, 0.3)); */
+      opacity: 0.8;
+      filter: drop-shadow(2px 3px 2px rgba(0, 0, 0, 0.2));
     }
     & .overview-link-highlight {
       opacity: 0.8;
@@ -293,25 +293,37 @@
     & .link-not-highlight {
       opacity: 0.1;
     }
-    /* & .not-show-link-not-highlight {
+    & .detail-link-not-highlight {
       opacity: 0;
-    } */
+    }
     & .line-hover {
       stroke: black;
       /* stroke-width: 3; */
-      opacity: 1;
+      opacity: 0.8;
     }
     & .box-hover {
       stroke: black;
       stroke-width: 3;
     }
+    & .clicked-box-highlight {
+      stroke: black;
+      stroke-width: 1;
+      filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.7));
+    }
     & .box-highlight {
       /* opacity: 1; */
       stroke: black;
-      stroke-width: 3;
+      stroke-width: 1;
+      /* filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.3)); */
     }
     & .box-not-highlight {
-      /* opacity: 0.5; */
+      opacity: 0.2;
+    }
+    & .box-icon-highlight {
+      opacity: 1;
+    }
+    & .box-icon-not-highlight {
+      opacity: 0.2;
     }
     & .box-label-highlight {
       opacity: 1;
