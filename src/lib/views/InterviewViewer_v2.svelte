@@ -562,22 +562,25 @@
     box-shadow: 0px 0px 3px black;
   }
   :global(.keyword-highlighted) {
-    background: #ff8f00;
+    background: #ffb019;
     /* font-weight: bold; */
   }
   :global(.node-highlight) {
-    color: #ff8f00;
+    /* color: #ffb019; */
+  }
+  .interview-item-index:has(.node-highlight) {
+    background: #ffb019;
   }
   .title {
     font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   }
   .highlighted_message {
-    background: #ff8f00;
+    background: #ffb019;
   }
   .highlighted_evidence {
     /* text-decoration: underline;
     text-decoration-color: red; */
-    background: #ff8f00;
+    background: #ffb019;
   }
   .conversation-wrapper {
     position: relative;

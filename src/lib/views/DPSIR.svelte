@@ -190,8 +190,14 @@
   }
   function handleOverviewVarTypeUnSelected(var_type_name: string | null) {
     function removeVarTypeBbox(_var_type) {
-      d3.select("g.detail-bbox-group").selectAll(`g.${_var_type}`).selectAll("*").remove();
-      d3.select("g.detail-tag-group").selectAll(`g.${_var_type}`).selectAll("*").remove();
+      d3.select("g.detail-bbox-group")
+        .selectAll(`g.${_var_type}`)
+        .selectAll("*")
+        .remove();
+      d3.select("g.detail-tag-group")
+        .selectAll(`g.${_var_type}`)
+        .selectAll("*")
+        .remove();
       box_states[_var_type].selected = false;
       OverviewDPSIR.drawVars(data[_var_type], bboxes[_var_type]);
     }
@@ -283,6 +289,9 @@
     max-width: 100%; /* make DPSIR full width*/
   }
   .varbox-svg {
+    & .link {
+      /* transition: all 0.3s; */
+    }
     & .link-highlight {
       opacity: 0.8;
       filter: drop-shadow(2px 3px 2px rgba(0, 0, 0, 0.2));
