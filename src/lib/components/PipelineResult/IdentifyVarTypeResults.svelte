@@ -82,158 +82,163 @@
   }
 </script>
 
-<div
-  class="relative z-50 flex
+{#key title}
+  <div
+    class="relative z-50 flex
      min-w-[30rem]
             flex-1 flex-col
             bg-gray-100 px-1 shadow-lg"
-  transition:fade={{
-    duration: 100,
-  }}
->
-  {#if titleOptions.length > 0}
-    <select
-      bind:value={selectedTitle}
-      class="text-center text-lg font-medium capitalize text-black"
-    >
-      {#each titleOptions as option}
-        <option class="capitalize" value={option}>{option}</option>
-      {/each}
-    </select>
-  {:else}
-    <h2 class="text-center text-lg font-medium capitalize text-black">
-      {title}
-    </h2>
-  {/if}
-  <div class="flex grow flex-col divide-y divide-black">
-    <div class="flex divide-x">
-      <div class="w-[4rem] shrink-0">Snippet</div>
-      <div class="flex pl-2">Indicators</div>
-      <div
-        role="button"
-        tabindex="0"
-        class="ml-auto flex items-center justify-center self-center rounded-sm bg-gray-200 px-2 py-1 text-[0.7rem] normal-case italic leading-3 text-gray-600 text-gray-700 outline-double outline-1 outline-gray-600 transition-colors duration-200 hover:bg-gray-300"
-        on:click={() => dispatch("base_or_new_button_click")}
-        on:keyup={() => {}}
+    transition:fade={{
+      duration: 100,
+    }}
+  >
+    {#if titleOptions.length > 0}
+      <select
+        bind:value={selectedTitle}
+        class="text-center text-lg font-medium capitalize text-black"
       >
-        {buttonText}
-      </div>
-    </div>
-    {#if data_loading}
-      <div class="flex h-full items-center justify-center">Data Loading...</div>
+        {#each titleOptions as option}
+          <option class="capitalize" value={option}>{option}</option>
+        {/each}
+      </select>
     {:else}
-      <div
-        class="flex h-1 grow flex-col divide-y divide-black overflow-y-scroll"
-      >
-        {#each sort_by_uncertainty(data) as datum, i}
-          {#if datum.identify_var_types_result}
-            {@const isNone = datum.identify_var_types_result.length === 0}
-            <div class="flex items-center divide-x bg-gray-200" class:isNone>
-              <div class="w-[4rem] shrink-0 text-[0.9rem]">{datum.id}</div>
-              <div
-                class="flex grow items-center gap-x-1 py-0.5 pl-1 pr-3 capitalize"
-              >
-                {#if isNone}
-                  <div class="text-sm">None</div>
-                  <!-- <label for="varType" class="text-sm mr-2">Enter var type...</label> -->
-                  <div
-                    class="editable-area min-w-[50px] rounded-sm px-1 text-sm italic outline-dashed outline-1 outline-gray-300"
-                    style="flex: 1;"
-                    contenteditable="true"
-                    role="textbox"
-                    tabindex="0"
-                    aria-label="Enter var type"
-                    on:input={(event) => handleInput(datum.id, event)}
-                    on:keydown={(event) => handleKeydown(datum.id, event)}
-                    on:blur={(event) => handleBlur(datum.id, event)}
-                  ></div>
-                {:else}
-                  <div class="flex w-full flex-col">
-                    {#if datum.uncertainty.identify_var_types}
-                      <div class="ml-auto text-xs italic text-gray-600">
-                        Overall Uncertainty: {datum.uncertainty.identify_var_types.toFixed(
-                          2,
-                        )}
-                      </div>
-                    {/if}
-                    <div class="flex gap-x-2">
-                      {#each datum.identify_var_types_result
-                        // .filter((item) => item.evidence && item.evidence.length > 0)
-                        .sort( (a, b) => compare_var_types(a.var_type, b.var_type), ) as var_type_wrapper, i}
-                        <div class="flex flex-col">
-                          <div
-                            role="button"
-                            tabindex="0"
-                            class="flex rounded-sm px-0.5 text-sm italic opacity-70 outline-double outline-0 outline-gray-300 hover:outline-gray-600"
-                            style={`background-color: ${$varTypeColorScale(var_type_wrapper.var_type)}; box-shadow: ${varTypeConfidenceShadow(var_type_wrapper.confidence)}`}
-                            on:click={() => {
-                              if (
-                                var_type_wrapper.evidence &&
-                                var_type_wrapper.evidence.length > 0
-                              ) {
-                                dispatch("navigate_evidence", {
-                                  // result: datum.identify_var_types_result,
-                                  chunk_id: datum.id,
-                                  evidence: var_type_wrapper.evidence,
-                                  explanation: generate_explanation_html(
-                                    var_type_wrapper.var_type,
-                                    var_type_wrapper.explanation,
-                                  ),
-                                });
-                              } else {
-                                alert("No evidence. Add manually.");
-                              }
-                            }}
-                            on:keyup={() => {}}
-                          >
-                            <span title="check evidence"
-                              >{var_type_wrapper.var_type}</span
-                            >
-                            <button
-                              class="font-bold hover:text-white focus:outline-none"
-                              on:click={(event) => {
-                                event.stopPropagation();
-                                dispatch("remove_var_type", {
-                                  id: datum.id,
-                                  variable: var_type_wrapper,
-                                });
+      <h2 class="text-center text-lg font-medium capitalize text-black">
+        {title}
+      </h2>
+    {/if}
+    <div class="flex grow flex-col divide-y divide-black">
+      <div class="flex divide-x">
+        <div class="w-[4rem] shrink-0">Snippet</div>
+        <div class="flex pl-2">Indicators</div>
+        <div
+          role="button"
+          tabindex="0"
+          class="ml-auto flex items-center justify-center self-center rounded-sm bg-gray-200 px-2 py-1 text-[0.7rem] normal-case italic leading-3 text-gray-600 text-gray-700 outline-double outline-1 outline-gray-600 transition-colors duration-200 hover:bg-gray-300"
+          on:click={() => dispatch("base_or_new_button_click")}
+          on:keyup={() => {}}
+        >
+          {buttonText}
+        </div>
+      </div>
+      {#if data_loading}
+        <div class="flex h-full items-center justify-center">
+          Data Loading...
+        </div>
+      {:else}
+        <div
+          class="flex h-1 grow flex-col divide-y divide-black overflow-y-scroll"
+        >
+          {#each sort_by_uncertainty(data) as datum, i}
+            {#if datum.identify_var_types_result}
+              {@const isNone = datum.identify_var_types_result.length === 0}
+              <div class="flex items-center divide-x bg-gray-200" class:isNone>
+                <div class="w-[4rem] shrink-0 text-[0.9rem]">{datum.id}</div>
+                <div
+                  class="flex grow items-center gap-x-1 py-0.5 pl-1 pr-3 capitalize"
+                >
+                  {#if isNone}
+                    <div class="text-sm">None</div>
+                    <!-- <label for="varType" class="text-sm mr-2">Enter var type...</label> -->
+                    <div
+                      class="editable-area min-w-[50px] rounded-sm px-1 text-sm italic outline-dashed outline-1 outline-gray-300"
+                      style="flex: 1;"
+                      contenteditable="true"
+                      role="textbox"
+                      tabindex="0"
+                      aria-label="Enter var type"
+                      on:input={(event) => handleInput(datum.id, event)}
+                      on:keydown={(event) => handleKeydown(datum.id, event)}
+                      on:blur={(event) => handleBlur(datum.id, event)}
+                    ></div>
+                  {:else}
+                    <div class="flex w-full flex-col">
+                      {#if datum.uncertainty?.identify_var_types}
+                        <div class="ml-auto text-xs italic text-gray-600">
+                          Overall Uncertainty: {datum.uncertainty.identify_var_types.toFixed(
+                            2,
+                          )}
+                        </div>
+                      {/if}
+                      <div class="flex gap-x-2">
+                        {#each datum.identify_var_types_result
+                          // .filter((item) => item.evidence && item.evidence.length > 0)
+                          .sort( (a, b) => compare_var_types(a.var_type, b.var_type), ) as var_type_wrapper, i}
+                          <div class="flex flex-col">
+                            <div
+                              role="button"
+                              tabindex="0"
+                              class="flex rounded-sm px-0.5 text-sm italic opacity-70 outline-double outline-0 outline-gray-300 hover:outline-gray-600"
+                              style={`background-color: ${$varTypeColorScale(var_type_wrapper.var_type)}; box-shadow: ${varTypeConfidenceShadow(var_type_wrapper.confidence)}`}
+                              on:click={() => {
+                                if (
+                                  var_type_wrapper.evidence &&
+                                  var_type_wrapper.evidence.length > 0
+                                ) {
+                                  dispatch("navigate_evidence", {
+                                    // result: datum.identify_var_types_result,
+                                    chunk_id: datum.id,
+                                    evidence: var_type_wrapper.evidence,
+                                    explanation: generate_explanation_html(
+                                      var_type_wrapper.var_type,
+                                      var_type_wrapper.explanation,
+                                    ),
+                                  });
+                                } else {
+                                  alert("No evidence. Add manually.");
+                                }
                               }}
                               on:keyup={() => {}}
                             >
-                              ×
-                            </button>
-                          </div>
-                          {#if var_type_wrapper.confidence}
-                            <div class="mt-0.5 text-xs italic text-gray-600">
-                              {var_type_wrapper.confidence}
+                              <span title="check evidence"
+                                >{var_type_wrapper.var_type}</span
+                              >
+                              <button
+                                class="font-bold hover:text-white focus:outline-none"
+                                on:click={(event) => {
+                                  event.stopPropagation();
+                                  dispatch("remove_var_type", {
+                                    id: datum.id,
+                                    variable: var_type_wrapper,
+                                  });
+                                }}
+                                on:keyup={() => {}}
+                              >
+                                ×
+                              </button>
                             </div>
-                          {/if}
-                        </div>
-                      {/each}
-                      {#if datum.identify_var_types_result.length < 5}
-                        <div
-                          class="editable-area min-w-[50px] rounded-sm px-1 text-sm italic outline-dashed outline-1 outline-gray-300"
-                          style="flex: 1;"
-                          contenteditable="true"
-                          role="textbox"
-                          tabindex="0"
-                          aria-label="Enter var type"
-                          on:input={(event) => handleInput(datum.id, event)}
-                          on:keydown={(event) => handleKeydown(datum.id, event)}
-                          on:blur={(event) => handleBlur(datum.id, event)}
-                        ></div>
-                      {/if}
+                            {#if var_type_wrapper.confidence}
+                              <div class="mt-0.5 text-xs italic text-gray-600">
+                                {var_type_wrapper.confidence}
+                              </div>
+                            {/if}
+                          </div>
+                        {/each}
+                        {#if datum.identify_var_types_result.length < 5}
+                          <div
+                            class="editable-area min-w-[50px] rounded-sm px-1 text-sm italic outline-dashed outline-1 outline-gray-300"
+                            style="flex: 1;"
+                            contenteditable="true"
+                            role="textbox"
+                            tabindex="0"
+                            aria-label="Enter var type"
+                            on:input={(event) => handleInput(datum.id, event)}
+                            on:keydown={(event) =>
+                              handleKeydown(datum.id, event)}
+                            on:blur={(event) => handleBlur(datum.id, event)}
+                          ></div>
+                        {/if}
+                      </div>
                     </div>
-                  </div>
-                {/if}
+                  {/if}
+                </div>
               </div>
-            </div>
-          {/if}
-        {/each}
-      </div>
-    {/if}
+            {/if}
+          {/each}
+        </div>
+      {/if}
+    </div>
   </div>
-</div>
+{/key}
 
 <style lang="postcss">
   .isNone {

@@ -323,7 +323,8 @@
         />
         <IdentifyVarTypeResults
           data={tmp_data?.identify_var_types || []}
-          title={`${selectedTitle} after run (new)`}
+          title={selectedTitle}
+          {titleOptions}
           buttonText="Save Version"
           {data_loading}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}

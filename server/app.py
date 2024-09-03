@@ -40,7 +40,7 @@ def test():
 
 
 @app.route("/data/")
-@app.route("/data/<version>")
+@app.route("/data/<version>/")
 def get_data(version="baseline"):
     nodes = {}
     for var_type in var_types:

@@ -101,7 +101,7 @@
 
   function fetchVersionData(version: string) {
     data_loading = true;
-    fetch(`${server_address}/data/${version}`)
+    fetch(`${server_address}/data/${version}/`)
       .then((res) => res.json())
       .then((versionData: tServerData) => {
         versionedPipelineResults[version] = versionData.pipeline_result;
