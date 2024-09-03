@@ -14,7 +14,8 @@
   const dispatch = createEventDispatcher();
   const validTypes = ["driver", "pressure", "state", "impact", "response"];
 
-  function varTypeConfidenceShadow(confidence: number) {
+  function varTypeConfidenceShadow(confidence: number | undefined) {
+    if (!confidence) return `unset`;
     if (confidence > 0.5) return "; color: rgb(31 41 55)";
     return `1px 1px 1px 1px black`;
   }
@@ -64,6 +65,10 @@
 
   $: selectedTitle, handleTitleChange();
   function sort_by_uncertainty(data: tIdentifyVarTypes[]) {
+    if (data.length === 0) return data;
+    if (!data[0].uncertainty) {
+      return sort_by_id(data);
+    }
     const sorted = data.sort(
       (a, b) =>
         b.uncertainty.identify_var_types - a.uncertainty.identify_var_types,
@@ -92,7 +97,7 @@
       class="text-center text-lg font-medium capitalize text-black"
     >
       {#each titleOptions as option}
-        <option value={option}>{option}</option>
+        <option class="capitalize" value={option}>{option}</option>
       {/each}
     </select>
   {:else}
@@ -126,7 +131,7 @@
             <div class="flex items-center divide-x bg-gray-200" class:isNone>
               <div class="w-[4rem] shrink-0 text-[0.9rem]">{datum.id}</div>
               <div
-                class="flex grow flex-col items-center gap-x-1 py-0.5 pl-1 pr-3 capitalize"
+                class="flex grow items-center gap-x-1 py-0.5 pl-1 pr-3 capitalize"
               >
                 {#if isNone}
                   <div class="text-sm">None</div>
@@ -144,11 +149,13 @@
                   ></div>
                 {:else}
                   <div class="flex w-full flex-col">
-                    <div class="ml-auto text-xs italic text-gray-600">
-                      Overall Uncertainty: {datum.uncertainty.identify_var_types.toFixed(
-                        2,
-                      )}
-                    </div>
+                    {#if datum.uncertainty.identify_var_types}
+                      <div class="ml-auto text-xs italic text-gray-600">
+                        Overall Uncertainty: {datum.uncertainty.identify_var_types.toFixed(
+                          2,
+                        )}
+                      </div>
+                    {/if}
                     <div class="flex gap-x-2">
                       {#each datum.identify_var_types_result
                         // .filter((item) => item.evidence && item.evidence.length > 0)
@@ -196,9 +203,11 @@
                               ×
                             </button>
                           </div>
-                          <div class="mt-0.5 text-xs italic text-gray-600">
-                            {var_type_wrapper.confidence}
-                          </div>
+                          {#if var_type_wrapper.confidence}
+                            <div class="mt-0.5 text-xs italic text-gray-600">
+                              {var_type_wrapper.confidence}
+                            </div>
+                          {/if}
                         </div>
                       {/each}
                       {#if datum.identify_var_types_result.length < 5}

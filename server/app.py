@@ -147,7 +147,9 @@ def get_data(version="baseline"):
             link for chunk in identify_links for link in chunk["identify_links_result"]
         ]  # TBM
 
-    keyword_embeddings = json.load(open(keyword_data_path + "keywords.json",encoding="utf-8"))
+    keyword_embeddings = json.load(
+        open(keyword_data_path + "keywords.json", encoding="utf-8")
+    )
     userdict = keyword_data_path + "userdict.txt"
     stopwords = ["綠島"]
     kpca_reducer = dr.init_kpca_reducer(
@@ -197,55 +199,55 @@ def get_data(version="baseline"):
     }
 
 
-@app.route("/var_extraction/", methods=["POST"])
-def var_extraction():
-    var_type = request.json["var_type"]
-    var_name = request.json["var_name"]
-    var_definition = request.json["var_definition"]
-    factor_type = request.json["factor_type"]
-    chunks = collect_chunks(
-        glob.glob(chunk_data_path + f"chunk_summaries_w_ktte/*.json")
-    )
-    all_nodes = collect_nodes(
-        [node_data_path + f"{var_type}_nodes.json" for var_type in var_types]
-    )
-    chunk_dict = chunk_w_var_mentions(chunks, all_nodes)
-    all_def_dict = local.all_definitions(
-        file_paths=[
-            metadata_path + f"{var_type}_variables_def.json" for var_type in var_types
-        ]
-    )
-    local.add_variable(
-        metadata_path + f"{var_type}_variables_def.json",
-        var_name,
-        var_definition,
-        factor_type,
-    )
-    query.var_extraction(
-        openai_client,
-        node_data_path + f"{var_type}_nodes.json",
-        node_data_path + "connections.json",
-        chunk_dict,
-        var_name,
-        var_type,
-        var_definition,
-        all_def_dict,
-    )
-    return "success"
+# @app.route("/var_extraction/", methods=["POST"])
+# def var_extraction():
+#     var_type = request.json["var_type"]
+#     var_name = request.json["var_name"]
+#     var_definition = request.json["var_definition"]
+#     factor_type = request.json["factor_type"]
+#     chunks = collect_chunks(
+#         glob.glob(chunk_data_path + f"chunk_summaries_w_ktte/*.json")
+#     )
+#     all_nodes = collect_nodes(
+#         [node_data_path + f"{var_type}_nodes.json" for var_type in var_types]
+#     )
+#     chunk_dict = chunk_w_var_mentions(chunks, all_nodes)
+#     all_def_dict = local.all_definitions(
+#         file_paths=[
+#             metadata_path + f"{var_type}_variables_def.json" for var_type in var_types
+#         ]
+#     )
+#     local.add_variable(
+#         metadata_path + f"{var_type}_variables_def.json",
+#         var_name,
+#         var_definition,
+#         factor_type,
+#     )
+#     query.var_extraction(
+#         openai_client,
+#         node_data_path + f"{var_type}_nodes.json",
+#         node_data_path + "connections.json",
+#         chunk_dict,
+#         var_name,
+#         var_type,
+#         var_definition,
+#         all_def_dict,
+#     )
+#     return "success"
 
 
-@app.route("/curation/remove/", methods=["POST"])
-def remove_var():
-    var_type = request.json["var_type"]
-    var_names = request.json["var_names"]
-    for var_name in var_names:
-        local.remove_variable(
-            node_file_path=node_data_path + f"{var_type}_nodes.json",
-            def_file_path=metadata_path + f"{var_type}_variables_def.json",
-            link_file_path=node_data_path + "connections.json",
-            var_name=var_name,
-        )
-    return "success"
+# @app.route("/curation/remove/", methods=["POST"])
+# def remove_var():
+#     var_type = request.json["var_type"]
+#     var_names = request.json["var_names"]
+#     for var_name in var_names:
+#         local.remove_variable(
+#             node_file_path=node_data_path + f"{var_type}_nodes.json",
+#             def_file_path=metadata_path + f"{var_type}_variables_def.json",
+#             link_file_path=node_data_path + "connections.json",
+#             var_name=var_name,
+#         )
+#     return "success"
 
 
 @app.route("/curation/identify_var_types/", methods=["POST"])
@@ -289,14 +291,14 @@ def curate_identify_var_types():
             user_prompt_blocks,
             prompt_variables,
         )
-        local.save_json(
-            all_chunks,
-            pipeline_result_path + "identify_var_types/chunk_w_var_types.json",
-        )
+        # local.save_json(
+        #     all_chunks,
+        #     pipeline_result_path + "identify_var_types/chunk_w_var_types.json",
+        # )
         return json.dumps(all_chunks, default=vars)
 
 
-@app.route("/curation/identify_var_types/save", methods=["POST"])
+@app.route("/curation/identify_var_types/save/", methods=["POST"])
 def save_identify_var_types():
     all_chunks = request.json["result"]
     context = request.json["context"]
@@ -374,13 +376,13 @@ def curate_identify_vars():
             user_prompt_blocks,
             prompt_variables,
         )
-        local.save_json(
-            all_chunks, pipeline_result_path + "identify_vars/chunk_w_vars.json"
-        )
+        # local.save_json(
+        #     all_chunks, pipeline_result_path + "identify_vars/chunk_w_vars.json"
+        # )
         return json.dumps(all_chunks, default=vars)
 
 
-@app.route("/curation/identify_vars/save", methods=["POST"])
+@app.route("/curation/identify_vars/save/", methods=["POST"])
 def save_identify_vars():
     all_chunks = request.json["result"]
     context = request.json["context"]
@@ -451,14 +453,14 @@ def curate_identify_links():
             user_prompt_blocks,
             prompt_variables,
         )
-        local.save_json(
-            all_chunks,
-            pipeline_result_path + "identify_links/chunk_w_links_uncertainty.json",
-        )
+        # local.save_json(
+        #     all_chunks,
+        #     pipeline_result_path + "identify_links/chunk_w_links_uncertainty.json",
+        # )
         return json.dumps(all_chunks, default=vars)
 
 
-@app.route("/curation/identify_links/save", methods=["POST"])
+@app.route("/curation/identify_links/save/", methods=["POST"])
 def save_identify_links():
     all_chunks = request.json["result"]
     local.save_json(

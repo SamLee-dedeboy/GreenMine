@@ -70,8 +70,8 @@ export type tVarTypeResult = {
   var_type: string;
   evidence: number[];
   explanation: string;
-  confidence: number;
-  uncertainty: number;
+  confidence?: number;
+  uncertainty?: number;
 }[];
 export type tVarResult = Record<
   string,

@@ -54,6 +54,7 @@
   };
   let removeVar: VarTypeItem[] = [];
   let addVar: VarTypeItem[] = [];
+  let measure_uncertainty = false;
 
   function navigate_evidence(e) {
     if (!e) return;
@@ -95,7 +96,10 @@
         "Content-Type": "application/json",
       },
       // body: JSON.stringify(data[key]),
-      body: JSON.stringify({ ...data[key], compute_uncertainty: true }),
+      body: JSON.stringify({
+        ...data[key],
+        compute_uncertainty: measure_uncertainty,
+      }),
     })
       .then((res) => res.json())
       .then((res) => {
@@ -161,7 +165,7 @@
     // console.log(version);
     if (!pipeline_tmp_data) return;
     console.log("saving", pipeline_tmp_data[key], data[key]);
-    fetch(server_address + `/curation/${key}/save`, {
+    fetch(server_address + `/curation/${key}/save/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -290,6 +294,9 @@
           <PromptHeader
             title="Identify Indicators"
             on:run={() => execute_prompt(data, "identify_var_types")}
+            bind:measure_uncertainty
+            on:toggle-measure-uncertainty={() =>
+              (measure_uncertainty = !measure_uncertainty)}
           ></PromptHeader>
           <VarTypeDataEntry
             bind:data={data.identify_var_types.var_type_definitions}
@@ -307,7 +314,7 @@
           title={selectedTitle}
           {titleOptions}
           buttonText="Update Rules"
-          data_loading={pipeline_result ? false : true}
+          data_loading={false}
           on:base_or_new_button_click={() => update_rules()}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
           on:remove_var_type={(e) => remove_var_type(e.detail, "base")}
@@ -331,7 +338,9 @@
           <PromptHeader
             title="Identify Variables"
             on:run={() => execute_prompt(data, "identify_vars")}
-            on:save={() => save_data(data, tmp_data, "identify_vars")}
+            bind:measure_uncertainty
+            on:toggle-measure-uncertainty={() =>
+              (measure_uncertainty = !measure_uncertainty)}
           ></PromptHeader>
           <VarDataEntry bind:data={data.identify_vars.var_definitions}
           ></VarDataEntry>
@@ -345,11 +354,13 @@
         <IdentifyVarResults
           title="baseline"
           data={pipeline_result?.identify_vars || []}
+          data_loading={false}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
         <IdentifyVarResults
           title="new"
           data={tmp_data?.identify_vars || []}
+          {data_loading}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
       </div>
@@ -361,7 +372,9 @@
           <PromptHeader
             title="Identify Links"
             on:run={() => execute_prompt(data, "identify_links")}
-            on:save={() => save_data(data, tmp_data, "identify_links")}
+            bind:measure_uncertainty
+            on:toggle-measure-uncertainty={() =>
+              (measure_uncertainty = !measure_uncertainty)}
           ></PromptHeader>
           <PromptEntry
             data={{
@@ -373,11 +386,13 @@
         <IdentifyLinkResults
           title="baseline"
           data={pipeline_result?.identify_links || []}
+          data_loading={false}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
         <IdentifyLinkResults
           title="new"
           data={tmp_data?.identify_links || []}
+          {data_loading}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
       </div>
