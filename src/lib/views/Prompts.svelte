@@ -61,6 +61,8 @@
     dispatch("navigate_evidence", e); //To App.sevelte
   }
   function update_rules() {
+    alert("Rules updating is in progress");
+    return;
     if (log_record) {
       // Update remove_element
       for (const item of removeVar) {
@@ -164,6 +166,8 @@
   ) {
     // console.log(version);
     if (!pipeline_tmp_data) return;
+    alert("Data saving is in progress");
+    return;
     console.log("saving", pipeline_tmp_data[key], data[key]);
     fetch(server_address + `/curation/${key}/save/`, {
       method: "POST",
