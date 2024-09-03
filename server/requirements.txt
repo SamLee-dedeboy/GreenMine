@@ -4,3 +4,5 @@ tiktoken
 tqdm
 openai
 pydantic    
+jieba
+scikit-learn
