@@ -1129,7 +1129,7 @@ export const DPSIR = {
               links
                 .classed("link-highlight", false)
                 .classed("detail-link-not-highlight", false)
-                .attr("link-not-highlight", false)
+                // .attr("link-not-highlight", false)
               d3.selectAll("g.tag").select("image")
                 .classed("box-icon-highlight", false)
                 .classed("box-icon-not-highlight", false);

@@ -32,11 +32,11 @@
     response: { center: [70, 210], size: [0, 0] },
   };
   let box_states = {
-    driver: { selected: false },
-    pressure: { selected: false },
-    state: { selected: false },
-    impact: { selected: false },
-    response: { selected: false },
+    driver: { revealed: false },
+    pressure: { revealed: false },
+    state: { revealed: false },
+    impact: { revealed: false },
+    response: { revealed: false },
   };
   // type SelectedType = { source: string; target: string };
   let all_selected_types: SelectedType[] = [];
@@ -49,22 +49,19 @@
   // let showLinks = true;
   let enable = false;
   let currentRenderer = "OverviewDPSIR";
+  $: isDetailMode = Object.values(box_states).every(state => state.revealed);
   async function update_vars(
     vars: tDPSIR,
     links: tVisLink[],
     // showLinks: boolean,
     all_selected_types,
   ) {
-    if (currentRenderer == "OverviewDPSIR") {
-      Constants.var_type_names.forEach((var_type) => {
-        box_states[var_type].selected = false;
-      });
-      OverviewDPSIR.update_vars(vars, links, $varTypeColorScale, bboxes);
-    } else {
+
+    if (Object.values(box_states).every(state => state.revealed)) {
       group_name_clickable = false;
-      Constants.var_type_names.forEach((var_type) => {
-        box_states[var_type].selected = true;
-      });
+      // Constants.var_type_names.forEach((var_type) => {
+      //   box_states[var_type].revealed = true;
+      // });
       DPSIR.update_vars(
         vars,
         links,
@@ -74,6 +71,11 @@
         bboxes,
         group_name_clickable,
       );
+    }else{
+      Constants.var_type_names.forEach((var_type) => {
+        box_states[var_type].revealed = false;
+      });
+      OverviewDPSIR.update_vars(vars, links, $varTypeColorScale, bboxes);
     }
   }
 
@@ -88,7 +90,7 @@
       bboxes,
     );
     // console.log({rectangleCoordinates,bboxes})
-    initializeRenderer(currentRenderer, all_selected_types);
+    initializeRenderer(all_selected_types);
   });
   // function toggleLinks() {
   //   if (enable) {
@@ -113,32 +115,21 @@
     dispatch("var-selected", selectedVar); // for App.svelte to hightlight the chunks
   }
   function handleVarTypeLinkSelected(varTypeLink: tLinkObjectOverview) {
-    // console.log(e)
+    // console.log("selected", varTypeLink);
     // vartypeunselected_flag = false;
     if (varTypeLink !== null) {
       const var_type_source = varTypeLink.source;
       const var_type_target = varTypeLink.target;
-      currentRenderer = "DPSIR";
-      d3.select("body").selectAll(".tooltip-content").remove();
+      
       const linkGroup = d3.select(".overview_link_group");
-      // Remove all path elements (links) within the group
-      linkGroup.selectAll("path").remove();
-
+      linkGroup.select(`path.link#${var_type_source}-${var_type_target}`).remove();
+      d3.select("body").selectAll(".tooltip-content").remove();
       Constants.var_type_names.forEach((var_type) => {
-        if (var_type !== var_type_source && var_type !== var_type_target) {
-          d3.select(`rect.bbox#` + `${var_type}`)
-            .attr("opacity", 0)
-            .attr("pointer-events", "none");
-          d3.select(`text.bbox-label#` + `${var_type}` + `_label`).attr(
-            "opacity",
-            0,
-          );
-          box_states[var_type].selected = false;
-        } else {
+        if (var_type === var_type_source || var_type === var_type_target) {          
           d3.select(`rect.bbox#` + `${var_type}`).remove();
           d3.select(`text.bbox-label#` + `${var_type}` + `_label`).remove();
-          box_states[var_type].selected = true;
-          group_name_clickable = false;
+          box_states[var_type].revealed = true;
+          // group_name_clickable = false;
           DPSIR.drawVars(
             $varTypeColorScale,
             data[var_type],
@@ -146,31 +137,26 @@
             bboxes[var_type],
             group_name_clickable,
           );
+
+          
         }
       });
 
-      all_selected_types = [];
-      all_selected_types.push({
-        source: varTypeLink.source,
-        target: varTypeLink.target,
-      });
-      all_selected_types.push({
-        source: varTypeLink.source,
-        target: varTypeLink.source,
-      });
-      all_selected_types.push({
-        source: varTypeLink.target,
-        target: varTypeLink.target,
-      });
+      all_selected_types = [
+        { source: varTypeLink.source, target: varTypeLink.target },
+        { source: varTypeLink.source, target: varTypeLink.source },
+        { source: varTypeLink.target, target: varTypeLink.target },
+      ];
       // initializeRenderer(currentRenderer, all_selected_types);
       DPSIR.drawLinks(links, bboxes, all_selected_types);
     }
   }
+
+  //overview -> detail
   function handleOverviewVarTypeSelected(var_type: string) {
-    console.log("selected", var_type);
     if (var_type !== null) {
       // d3.select("g.detail-bbox-group").select(`g.${var_type}`).remove();
-      box_states[var_type].selected = true;
+      box_states[var_type].revealed = true;
       group_name_clickable = true;
       DPSIR.drawVars(
         $varTypeColorScale,
@@ -180,61 +166,84 @@
         group_name_clickable,
       );
       all_selected_types = [];
-      Constants.var_type_names.forEach((var_type) => {
-        if (box_states[var_type].selected) {
-          all_selected_types.push({ source: var_type, target: var_type });
+      const revealedTypes = Constants.var_type_names.filter(type => box_states[type].revealed);
+      const linkGroup = d3.select(".overview_link_group");
+      for (let i = 0; i < revealedTypes.length; i++) {
+        for (let j = 0; j < revealedTypes.length; j++) {
+          all_selected_types.push({
+            source: revealedTypes[i],
+            target: revealedTypes[j]
+          });
+          if(revealedTypes[i] !== revealedTypes[j]){            
+              linkGroup.select(`path.link#${revealedTypes[i]}-${revealedTypes[j]}`).remove();
+          }
         }
-      });
+      }
       DPSIR.drawLinks(links, bboxes, all_selected_types);
     }
   }
+
+  //detail -> overview
   function handleOverviewVarTypeUnSelected(var_type_name: string | null) {
     function removeVarTypeBbox(_var_type) {
       d3.select("g.detail-bbox-group").selectAll(`g.${_var_type}`).selectAll("*").remove();
       d3.select("g.detail-tag-group").selectAll(`g.${_var_type}`).selectAll("*").remove();
-      box_states[_var_type].selected = false;
+      box_states[_var_type].revealed = false;
       OverviewDPSIR.drawVars(data[_var_type], bboxes[_var_type]);
     }
     function removeVarTypeLinks(_var_type) {
-      const link_group = d3.select(".detail-link-group");
-      link_group.selectAll(`path.link.${_var_type}-${_var_type}`).remove();
+      const detail_link_group = d3.select(".detail-link-group");
+      detail_link_group.selectAll(`path.link.${_var_type}-${_var_type}, path.link[class*="${_var_type}-"], path.link[class*="-${_var_type}"]`).remove();
+
     }
-    console.log("unselected", var_type_name);
+
+    // console.log("unselected", var_type_name);
     if (var_type_name !== null) {
       removeVarTypeBbox(var_type_name);
       removeVarTypeLinks(var_type_name);
     } else {
       Constants.var_type_names.forEach((_var_type) => {
-        if (box_states[_var_type].selected) {
+        if (box_states[_var_type].revealed) {
           console.log("remove", _var_type);
           removeVarTypeBbox(_var_type);
           removeVarTypeLinks(_var_type);
         }
       });
     }
+    OverviewDPSIR.drawLinks(links, bboxes);
   }
   function enableLinks(e) {
     enable = e;
   }
 
   function switchRenderer() {
-    currentRenderer =
-      currentRenderer === "OverviewDPSIR" ? "DPSIR" : "OverviewDPSIR";
+    // detail mode
+    const allRevealed = Object.values(box_states).every(
+      (state) => state.revealed,
+    );
 
-    if (currentRenderer === "DPSIR") {
+    // if it is in detail mode, then switch to overview mode
+    if (allRevealed) {
+      Object.keys(box_states).forEach(key => {
+        box_states[key].revealed = false;
+      });
+      all_selected_types = [];
+      vartypeunselected_flag = true;
+      console.log("VarTypeUnSelected will be triggered in overview mode");
+    } 
+    else {
+      Object.keys(box_states).forEach(key => {
+        box_states[key].revealed = true;
+      });
       all_selected_types = OverviewDPSIR.extractUniquePairs(links);
       // all_selected_types = [];
       vartypeunselected_flag = false;
       console.log("VarTypeUnSelected will not be triggered in detail mode");
-    } else {
-      all_selected_types = [];
-      vartypeunselected_flag = true;
-      console.log("VarTypeUnSelected will be triggered in overview mode");
     }
-    initializeRenderer(currentRenderer, all_selected_types);
+    initializeRenderer(all_selected_types);
   }
 
-  function initializeRenderer(renderer, all_selected_types) {
+  function initializeRenderer(all_selected_types) {
     d3.select(`#${svgId}`).selectAll("*").remove();
     OverviewDPSIR.init(svgId);
     DPSIR.init(svgId, utilities);
@@ -244,7 +253,6 @@
     // Remove tooltip if it exists
     // d3.select("body").selectAll(".tooltip-content").remove();
     OverviewDPSIR.on("VarTypeLinkSelected", handleVarTypeLinkSelected);
-    // OverviewDPSIR.on("VarTypeHovered", handleOverviewVarTypeHovered);
     OverviewDPSIR.on("VarTypeSelected", handleOverviewVarTypeSelected);
     document
       .querySelector(`#${svgId}`)
@@ -252,7 +260,7 @@
     update_vars(data, links, all_selected_types);
   }
 
-  function handleOverviewVarTypeHovered(var_type: string) {}
+
 </script>
 
 <div bind:this={container} class="container relative h-full w-full">
@@ -273,7 +281,7 @@
     class="absolute right-4 top-4 z-10 rounded-md bg-gray-300 p-2 text-black transition-colors hover:bg-gray-500 hover:text-white"
     on:click={switchRenderer}
   >
-    Show {currentRenderer === "OverviewDPSIR" ? "Full Detail" : "Overview"}
+    Show {isDetailMode ? "Overview" : "Full Detail"}
   </button>
   <div class="tooltip-content"></div>
 </div>
