@@ -198,7 +198,7 @@ export const OverviewDPSIR = {
   },
   drawLinks(
     links: tVisLink[],
-    bboxes: { center: [number, number]; size: [number, number] },
+    bboxes
   ) {
     const self = this;
     // console.log(bboxes);
@@ -329,7 +329,7 @@ export const OverviewDPSIR = {
         Math.max(...pairInfo.map((d) => d.count)),
       ])
       .range([0.4, 0.8]);
-    svg.select("g.overview_link_group");
+    
     const link_paths = svg
       .select("g.overview_link_group")
       .selectAll(".link")
@@ -351,7 +351,7 @@ export const OverviewDPSIR = {
       })
       //   .attr("stroke-dasharray", "5,5")
       .on("mouseover", function (event, d) {
-        d3.selectAll("path.link").classed("link-not-highlight", true);
+        // d3.selectAll("path.link").classed("link-not-highlight", true);
         d3.select(this)
           .classed("link-highlight", true)
           .classed("link-not-highlight", false)
@@ -395,7 +395,7 @@ export const OverviewDPSIR = {
       })
       .on("click", function (event, d: tLinkObjectOverview) {
         event.preventDefault();
-        // self.dispatch.call("VarTypeLinkSelected", null, d);
+        self.dispatch.call("VarTypeLinkSelected", null, d);
       });
   },
 
