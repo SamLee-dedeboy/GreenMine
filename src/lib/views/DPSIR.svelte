@@ -38,7 +38,7 @@
     impact: { revealed: false },
     response: { revealed: false },
   };
-  // type SelectedType = { source: string; target: string };
+  let varTypeLinks: tLinkObjectOverview[] = [];
   let all_selected_types: SelectedType[] = [];
   let vartypeunselected_flag = true;
   let group_name_clickable = true;
@@ -142,12 +142,12 @@
         }
       });
 
-      all_selected_types = [
+
+      all_selected_types.push(
         { source: varTypeLink.source, target: varTypeLink.target },
         { source: varTypeLink.source, target: varTypeLink.source },
         { source: varTypeLink.target, target: varTypeLink.target },
-      ];
-      // initializeRenderer(currentRenderer, all_selected_types);
+      );
       DPSIR.drawLinks(links, bboxes, all_selected_types);
     }
   }
@@ -194,7 +194,9 @@
     function removeVarTypeLinks(_var_type) {
       const detail_link_group = d3.select(".detail-link-group");
       detail_link_group.selectAll(`path.link.${_var_type}-${_var_type}, path.link[class*="${_var_type}-"], path.link[class*="-${_var_type}"]`).remove();
-
+      all_selected_types = all_selected_types.filter(
+        (type) => type.source !== _var_type && type.target !== _var_type,
+      );
     }
 
     // console.log("unselected", var_type_name);
