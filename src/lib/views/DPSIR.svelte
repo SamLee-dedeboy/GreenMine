@@ -4,7 +4,6 @@
   import { DPSIR } from "lib/renderers/DetailDPSIR";
   import { OverviewDPSIR } from "lib/renderers/OverviewDPSIR";
   import * as Constants from "lib/constants";
-  import Curation from "lib/components/Curation.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   import type {
@@ -38,17 +37,13 @@
     impact: { revealed: false },
     response: { revealed: false },
   };
-  let varTypeLinks: tLinkObjectOverview[] = [];
   let all_selected_types: SelectedType[] = [];
-  let vartypeunselected_flag = true;
   let group_name_clickable = true;
   let rectangleCoordinates = [];
   let container;
   let selectedVar: tVariable | undefined = undefined;
   // let selectedType = { source: "", target: "" };
   // let showLinks = true;
-  let enable = false;
-  let currentRenderer = "OverviewDPSIR";
   $: isDetailMode = Object.values(box_states).every((state) => state.revealed);
   async function update_vars(
     vars: tDPSIR,
@@ -101,8 +96,9 @@
   // }
 
   function handleEmptySpaceClicked(e) {
+    console.log("empty space clicked", e);
     if (!e.defaultPrevented) {
-      DPSIR.resetHighlights(vartypeunselected_flag);
+      DPSIR.resetHighlights();
       OverviewDPSIR.resetHighlights();
     }
   }
@@ -115,7 +111,6 @@
   }
   function handleVarTypeLinkSelected(varTypeLink: tLinkObjectOverview) {
     // console.log("selected", varTypeLink);
-    // vartypeunselected_flag = false;
     if (varTypeLink !== null) {
       const var_type_source = varTypeLink.source;
       const var_type_target = varTypeLink.target;
@@ -150,7 +145,7 @@
     }
   }
 
-  //overview -> detail
+  // overview -> detail
   function handleOverviewVarTypeSelected(var_type: string) {
     if (var_type !== null) {
       // d3.select("g.detail-bbox-group").select(`g.${var_type}`).remove();
@@ -185,7 +180,7 @@
     }
   }
 
-  //detail -> overview
+  // detail -> overview
   function handleOverviewVarTypeUnSelected(var_type_name: string | null) {
     function removeVarTypeBbox(_var_type) {
       d3.select("g.detail-bbox-group")
@@ -226,34 +221,28 @@
     }
     OverviewDPSIR.drawLinks(links, bboxes);
   }
-  function enableLinks(e) {
-    enable = e;
-  }
 
   function switchRenderer() {
     // detail mode
-    const allRevealed = Object.values(box_states).every(
-      (state) => state.revealed,
-    );
+    // const allRevealed = Object.values(box_states).every(
+    //   (state) => state.revealed,
+    // );
 
     // if it is in detail mode, then switch to overview mode
-    if (allRevealed) {
+    if (isDetailMode) {
       Object.keys(box_states).forEach((key) => {
         box_states[key].revealed = false;
       });
       all_selected_types = [];
-      vartypeunselected_flag = true;
-      console.log("VarTypeUnSelected will be triggered in overview mode");
     } else {
       Object.keys(box_states).forEach((key) => {
         box_states[key].revealed = true;
       });
       all_selected_types = OverviewDPSIR.extractUniquePairs(links);
       // all_selected_types = [];
-      vartypeunselected_flag = false;
-      console.log("VarTypeUnSelected will not be triggered in detail mode");
     }
-    initializeRenderer(all_selected_types);
+    // initializeRenderer(all_selected_types);
+    update_vars(data, links, all_selected_types);
   }
 
   function initializeRenderer(all_selected_types) {
@@ -275,16 +264,6 @@
 </script>
 
 <div bind:this={container} class="container relative h-full w-full">
-  <!-- <div class="absolute right-0 top-1">
-    <Curation bind:this={curation} {metadata} />
-  </div> -->
-  <!-- <button
-      class="absolute top-20 right-20 bg-gray-200 p-1 rounded-sm"
-      on:click={() => {
-        toggleLinks();
-      }}
-      >{showLinks ? 'Hide Other Links' : 'Show Other Links'}</button
-    > -->
   <svg id={svgId} class="varbox-svg relative h-full w-full">
     <defs></defs>
   </svg>

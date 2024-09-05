@@ -60,7 +60,7 @@ export const DPSIR = {
     this.dispatch.on(event, handler);
   },
 
-  resetHighlights(flag: boolean) {
+  resetHighlights() {
     d3.selectAll("rect.box")
       .classed("box-highlight", false)
       .classed("clicked-box-highlight", false)
@@ -83,10 +83,7 @@ export const DPSIR = {
       .classed("box-icon-not-highlight", false);
     console.log("click on svg");
     this.dispatch.call("VarOrLinkSelected", null, null);
-    if (flag) {
-      this.dispatch.call("VarTypeUnSelected", null, null);
-    }
-    // this.dispatch.call("VarTypeUnSelected", null, null);
+    this.dispatch.call("VarTypeUnSelected", null, null);
     this.clicked_link = null;
     this.clicked_rect = null;
     this.rectClicked = false;
