@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { KeyWordRect } from "lib/renderers/KeywordRect";
   import { KeyWordSea } from "lib/renderers/KeywordSea";
   import { varTypeColorScale } from "lib/store";
   import type { tKeywordData } from "lib/types";
@@ -7,14 +8,14 @@
   export let data: tKeywordData;
   export let key: string = "keyword";
   const svgId = `keyword-sea-${key}-svg`;
-  const keyword_sea_renderer = new KeyWordSea();
+  // const keyword_sea_renderer = new KeyWordSea();
+  const keyword_sea_renderer = new KeyWordRect();
   let mounted = false;
 
   $: if (mounted) {
     keyword_sea_renderer.update_keywords(
       data,
       "tf_idf",
-      0.5,
       $varTypeColorScale(key),
     );
   }
@@ -29,7 +30,6 @@
     keyword_sea_renderer.update_keywords(
       data,
       "tf_idf",
-      0.5,
       $varTypeColorScale(key),
     );
     mounted = true;
