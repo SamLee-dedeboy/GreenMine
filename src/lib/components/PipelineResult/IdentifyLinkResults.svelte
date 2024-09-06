@@ -61,7 +61,7 @@
     -
     <span style="background-color: ${$varTypeColorScale(indicator2)}; text-transform: capitalize; padding-left: 0.125rem; padding-right: 0.125rem;">${var2}</span>
     <br>` + relationship[0].confidence
-      ? `<span style="color: gray; text-transform: capitalize">${relationship.map((r) => `${r.label}(${r.confidence})`).join("/")}</span>`
+      ? `<span style="color: gray; text-transform: capitalize">${relationship.map((r) => `${r.label}(${(1 - r.confidence!).toFixed(2)})`).join("/")}</span>`
       : `<span style="color: gray; text-transform: capitalize">${relationship.map((r) => `${r.label}`).join("/")}</span>` +
           `<br> - ${explanation}`;
   }
@@ -196,7 +196,7 @@
                                 {relationship.label}
                               </div>
                               <div class="mt-[0.125rem] text-xs">
-                                {relationship.confidence}
+                                {(1 - relationship.confidence).toFixed(2)}
                               </div>
                             </div>
                           {/each}

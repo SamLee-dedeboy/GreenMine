@@ -208,7 +208,7 @@
                             </div>
                             {#if var_type_wrapper.confidence}
                               <div class="mt-0.5 text-xs italic text-gray-600">
-                                {var_type_wrapper.confidence}
+                                {(1 - var_type_wrapper.confidence).toFixed(2)}
                               </div>
                             {/if}
                           </div>
