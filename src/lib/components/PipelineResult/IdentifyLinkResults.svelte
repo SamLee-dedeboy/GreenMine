@@ -56,14 +56,17 @@
     relationship: { label: string; confidence: number | undefined }[],
     explanation: string,
   ) {
-    return `
+    return (
+      `
     <span style="background-color: ${$varTypeColorScale(indicator1)}; text-transform: capitalize; padding-left: 0.125rem; padding-right: 0.125rem;">${var1}</span>
     -
     <span style="background-color: ${$varTypeColorScale(indicator2)}; text-transform: capitalize; padding-left: 0.125rem; padding-right: 0.125rem;">${var2}</span>
-    <br>` + relationship[0].confidence
-      ? `<span style="color: gray; text-transform: capitalize">${relationship.map((r) => `${r.label}(${(1 - r.confidence!).toFixed(2)})`).join("/")}</span>`
-      : `<span style="color: gray; text-transform: capitalize">${relationship.map((r) => `${r.label}`).join("/")}</span>` +
-          `<br> - ${explanation}`;
+    <br>` +
+      (Array.isArray(relationship)
+        ? `<span style="color: gray; text-transform: capitalize">${relationship.map((r) => `${r.label}(${(1 - r.confidence!).toFixed(2)})`).join("/")}</span>`
+        : `<span style="color: gray; text-transform: capitalize">${relationship}</span>`) +
+      `<br> - ${explanation}`
+    );
   }
 </script>
 
