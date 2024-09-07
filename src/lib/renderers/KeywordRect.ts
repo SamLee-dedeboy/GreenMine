@@ -225,9 +225,12 @@ function collect_nodes(
   > = {};
   const statistics = keywords.keyword_statistics;
   const coordinates = keywords.keyword_coordinates;
+  const degrees = Object.values(statistics)
+    .map((d) => d[stat_key])
+    .sort((a, b) => b - a);
   keywords.keyword_list.forEach((keyword) => {
     const degree = statistics[keyword][stat_key];
-    if (degree < 0.5) return;
+    if (degree < degrees[70]) return;
     const coordinate = coordinates[keyword];
     node_dict[keyword] = {
       label: keyword,
@@ -236,6 +239,7 @@ function collect_nodes(
       y: yScale(coordinate[1]),
     };
   });
+
   return node_dict;
 }
 
