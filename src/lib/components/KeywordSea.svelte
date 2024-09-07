@@ -48,3 +48,11 @@
   ></div>
   <svg id={svgId}></svg>
 </div>
+
+<style lang="postcss">
+  svg {
+    & .rect-hover {
+      stroke-width: 3;
+    }
+  }
+</style>

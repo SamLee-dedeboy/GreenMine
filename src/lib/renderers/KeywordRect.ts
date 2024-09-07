@@ -102,9 +102,13 @@ export class KeyWordRect {
       .attr("filter", "drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5))")
       .attr("cursor", "pointer")
       .on("mousemove", function (e) {
-        d3.select(".tooltip")
-          .style("left", e.layerX + 10 + "px")
-          .style("top", e.layerY - 30 + "px");
+        // d3.select(".tooltip")
+        //   .style("left", rect.left + "px")
+        //   .style("top", rect.top + "px");
+        //   .style("left", e.clientX + "px")
+        //   .style("top", e.clientY + "px");
+        //   .style("left", e.layerX + 10 + "px")
+        //   .style("top", e.layerY - 30 + "px");
       })
       .on("mouseover", function (e, d) {
         d3.select(this).classed("rect-hover", true).raise();
@@ -113,7 +117,7 @@ export class KeyWordRect {
           .filter((label) => label[0] === d.label)
           .classed("rect-label-hover", true);
         // self.hoveredHexKeywords = d
-        d3.select(".tooltip").classed("show-tooltip", true).text(d.label);
+        // d3.select(".tooltip").classed("show-tooltip", true).text(d.label);
       })
       .on("mouseout", function (_, d) {
         d3.select(this).classed("rect-hover", false);
@@ -121,7 +125,7 @@ export class KeyWordRect {
           .filter((label) => label[0] === d.label)
           .classed("rect-label-hover", false);
         // self.hoveredHexKeywords = null
-        d3.select(".tooltip").classed("show-tooltip", false);
+        // d3.select(".tooltip").classed("show-tooltip", false);
       })
       .on("click", function (e, d) {
         e.preventDefault();
