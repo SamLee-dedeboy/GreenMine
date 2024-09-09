@@ -76,17 +76,21 @@
   }
 
   // ////white -> ${chunkColor(chunk)}
-  export function highlight_chunks(highlight_chunks: tMention[]) {
+  export function highlight_chunks(
+    highlight_chunk_mentions: tMention[] | null,
+  ) {
     // console.log({ highlight_chunks });
     let temp = new Set();
     dehighlight_chunks();
     init_highlight_messages();
     external_highlights = true;
-    if (!highlight_chunks) {
+    if (!highlight_chunk_mentions) {
       external_highlights = false;
-      highlight_chunks = [];
+      highlight_chunk_mentions = [];
     }
-    highlight_chunk_ids = highlight_chunks.map((chunk) => chunk.chunk_id);
+    highlight_chunk_ids = highlight_chunk_mentions.map(
+      (chunk) => chunk.chunk_id,
+    );
     highlight_chunk_ids.forEach((chunk_id) => {
       const chunk_index = chunk_indexes[chunk_id];
       // console.log(typeof chunk_index[0])
@@ -95,13 +99,8 @@
     });
 
     highlight_nodes = sort_nodes_by_id(temp); // sort the nodes by index
-    // console.log({highlight_nodes});
-    if (highlight_chunks.length > 0)
-      if (highlight_chunks[0].conversation_ids) {
-        highlight_conversations(highlight_chunks);
-      } else {
-        // highlight_evidence(highlight_chunks);
-      }
+    if (highlight_chunk_mentions.length > 0)
+      highlight_conversations(highlight_chunk_mentions);
     return;
   }
 
@@ -114,7 +113,9 @@
   function highlight_conversations(highlight_chunks: tMention[]) {
     highlight_chunks.forEach((chunk) => {
       const chunk_id = chunk.chunk_id;
-      chunk.conversation_ids!.forEach((message_id) => {
+      const highlight_conversation_ids =
+        chunk.conversation_ids || chunk.evidence || [];
+      highlight_conversation_ids.forEach((message_id) => {
         highlight_messages[chunk_id][message_id] = true;
       });
     });
@@ -171,7 +172,6 @@
       highlight_evidence[chunk_id][message_index] = true;
       evidence[message_index] = explanation;
     });
-    console.log(evidence);
     await tick();
     const target = document.querySelector(`#${chunk_id}-${evidence_index[0]}`);
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -179,7 +179,6 @@
   export function _handleEvidenceSelected(e) {
     init_highlight_evidence(); //set all evidence to false
     show_interview = []; //clear and not show the previous evidence interview index
-    // console.log(e);
     const chunk_index = e.id;
     // const message_indexes = e.result
     let evidenceMap = {};
@@ -195,7 +194,6 @@
         });
       });
     });
-    // console.log(evidenceMap);
     const interview_index_match = chunk_index.match(/N(\d+)/);
     if (interview_index_match) {
       const interview_index = parseInt(interview_index_match[1], 10) - 1;
@@ -215,10 +213,9 @@
 
             evidence[message_index] = explanations;
             highlight_evidence[chunk_index][message_index] = true;
-            // console.log(highlight_evidence)
           }
         });
-        scrollToFirstTargetChunk(interview_index, "evidence_hightlight");
+        scrollToFirstTargetChunk(interview_index);
       }
       // console.log(evidence_index);
       // if (matchingResult !== -1) {
@@ -227,7 +224,7 @@
       //       evidence[message_index] = explanation;
       //       highlight_evidence[chunk_index][message_index] = true;
       //     });
-      //     scrollToFirstTargetChunk(interview_index,"evidence_hightlight");
+      //     scrollToFirstTargetChunk(interview_index,"evidence_highlight");
       // }
       //   Object.keys(evidenceMap).forEach(key=>{
       //     const message_index = parseInt(key,10);
@@ -236,7 +233,7 @@
       //     evidence[message_index] = explanations;
       //     console.log(evidence);
       //     highlight_evidence[chunk_index][message_index] = true;
-      //     scrollToFirstTargetChunk(interview_index,"evidence_hightlight");
+      //     scrollToFirstTargetChunk(interview_index,"evidence_highlight");
       // })
     }
   }
@@ -287,68 +284,28 @@
     );
   }
 
-  function scrollToMessage(messageId, containerId) {
-    const messageElement = document.getElementById(messageId);
-    const containerElement = document.getElementById(containerId);
-    if (messageElement && containerElement) {
-      containerElement.scrollTop =
-        messageElement.offsetTop - containerElement.offsetTop;
-    }
-  }
-
   function handleChunkClick(interview_index, chunk_index) {
+    console.log("handle chunk click", interview_index, chunk_index);
     selected_chunk[interview_index] = chunk_index;
     // console.log("handle chunk click", interview_index, chunk_index);
-    scrollToMessage(
-      `${interview_index}-${chunk_index}-0`,
-      `conversation-container-${interview_index}`,
-    );
+    document.querySelector(`#${chunk_index}-0`)?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
   }
 
-  async function scrollToFirstTargetChunk(
-    interview_index,
-    chunk_state = "chunk_highlight",
-  ) {
+  async function scrollToFirstTargetChunk(interview_index) {
     await tick(); //to wait for the DOM to update before attempting to find and scroll to the highlighted chunk
-    let container;
-    let target; // record the target element to scroll to
-    if (chunk_state == "chunk_highlight") {
-      container = document.getElementById(
-        `chunk-title-container-` + `${interview_index}`,
-      );
-      target = container?.querySelector(".chunk-highlight");
-    } else if (chunk_state == "evidence_hightlight") {
-      container = document.getElementById(
-        `conversation-container-` + `${interview_index}`,
-      );
-      target = container?.querySelector(".highlighted_evidence").parentNode;
-    }
-
-    // console.log(container);
+    let container = document.getElementById(
+      `conversation-container-` + `${interview_index}`,
+    );
+    let target = container?.querySelector(".highlighted_message");
 
     if (container && target) {
-      // const highlightedChunk = container.querySelector(".chunk-highlight");
-      // console.log(highlightedChunk);
       target.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
-      // 500 milliseconds delay delay to allow the first scroll to complete
-      if (chunk_state == "chunk_highlight") {
-        setTimeout(() => {
-          scrollToMessage(
-            `${interview_index}-${target.id}-0`,
-            `conversation-container-${interview_index}`,
-          );
-        }, 1000);
-      } else if (chunk_state == "evidence_hightlight") {
-        setTimeout(() => {
-          scrollToMessage(
-            `${target.id}`,
-            `conversation-container-${interview_index}`,
-          );
-        }, 1000);
-      }
     }
   }
   $: {
@@ -409,9 +366,11 @@
                   show_interview[interview_index] ? "0px" : "1px"
                 }`}
                 on:keyup={() => {}}
-                on:click={() =>
-                  (show_interview[interview_index] =
-                    !show_interview[interview_index])}
+                on:click={() => {
+                  show_interview[interview_index] =
+                    !show_interview[interview_index];
+                  scrollToFirstTargetChunk(interview_index);
+                }}
               >
                 <span
                   class:node-highlight={highlight_nodes.has(interview_index)}
@@ -504,7 +463,7 @@
                               </div>
                               <div
                                 class="interview-message-content"
-                                class:highlighted_evidence={highlight_evidence[
+                                class:highlighted_message={highlight_evidence[
                                   message.chunkIndex
                                 ][message.messageIndex]}
                               >
@@ -575,11 +534,6 @@
     font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   }
   .highlighted_message {
-    background: #ffb019;
-  }
-  .highlighted_evidence {
-    /* text-decoration: underline;
-    text-decoration-color: red; */
     background: #ffb019;
   }
   .conversation-wrapper {

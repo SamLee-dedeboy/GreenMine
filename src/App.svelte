@@ -35,7 +35,6 @@
   let versionedPipelineResults: { [key: string]: tServerPipelineData } = {};
   let var_data: tDPSIR;
   let vis_links: tVisLink[];
-  let summary_interviews: tChunk[];
   let data_loading: boolean = true;
   let show_dpsir: boolean = true;
   let show_prompts: boolean = false;
@@ -132,7 +131,6 @@
     }
   }
   function handleEvidenceSelected(e) {
-    // console.log("evidence selected", e.detail);
     // interview_viewer_component.handleEvidenceSelected(e.detail);
     const { chunk_id, evidence, explanation } = e.detail;
     interview_viewer_component.handleEvidenceSelected(
@@ -146,41 +144,9 @@
     //deselect var/link
     if (e.detail === null) {
       interview_viewer_component.highlight_chunks(null); //dehighlight chunks
-      summary_interviews = []; //clear summary view
     } else {
-      const chunks: tMention[] = e.detail.mentions;
-      // console.log({ chunks });
-      interview_viewer_component.highlight_chunks(chunks);
-      // console.log(interview_data);
-      const flattenedInterviewData = interview_data.flatMap(
-        (item) => item.data,
-      );
-      // console.log(chunks);
-      const enhanceChunks = (chunks: any[]): any[] => {
-        return chunks
-          .map((chunk) => {
-            const match = flattenedInterviewData.find(
-              (item) => item.id === chunk.chunk_id,
-            );
-
-            if (match) {
-              return {
-                id: chunk.chunk_id,
-                conversation: chunk.conversation,
-                emotion: match.emotion,
-                title: match.title,
-                topic: match.topic,
-                raw_keywords: match.raw_keywords,
-              };
-            } else {
-              console.error(`No match found for chunk_id: ${chunk.chunk_id}`);
-              return null;
-            }
-          })
-          .filter((chunk) => chunk !== null);
-      };
-
-      summary_interviews = enhanceChunks(chunks);
+      const chunk_mentions: tMention[] = e.detail.mentions;
+      interview_viewer_component.highlight_chunks(chunk_mentions);
     }
   }
   function handleRemoveVarType(e) {
@@ -304,9 +270,6 @@
         </div>
       </div>
       <div class="flex h-full grow flex-col">
-        <!-- <div class="gap-y-1">
-          <SummaryView {summary_interviews} id="statistics" />
-        </div> -->
         <div
           class="interview-viewer-container relative w-full grow bg-[#fefbf1]"
         >

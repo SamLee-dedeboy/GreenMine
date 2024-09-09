@@ -19,7 +19,7 @@ export type tVariable = {
 
 export type tMention = {
   chunk_id: string;
-  conversation_ids?: number[];
+  conversation_ids?: string[];
   evidence?: string[];
 };
 
@@ -129,7 +129,7 @@ export type tLinkObjectOverview = {
   source_center: number[];
   target_center: number[];
   count: number;
-}
+};
 export type tUtilityHandlers = {
   [key: string]: Function;
 };
