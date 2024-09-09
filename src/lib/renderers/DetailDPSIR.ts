@@ -394,8 +394,12 @@ export const DPSIR = {
 
     const svg = d3.select("#" + this.svgId);
     const mergedData: (tLinkObject | undefined)[] = links.map((link) => {
-      const source_block = document.querySelector(`#${link.source.var_type}`);
-      const target_block = document.querySelector(`#${link.target.var_type}`);
+      const source_block = document
+        .querySelector(`g.${link.source.var_type}`)
+        ?.querySelector(`#${link.source.var_type}`);
+      const target_block = document
+        .querySelector(`g.${link.target.var_type}`)
+        ?.querySelector(`#${link.target.var_type}`);
       const sourceElement = this.global_rects?.find(
         (rect) => rect.variable_name === link.source.variable_name,
       );
@@ -959,65 +963,65 @@ export const DPSIR = {
     //   this.utilities,
     // );
   },
-  drawUtilities(
-    var_type_name: string,
-    bbox_center: number[],
-    bboxWidth: number,
-    bboxHeight: number,
-    utilities: string[],
-  ) {
-    // console.log("draw utilities", utilities);
-    const group = d3
-      .select("#" + this.svgId)
-      .select(`.${var_type_name}_region`);
-    const utility_group = group
-      .select("g.detail-bbox-group")
-      .append("g")
-      .attr("class", "utility-group")
-      .attr("opacity", 0)
-      .attr("pointer-events", "none");
-    const utility_group_origin = [
-      bbox_center[0] + (var_type_name.length + 1) * 12,
-      bbox_center[1] - bboxHeight / 2 - 40,
-    ];
-    const self = this;
-    const width = Math.max(...utilities.map((d) => d.length)) * 12;
-    utility_group
-      .selectAll("g.utility")
-      .data(utilities)
-      .join("g")
-      .attr("class", "utility")
-      .attr(
-        "transform",
-        `translate(${utility_group_origin[0]}, ${utility_group_origin[1]})`,
-      )
-      .each(function (d: string, i) {
-        const utility_container = d3.select(this);
-        utility_container.selectAll("*").remove();
-        const height = 20;
-        const y_offset = 1;
-        const utility_attrs = {
-          parent: utility_container,
-          class_name: d,
-          activated_color: "rgb(187 247 208)",
-          deactivated_color: "white",
-          activated_text_color: "black",
-          deactivated_text_color: "#aaaaaa",
-          text: d,
-          x: 5,
-          y: 5 + i * (height + y_offset),
-          width: width,
-          height: height,
-          onClick: () => {
-            d3.select(this.parentNode)
-              .attr("opacity", 0)
-              .attr("pointer-events", "none");
-            self.handlers[d](var_type_name);
-          },
-        };
-        grid_layout.add_utility_button(utility_attrs);
-      });
-  },
+  // drawUtilities(
+  //   var_type_name: string,
+  //   bbox_center: number[],
+  //   bboxWidth: number,
+  //   bboxHeight: number,
+  //   utilities: string[],
+  // ) {
+  //   // console.log("draw utilities", utilities);
+  //   const group = d3
+  //     .select("#" + this.svgId)
+  //     .select(`.${var_type_name}_region`);
+  //   const utility_group = group
+  //     .select("g.detail-bbox-group")
+  //     .append("g")
+  //     .attr("class", "utility-group")
+  //     .attr("opacity", 0)
+  //     .attr("pointer-events", "none");
+  //   const utility_group_origin = [
+  //     bbox_center[0] + (var_type_name.length + 1) * 12,
+  //     bbox_center[1] - bboxHeight / 2 - 40,
+  //   ];
+  //   const self = this;
+  //   const width = Math.max(...utilities.map((d) => d.length)) * 12;
+  //   utility_group
+  //     .selectAll("g.utility")
+  //     .data(utilities)
+  //     .join("g")
+  //     .attr("class", "utility")
+  //     .attr(
+  //       "transform",
+  //       `translate(${utility_group_origin[0]}, ${utility_group_origin[1]})`,
+  //     )
+  //     .each(function (d: string, i) {
+  //       const utility_container = d3.select(this);
+  //       utility_container.selectAll("*").remove();
+  //       const height = 20;
+  //       const y_offset = 1;
+  //       const utility_attrs = {
+  //         parent: utility_container,
+  //         class_name: d,
+  //         activated_color: "rgb(187 247 208)",
+  //         deactivated_color: "white",
+  //         activated_text_color: "black",
+  //         deactivated_text_color: "#aaaaaa",
+  //         text: d,
+  //         x: 5,
+  //         y: 5 + i * (height + y_offset),
+  //         width: width,
+  //         height: height,
+  //         onClick: () => {
+  //           d3.select(this.parentNode)
+  //             .attr("opacity", 0)
+  //             .attr("pointer-events", "none");
+  //           self.handlers[d](var_type_name);
+  //         },
+  //       };
+  //       grid_layout.add_utility_button(utility_attrs);
+  //     });
+  // },
 
   drawTags(
     var_type_name: string,
@@ -1033,11 +1037,11 @@ export const DPSIR = {
       .select("g.detail-tag-group")
       .select(`.${var_type_name}`);
     // mark rect with "*" in the grid
-    grid_layout.markOccupiedGrid(
-      this.grid_renderer?.global_grid,
-      rectWithVar,
-      "*",
-    );
+    // grid_layout.markOccupiedGrid(
+    //   this.grid_renderer?.global_grid,
+    //   rectWithVar,
+    //   "*",
+    // );
     // console.log({ rectWithVar });
     group
       .selectAll("g.tag")

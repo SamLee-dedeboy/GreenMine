@@ -178,6 +178,7 @@ def identify_links_uncertainty(
             iteration_results[chunk_index].append(chunk["identify_links_result"])
     for chunk_index, chunk in enumerate(all_chunks):
         if chunk["identify_links_result"] == []:
+            chunk["uncertainty"]["identify_links"] = 0
             continue
         ensemble_links = merge_links(iteration_results[chunk_index])
         candidate_links = list(

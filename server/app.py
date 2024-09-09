@@ -443,7 +443,10 @@ def curate_identify_links():
             user_prompt_blocks,
             prompt_variables,
         )
-        return json.dumps(all_chunks, default=vars)
+        # local.save_json(
+        #     all_chunks,
+        #     pipeline_result_path + "identify_links/chunk_w_links_new_prompt_3.json",
+        # )
     else:
         all_chunks = uncertainty.identify_links_uncertainty(
             all_chunks,
@@ -453,11 +456,11 @@ def curate_identify_links():
             user_prompt_blocks,
             prompt_variables,
         )
-        # local.save_json(
-        #     all_chunks,
-        #     pipeline_result_path + "identify_links/chunk_w_links_uncertainty.json",
-        # )
-        return json.dumps(all_chunks, default=vars)
+        local.save_json(
+            all_chunks,
+            pipeline_result_path + "identify_links/chunk_w_links_uncertainty.json",
+        )
+    return json.dumps(all_chunks, default=vars)
 
 
 @app.route("/curation/identify_links/save/", methods=["POST"])

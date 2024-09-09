@@ -131,7 +131,9 @@ def identify_link_prompt_factory(
                     {{
                         "result": 
                             {{
-                                "relationship": string (relationship between the two variables, or "none"),
+                                "source": string (source concept),
+                                "target": string (target concept),
+                                "relationship": string (relationship between the two concepts or "none"),
                                 "evidence": [] (list of transcript conversation indices, empty if relationship is "none"),
                                 "explanation": string (explain why the evidence indicates the relationship in Traditional Chinese), or "none" if relationship is "none"
                             }}

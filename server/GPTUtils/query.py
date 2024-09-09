@@ -408,13 +408,44 @@ def identify_links(
             [extraction_result], len(chunk["conversation"])
         )[0]
         link_metadata = link_metadata_list[response_index]
+        # check if the source and target variables are valid
+        if (
+            extraction_result["source"] != link_metadata["var1"]
+            and extraction_result["source"] != link_metadata["var2"]
+        ):
+            continue
+        if (
+            extraction_result["target"] != link_metadata["var1"]
+            and extraction_result["target"] != link_metadata["var2"]
+        ):
+            continue
+        if extraction_result["source"] == link_metadata["var1"]:
+            source_var, source_indicator = (
+                link_metadata["var1"],
+                link_metadata["indicator1"],
+            )
+            target_var, target_indicator = (
+                link_metadata["var2"],
+                link_metadata["indicator2"],
+            )
+        else:
+            source_var, source_indicator = (
+                link_metadata["var2"],
+                link_metadata["indicator2"],
+            )
+            target_var, target_indicator = (
+                link_metadata["var1"],
+                link_metadata["indicator1"],
+            )
         chunk["identify_links_result"].append(
             {
                 "chunk_id": link_metadata["chunk_id"],
-                "var1": link_metadata["var1"],
-                "var2": link_metadata["var2"],
-                "indicator1": link_metadata["indicator1"],
-                "indicator2": link_metadata["indicator2"],
+                # "var1": link_metadata["var1"],
+                # "var2": link_metadata["var2"],
+                "var1": source_var,
+                "var2": target_var,
+                "indicator1": source_indicator,
+                "indicator2": target_indicator,
                 "response": extraction_result,
             }
         )
