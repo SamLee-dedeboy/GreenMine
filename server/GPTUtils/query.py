@@ -325,12 +325,14 @@ def identify_vars(
         conversation = chunk["conversation"]
         prompt_variables["conversation"] = conversation_to_string(conversation)
         for var_type in var_types:
-            prompt_variables["var_type"] = (
+            prompt_variables["indicator"] = (
                 var_type["var_type"]
                 + prompt_variables[var_type["var_type"]]["definition"]
             )
             prompt_variables["explanation"] = var_type["explanation"]
-            prompt_variables["vars"] = prompt_variables[var_type["var_type"]]["vars"]
+            prompt_variables["variables"] = prompt_variables[var_type["var_type"]][
+                "vars"
+            ]
             prompt, response_format, extract_response_func = (
                 prompts.identify_var_prompt_factory(
                     system_prompt_blocks, user_prompt_blocks, prompt_variables
@@ -379,10 +381,10 @@ def identify_links(
             continue
         conversation = chunk_dict[link["chunk_id"]]["conversation"]
         prompt_variables["conversation"] = conversation_to_string(conversation)
-        prompt_variables["var1"] = (
+        prompt_variables["variable1"] = (
             f"{link['var1']}, {variable_definitions[link['var1']]}"
         )
-        prompt_variables["var2"] = (
+        prompt_variables["variable2"] = (
             f"{link['var2']}, {variable_definitions[link['var2']]}"
         )
         prompt, response_format, extract_response_func = (

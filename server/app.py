@@ -256,7 +256,7 @@ def curate_identify_var_types():
     system_prompt_blocks = request.json["system_prompt_blocks"]
     user_prompt_blocks = request.json["user_prompt_blocks"]
     prompt_variables = {
-        "var_types": "\n".join(
+        "indicators": "\n".join(
             [
                 f"{var_type}: {var_type_def}"
                 for var_type, var_type_def in var_type_definitions.items()
