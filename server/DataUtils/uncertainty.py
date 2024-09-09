@@ -88,6 +88,9 @@ def identify_vars_uncertainty(
                     merged_vars[var["var"]]["evidence"] = list(
                         set(merged_vars[var["var"]]["evidence"] + var["evidence"])
                     )
+                    merged_vars[var["var"]]["keywords"] = list(
+                        set(merged_vars[var["var"]]["keywords"] + var["keywords"])
+                    )
         return list(merged_vars.values())
 
     # uncertainty calculation

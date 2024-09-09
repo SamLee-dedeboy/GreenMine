@@ -367,7 +367,10 @@ def curate_identify_vars():
             user_prompt_blocks,
             prompt_variables,
         )
-        return json.dumps(all_chunks, default=vars)
+        local.save_json(
+            all_chunks,
+            pipeline_result_path + "identify_vars/chunk_w_vars_keywords.json",
+        )
     else:
         all_chunks = uncertainty.identify_vars_uncertainty(
             all_chunks,
@@ -379,7 +382,7 @@ def curate_identify_vars():
         # local.save_json(
         #     all_chunks, pipeline_result_path + "identify_vars/chunk_w_vars.json"
         # )
-        return json.dumps(all_chunks, default=vars)
+    return json.dumps(all_chunks, default=vars)
 
 
 @app.route("/curation/identify_vars/save/", methods=["POST"])

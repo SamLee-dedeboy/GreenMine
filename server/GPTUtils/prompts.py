@@ -85,6 +85,7 @@ def identify_var_prompt_factory(
                             {{
                                 "tag": string (one of the above or "none")
                                 "evidence": [] (list of transcript conversation indices, empty if tag is "none"),
+                                "keywords": [] (list of keywords, empty if tag is "none"),
                                 "explanation": string (explain why the evidence indicates the tag in Traditional Chinese), or "none" if tag is "none"
                             }}
                         ]
@@ -101,6 +102,7 @@ def identify_var_prompt_factory(
                 lambda x: {
                     "var": x["tag"],
                     "evidence": x["evidence"],
+                    "keywords": x["keywords"],
                     "explanation": x["explanation"],
                 },
                 response,
