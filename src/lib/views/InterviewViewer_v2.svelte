@@ -220,24 +220,6 @@
         });
         scrollToFirstTargetChunk(interview_index, "evidence_hightlight");
       }
-      // console.log(evidence_index);
-      // if (matchingResult !== -1) {
-      //     const explanation = `<span style="background-color: ${$varTypeColorScale(matchingResult.var_type)}">${matchingResult.var_type}</span>:${matchingResult.explanation}`;
-      //     matchingResult.evidence.forEach(message_index => {
-      //       evidence[message_index] = explanation;
-      //       highlight_evidence[chunk_index][message_index] = true;
-      //     });
-      //     scrollToFirstTargetChunk(interview_index,"evidence_hightlight");
-      // }
-      //   Object.keys(evidenceMap).forEach(key=>{
-      //     const message_index = parseInt(key,10);
-      //     const explanations = evidenceMap[message_index].map(e => `<span style="background-color: ${$varTypeColorScale(e.var_type)}">${e.var_type}</span>:${e.explanation}`)
-      //     .join('<br>');
-      //     evidence[message_index] = explanations;
-      //     console.log(evidence);
-      //     highlight_evidence[chunk_index][message_index] = true;
-      //     scrollToFirstTargetChunk(interview_index,"evidence_hightlight");
-      // })
     }
   }
 
@@ -289,7 +271,9 @@
 
   function scrollToMessage(messageId, containerId) {
     const messageElement = document.getElementById(messageId);
+    // console.log("messageElement in scrollToMessage",messageElement);
     const containerElement = document.getElementById(containerId);
+    // console.log("containerElement in scrollToMessage",containerElement);
     if (messageElement && containerElement) {
       containerElement.scrollTop =
         messageElement.offsetTop - containerElement.offsetTop;
@@ -300,65 +284,62 @@
     selected_chunk[interview_index] = chunk_index;
     // console.log("handle chunk click", interview_index, chunk_index);
     scrollToMessage(
-      `${interview_index}-${chunk_index}-0`,
+      `${chunk_index}-0`,
       `conversation-container-${interview_index}`,
     );
   }
 
-  async function scrollToFirstTargetChunk(
-    interview_index,
-    chunk_state = "chunk_highlight",
-  ) {
-    await tick(); //to wait for the DOM to update before attempting to find and scroll to the highlighted chunk
-    let container;
-    let target; // record the target element to scroll to
-    if (chunk_state == "chunk_highlight") {
-      container = document.getElementById(
-        `chunk-title-container-` + `${interview_index}`,
-      );
-      target = container?.querySelector(".chunk-highlight");
-    } else if (chunk_state == "evidence_hightlight") {
-      container = document.getElementById(
-        `conversation-container-` + `${interview_index}`,
-      );
-      target = container?.querySelector(".highlighted_evidence").parentNode;
-    }
 
-    // console.log(container);
 
-    if (container && target) {
-      // const highlightedChunk = container.querySelector(".chunk-highlight");
-      // console.log(highlightedChunk);
-      target.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-      // 500 milliseconds delay delay to allow the first scroll to complete
-      if (chunk_state == "chunk_highlight") {
-        setTimeout(() => {
-          scrollToMessage(
-            `${interview_index}-${target.id}-0`,
-            `conversation-container-${interview_index}`,
-          );
-        }, 1000);
-      } else if (chunk_state == "evidence_hightlight") {
-        setTimeout(() => {
-          scrollToMessage(
-            `${target.id}`,
-            `conversation-container-${interview_index}`,
-          );
-        }, 1000);
-      }
-    }
+async function scrollToFirstTargetChunk(
+  interview_index,
+  scroll_state = "chunk_highlight"
+) {
+  await tick(); // Wait for DOM update
+
+  let container;
+  let target;
+
+  if (scroll_state === "chunk_highlight") { //chunk title highlight
+    container = document.getElementById(`chunk-title-container-${interview_index}`);
+    target = container?.querySelector(".chunk-highlight");
+  } else if (scroll_state === "message_highlight") {
+    container = document.getElementById(`conversation-container-${interview_index}`);
+    target = container?.querySelector(".highlighted_message");
+  } else if (scroll_state === "evidence_highlight") {
+    container = document.getElementById(`conversation-container-${interview_index}`);
+    target = container?.querySelector(".highlighted_evidence")?.parentNode;
   }
-  $: {
-    show_chunk_title.forEach((show, index) => {
-      // console.log({ show,index });
-      if (show) {
-        scrollToFirstTargetChunk(index);
-      }
+
+  if (container && target) {
+    target.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
     });
+
+    // Return a promise that resolves after the scroll animation is complete
+    return new Promise(resolve => setTimeout(resolve, 1000));
   }
+
+  // If no scrolling occurred, resolve immediately
+  return Promise.resolve();
+}
+
+$: {
+  (async () => {
+    // First, scroll to highlighted messages
+    const messageScrollPromises = show_interview.map((show, index) => 
+      show ? scrollToFirstTargetChunk(index, "message_highlight") : Promise.resolve()
+    );
+    await Promise.all(messageScrollPromises);
+
+    // Then, scroll to highlighted chunk titles
+    const chunkScrollPromises = show_chunk_title.map((show, index) => 
+      show ? scrollToFirstTargetChunk(index, "chunk_highlight") : Promise.resolve()
+    );
+    await Promise.all(chunkScrollPromises);
+  })();
+}
   // onMount(() => {
   //   function positionTooltips() {
   //     const tooltips = document.querySelectorAll('.tooltip');
