@@ -122,6 +122,26 @@
                   svgId={`link-graph-${index}`}
                   data={datum.identify_links_result}
                   {max_degree}
+                  on:link-clicked={(e) => {
+                    const link = e.detail;
+                    if (
+                      link.response.evidence &&
+                      link.response.evidence.length > 0
+                    ) {
+                      dispatch("navigate_evidence", {
+                        chunk_id: datum.id,
+                        evidence: link.response.evidence,
+                        explanation: generate_explanation_html(
+                          link.indicator1,
+                          link.indicator2,
+                          link.var1,
+                          link.var2,
+                          link.response.relationship,
+                          link.response.explanation,
+                        ),
+                      });
+                    }
+                  }}
                 />
               </div>
             {:else}
