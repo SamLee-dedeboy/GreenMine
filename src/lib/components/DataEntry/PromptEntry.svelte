@@ -9,7 +9,7 @@
     // replace ${var} with <span class="bg-yellow-200">${var}</span>
     return text.replace(
       /\${(.*?)}/g,
-      '<span class="text-yellow-600">${$1}</span>',
+      '<span class="text-yellow-600" contenteditable=false>${$1}</span>',
     );
   }
 
