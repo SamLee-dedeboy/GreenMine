@@ -196,10 +196,7 @@ export const OverviewDPSIR = {
       return { source, target };
     });
   },
-  drawLinks(
-    links: tVisLink[],
-    bboxes
-  ) {
+  drawLinks(links: tVisLink[], bboxes) {
     const self = this;
     // console.log(bboxes);
     let cellWidth: number = self.cellWidth;
@@ -329,7 +326,7 @@ export const OverviewDPSIR = {
         Math.max(...pairInfo.map((d) => d.count)),
       ])
       .range([0.4, 0.8]);
-    
+
     const link_paths = svg
       .select("g.overview_link_group")
       .selectAll(".link")
@@ -628,11 +625,22 @@ function generatePorts(bboxes) {
     "state-impact": {
       source: {
         x: bboxes.state.original[0] + (bboxes.state.size[0] * 3) / 4,
-        y: bboxes.state.original[1] + bboxes.state.size[1],
+        y: bboxes.state.original[1] + bboxes.state.size[1] / 2,
       },
       target: {
+        x: bboxes.impact.original[0] + (bboxes.impact.size[0] * 6) / 7,
+        y: bboxes.impact.original[1],
+      },
+      reverse: false,
+    },
+    "impact-state": {
+      source: {
         x: bboxes.impact.original[0] + bboxes.impact.size[0],
         y: bboxes.impact.original[1] + (bboxes.impact.size[1] * 2) / 3,
+      },
+      target: {
+        x: bboxes.state.original[0] + (bboxes.state.size[0] * 3) / 4,
+        y: bboxes.state.original[1] + bboxes.state.size[1],
       },
     },
     "impact-response": {
@@ -641,10 +649,10 @@ function generatePorts(bboxes) {
         y: bboxes.impact.original[1] + (3 * bboxes.impact.size[1]) / 4,
       },
       target: {
-        x: bboxes.response.original[0] + (7 * bboxes.response.size[0]) / 8,
+        x: bboxes.response.original[0] + (10 * bboxes.response.size[0]) / 9.5,
         y: bboxes.response.original[1] + (3 * bboxes.response.size[1]) / 4,
       },
-      reverse: false,
+      reverse: true,
     },
     "response-impact": {
       source: {
@@ -652,8 +660,8 @@ function generatePorts(bboxes) {
         y: bboxes.response.original[1] + (4 * bboxes.response.size[1]) / 4,
       },
       target: {
-        x: bboxes.impact.original[0],
-        y: bboxes.impact.original[1] + (4 * bboxes.impact.size[1]) / 4,
+        x: bboxes.impact.original[0] + bboxes.impact.size[0] / 3,
+        y: bboxes.impact.original[1] + (4 * bboxes.impact.size[1]) / 4 + 2,
       },
       reverse: false,
     },
@@ -769,7 +777,18 @@ function generatePorts(bboxes) {
       },
       target: {
         x: bboxes.state.original[0],
-        y: bboxes.state.original[1] + bboxes.state.size[1] / 1,
+        y: bboxes.state.original[1] + bboxes.state.size[1] / 2,
+      },
+      reverse: true,
+    },
+    "state-response": {
+      source: {
+        x: bboxes.state.original[0] + bboxes.state.size[0] / 5,
+        y: bboxes.state.original[1] + bboxes.state.size[1] / 3,
+      },
+      target: {
+        x: bboxes.response.original[0] + bboxes.response.size[0] + 1,
+        y: bboxes.response.original[1] + bboxes.response.size[1] / 4,
       },
       reverse: true,
     },
