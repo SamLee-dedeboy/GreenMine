@@ -40,112 +40,73 @@ def test():
 
 
 @app.route("/data/")
-@app.route("/data/<version>/")
-def get_data(version="baseline"):
+def get_data():
+    interview_data = process_interview(
+        glob.glob(chunk_data_path + f"chunk_summaries_w_ktte/*.json")
+    )
+    v1_data = get_data_v1(v1_data_path)
+    return {"interviews": interview_data, "v1": v1_data}
+
+@app.route("/pipeline/<step>/<version>/")
+def get_pipeline(step,version):
+    # step = var_type, var, link
+    version_number = version.replace("v", "")
+    definitions = {}
+    if step in ["var_type", "var"]:
+        definitions = json.load(
+            open(
+                f"{prompt_context_path}v{version_number}_{step}_definitions.json",
+                encoding="utf-8",
+            )
+        )
+    # prompts
+    identify_prompts = json.load(
+        open(
+            f"{prompt_path}v{version_number}_identify_{step}s.json",
+            encoding="utf-8",
+        )
+    )
+    # pipeline data
+    identify_data = json.load(
+        open(
+            f"{pipeline_result_path}identify_{step}s/v{version_number}_chunk_w_{step}s.json",
+            encoding="utf-8",
+        )
+    )
+    
+    
+    return {
+        "prompts": {
+            f"identify_{step}s": {
+                f"{step}_definitions": definitions,
+                "system_prompt_blocks": identify_prompts["system_prompt_blocks"],
+                "user_prompt_blocks": identify_prompts["user_prompt_blocks"],
+            }
+        },
+        "pipeline_result": {
+            f"identify_{step}s": identify_data
+        }
+    }
+
+@app.route("/dpsir/<link_version>/")
+def getDPSIR(link_version):
     nodes = {}
     for var_type in var_types:
         nodes[var_type] = json.load(
             open(node_data_path + f"{var_type}_nodes.json", encoding="utf-8")
         )
+    link_version_number = link_version.replace("v", "")
 
-    old_links = json.load(open(node_data_path + "connections.json", encoding="utf-8"))
-    interview_data = process_interview(
-        glob.glob(chunk_data_path + f"chunk_summaries_w_ktte/*.json")
+    # old_links = json.load(open(node_data_path + "connections.json", encoding="utf-8"))
+    identify_links = json.load(
+        open(
+            f"{pipeline_result_path}identify_links/v{link_version_number}_chunk_w_links.json",
+            encoding="utf-8",
+        )
     )
-
-    v1_data = get_data_v1(v1_data_path)
-    if version == "baseline":
-        # prompt template data
-        var_type_definitions = json.load(
-            open(prompt_context_path + "var_type_definitions.json", encoding="utf-8")
-        )
-        var_definitions = json.load(
-            open(prompt_context_path + "variable_definitions.json", encoding="utf-8")
-        )
-        # var_definitions = {}
-        # for var_type in var_type_definitions.keys():
-        #     var_definitions_by_type = json.load(open(prompt_context_path + f"variable_definitions/{var_type}_variables_def.json", encoding='utf-8'))
-        #     var_definitions[var_type] = var_definitions_by_type
-
-        # prompts
-        identify_var_types_prompts = json.load(
-            open(prompt_path + "identify_var_types.json", encoding="utf-8")
-        )
-        identify_vars_prompts = json.load(
-            open(prompt_path + "identify_vars.json", encoding="utf-8")
-        )
-        identify_links_prompts = json.load(
-            open(prompt_path + "identify_links.json", encoding="utf-8")
-        )
-
-        # pipeline data
-        identify_var_types = json.load(
-            open(
-                pipeline_result_path + "identify_var_types/chunk_w_var_types.json",
-                encoding="utf-8",
-            )
-        )
-        identify_vars = json.load(
-            open(
-                pipeline_result_path + "identify_vars/chunk_w_vars.json",
-                encoding="utf-8",
-            )
-        )
-        identify_links = json.load(
-            open(
-                pipeline_result_path + "identify_links/chunk_w_links.json",
-                encoding="utf-8",
-            )
-        )
-        pipeline_links = [
-            link for chunk in identify_links for link in chunk["identify_links_result"]
-        ]
-    else:
-        version_number = version.replace("version", "")
-        var_type_definitions = json.load(
-            open(
-                f"{prompt_context_path}v{version_number}_var_type_definitions.json",
-                encoding="utf-8",
-            )
-        )
-        var_definitions = json.load(
-            open(prompt_context_path + "variable_definitions.json", encoding="utf-8")
-        )  # TBM
-        # prompts
-        identify_var_types_prompts = json.load(
-            open(
-                f"{prompt_path}v{version_number}_identify_var_types.json",
-                encoding="utf-8",
-            )
-        )
-        identify_vars_prompts = json.load(
-            open(prompt_path + "identify_vars.json", encoding="utf-8")
-        )  # TBM
-        identify_links_prompts = json.load(
-            open(prompt_path + "identify_links.json", encoding="utf-8")
-        )  # TBM
-        # pipeline data
-        identify_var_types = json.load(
-            open(
-                f"{pipeline_result_path}identify_var_types/v{version_number}_chunk_w_var_types.json",
-                encoding="utf-8",
-            )
-        )
-        identify_vars = json.load(
-            open(
-                pipeline_result_path + "identify_vars/chunk_w_vars.json",
-                encoding="utf-8",
-            )
-        )  # TBM
-        identify_links = json.load(
-            open(
-                pipeline_result_path + "identify_links/chunk_w_links.json",
-                encoding="utf-8",
-            )
-        )  # TBM
-        pipeline_links = [
-            link for chunk in identify_links for link in chunk["identify_links_result"]
-        ]  # TBM
+    pipeline_links = [
+        link for chunk in identify_links for link in chunk["identify_links_result"]
+    ]
 
     keyword_embeddings = json.load(
         open(keyword_data_path + "keywords.json", encoding="utf-8")
@@ -156,48 +117,18 @@ def get_data(version="baseline"):
         list(map(lambda x: x["embedding"], keyword_embeddings))
     )
     DPSIR_data = v2_processing.generate_DPSIR_data(
-        identify_var_types,
+        identify_links,
         nodes,
-        var_definitions,
         keyword_embeddings,
         stopwords,
         userdict,
         kpca_reducer,
     )
     return {
-        "interviews": interview_data,
-        # "nodes": nodes,
-        # "variable_definitions": var_definitions,
         "DPSIR_data": DPSIR_data,
-        "links": old_links,
+        # "links": old_links,
         "pipeline_links": pipeline_links,
-        "v1": v1_data,
-        "prompts": {
-            "identify_var_types": {
-                "var_type_definitions": var_type_definitions,
-                "system_prompt_blocks": identify_var_types_prompts[
-                    "system_prompt_blocks"
-                ],
-                "user_prompt_blocks": identify_var_types_prompts["user_prompt_blocks"],
-            },
-            "identify_vars": {
-                "var_definitions": var_definitions,
-                "system_prompt_blocks": identify_vars_prompts["system_prompt_blocks"],
-                "user_prompt_blocks": identify_vars_prompts["user_prompt_blocks"],
-            },
-            "identify_links": {
-                "var_definitions": var_definitions,
-                "system_prompt_blocks": identify_links_prompts["system_prompt_blocks"],
-                "user_prompt_blocks": identify_links_prompts["user_prompt_blocks"],
-            },
-        },
-        "pipeline_result": {
-            "identify_var_types": identify_var_types,
-            "identify_vars": identify_vars,
-            "identify_links": identify_links,
-        },
     }
-
 
 # @app.route("/var_extraction/", methods=["POST"])
 # def var_extraction():

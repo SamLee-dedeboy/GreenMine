@@ -110,15 +110,17 @@
       <div class="flex divide-x">
         <div class="w-[4rem] shrink-0">Snippet</div>
         <div class="flex pl-2">Indicators</div>
-        <div
-          role="button"
-          tabindex="0"
-          class="ml-auto flex items-center justify-center self-center rounded-sm bg-gray-200 px-2 py-1 text-[0.7rem] normal-case italic leading-3 text-gray-600 text-gray-700 outline-double outline-1 outline-gray-600 transition-colors duration-200 hover:bg-gray-300"
-          on:click={() => dispatch("base_or_new_button_click")}
-          on:keyup={() => {}}
-        >
-          {buttonText}
-        </div>
+        {#if buttonText!==""}
+          <div
+            role="button"
+            tabindex="0"
+            class="ml-auto flex items-center justify-center self-center rounded-sm bg-gray-200 px-2 py-1 text-[0.7rem] normal-case italic leading-3 text-gray-600 text-gray-700 outline-double outline-1 outline-gray-600 transition-colors duration-200 hover:bg-gray-300"
+            on:click={() => dispatch("base_or_new_button_click")}
+            on:keyup={() => {}}
+          >
+            {buttonText}
+          </div>
+        {/if}
       </div>
       {#if data_loading}
         <div class="flex h-full items-center justify-center">

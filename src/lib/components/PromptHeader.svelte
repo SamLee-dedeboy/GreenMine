@@ -22,7 +22,7 @@
         on:click={() => dispatch("run")}
         on:keyup={() => {}}
       >
-        Run
+        Run and Save
       </div>
       <div
         role="button"

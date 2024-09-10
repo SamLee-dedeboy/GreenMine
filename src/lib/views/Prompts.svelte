@@ -17,8 +17,9 @@
   } from "lib/types";
   import { updateTmpData } from "lib/utils/update_with_log";
   import { server_address } from "lib/constants";
-  import { createEventDispatcher, tick } from "svelte";
+  import { createEventDispatcher, tick, getContext } from "svelte";
   const dispatch = createEventDispatcher();
+  const fetchPipelineData = getContext("fetchPipelineData");
 
   export let data: tServerPromptData;
   export let pipeline_result: tServerPipelineData | undefined = undefined;
@@ -31,7 +32,8 @@
     identify_vars: [],
     identify_links: [],
   };
-  let show_step = 1;
+  export let show_step: number;
+  console.log(show_step)
 
   let log_record: LogRecord = {
     identify_type_results:
@@ -55,6 +57,10 @@
   let removeVar: VarTypeItem[] = [];
   let addVar: VarTypeItem[] = [];
   let measure_uncertainty = false;
+  function changeStep(newStep: number) {
+    show_step = newStep;
+    dispatch('step_change', newStep);
+  }
 
   function navigate_evidence(e) {
     if (!e) return;
@@ -101,15 +107,18 @@
         compute_uncertainty: measure_uncertainty,
       }),
     })
-      .then((res) => res.json())
-      .then((res) => {
-        tmp_data[key] = res;
-        console.log({ res });
-        //apply rules (prompt from App) to tmp_data which get back from server with new prompt
-        tmp_data = updateTmpData(tmp_data, log_record);
-        data_loading = false;
-        // compute_uncertainty(data, key);
-      });
+    .then((res) => res.json())
+    .then((res) => {
+      tmp_data[key] = res;
+      console.log({ res });
+      //apply rules (prompt from App) to tmp_data which get back from server with new prompt
+      tmp_data = updateTmpData(tmp_data, log_record);
+      data_loading = false;
+      // compute_uncertainty(data, key);
+    });
+
+    // const nextVersion = getNextVersion();
+    // save_data(data, tmp_data, "identify_var_types", nextVersion);
   }
 
   function compute_uncertainty(data: tServerPromptData, key: string) {
@@ -139,10 +148,10 @@
       return `version${versionNumber}`;
     }
   }
-  function handle_save() {
-    const nextVersion = getNextVersion();
-    save_data(data, tmp_data, "identify_var_types", nextVersion);
-  }
+  // function handle_save() {
+  //   const nextVersion = getNextVersion();
+  //   save_data(data, tmp_data, "identify_var_types", nextVersion);
+  // }
 
   function handle_title_change(newTitle: string) {
     // console.log("title changed",newTitle);
@@ -248,6 +257,8 @@
       });
     }
   }
+
+
 </script>
 
 <div class="flex grow cursor-auto flex-col">
@@ -258,7 +269,7 @@
       role="button"
       class="pipeline-step-button"
       class:active={show_step === 1}
-      on:click={() => (show_step = 1)}
+      on:click={() => (changeStep(1))}
       on:keyup={() => {}}
     >
       Indicators
@@ -268,7 +279,7 @@
       role="button"
       class="pipeline-step-button"
       class:active={show_step === 2}
-      on:click={() => (show_step = 2)}
+      on:click={() => (changeStep(2))}
       on:keyup={() => {}}
     >
       Variables
@@ -278,7 +289,7 @@
       role="button"
       class="pipeline-step-button"
       class:active={show_step === 3}
-      on:click={() => (show_step = 3)}
+      on:click={() => (changeStep(3))}
       on:keyup={() => {}}
     >
       Links
@@ -286,7 +297,7 @@
   </div>
 
   {#key show_step}
-    {#if show_step === 1}
+    {#if show_step === 1 && data.identify_var_types}
       <div in:slide|global class="step-1 flex grow">
         <div
           class="flex min-w-[25rem] max-w-[30rem] flex-col gap-y-1 overflow-y-auto bg-gray-100"
@@ -310,30 +321,30 @@
           />
         </div>
         <IdentifyVarTypeResults
-          data={pipeline_result?.identify_var_types || []}
-          title={selectedTitle}
-          {titleOptions}
-          buttonText="Update Rules"
-          data_loading={false}
-          on:base_or_new_button_click={() => update_rules()}
-          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
-          on:remove_var_type={(e) => remove_var_type(e.detail, "base")}
-          on:add_var_type={(e) => add_var_type(e.detail, "base")}
-          on:title_change={(e) => handle_title_change(e.detail)}
-        />
-        <IdentifyVarTypeResults
           data={tmp_data?.identify_var_types || []}
           title={selectedTitle}
-          {titleOptions}
-          buttonText="Save Version"
+          titleOptions = {[]}
+          buttonText=""
           {data_loading}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
           on:remove_var_type={(e) => remove_var_type(e.detail, "new")}
           on:add_var_type={(e) => add_var_type(e.detail, "new")}
-          on:base_or_new_button_click={() => handle_save()}
+          on:title_change={(e) => handle_title_change(e.detail)}
         />
+        <IdentifyVarTypeResults
+        data={pipeline_result?.identify_var_types || []}
+        title={selectedTitle}
+        {titleOptions}
+        buttonText="Update Rules"
+        data_loading={false}
+        on:base_or_new_button_click={() => update_rules()}
+        on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+        on:remove_var_type={(e) => remove_var_type(e.detail, "base")}
+        on:add_var_type={(e) => add_var_type(e.detail, "base")}
+        on:title_change={(e) => handle_title_change(e.detail)}
+      />
       </div>
-    {:else if show_step === 2}
+    {:else if show_step === 2 && data.identify_vars}
       <div in:slide|global class="step-2 flex grow">
         <div class="flex min-w-[25] max-w-[30rem] flex-col gap-y-1 bg-gray-100">
           <PromptHeader
@@ -365,7 +376,7 @@
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
       </div>
-    {:else if show_step === 3}
+    {:else if show_step === 3 && data.identify_links}
       <div in:slide|global class="step-2 flex grow">
         <div
           class="flex min-w-[25rem] max-w-[30rem] flex-col gap-y-1 bg-gray-100"

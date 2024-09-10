@@ -40,10 +40,17 @@
   let show_dpsir: boolean = true;
   let show_prompts: boolean = false;
   let show_keywordsea: boolean = false;
+  let show_step: number = 1;
+  let current_prompt_data:any;
   // let versions: string[] = [];
   let log_record: any;
   let selectedTitle = "baseline";
   let titleOptions = ["baseline"];
+  const stepMap = {
+    1: "var_type",
+    2: "var",
+    3: "link"
+  };
   // pipeline
   // v1
   let keyword_data: any;
@@ -52,6 +59,7 @@
   // let timeline_data: any;
 
   let fetch_success = false;
+
   function fetchTest() {
     // fetch data from backend
     fetch(server_address + "/test/").then((res) => {
@@ -59,29 +67,13 @@
       fetch_success = res.ok;
     });
   }
-
-  function fetchData() {
+  function fetchData(){
     fetch(`${server_address}/data/`)
       .then((res) => res.json())
       .then((res: tServerData) => {
         console.log({ res });
         interview_data = res.interviews;
-        prompt_data = res.prompts;
-        versionedPipelineResults["baseline"] = res.pipeline_result;
-        pipeline_result = res.pipeline_result; //set the initial pipeline result
-        // console.log({pipeline_result})
-        data_loading = false;
-        var_data = res.DPSIR_data;
-        // vis_links = utils.link_to_vis_link(res.links);
-        vis_links = utils.link_to_vis_link(res.pipeline_links);
-        // console.log(vis_links)
-        // console.log(res.pipeline_links)
-        const var_types = Object.keys(var_data);
-        $varTypeColorScale = d3
-          .scaleOrdinal()
-          .domain(var_types)
-          .range(d3.schemeSet2);
-
+        // data_loading = false;
         // v1
         // report_data = res.reports
         chunk_coordinates = res.v1.topic_tsnes;
@@ -96,24 +88,55 @@
           keyword_coordinates: res.v1.keyword_coordinates,
           keyword_statistics: res.v1.keyword_statistics,
         };
-      });
+      })
+  }
+  function fetchPipelineData(step: string, version: string) {
+    data_loading = true;
+    fetch(`${server_address}/pipeline/${step}/${version}/`)
+      .then((res) => res.json())
+      .then((res: tServerData) => {
+        console.log({ res });
+        prompt_data = res.prompts;
+        versionedPipelineResults[version] = res.pipeline_result;
+        pipeline_result = res.pipeline_result; //set the initial pipeline result
+        // console.log({pipeline_result})
+        // data_loading = false;
+  
+      })
+  }
+  function fetchDPSIRData(link_version:string = "v0"){
+    data_loading = true;
+    fetch(`${server_address}/dpsir/${link_version}/`)
+      .then((res) => res.json())
+      .then((res) => {
+          var_data = res.DPSIR_data;
+          vis_links = utils.link_to_vis_link(res.pipeline_links);
+          console.log(vis_links)
+          console.log(res.pipeline_links)
+          const var_types = Object.keys(var_data);
+          $varTypeColorScale = d3
+            .scaleOrdinal()
+            .domain(var_types)
+            .range(d3.schemeSet2);
+          data_loading = false;
+      })
   }
 
-  function fetchVersionData(version: string) {
-    data_loading = true;
-    fetch(`${server_address}/data/${version}/`)
-      .then((res) => res.json())
-      .then((versionData: tServerData) => {
-        versionedPipelineResults[version] = versionData.pipeline_result;
-        pipeline_result = versionData.pipeline_result;
-        // console.log(`Data fetched for version: ${version}`);
-        data_loading = false;
-      })
-      .catch((error) => {
-        console.error(`Error fetching data for version ${version}:`, error);
-        data_loading = false;
-      });
-  }
+  // function fetchVersionData(version: string) {
+  //   data_loading = true;
+  //   fetch(`${server_address}/data/${version}/`)
+  //     .then((res) => res.json())
+  //     .then((versionData: tServerData) => {
+  //       versionedPipelineResults[version] = versionData.pipeline_result;
+  //       pipeline_result = versionData.pipeline_result;
+  //       // console.log(`Data fetched for version: ${version}`);
+  //       data_loading = false;
+  //     })
+  //     .catch((error) => {
+  //       console.error(`Error fetching data for version ${version}:`, error);
+  //       data_loading = false;
+  //     });
+  // }
 
   function updateVersion(e, key: string) {
     if (key === "version_changed") {
@@ -217,13 +240,23 @@
       },
     );
   }
-
+  function handleStepChange(newStep: number) {
+    show_step = newStep;
+    const step = stepMap[show_step];
+    if (step) {
+      fetchPipelineData(step, "v0");
+      data_loading = false;
+    }
+  }
   onMount(async () => {
     await fetchTest();
     await fetchData();
+    await fetchDPSIRData();
+    await fetchPipelineData("var_type", "v0");
   });
 
   setContext("fetchData", fetchData);
+  setContext('fetchPipelineData', fetchPipelineData);
 </script>
 
 <main class="h-full w-full px-1">
@@ -241,6 +274,8 @@
             {pipeline_result}
             {selectedTitle}
             {titleOptions}
+            {show_step}
+            on:step_change={(e) => handleStepChange(e.detail)}
             on:close={() => (show_prompts = false)}
             on:navigate_evidence={handleEvidenceSelected}
             on:remove_var_type={handleRemoveVarType}
