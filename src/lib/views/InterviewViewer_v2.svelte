@@ -47,18 +47,6 @@
   let selected_chunk = data.map(() => "");
   let highlight_nodes = new Set();
 
-  onMount(() => {
-    // console.log(data, show_chunk);
-    original_data = JSON.parse(JSON.stringify(data));
-    init_highlight_messages();
-    init_highlight_evidence();
-    //   show_chunk_title.forEach((show, index) => {
-    //     console.log({ show,index });
-    //     if (show) {
-    //         scrollToFirstHighlightedChunk(index);
-    //     }
-    //     });
-  });
   function init_highlight_evidence() {
     data.forEach((interview, interview_index) => {
       interview.data.forEach((chunk, chunk_index) => {
@@ -316,30 +304,12 @@
       }
     });
   }
-  // onMount(() => {
-  //   function positionTooltips() {
-  //     const tooltips = document.querySelectorAll('.tooltip');
-  //     tooltips.forEach(tooltip => {
-  //       const messageId = tooltip.dataset.messageId;
-  //       const message = document.getElementById(messageId);
-  //       if (message) {
-  //         const rect = message.getBoundingClientRect();
-  //         const containerRect = message.closest('.conversation-container').getBoundingClientRect();
 
-  //         tooltip.style.top = `${rect.top - containerRect.top}px`;
-  //         tooltip.style.left = `${rect.right - containerRect.left + 10}px`;
-  //       }
-  //     });
-  //   }
-
-  //   // Position tooltips initially and on window resize
-  //   positionTooltips();
-  //   window.addEventListener('resize', positionTooltips);
-
-  //   return () => {
-  //     window.removeEventListener('resize', positionTooltips);
-  //   };
-  // });
+  onMount(() => {
+    original_data = JSON.parse(JSON.stringify(data));
+    init_highlight_messages();
+    init_highlight_evidence();
+  });
 </script>
 
 <div class="flex flex-col">

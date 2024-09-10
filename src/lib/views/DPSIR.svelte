@@ -53,14 +53,14 @@
   ) {
     if (Object.values(box_states).every((state) => state.revealed)) {
       group_name_clickable = false;
-      console.log("remove overview")
+      console.log("remove overview");
       const linkGroup = d3.select(".overview_link_group");
       linkGroup.selectAll("*").remove();
-      Constants.var_type_names.forEach((var_type) => {       
+      Constants.var_type_names.forEach((var_type) => {
         const overview_region = d3.select(`g.overview_${var_type}_region`);
-        overview_region.select('g.bbox-group').selectAll("*").remove();
+        overview_region.select("g.bbox-group").selectAll("*").remove();
       });
-      console.log("drawing detail")
+      console.log("drawing detail");
       DPSIR.update_vars(
         vars,
         links,
@@ -74,7 +74,7 @@
       Constants.var_type_names.forEach((var_type) => {
         box_states[var_type].revealed = false;
       });
-      console.log("remove detail")
+      console.log("remove detail");
       const detail_link_group = d3.select(".detail-link-group");
       detail_link_group.selectAll("*").remove();
       const detail_box_group = d3.select(".detail-bbox-group");
@@ -85,7 +85,7 @@
       Constants.var_type_names.forEach((var_type) => {
         detail_tag_group.select(`g.${var_type}`).selectAll("*").remove();
       });
-      console.log("drawing overview")
+      console.log("drawing overview");
       OverviewDPSIR.update_vars(vars, links, $varTypeColorScale, bboxes);
     }
   }
@@ -121,7 +121,7 @@
   }
 
   function handleVarOrLinkSelected(e) {
-    // console.log("varOrLink", e);
+    console.log("varOrLink", e);
     const variable: tVariable = e;
     selectedVar = variable;
     dispatch("var-selected", selectedVar); // for App.svelte to hightlight the chunks
