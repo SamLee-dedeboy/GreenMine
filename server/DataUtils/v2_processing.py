@@ -113,6 +113,7 @@ def generate_keyword_data(
     }
     all_keywords = set()
     keyword_statistics = defaultdict(int)
+    keyword_occurrences = defaultdict(list)
     keyword_coordinates = {}
     for chunk in chunks:
         if chunk["identify_var_types_result"] == []:
@@ -132,20 +133,38 @@ def generate_keyword_data(
                 ]
             )
         )
-        evidence_messages = [chunk["conversation"][i]["content"] for i in evidences]
         chunk_keywords = set()
-        for sentence in evidence_messages:
+        for evidence_index in evidences:
+            sentence = chunk["conversation"][evidence_index]["content"]
             words = jieba.cut(sentence)
             words = list(filter(lambda x: x not in stopwords, words))
             words = list(filter(lambda x: x in keyword_embeddings_dict, words))
             chunk_keywords.update(words)
+            for word in words:
+                if word not in keyword_occurrences:
+                    keyword_occurrences[word] = []
+                keyword_occurrences[word].append((chunk["id"], evidence_index))
         for keyword in chunk_keywords:
             keyword_statistics[keyword] += 1
         all_keywords.update(chunk_keywords)
     all_keywords = list(all_keywords)
+    # reorganize keyword_occurrences
+    for word, occurrences in keyword_occurrences.items():
+        evidence_by_chunk = {}
+        for chunk_id, evidence_index in occurrences:
+            if chunk_id not in evidence_by_chunk:
+                evidence_by_chunk[chunk_id] = {"chunk_id": chunk_id, "evidence": []}
+            evidence_by_chunk[chunk_id]["evidence"].append(evidence_index)
+        keyword_occurrences[word] = list(evidence_by_chunk.values())
+
     keyword_statistics = {
-        keyword: {"frequency": freq} for keyword, freq in keyword_statistics.items()
+        keyword: {
+            "frequency": freq,
+            "mentions": keyword_occurrences[keyword],
+        }
+        for keyword, freq in keyword_statistics.items()
     }
+
     all_keyword_embeddings = [
         keyword_embeddings_dict[keyword]["embedding"] for keyword in all_keywords
     ]

@@ -14,7 +14,7 @@ export class KeyWordRect {
   } = { left: 0, right: 0, top: 0, bottom: 0 };
   xScale_keywords: any;
   yScale_keywords: any;
-  clicked_rect: string | undefined;
+  // clicked_rect: string | undefined;
   dispatch: any;
   constructor() {}
   on(event, handler) {
@@ -25,7 +25,7 @@ export class KeyWordRect {
   init(svgId: string, svgWidth: number, svgHeight: number) {
     console.log("KeywordRect constructor");
     this.svgId = svgId;
-    this.dispatch = d3.dispatch("keywordsSelected");
+    this.dispatch = d3.dispatch("keywordSelected");
     this.width = svgWidth;
     this.height = svgHeight;
     d3.select("#" + this.svgId).attr(
@@ -46,7 +46,7 @@ export class KeyWordRect {
       .scaleLinear()
       .domain([0, 1])
       .range([this.paddings.bottom, this.height - this.paddings.top]);
-    this.clicked_rect = undefined;
+    // this.clicked_rect = undefined;
     d3.select("#" + this.svgId)
       .append("g")
       .attr("class", "rect-group");
@@ -128,25 +128,31 @@ export class KeyWordRect {
         // d3.select(".tooltip").classed("show-tooltip", false);
       })
       .on("click", function (e, d) {
+        // console.log("click", d, self.clicked_rect);
         e.preventDefault();
         const hexes = d3
           .selectAll("rect.keyword")
           .classed("rect-selected", false)
           .classed("rect-not-selected", true);
-        if (self.clicked_rect === d.label) {
-          self.clicked_rect = undefined;
-          self.dispatch.call("keywordsSelected", null, null);
-          hexes
-            .classed("hex-selected", false)
-            .classed("hex-not-selected", false);
-        } else {
-          self.clicked_rect = d.label;
-          self.dispatch.call("keywordsSelected", null, d.label);
-          d3.select(this)
-            .classed("rect-selected", true)
-            .classed("rect-not-selected", false)
-            .raise();
-        }
+        d3.select(this)
+          .classed("rect-selected", true)
+          .classed("rect-not-selected", false)
+          .raise();
+        self.dispatch.call("keywordSelected", null, d.label);
+        // if (self.clicked_rect === d.label) {
+        //   self.clicked_rect = undefined;
+        //   self.dispatch.call("keywordSelected", null, null);
+        //   hexes
+        //     .classed("hex-selected", false)
+        //     .classed("hex-not-selected", false);
+        // } else {
+        //   self.clicked_rect = d.label;
+        //   self.dispatch.call("keywordSelected", null, d.label);
+        //   d3.select(this)
+        //     .classed("rect-selected", true)
+        //     .classed("rect-not-selected", false)
+        //     .raise();
+        // }
       });
     const node_labels = svg
       .select("g.label-group")

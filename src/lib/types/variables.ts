@@ -6,7 +6,10 @@ export type tVariableType = {
 };
 export type tKeywordData = {
   keyword_list: string[];
-  keyword_statistics: Record<string, { frequency: number; tf_idf: number }>;
+  keyword_statistics: Record<
+    string,
+    { frequency: number; tf_idf: number; mentions: tMention[] }
+  >;
   keyword_coordinates: Record<string, [number, number]>;
 };
 
@@ -21,7 +24,7 @@ export type tMention = {
   chunk_id: string;
   conversation_ids?: string[];
   evidence?: string[];
-  explanation: string;
+  explanation?: string;
 };
 
 export type tLink = {

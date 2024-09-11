@@ -138,9 +138,9 @@
       explanation,
     );
   }
-  function handleVarOrLinkSelected(e) {
+  function handleHighlightChunks(e) {
+    console.log("handle highlight chunks", e.detail);
     if (!interview_data) return;
-    //deselect var/link
     if (e.detail === null) {
       interview_viewer_component.highlight_chunks(null); //dehighlight chunks
     } else {
@@ -221,6 +221,7 @@
         >
           <KeywordSeaViewer
             data={var_data}
+            on:keywordSelected={handleHighlightChunks}
             on:close={() => (show_keywordsea = false)}
           ></KeywordSeaViewer>
         </div>
@@ -249,20 +250,19 @@
             <span>Sea of</span> <br />
             <span class="title-hidden absolute mt-[-25px] h-fit">Voices</span>
           </div> -->
+
+          <!-- these cases are mutual, but writing it this way has less nesting -->
           {#if data_loading}
             <div>Data Loading...</div>
           {/if}
-          {#if show_dpsir}
-            {#if data_loading}
-              <div></div>
-            {:else}
-              <DPSIR
-                data={var_data}
-                links={vis_links}
-                on:var-selected={handleVarOrLinkSelected}
-              ></DPSIR>
-            {/if}
-          {:else}
+          {#if !data_loading && show_dpsir}
+            <DPSIR
+              data={var_data}
+              links={vis_links}
+              on:var-selected={handleHighlightChunks}
+            ></DPSIR>
+          {/if}
+          {#if !data_loading && !show_dpsir}
             <SimGraph topic_data={chunk_graph} {keyword_data}></SimGraph>
           {/if}
         </div>

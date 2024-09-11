@@ -16,10 +16,9 @@ app = Flask(__name__)
 CORS(app)
 dirname = os.path.dirname(__file__)
 relative_path = lambda dirname, filename: os.path.join(dirname, filename)
-node_data_path = relative_path(dirname, "data/v2/user/nodes/")
+# node_data_path = relative_path(dirname, "data/v2/user/nodes/")
 chunk_data_path = relative_path(dirname, "data/v2/user/chunk/")
 keyword_data_path = relative_path(dirname, "data/v2/user/keyword/")
-metadata_path = relative_path(dirname, "data/v2/user/variable_definitions/")
 v1_data_path = relative_path(dirname, "data/v1/")
 # pipeline result path
 pipeline_result_path = relative_path(dirname, "data/v2/user/pipeline/")
@@ -43,7 +42,7 @@ def test():
 @app.route("/data/<version>/")
 def get_data(version="baseline"):
 
-    old_links = json.load(open(node_data_path + "connections.json", encoding="utf-8"))
+    # old_links = json.load(open(node_data_path + "connections.json", encoding="utf-8"))
     interview_data = process_interview(
         glob.glob(chunk_data_path + f"chunk_summaries_w_ktte/*.json")
     )
@@ -142,12 +141,6 @@ def get_data(version="baseline"):
             link for chunk in identify_links for link in chunk["identify_links_result"]
         ]  # TBM
 
-    # nodes = {}
-    # for var_type in var_types:
-    #     nodes[var_type] = json.load(
-    #         open(node_data_path + f"{var_type}_nodes.json", encoding="utf-8")
-    #     )
-
     nodes = v2_processing.collect_nodes(identify_links, var_types)
     keyword_embeddings = json.load(
         open(keyword_data_path + "keywords.json", encoding="utf-8")
@@ -171,7 +164,7 @@ def get_data(version="baseline"):
         # "nodes": nodes,
         # "variable_definitions": var_definitions,
         "DPSIR_data": DPSIR_data,
-        "links": old_links,
+        # "links": old_links,
         "pipeline_links": pipeline_links,
         "v1": v1_data,
         "prompts": {
@@ -199,57 +192,6 @@ def get_data(version="baseline"):
             "identify_links": identify_links,
         },
     }
-
-
-# @app.route("/var_extraction/", methods=["POST"])
-# def var_extraction():
-#     var_type = request.json["var_type"]
-#     var_name = request.json["var_name"]
-#     var_definition = request.json["var_definition"]
-#     factor_type = request.json["factor_type"]
-#     chunks = collect_chunks(
-#         glob.glob(chunk_data_path + f"chunk_summaries_w_ktte/*.json")
-#     )
-#     all_nodes = collect_nodes(
-#         [node_data_path + f"{var_type}_nodes.json" for var_type in var_types]
-#     )
-#     chunk_dict = chunk_w_var_mentions(chunks, all_nodes)
-#     all_def_dict = local.all_definitions(
-#         file_paths=[
-#             metadata_path + f"{var_type}_variables_def.json" for var_type in var_types
-#         ]
-#     )
-#     local.add_variable(
-#         metadata_path + f"{var_type}_variables_def.json",
-#         var_name,
-#         var_definition,
-#         factor_type,
-#     )
-#     query.var_extraction(
-#         openai_client,
-#         node_data_path + f"{var_type}_nodes.json",
-#         node_data_path + "connections.json",
-#         chunk_dict,
-#         var_name,
-#         var_type,
-#         var_definition,
-#         all_def_dict,
-#     )
-#     return "success"
-
-
-# @app.route("/curation/remove/", methods=["POST"])
-# def remove_var():
-#     var_type = request.json["var_type"]
-#     var_names = request.json["var_names"]
-#     for var_name in var_names:
-#         local.remove_variable(
-#             node_file_path=node_data_path + f"{var_type}_nodes.json",
-#             def_file_path=metadata_path + f"{var_type}_variables_def.json",
-#             link_file_path=node_data_path + "connections.json",
-#             var_name=var_name,
-#         )
-#     return "success"
 
 
 @app.route("/curation/identify_var_types/", methods=["POST"])

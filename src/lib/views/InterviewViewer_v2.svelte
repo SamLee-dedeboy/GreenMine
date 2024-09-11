@@ -174,7 +174,8 @@
       const highlight_conversation_ids =
         chunk_mention.conversation_ids || chunk_mention.evidence || [];
       highlight_conversation_ids.forEach((message_id) => {
-        evidence[chunk_id][message_id] = chunk_mention.explanation;
+        evidence[chunk_id][message_id] =
+          chunk_mention.explanation || "No explanation provided";
       });
     });
     evidence = evidence;

@@ -37,6 +37,9 @@
       <KeywordSea
         data={data[keywordsea_var_type].keyword_data}
         key={keywordsea_var_type}
+        on:keywordSelected={(e) => {
+          dispatch("keywordSelected", e.detail);
+        }}
       />
     {:else}
       <div

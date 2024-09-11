@@ -1,10 +1,9 @@
 <script lang="ts">
   import { KeyWordRect } from "lib/renderers/KeywordRect";
-  import { KeyWordSea } from "lib/renderers/KeywordSea";
   import { varTypeColorScale } from "lib/store";
   import type { tKeywordData } from "lib/types";
-  import { onMount } from "svelte";
-
+  import { onMount, createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let data: tKeywordData;
   export let key: string = "keyword";
   const svgId = `keyword-sea-${key}-svg`;
@@ -19,6 +18,11 @@
       $varTypeColorScale(key),
     );
   }
+
+  function handleKeywordSelected(keyword: string) {
+    dispatch("keywordSelected", data.keyword_statistics[keyword].mentions);
+  }
+
   onMount(() => {
     console.log("keyword sea: ", { data });
     const container = document.querySelector(".keywordsea-container")!;
@@ -27,6 +31,7 @@
       height: container.clientHeight,
     };
     keyword_sea_renderer.init(svgId, svgSize.width, svgSize.height);
+    keyword_sea_renderer.on("keywordSelected", handleKeywordSelected);
     keyword_sea_renderer.update_keywords(
       data,
       "tf_idf",
