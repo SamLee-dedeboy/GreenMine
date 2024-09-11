@@ -176,7 +176,8 @@ export const DPSIR = {
             name,
             width: rectWidth,
             height: 12, // height might be adjusted later as needed
-            outgroup_degree: linkCount[name].outGroup_link,
+            outgroup_degree:
+              linkCount[name].outGroup_link + linkCount[name].inGroup_link,
           };
         })
         .sort(
@@ -1049,6 +1050,7 @@ export const DPSIR = {
       .join("g")
       .attr("class", "tag")
       .each(function (d: tRectObject) {
+        console.log({ d });
         const tag = d3.select(this);
         tag.selectAll("*").remove();
         tag
@@ -1069,8 +1071,8 @@ export const DPSIR = {
           .attr("stroke-width", "1px")
           .attr(
             "fill",
-            // scaleVarColor(d.degree)
-            d.degree !== 0 ? scaleVarColor(d.degree) : "#cdcdcd",
+            scaleVarColor(d.degree),
+            // d.degree !== 0 ? scaleVarColor(d.degree) : "#cdcdcd",
           )
           .attr("rx", "0.2%")
           .attr("opacity", "1")
