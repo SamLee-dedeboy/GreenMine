@@ -42,11 +42,6 @@ def test():
 @app.route("/data/")
 @app.route("/data/<version>/")
 def get_data(version="baseline"):
-    nodes = {}
-    for var_type in var_types:
-        nodes[var_type] = json.load(
-            open(node_data_path + f"{var_type}_nodes.json", encoding="utf-8")
-        )
 
     old_links = json.load(open(node_data_path + "connections.json", encoding="utf-8"))
     interview_data = process_interview(
@@ -147,6 +142,13 @@ def get_data(version="baseline"):
             link for chunk in identify_links for link in chunk["identify_links_result"]
         ]  # TBM
 
+    # nodes = {}
+    # for var_type in var_types:
+    #     nodes[var_type] = json.load(
+    #         open(node_data_path + f"{var_type}_nodes.json", encoding="utf-8")
+    #     )
+
+    nodes = v2_processing.collect_nodes(identify_links, var_types)
     keyword_embeddings = json.load(
         open(keyword_data_path + "keywords.json", encoding="utf-8")
     )

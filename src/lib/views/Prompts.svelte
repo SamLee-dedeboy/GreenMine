@@ -139,6 +139,7 @@
       return `version${versionNumber}`;
     }
   }
+
   function handle_save() {
     const nextVersion = getNextVersion();
     save_data(data, tmp_data, "identify_var_types", nextVersion);

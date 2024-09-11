@@ -73,7 +73,6 @@
         var_data = res.DPSIR_data;
         // vis_links = utils.link_to_vis_link(res.links);
         vis_links = utils.link_to_vis_link(res.pipeline_links);
-        // console.log(vis_links)
         // console.log(res.pipeline_links)
         const var_types = Object.keys(var_data);
         $varTypeColorScale = d3

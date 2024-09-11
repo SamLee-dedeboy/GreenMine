@@ -124,7 +124,7 @@
     console.log("varOrLink", e);
     const variable: tVariable = e;
     selectedVar = variable;
-    dispatch("var-selected", selectedVar); // for App.svelte to hightlight the chunks
+    dispatch("var-selected", variable); // for App.svelte to hightlight the chunks
   }
   function handleVarTypeLinkSelected(varTypeLink: tLinkObjectOverview) {
     // console.log("selected", varTypeLink);

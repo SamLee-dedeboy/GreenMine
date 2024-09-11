@@ -21,6 +21,7 @@ export type tMention = {
   chunk_id: string;
   conversation_ids?: string[];
   evidence?: string[];
+  explanation: string;
 };
 
 export type tLink = {
