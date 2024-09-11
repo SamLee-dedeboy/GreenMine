@@ -206,7 +206,7 @@ export const DetailDPSIR = {
       self.drawVars(
         varTypeColorScale,
         vars[varType],
-        this.varCoordinatesDict[varType],
+        varType,
         bboxes[varType],
         clickable,
       );
@@ -263,6 +263,7 @@ export const DetailDPSIR = {
     bbox_info: { center: [number, number]; size: [number, number] },
     clickable: boolean,
   ) {
+    console.log("varCoordinatesDict", this.varCoordinatesDict, varType);
     const varCoordinates = this.varCoordinatesDict[varType];
     // console.log(vars);
     this.varTypeColorScale = varTypeColorScale;
