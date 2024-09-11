@@ -14,10 +14,9 @@
     tVisLink,
     tLinkObjectOverview,
     SelectedType,
+    tMention,
   } from "../types";
   import { varTypeColorScale } from "lib/store";
-  import KeywordSea from "lib/components/KeywordSea.svelte";
-  // import { group } from "console";
   export let data: tDPSIR;
   export let links: tVisLink[];
   const svgId = "model-svg";
@@ -39,7 +38,6 @@
   let all_selected_types: SelectedType[] = [];
   let group_name_clickable = true;
   let container;
-  let selectedVar: tVariable | undefined = undefined;
   $: isDetailMode = Object.values(box_states).every((state) => state.revealed);
   async function update_vars(
     vars: tDPSIR,
@@ -84,14 +82,11 @@
     }
   }
 
-  function handleVarOrLinkSelected(e) {
-    console.log("varOrLink", e);
-    const variable: tVariable = e;
-    selectedVar = variable;
-    dispatch("var-selected", variable); // for App.svelte to hightlight the chunks
+  function handleVarOrLinkSelected(mentions: tMention[]) {
+    console.log("varOrLink", mentions);
+    dispatch("var-selected", mentions); // for App.svelte to hightlight the chunks
   }
   function handleVarTypeLinkSelected(varTypeLink: tLinkObjectOverview) {
-    // console.log("selected", varTypeLink);
     if (varTypeLink !== null) {
       const var_type_source = varTypeLink.source;
       const var_type_target = varTypeLink.target;

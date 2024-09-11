@@ -144,8 +144,7 @@
     if (e.detail === null) {
       interview_viewer_component.highlight_chunks(null); //dehighlight chunks
     } else {
-      const chunk_mentions: tMention[] = e.detail.mentions;
-      interview_viewer_component.highlight_chunks(chunk_mentions);
+      interview_viewer_component.highlight_chunks(e.detail as tMention[]);
     }
   }
   function handleRemoveVarType(e) {

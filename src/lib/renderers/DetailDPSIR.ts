@@ -692,7 +692,7 @@ export const DetailDPSIR = {
           self.clicked_link = d;
           self.linkClicked = true;
           // self.handlers.VarOrLinkSelected(d);
-          self.dispatch.call("VarOrLinkSelected", null, d);
+          self.dispatch.call("VarOrLinkSelected", null, d.mentions);
           d3.select(this)
             .classed("link-highlight", true)
             .classed("detail-link-not-highlight", false)
@@ -1136,7 +1136,7 @@ export const DetailDPSIR = {
             } else {
               self.clicked_rect = d;
               self.rectClicked = true;
-              self.dispatch.call("VarOrLinkSelected", null, d); //this refer to the context of the event
+              self.dispatch.call("VarOrLinkSelected", null, d.mentions); //this refer to the context of the event
 
               d3.select(this)
                 .classed("clicked-box-highlight", true)
