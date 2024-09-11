@@ -46,11 +46,45 @@ def get_data():
     )
     v1_data = get_data_v1(v1_data_path)
     return {"interviews": interview_data, "v1": v1_data}
+@app.route("/pipeline/<step>/versions/")
+def get_pipeline_versions(step):
+    versions = set()
 
+    # Check prompts
+    prompt_files = os.listdir(prompt_path)
+    for file in prompt_files:
+        if file.endswith(f"_identify_{step}s.json"):
+            version = file.split('_')[0]
+            versions.add(version)
+
+    # Check pipeline results
+    result_files = os.listdir(os.path.join(pipeline_result_path, f"identify_{step}s"))
+    for file in result_files:
+        if file.startswith('v') and file.endswith(f"_chunk_w_{step}s.json"):
+            version = file.split('_')[0]
+            versions.add(version)
+
+    # Check definitions (only for var_type and var)
+    if step in ["var_type", "var"]:
+        definition_files = os.listdir(prompt_context_path)
+        for file in definition_files:
+            if file.endswith(f"_{step}_definitions.json"):
+                version = file.split('_')[0]
+                versions.add(version)
+
+    # Convert versions to a sorted list of integers
+    version_numbers = sorted([int(v.replace('v', '')) for v in versions])
+
+    return ({
+        "step": step,
+        "total_versions": len(version_numbers),
+        "versions": [f"v{v}" for v in version_numbers]
+    })
 @app.route("/pipeline/<step>/<version>/")
 def get_pipeline(step,version):
     # step = var_type, var, link
     version_number = version.replace("v", "")
+    print(version_number)
     definitions = {}
     if step in ["var_type", "var"]:
         definitions = json.load(
@@ -239,7 +273,7 @@ def save_identify_var_types():
         "system_prompt_blocks": context["system_prompt_blocks"],
         "user_prompt_blocks": context["user_prompt_blocks"],
     }
-    version_number = version.replace("version", "")
+    version_number = version.replace("v", "")
     local.save_json(
         all_chunks,
         f"{pipeline_result_path}identify_var_types/v{version_number}_chunk_w_var_types.json",

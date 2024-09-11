@@ -14,6 +14,7 @@
     tServerPromptData,
     tVarTypeResult,
     LogRecord,
+    tVersionInfo
   } from "lib/types";
   import { updateTmpData } from "lib/utils/update_with_log";
   import { server_address } from "lib/constants";
@@ -25,6 +26,7 @@
   export let pipeline_result: tServerPipelineData | undefined = undefined;
   export let selectedTitle: string;
   export let titleOptions: string[];
+  export let versionsCount: { [key: string]: tVersionInfo };
 
   let data_loading: boolean = false;
   let tmp_data: tServerPipelineData = {
@@ -61,6 +63,7 @@
     show_step = newStep;
     dispatch('step_change', newStep);
   }
+  let current_version = "";
 
   function navigate_evidence(e) {
     if (!e) return;
@@ -93,8 +96,12 @@
     removeVar = [];
     addVar = [];
   }
-  function execute_prompt(data: tServerPromptData, key: string) {
+  function execute_prompt(data: tServerPromptData, key: string, current_version: string) {
     if (!data) return;
+    if(current_version === "") {
+      alert("Please select a version");
+      return;
+    }
     data_loading = true;
     fetch(server_address + `/curation/${key}/`, {
       method: "POST",
@@ -112,13 +119,13 @@
       tmp_data[key] = res;
       console.log({ res });
       //apply rules (prompt from App) to tmp_data which get back from server with new prompt
-      tmp_data = updateTmpData(tmp_data, log_record);
+      save_data(data, tmp_data, key, current_version);
+      tmp_data = updateTmpData(tmp_data, log_record); //to be saved
       data_loading = false;
       // compute_uncertainty(data, key);
     });
 
     // const nextVersion = getNextVersion();
-    // save_data(data, tmp_data, "identify_var_types", nextVersion);
   }
 
   function compute_uncertainty(data: tServerPromptData, key: string) {
@@ -152,17 +159,21 @@
   //   const nextVersion = getNextVersion();
   //   save_data(data, tmp_data, "identify_var_types", nextVersion);
   // }
-
+  function handle_version_selected(current_v: string) {
+    // console.log("version selected", current_v);
+    current_version = current_v;
+    dispatch("version_selected", {
+              pipe_version:"v" + selectedTitle.replace("version ", ""),
+              prompt_version:current_version              
+            });//To App.svelte to reload prompt_data
+  }
   function handle_title_change(newTitle: string) {
-    // console.log("title changed",newTitle);
+    // console.log("version changed",newTitle);
     selectedTitle = newTitle;
-    //reset tmp_data
-    tmp_data = {
-      identify_var_types: [],
-      identify_vars: [],
-      identify_links: [],
-    };
-    dispatch("versions_changed", selectedTitle);
+    dispatch("version_changed", {
+              pipe_version:selectedTitle, 
+              prompt_version:current_version,
+            }); //To App.svelte to reload pipeline_data
   }
 
   function save_data(
@@ -173,7 +184,7 @@
   ) {
     // console.log(version);
     if (!pipeline_tmp_data) return;
-    console.log("saving", pipeline_tmp_data[key], data[key]);
+    console.log(`saving ${version} tmp data`, pipeline_tmp_data[key], data[key]);
     fetch(server_address + `/curation/${key}/save/`, {
       method: "POST",
       headers: {
@@ -189,9 +200,12 @@
       .then((data) => {
         if (data === "success") {
           // Add the new version to titleOptions if it's not already there
-          if (!titleOptions.includes(version)) {
-            dispatch("new_verison_added", version); //To App.svelte
-          }
+          // if (!titleOptions.includes(version)) {
+          //   dispatch("new_verison_added", {
+          //     version:version, 
+          //     step:key.startsWith("identify_") ? key.slice("identify_".length).replace(/s$/, '') : key
+          //   }); //To App.svelte
+          // }
         } else {
           console.error("Unexpected response:", data);
         }
@@ -304,10 +318,12 @@
         >
           <PromptHeader
             title="Identify Indicators"
-            on:run={() => execute_prompt(data, "identify_var_types")}
+            versionCount={versionsCount['var_type']}
+            on:run={() => execute_prompt(data, "identify_var_types", current_version)}
             bind:measure_uncertainty
             on:toggle-measure-uncertainty={() =>
               (measure_uncertainty = !measure_uncertainty)}
+            on:select-version={(e) => handle_version_selected(e.detail)}
           ></PromptHeader>
           <VarTypeDataEntry
             bind:data={data.identify_var_types.var_type_definitions}
@@ -322,33 +338,33 @@
         </div>
         <IdentifyVarTypeResults
           data={tmp_data?.identify_var_types || []}
-          title={selectedTitle}
+          title={`Running: version ${current_version.slice(1)}`}
           titleOptions = {[]}
           buttonText=""
           {data_loading}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
           on:remove_var_type={(e) => remove_var_type(e.detail, "new")}
           on:add_var_type={(e) => add_var_type(e.detail, "new")}
-          on:title_change={(e) => handle_title_change(e.detail)}
         />
         <IdentifyVarTypeResults
-        data={pipeline_result?.identify_var_types || []}
-        title={selectedTitle}
-        {titleOptions}
-        buttonText="Update Rules"
-        data_loading={false}
-        on:base_or_new_button_click={() => update_rules()}
-        on:navigate_evidence={(e) => navigate_evidence(e.detail)}
-        on:remove_var_type={(e) => remove_var_type(e.detail, "base")}
-        on:add_var_type={(e) => add_var_type(e.detail, "base")}
-        on:title_change={(e) => handle_title_change(e.detail)}
-      />
+          data={pipeline_result?.identify_var_types || []}
+          title={selectedTitle}
+          {titleOptions}
+          buttonText="Update Rules"
+          data_loading={false}
+          on:base_or_new_button_click={() => update_rules()}
+          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+          on:remove_var_type={(e) => remove_var_type(e.detail, "base")}
+          on:add_var_type={(e) => add_var_type(e.detail, "base")}
+          on:title_change={(e) => handle_title_change(e.detail)}
+        />
       </div>
     {:else if show_step === 2 && data.identify_vars}
       <div in:slide|global class="step-2 flex grow">
         <div class="flex min-w-[25] max-w-[30rem] flex-col gap-y-1 bg-gray-100">
           <PromptHeader
             title="Identify Variables"
+            versionCount={versionsCount['var']}
             on:run={() => execute_prompt(data, "identify_vars")}
             bind:measure_uncertainty
             on:toggle-measure-uncertainty={() =>
@@ -383,6 +399,7 @@
         >
           <PromptHeader
             title="Identify Links"
+            versionCount={versionsCount['link']}
             on:run={() => execute_prompt(data, "identify_links")}
             bind:measure_uncertainty
             on:toggle-measure-uncertainty={() =>

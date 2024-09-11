@@ -17,6 +17,7 @@
     tDPSIR,
     tServerPromptData,
     tServerPipelineData,
+    tVersionInfo,
   } from "lib/types";
   import DPSIR from "lib/views/DPSIR.svelte";
   import BrowserBlockingPage from "lib/views/BrowserBlockingPage.svelte";
@@ -33,6 +34,7 @@
   let prompt_data: tServerPromptData;
   let pipeline_result: tServerPipelineData;
   let versionedPipelineResults: { [key: string]: tServerPipelineData } = {};
+  let versionedPrompt: { [key: string]: tServerPromptData } = {};
   let var_data: tDPSIR;
   let vis_links: tVisLink[];
   let summary_interviews: tChunk[];
@@ -44,8 +46,10 @@
   let current_prompt_data:any;
   // let versions: string[] = [];
   let log_record: any;
-  let selectedTitle = "baseline";
-  let titleOptions = ["baseline"];
+  let selectedTitle = "version 0";
+  let titleOptions = ["version 0"];
+
+  let versionsCount: { [key: string]: tVersionInfo } = {};
   const stepMap = {
     1: "var_type",
     2: "var",
@@ -90,12 +94,30 @@
         };
       })
   }
-  function fetchPipelineData(step: string, version: string) {
-    data_loading = true;
+  function fetchVersionsCount(step: string) {
+    fetch(`${server_address}/pipeline/${step}/versions`)
+      .then(res => res.json())
+      .then(data => {
+        versionsCount = { 
+          ...versionsCount, 
+          [step]: {
+            total_versions: data.total_versions,
+            versions: data.versions
+          }
+        };
+        console.log("Versions count:", versionsCount);
+      })
+      .catch(error => {
+        console.error(`Error fetching versions count for ${step}:`, error);
+      });
+  }
+  function fetchPipelineData(step: string, version: string, data_loading = true) {
+    data_loading = data_loading;
     fetch(`${server_address}/pipeline/${step}/${version}/`)
       .then((res) => res.json())
       .then((res: tServerData) => {
         console.log({ res });
+        versionedPrompt[version] = res.prompts;
         prompt_data = res.prompts;
         versionedPipelineResults[version] = res.pipeline_result;
         pipeline_result = res.pipeline_result; //set the initial pipeline result
@@ -122,36 +144,36 @@
       })
   }
 
-  // function fetchVersionData(version: string) {
-  //   data_loading = true;
-  //   fetch(`${server_address}/data/${version}/`)
-  //     .then((res) => res.json())
-  //     .then((versionData: tServerData) => {
-  //       versionedPipelineResults[version] = versionData.pipeline_result;
-  //       pipeline_result = versionData.pipeline_result;
-  //       // console.log(`Data fetched for version: ${version}`);
-  //       data_loading = false;
-  //     })
-  //     .catch((error) => {
-  //       console.error(`Error fetching data for version ${version}:`, error);
-  //       data_loading = false;
-  //     });
-  // }
-
   function updateVersion(e, key: string) {
+    // console.log(versionedPipelineResults);
+    // console.log(versionedPrompt);
     if (key === "version_changed") {
-      selectedTitle = e.detail;
-      if (versionedPipelineResults[selectedTitle]) {
-        pipeline_result = versionedPipelineResults[selectedTitle];
+      selectedTitle = e.detail.pipe_version;
+      let pipe_version = "v" + selectedTitle.replace("version ", "")
+      let prompt_version = e.detail.prompt_version;
+      if (versionedPipelineResults[pipe_version]) {
+        pipeline_result = versionedPipelineResults[pipe_version];
+        prompt_data = versionedPrompt[prompt_version];
       } else {
-        console.warn("no data for this version");
+        console.error("No data for this version");
+      }
+    } else if (key === "version_selected") {
+      let pipe_version = e.detail.pipe_version;
+      let prompt_version = e.detail.prompt_version;
+      if (versionedPrompt[prompt_version]) {
+        pipeline_result = versionedPipelineResults[pipe_version];
+        prompt_data = versionedPrompt[prompt_version];
+      } else {
+        console.error("No data for this version");
       }
     } else if (key === "new_verison_added") {
-      let new_version = e.detail;
-      titleOptions = [...titleOptions, new_version];
-      // console.log("updated titleOptions is", titleOptions);
-      // console.warn(`fetching data for version: ${new_version}`);
-      fetchVersionData(new_version);
+      let new_version = "version "+(e.detail.version).slice(1); //title
+      let step = e.detail.step;
+      if (!titleOptions.includes(new_version)) {
+          titleOptions = [...titleOptions, new_version];
+      }
+      // fetch new version prompt and pipline data
+      fetchPipelineData(step,e.detail.version,false);
     }
   }
   function handleEvidenceSelected(e) {
@@ -245,6 +267,7 @@
     const step = stepMap[show_step];
     if (step) {
       fetchPipelineData(step, "v0");
+      fetchVersionsCount(step);
       data_loading = false;
     }
   }
@@ -253,6 +276,7 @@
     await fetchData();
     await fetchDPSIRData();
     await fetchPipelineData("var_type", "v0");
+    fetchVersionsCount("var_type");
   });
 
   setContext("fetchData", fetchData);
@@ -275,12 +299,14 @@
             {selectedTitle}
             {titleOptions}
             {show_step}
+            {versionsCount}
             on:step_change={(e) => handleStepChange(e.detail)}
             on:close={() => (show_prompts = false)}
             on:navigate_evidence={handleEvidenceSelected}
             on:remove_var_type={handleRemoveVarType}
             on:add_var_type={handleAddVarType}
-            on:versions_changed={(e) => updateVersion(e, "versions_changed")}
+            on:version_selected={(e) => updateVersion(e, "version_selected")}
+            on:version_changed={(e) => updateVersion(e, "version_changed")} 
             on:new_verison_added={(e) => updateVersion(e, "new_verison_added")}
           ></Prompts>
         </div>

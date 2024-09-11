@@ -97,3 +97,8 @@ export type LogEntry = {
 export type LogRecord = {
   identify_type_results: LogEntry[];
 };
+
+export type tVersionInfo = {
+  total_versions: number;
+  versions: string[];
+}

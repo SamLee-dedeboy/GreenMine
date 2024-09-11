@@ -1,9 +1,15 @@
 <script lang="ts">
   import { fade, slide } from "svelte/transition";
   import { createEventDispatcher, onMount } from "svelte";
+  import type { tVersionInfo } from "lib/types";
   const dispatch = createEventDispatcher();
   export let title: string = "Prompt Viewer";
   export let measure_uncertainty: boolean = false;
+  export let versionCount: tVersionInfo={
+    total_versions: 0,
+    versions: [],
+  }
+  let show_versions = true;
 </script>
 
 <div
@@ -39,11 +45,39 @@
       </div>
     </div>
   </div>
+  <div class="flex flex-col py-1">
+    <div
+      tabindex="0"
+      role="button"
+      class="entry-trigger"
+      on:click={() => (show_versions = !show_versions)}
+      on:keyup={() => {}}
+    >
+      Version list (Total: {versionCount.total_versions}) 
+    </div>
+  </div>
+  {#if show_versions}
+  <div class="flex divide-x justify-center ">
+    <div class="flex flex-wrap gap-2 justify-center">
+      {#each versionCount.versions as version}
+        <button 
+          class="h-6 w-6 rounded-full bg-blue-500 opacity-80 text-white text-sm hover:bg-blue-600 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 focus:bg-blue-600 focus:opacity-100"
+          on:click={() => dispatch('select-version', version)}
+        >
+          {version}
+        </button>
+      {/each}
+    </div>
+  </div>
+  {/if}
 </div>
 
 <style lang="postcss">
   .active {
     @apply bg-green-300;
     transition: all 0.5s;
+  }
+  .entry-trigger {
+    @apply rounded-sm bg-gray-200 text-gray-700 outline-double outline-1 outline-gray-600 hover:bg-gray-300;
   }
 </style>
