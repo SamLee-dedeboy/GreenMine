@@ -109,6 +109,7 @@ def identify_var_prompt_factory(
             )
         )
         response = list(filter(lambda x: x["var"] != "none", response))
+        response = list(filter(lambda x: x["explanation"] != "none", response))
         return response
 
     response_format = "json"
