@@ -14,8 +14,8 @@ import type {
 import * as Constants from "../constants";
 import * as grid_layout from "./grid_layout";
 
-export const DPSIR = {
-  init(svgId: string, utilities: string[]) {
+export const DetailDPSIR = {
+  init(svgId: string) {
     // console.log("init detailed");
     this.clicked_rect = null;
     this.clicked_link = null;
@@ -33,27 +33,19 @@ export const DPSIR = {
     this.cellHeight = this.height / this.grid_renderer.rows;
     this.svgId = svgId;
     this.dispatch = d3.dispatch("VarOrLinkSelected", "VarTypeUnSelected");
-    this.utilities = utilities;
     this.varTypeColorScale = null;
-    // this.showLinks = true;
-    // this.enable = false;
+    this.varCoordinatesDict = {};
     const self = this;
     const svg = d3
       .select("#" + svgId)
       .attr("viewBox", `0 0 ${this.width} ${this.height}`);
 
-    // this.drawGids(svg, svgId);
-    // .attr("transform", `translate(${padding.left}, ${padding.top})`);
     const bbox_group = svg.append("g").attr("class", "detail-bbox-group");
     const link_group = svg.append("g").attr("class", "detail-link-group");
     const tag_group = svg.append("g").attr("class", "detail-tag-group");
     Constants.var_type_names.forEach((var_type_name) => {
       bbox_group.append("g").attr("class", `${var_type_name}`);
       tag_group.append("g").attr("class", `${var_type_name}`);
-      // const var_type_region = svg
-      //   .append("g")
-      //   .attr("class", `${var_type_name}_region`);
-      // .attr("transform", `translate(${padding.left}, ${padding.top})`);
     });
   },
   on(event, handler) {
@@ -160,13 +152,13 @@ export const DPSIR = {
 
     return categorizedLinks;
   },
+
   calculateBoxInfo(vars, links, var_type_names: string[], bboxes) {
     const categorizedLinks = this.categorizedLinkByVarType(
       vars,
       links,
       var_type_names,
     );
-    const rects = {};
     Object.values(var_type_names).forEach((varType: string) => {
       let linkCount = categorizedLinks[varType];
       const rectWidth = 20; //(g)
@@ -190,16 +182,16 @@ export const DPSIR = {
         bboxes[varType],
       );
       bboxes[varType] = bbox;
-      rects[varType] = rectangleCoordinates;
+      this.varCoordinatesDict[varType] = rectangleCoordinates;
     });
-    return [rects, bboxes];
+
+    return bboxes;
   },
   update_vars(
     vars: tDPSIR,
     links: tVisLink[],
     varTypeColorScale: Function,
     all_selected_types,
-    rectangleCoordinates,
     bboxes,
     clickable: boolean,
   ) {
@@ -214,7 +206,7 @@ export const DPSIR = {
       self.drawVars(
         varTypeColorScale,
         vars[varType],
-        rectangleCoordinates[varType],
+        this.varCoordinatesDict[varType],
         bboxes[varType],
         clickable,
       );
@@ -267,10 +259,11 @@ export const DPSIR = {
   drawVars(
     varTypeColorScale: Function,
     vars: tVariableType,
-    rectangleCoordinates,
+    varType: string,
     bbox_info: { center: [number, number]; size: [number, number] },
     clickable: boolean,
   ) {
+    const varCoordinates = this.varCoordinatesDict[varType];
     // console.log(vars);
     this.varTypeColorScale = varTypeColorScale;
     const self = this;
@@ -278,7 +271,7 @@ export const DPSIR = {
     // console.log(rectangleCoordinates);
     const rectWithVar = grid_layout.combineData(
       vars,
-      rectangleCoordinates,
+      varCoordinates,
       this.grid_renderer?.global_grid,
     ); //return as an object
     // console.log(rectWithVar);

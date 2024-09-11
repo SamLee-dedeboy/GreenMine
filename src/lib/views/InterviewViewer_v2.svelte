@@ -173,18 +173,11 @@
       const chunk_id = chunk_mention.chunk_id;
       const highlight_conversation_ids =
         chunk_mention.conversation_ids || chunk_mention.evidence || [];
-      console.log(
-        "highlight_conversation_ids",
-        chunk_id,
-        highlight_conversation_ids,
-        chunk_mention.explanation,
-      );
       highlight_conversation_ids.forEach((message_id) => {
         evidence[chunk_id][message_id] = chunk_mention.explanation;
       });
     });
     evidence = evidence;
-    console.log({ evidence });
   }
 
   onMount(() => {

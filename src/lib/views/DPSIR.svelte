@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
   import * as d3 from "d3";
-  import { DPSIR } from "lib/renderers/DetailDPSIR";
+  import { DetailDPSIR } from "lib/renderers/DetailDPSIR";
   import { OverviewDPSIR } from "lib/renderers/OverviewDPSIR";
   import * as Constants from "lib/constants";
   import { createEventDispatcher } from "svelte";
@@ -22,7 +22,6 @@
   export let links: tVisLink[];
   const svgId = "model-svg";
 
-  const utilities = ["add", "remove", "edit"];
   let bboxes = {
     driver: { center: [58, 90], size: [0, 0] },
     pressure: { center: [170, 30], size: [0, 0] },
@@ -39,11 +38,8 @@
   };
   let all_selected_types: SelectedType[] = [];
   let group_name_clickable = true;
-  let rectangleCoordinates = [];
   let container;
   let selectedVar: tVariable | undefined = undefined;
-  // let selectedType = { source: "", target: "" };
-  // let showLinks = true;
   $: isDetailMode = Object.values(box_states).every((state) => state.revealed);
   async function update_vars(
     vars: tDPSIR,
@@ -61,12 +57,11 @@
         overview_region.select("g.bbox-group").selectAll("*").remove();
       });
       console.log("drawing detail");
-      DPSIR.update_vars(
+      DetailDPSIR.update_vars(
         vars,
         links,
         $varTypeColorScale,
         all_selected_types,
-        rectangleCoordinates,
         bboxes,
         group_name_clickable,
       );
@@ -85,38 +80,7 @@
       Constants.var_type_names.forEach((var_type) => {
         detail_tag_group.select(`g.${var_type}`).selectAll("*").remove();
       });
-      console.log("drawing overview");
       OverviewDPSIR.update_vars(vars, links, $varTypeColorScale, bboxes);
-    }
-  }
-
-  onMount(async () => {
-    await tick();
-
-    // calculate box info and small rectangle info
-    [rectangleCoordinates, bboxes] = DPSIR.calculateBoxInfo(
-      data,
-      links,
-      Constants.var_type_names,
-      bboxes,
-    );
-    // console.log({rectangleCoordinates,bboxes})
-    initializeRenderer(all_selected_types);
-  });
-  // function toggleLinks() {
-  //   if (enable) {
-  //     showLinks = !showLinks;
-  //     if (currentRenderer == "DPSIR") {
-  //       DPSIR.toggleLinks(showLinks);
-  //     }
-  //   }
-  // }
-
-  function handleEmptySpaceClicked(e) {
-    console.log("empty space clicked", e);
-    if (!e.defaultPrevented) {
-      DPSIR.resetHighlights();
-      OverviewDPSIR.resetHighlights();
     }
   }
 
@@ -143,10 +107,10 @@
           d3.select(`text.bbox-label#` + `${var_type}` + `_label`).remove();
           box_states[var_type].revealed = true;
           // group_name_clickable = false;
-          DPSIR.drawVars(
+          DetailDPSIR.drawVars(
             $varTypeColorScale,
             data[var_type],
-            rectangleCoordinates[var_type],
+            var_type,
             bboxes[var_type],
             group_name_clickable,
           );
@@ -158,7 +122,7 @@
         { source: varTypeLink.source, target: varTypeLink.source },
         { source: varTypeLink.target, target: varTypeLink.target },
       );
-      DPSIR.drawLinks(links, bboxes, all_selected_types);
+      DetailDPSIR.drawLinks(links, bboxes, all_selected_types);
     }
   }
 
@@ -168,10 +132,10 @@
       // d3.select("g.detail-bbox-group").select(`g.${var_type}`).remove();
       box_states[var_type].revealed = true;
       group_name_clickable = true;
-      DPSIR.drawVars(
+      DetailDPSIR.drawVars(
         $varTypeColorScale,
         data[var_type],
-        rectangleCoordinates[var_type],
+        var_type,
         bboxes[var_type],
         group_name_clickable,
       );
@@ -193,7 +157,7 @@
           }
         }
       }
-      DPSIR.drawLinks(links, bboxes, all_selected_types);
+      DetailDPSIR.drawLinks(links, bboxes, all_selected_types);
     }
   }
 
@@ -223,7 +187,6 @@
       );
     }
 
-    // console.log("unselected", var_type_name);
     if (var_type_name !== null) {
       removeVarTypeBbox(var_type_name);
       removeVarTypeLinks(var_type_name);
@@ -256,27 +219,44 @@
         box_states[key].revealed = true;
       });
       all_selected_types = OverviewDPSIR.extractUniquePairs(links);
-      // all_selected_types = [];
     }
-    // initializeRenderer(all_selected_types);
     update_vars(data, links, all_selected_types);
   }
 
-  function initializeRenderer(all_selected_types) {
+  function initializeRenderer() {
     d3.select(`#${svgId}`).selectAll("*").remove();
     OverviewDPSIR.init(svgId);
-    DPSIR.init(svgId, utilities);
+    DetailDPSIR.init(svgId);
 
-    DPSIR.on("VarOrLinkSelected", handleVarOrLinkSelected);
-    DPSIR.on("VarTypeUnSelected", handleOverviewVarTypeUnSelected);
-    // Remove tooltip if it exists
-    // d3.select("body").selectAll(".tooltip-content").remove();
+    DetailDPSIR.on("VarOrLinkSelected", handleVarOrLinkSelected);
+    DetailDPSIR.on("VarTypeUnSelected", handleOverviewVarTypeUnSelected);
     OverviewDPSIR.on("VarTypeLinkSelected", handleVarTypeLinkSelected);
     OverviewDPSIR.on("VarTypeSelected", handleOverviewVarTypeSelected);
     document
       .querySelector(`#${svgId}`)
       ?.addEventListener("click", handleEmptySpaceClicked);
+  }
+
+  onMount(async () => {
+    await tick();
+    initializeRenderer();
+
+    // calculate box size and small rectangle layout
+    bboxes = DetailDPSIR.calculateBoxInfo(
+      data,
+      links,
+      Constants.var_type_names,
+      bboxes,
+    );
     update_vars(data, links, all_selected_types);
+  });
+
+  function handleEmptySpaceClicked(e) {
+    console.log("empty space clicked", e);
+    if (!e.defaultPrevented) {
+      DetailDPSIR.resetHighlights();
+      OverviewDPSIR.resetHighlights();
+    }
   }
 </script>
 
