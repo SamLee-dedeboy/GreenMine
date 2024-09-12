@@ -6,6 +6,8 @@
   const dispatch = createEventDispatcher();
   export let data: tKeywordData;
   export let key: string = "keyword";
+  const degree_key = "tf_idf";
+  // const degree_key = "frequency";
   const svgId = `keyword-sea-${key}-svg`;
   // const keyword_sea_renderer = new KeyWordSea();
   const keyword_sea_renderer = new KeyWordRect();
@@ -14,7 +16,7 @@
   $: if (mounted) {
     keyword_sea_renderer.update_keywords(
       data,
-      "tf_idf",
+      degree_key,
       $varTypeColorScale(key),
     );
   }
@@ -34,7 +36,7 @@
     keyword_sea_renderer.on("keywordSelected", handleKeywordSelected);
     keyword_sea_renderer.update_keywords(
       data,
-      "tf_idf",
+      degree_key,
       $varTypeColorScale(key),
     );
     mounted = true;
