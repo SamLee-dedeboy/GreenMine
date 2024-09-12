@@ -325,12 +325,14 @@ def identify_vars(
         conversation = chunk["conversation"]
         prompt_variables["conversation"] = conversation_to_string(conversation)
         for var_type in var_types:
-            prompt_variables["var_type"] = (
+            prompt_variables["indicator"] = (
                 var_type["var_type"]
                 + prompt_variables[var_type["var_type"]]["definition"]
             )
             prompt_variables["explanation"] = var_type["explanation"]
-            prompt_variables["vars"] = prompt_variables[var_type["var_type"]]["vars"]
+            prompt_variables["variables"] = prompt_variables[var_type["var_type"]][
+                "vars"
+            ]
             prompt, response_format, extract_response_func = (
                 prompts.identify_var_prompt_factory(
                     system_prompt_blocks, user_prompt_blocks, prompt_variables
@@ -379,10 +381,10 @@ def identify_links(
             continue
         conversation = chunk_dict[link["chunk_id"]]["conversation"]
         prompt_variables["conversation"] = conversation_to_string(conversation)
-        prompt_variables["var1"] = (
+        prompt_variables["variable1"] = (
             f"{link['var1']}, {variable_definitions[link['var1']]}"
         )
-        prompt_variables["var2"] = (
+        prompt_variables["variable2"] = (
             f"{link['var2']}, {variable_definitions[link['var2']]}"
         )
         prompt, response_format, extract_response_func = (
@@ -408,13 +410,44 @@ def identify_links(
             [extraction_result], len(chunk["conversation"])
         )[0]
         link_metadata = link_metadata_list[response_index]
+        # check if the source and target variables are valid
+        if (
+            extraction_result["source"] != link_metadata["var1"]
+            and extraction_result["source"] != link_metadata["var2"]
+        ):
+            continue
+        if (
+            extraction_result["target"] != link_metadata["var1"]
+            and extraction_result["target"] != link_metadata["var2"]
+        ):
+            continue
+        if extraction_result["source"] == link_metadata["var1"]:
+            source_var, source_indicator = (
+                link_metadata["var1"],
+                link_metadata["indicator1"],
+            )
+            target_var, target_indicator = (
+                link_metadata["var2"],
+                link_metadata["indicator2"],
+            )
+        else:
+            source_var, source_indicator = (
+                link_metadata["var2"],
+                link_metadata["indicator2"],
+            )
+            target_var, target_indicator = (
+                link_metadata["var1"],
+                link_metadata["indicator1"],
+            )
         chunk["identify_links_result"].append(
             {
                 "chunk_id": link_metadata["chunk_id"],
-                "var1": link_metadata["var1"],
-                "var2": link_metadata["var2"],
-                "indicator1": link_metadata["indicator1"],
-                "indicator2": link_metadata["indicator2"],
+                # "var1": link_metadata["var1"],
+                # "var2": link_metadata["var2"],
+                "var1": source_var,
+                "var2": target_var,
+                "indicator1": source_indicator,
+                "indicator2": target_indicator,
                 "response": extraction_result,
             }
         )

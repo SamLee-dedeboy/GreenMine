@@ -40,10 +40,12 @@
     console.log("links:", { data });
   });
   function sort_by_uncertainty(data: tIdentifyLinks[]) {
+    console.log("sort_by_uncertainty", data);
     if (data.length === 0) return data;
-    if (!data[0].uncertainty) {
+    if (data[0].uncertainty.identify_links === undefined) {
       return sort_by_id(data);
     }
+    console.log("sorting_by_uncertainty", data);
     return data.sort(
       (a, b) => -(a.uncertainty.identify_links - b.uncertainty.identify_links),
     );
@@ -56,14 +58,17 @@
     relationship: { label: string; confidence: number | undefined }[],
     explanation: string,
   ) {
-    return `
+    return (
+      `
     <span style="background-color: ${$varTypeColorScale(indicator1)}; text-transform: capitalize; padding-left: 0.125rem; padding-right: 0.125rem;">${var1}</span>
     -
     <span style="background-color: ${$varTypeColorScale(indicator2)}; text-transform: capitalize; padding-left: 0.125rem; padding-right: 0.125rem;">${var2}</span>
-    <br>` + relationship[0].confidence
-      ? `<span style="color: gray; text-transform: capitalize">${relationship.map((r) => `${r.label}(${r.confidence})`).join("/")}</span>`
-      : `<span style="color: gray; text-transform: capitalize">${relationship.map((r) => `${r.label}`).join("/")}</span>` +
-          `<br> - ${explanation}`;
+    <br>` +
+      (Array.isArray(relationship)
+        ? `<span style="color: gray; text-transform: capitalize">${relationship.map((r) => `${r.label}(${(1 - r.confidence!).toFixed(2)})`).join("/")}</span>`
+        : `<span style="color: gray; text-transform: capitalize">${relationship}</span>`) +
+      `<br> - ${explanation}`
+    );
   }
 </script>
 
@@ -117,6 +122,26 @@
                   svgId={`link-graph-${index}`}
                   data={datum.identify_links_result}
                   {max_degree}
+                  on:link-clicked={(e) => {
+                    const link = e.detail;
+                    if (
+                      link.response.evidence &&
+                      link.response.evidence.length > 0
+                    ) {
+                      dispatch("navigate_evidence", {
+                        chunk_id: datum.id,
+                        evidence: link.response.evidence,
+                        explanation: generate_explanation_html(
+                          link.indicator1,
+                          link.indicator2,
+                          link.var1,
+                          link.var2,
+                          link.response.relationship,
+                          link.response.explanation,
+                        ),
+                      });
+                    }
+                  }}
                 />
               </div>
             {:else}
@@ -196,7 +221,7 @@
                                 {relationship.label}
                               </div>
                               <div class="mt-[0.125rem] text-xs">
-                                {relationship.confidence}
+                                {(1 - relationship.confidence).toFixed(2)}
                               </div>
                             </div>
                           {/each}

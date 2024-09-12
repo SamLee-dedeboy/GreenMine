@@ -2,10 +2,7 @@
   import { onMount } from "svelte";
   import { tick } from "svelte";
   import { slide } from "svelte/transition";
-  import { emotionColorScale, topicColorScale } from "lib/constants/Colors";
-  import { colorBy } from "lib/store";
   import type { tMention, tTranscript } from "lib/types";
-  import { varTypeColorScale } from "lib/store";
   export let data: tTranscript[];
   const speaker_title = {
     1: "Host",
@@ -17,17 +14,31 @@
     // 0: "bg-lime-100",
     0: "bg-yellow-100",
   };
-  $: colorScale = $colorBy === "topic" ? emotionColorScale : topicColorScale;
   let data_changes = 0;
-  let show_chunk: any = [];
-  let highlight_chunk: any = [];
-  let highlight_chunk_ids: any[] = [];
-  let highlight_messages = {};
-  let highlight_evidence = {};
-  let evidence: string[] = [];
+  /**
+   * a 2d array of boolean, accessed by show_chunk[interview_index][chunk_index]
+   */
+  let show_chunk: boolean[][] = [];
+  /**
+   * a 2d array of boolean, accessed by highlight_chunk[interview_index][chunk_index]
+   */
+  let highlight_chunk: boolean[][] = [];
+
+  /**
+   * a 2d array of boolean, accessed by highlight_evidence[interview_index][chunk_index]
+   */
+  // let highlight_evidence = {};
+  /**
+   * a 2d array of string, accessed by highlight_evidence[interview_index][chunk_index]
+   */
+  let evidence: Record<string, (string | undefined)[]> = {};
   let external_highlights = false;
+  /**
+   * chunk_indexes is a dictionary that maps chunk ids to [interview_index, chunk_index]
+   */
   let chunk_indexes = {};
-  let original_data;
+
+  let highlight_transcripts = new Set();
   $: {
     data.forEach((interview, interview_index) => {
       highlight_chunk.push([]);
@@ -38,107 +49,48 @@
         chunk_indexes[chunk.id] = [interview_index, chunk_index];
       });
     });
-    // data.map((interview) => interview.data.map((_) => false));
   }
   $: highlighting_chunk =
     external_highlights || highlight_chunk.flat().some((showing) => showing);
   $: show_interview = Array.apply(null, Array(data.length)).map(() => false);
   $: show_chunk_title = Array.apply(null, Array(data.length)).map(() => false);
-  let selected_chunk = data.map(() => "");
-  let highlight_nodes = new Set();
+  $: {
+    show_chunk_title.forEach((show, index) => {
+      if (show) {
+        scrollToFirstTargetChunk(index);
+      }
+    });
+  }
 
-  onMount(() => {
-    // console.log(data, show_chunk);
-    original_data = JSON.parse(JSON.stringify(data));
-    init_highlight_messages();
-    init_highlight_evidence();
-    //   show_chunk_title.forEach((show, index) => {
-    //     console.log({ show,index });
-    //     if (show) {
-    //         scrollToFirstHighlightedChunk(index);
-    //     }
-    //     });
-  });
   function init_highlight_evidence() {
     data.forEach((interview, interview_index) => {
       interview.data.forEach((chunk, chunk_index) => {
-        highlight_evidence[chunk.id] = chunk.conversation.map(() => false);
-      });
-    });
-    // console.log(highlight_evidence);
-  }
-  function init_highlight_messages() {
-    data.forEach((interview, interview_index) => {
-      interview.data.forEach((chunk, chunk_index) => {
-        highlight_messages[chunk.id] = chunk.conversation.map(() => false);
+        evidence[chunk.id] = chunk.conversation.map(() => undefined);
       });
     });
   }
 
-  // ////white -> ${chunkColor(chunk)}
-  export function highlight_chunks(highlight_chunks: tMention[]) {
-    // console.log({ highlight_chunks });
-    let temp = new Set();
-    dehighlight_chunks();
-    init_highlight_messages();
+  export function highlight_chunks(
+    highlight_chunk_mentions: tMention[] | null,
+  ) {
+    resetHighlights();
     external_highlights = true;
-    if (!highlight_chunks) {
+    if (!highlight_chunk_mentions) {
       external_highlights = false;
-      highlight_chunks = [];
+      highlight_chunk_mentions = [];
     }
-    highlight_chunk_ids = highlight_chunks.map((chunk) => chunk.chunk_id);
-    highlight_chunk_ids.forEach((chunk_id) => {
-      const chunk_index = chunk_indexes[chunk_id];
-      // console.log(typeof chunk_index[0])
-      temp.add(chunk_index[0]); //collect nodes with highlighted chunks
-      highlight_chunk[chunk_index[0]][chunk_index[1]] = true;
+    highlight_chunk_mentions.forEach((chunk) => {
+      const chunk_id = chunk.chunk_id;
+      const [interview_index, chunk_index] = chunk_indexes[chunk_id];
+      highlight_transcripts.add(interview_index); //collect nodes with highlighted chunks
+      highlight_chunk[interview_index][chunk_index] = true;
     });
 
-    highlight_nodes = sort_nodes_by_id(temp); // sort the nodes by index
-    // console.log({highlight_nodes});
-    if (highlight_chunks.length > 0)
-      if (highlight_chunks[0].conversation_ids) {
-        highlight_conversations(highlight_chunks);
-      } else {
-        // highlight_evidence(highlight_chunks);
-      }
+    highlight_transcripts = highlight_transcripts; // need this to trigger reactivity
+    if (highlight_chunk_mentions.length > 0)
+      highlight_conversations(highlight_chunk_mentions);
     return;
   }
-
-  function sort_nodes_by_id(nodes) {
-    let array = Array.from(nodes);
-    array.sort((a, b) => Number(a) - Number(b));
-    let sortedSet = new Set(array);
-    return sortedSet;
-  }
-  function highlight_conversations(highlight_chunks: tMention[]) {
-    highlight_chunks.forEach((chunk) => {
-      const chunk_id = chunk.chunk_id;
-      chunk.conversation_ids!.forEach((message_id) => {
-        highlight_messages[chunk_id][message_id] = true;
-      });
-    });
-  }
-
-  // function highlight_evidence(highlight_chunks: tMention[]) {
-  //   data.forEach((interview) => {
-  //     interview.data.forEach((chunk) => {
-  //       // check if chunk is in highlight_chunks
-  //       const index = highlight_chunks.findIndex(
-  //         (highlight_chunk) => highlight_chunk.chunk_id === chunk.id,
-  //       );
-  //       if (index === -1) return;
-  //       chunk.conversation.forEach((message, message_index) => {
-  //         if (
-  //           highlight_chunks[index].evidence?.some((evidence_message) =>
-  //             message.content.includes(evidence_message),
-  //           )
-  //         )
-  //           highlight_messages[chunk.id][message_index] = true;
-  //       });
-  //     });
-  //   });
-  // }
 
   export function dehighlight_chunks() {
     highlight_chunk = [];
@@ -153,110 +105,35 @@
     });
     return;
   }
+
   export async function handleEvidenceSelected(
     chunk_id: string,
     evidence_index: number[],
     explanation: string,
   ) {
-    init_highlight_evidence(); //set all evidence to false
+    resetHighlights();
     show_interview = []; //clear and not show the previous evidence interview index
     const interview_index_match = chunk_id.match(/N(\d+)/);
-    const chunk_index = chunk_id.split("_")[1];
     if (!interview_index_match) return;
     const interview_index = parseInt(interview_index_match[1], 10) - 1;
     // show transcript
     show_interview[interview_index] = true;
     // highlight evidences
     evidence_index.forEach((message_index) => {
-      highlight_evidence[chunk_id][message_index] = true;
-      evidence[message_index] = explanation;
+      // highlight_evidence[chunk_id][message_index] = true;
+      evidence[chunk_id][message_index] = explanation;
+      // evidence[message_index] = explanation;
     });
-    console.log(evidence);
     await tick();
     const target = document.querySelector(`#${chunk_id}-${evidence_index[0]}`);
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
-  export function _handleEvidenceSelected(e) {
+
+  function resetHighlights() {
     init_highlight_evidence(); //set all evidence to false
-    show_interview = []; //clear and not show the previous evidence interview index
-    // console.log(e);
-    const chunk_index = e.id;
-    // const message_indexes = e.result
-    let evidenceMap = {};
-
-    e.result.forEach((item) => {
-      item.evidence.forEach((index) => {
-        if (!evidenceMap[index]) {
-          evidenceMap[index] = [];
-        }
-        evidenceMap[index].push({
-          var_type: item.var_type,
-          explanation: item.explanation,
-        });
-      });
-    });
-    // console.log(evidenceMap);
-    const interview_index_match = chunk_index.match(/N(\d+)/);
-    if (interview_index_match) {
-      const interview_index = parseInt(interview_index_match[1], 10) - 1;
-      show_interview[interview_index] = true;
-      const matchingResult = e.result.find(
-        (item) => item.var_type === e.var_type,
-      );
-      if (matchingResult !== -1) {
-        matchingResult.evidence.forEach((message_index: number) => {
-          if (evidenceMap[message_index]) {
-            const explanations = evidenceMap[message_index]
-              .map(
-                (e) =>
-                  `<span style="background-color: ${$varTypeColorScale(e.var_type)}; text-transform: capitalize; padding-left: 0.125rem; padding-right: 0.125rem;">${e.var_type}</span>:${e.explanation}`,
-              )
-              .join("<br>");
-
-            evidence[message_index] = explanations;
-            highlight_evidence[chunk_index][message_index] = true;
-            // console.log(highlight_evidence)
-          }
-        });
-        scrollToFirstTargetChunk(interview_index, "evidence_hightlight");
-      }
-    }
+    dehighlight_chunks();
+    highlight_transcripts = new Set();
   }
-
-  // export function highlight_keywords(keyword_chunks, keywords) {
-  //   // console.log({ keyword_chunks, keywords });
-  //   dehighlight_keywords();
-  //   keyword_chunks = JSON.parse(JSON.stringify(keyword_chunks));
-  //   keyword_chunks.forEach((chunks, keyword_index) => {
-  //     const keyword = keywords[keyword_index];
-  //     chunks.forEach((chunk) => {
-  //       chunk.conversation.forEach((message) => {
-  //         message.content = message.content.replaceAll(
-  //           keyword,
-  //           `<span class="keyword-highlighted">${keyword}</span>`
-  //         );
-  //       });
-  //       replaceChunk(data, chunk);
-  //     });
-  //   });
-  //   data_changes += 1;
-  //   // console.log(keyword_chunks);
-  // }
-
-  // export function dehighlight_keywords() {
-  //   data = JSON.parse(JSON.stringify(original_data));
-  //   return;
-  // }
-
-  // function replaceChunk(data, chunk) {
-  //   data.forEach((interview) => {
-  //     interview.data.forEach((interview_chunk, chunk_index) => {
-  //       if (interview_chunk.id === chunk.id) {
-  //         interview.data[chunk_index] = chunk;
-  //       }
-  //     });
-  //   });
-  // }
 
   function aggregateMessages(interview) {
     return interview.data.flatMap((chunk) =>
@@ -269,101 +146,44 @@
     );
   }
 
-  function scrollToMessage(messageId, containerId) {
-    const messageElement = document.getElementById(messageId);
-    // console.log("messageElement in scrollToMessage",messageElement);
-    const containerElement = document.getElementById(containerId);
-    // console.log("containerElement in scrollToMessage",containerElement);
-    if (messageElement && containerElement) {
-      containerElement.scrollTop =
-        messageElement.offsetTop - containerElement.offsetTop;
-    }
-  }
-
-  function handleChunkClick(interview_index, chunk_index) {
-    selected_chunk[interview_index] = chunk_index;
-    // console.log("handle chunk click", interview_index, chunk_index);
-    scrollToMessage(
-      `${chunk_index}-0`,
-      `conversation-container-${interview_index}`,
-    );
-  }
-
-
-
-async function scrollToFirstTargetChunk(
-  interview_index,
-  scroll_state = "chunk_highlight"
-) {
-  await tick(); // Wait for DOM update
-
-  let container;
-  let target;
-
-  if (scroll_state === "chunk_highlight") { //chunk title highlight
-    container = document.getElementById(`chunk-title-container-${interview_index}`);
-    target = container?.querySelector(".chunk-highlight");
-  } else if (scroll_state === "message_highlight") {
-    container = document.getElementById(`conversation-container-${interview_index}`);
-    target = container?.querySelector(".highlighted_message");
-  } else if (scroll_state === "evidence_highlight") {
-    container = document.getElementById(`conversation-container-${interview_index}`);
-    target = container?.querySelector(".highlighted_evidence")?.parentNode;
-  }
-
-  if (container && target) {
-    target.scrollIntoView({
+  function handleChunkClick(chunk_id) {
+    document.querySelector(`#${chunk_id}-0`)?.scrollIntoView({
       behavior: "smooth",
       block: "center",
     });
-
-    // Return a promise that resolves after the scroll animation is complete
-    return new Promise(resolve => setTimeout(resolve, 1000));
   }
 
-  // If no scrolling occurred, resolve immediately
-  return Promise.resolve();
-}
-
-$: {
-  (async () => {
-    // First, scroll to highlighted messages
-    const messageScrollPromises = show_interview.map((show, index) => 
-      show ? scrollToFirstTargetChunk(index, "message_highlight") : Promise.resolve()
+  async function scrollToFirstTargetChunk(interview_index) {
+    await tick(); //to wait for the DOM to update before attempting to find and scroll to the highlighted chunk
+    let container = document.getElementById(
+      `conversation-container-` + `${interview_index}`,
     );
-    await Promise.all(messageScrollPromises);
+    let target = container?.querySelector(".highlighted_message");
 
-    // Then, scroll to highlighted chunk titles
-    const chunkScrollPromises = show_chunk_title.map((show, index) => 
-      show ? scrollToFirstTargetChunk(index, "chunk_highlight") : Promise.resolve()
-    );
-    await Promise.all(chunkScrollPromises);
-  })();
-}
-  // onMount(() => {
-  //   function positionTooltips() {
-  //     const tooltips = document.querySelectorAll('.tooltip');
-  //     tooltips.forEach(tooltip => {
-  //       const messageId = tooltip.dataset.messageId;
-  //       const message = document.getElementById(messageId);
-  //       if (message) {
-  //         const rect = message.getBoundingClientRect();
-  //         const containerRect = message.closest('.conversation-container').getBoundingClientRect();
+    if (container && target) {
+      target.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }
 
-  //         tooltip.style.top = `${rect.top - containerRect.top}px`;
-  //         tooltip.style.left = `${rect.right - containerRect.left + 10}px`;
-  //       }
-  //     });
-  //   }
+  function highlight_conversations(highlight_chunks: tMention[]) {
+    highlight_chunks.forEach((chunk_mention) => {
+      const chunk_id = chunk_mention.chunk_id;
+      const highlight_conversation_ids =
+        chunk_mention.conversation_ids || chunk_mention.evidence || [];
+      highlight_conversation_ids.forEach((message_id) => {
+        evidence[chunk_id][message_id] =
+          chunk_mention.explanation || "No explanation provided";
+      });
+    });
+    evidence = evidence;
+  }
 
-  //   // Position tooltips initially and on window resize
-  //   positionTooltips();
-  //   window.addEventListener('resize', positionTooltips);
-
-  //   return () => {
-  //     window.removeEventListener('resize', positionTooltips);
-  //   };
-  // });
+  onMount(() => {
+    init_highlight_evidence();
+  });
 </script>
 
 <div class="flex flex-col">
@@ -390,12 +210,16 @@ $: {
                   show_interview[interview_index] ? "0px" : "1px"
                 }`}
                 on:keyup={() => {}}
-                on:click={() =>
-                  (show_interview[interview_index] =
-                    !show_interview[interview_index])}
+                on:click={() => {
+                  show_interview[interview_index] =
+                    !show_interview[interview_index];
+                  scrollToFirstTargetChunk(interview_index);
+                }}
               >
                 <span
-                  class:node-highlight={highlight_nodes.has(interview_index)}
+                  class:node-highlight={highlight_transcripts.has(
+                    interview_index,
+                  )}
                 >
                   {interview.file_name.replaceAll("chunks_", "")}
                 </span>
@@ -446,7 +270,7 @@ $: {
                             (show_chunk[interview_index][chunk_index] =
                               !show_chunk[interview_index][chunk_index])}
                           on:click={() => {
-                            handleChunkClick(interview_index, chunk.id);
+                            handleChunkClick(chunk.id);
                           }}
                         >
                           <div
@@ -476,27 +300,27 @@ $: {
                                 message.speaker
                               ]}"
                               class:border-t={index !== 0}
-                              class:highlighted_message={highlight_messages[
+                              class:highlighted_message={evidence[
                                 message.chunkIndex
-                              ][message.messageIndex]}
+                              ][message.messageIndex] !== undefined}
                             >
                               <div class="interview-message-speaker font-bold">
                                 {speaker_title[message.speaker]}:
                               </div>
                               <div
                                 class="interview-message-content"
-                                class:highlighted_evidence={highlight_evidence[
+                                class:highlighted_message={evidence[
                                   message.chunkIndex
-                                ][message.messageIndex]}
+                                ][message.messageIndex] !== undefined}
                               >
                                 {@html message.content}
                               </div>
                             </div>
-                            {#if highlight_evidence[message.chunkIndex][message.messageIndex]}
+                            {#if evidence[message.chunkIndex][message.messageIndex] !== undefined}
                               <div class="tooltip">
                                 <div class="tooltip-content">
                                   <span
-                                    >{@html evidence[
+                                    >{@html evidence[message.chunkIndex][
                                       message.messageIndex
                                     ]}</span
                                   >
@@ -508,10 +332,14 @@ $: {
                       </div>
                     </div>
                     {#each aggregateMessages(interview) as message, index}
-                      {#if highlight_evidence[message.chunkIndex][message.messageIndex]}
+                      {#if evidence[message.chunkIndex][message.messageIndex] !== undefined}
                         <div class="tooltip">
                           <div class="tooltip-content">
-                            <span>{@html evidence[message.messageIndex]}</span>
+                            <span
+                              >{@html evidence[message.chunkIndex][
+                                message.messageIndex
+                              ]}</span
+                            >
                           </div>
                         </div>
                       {/if}
@@ -558,11 +386,6 @@ $: {
   .highlighted_message {
     background: #ffb019;
   }
-  .highlighted_evidence {
-    /* text-decoration: underline;
-    text-decoration-color: red; */
-    background: #ffb019;
-  }
   .conversation-wrapper {
     position: relative;
   }
@@ -575,6 +398,7 @@ $: {
     transform: translateX(-50%);
     top: 100%; /* This positions the tooltip just outside the bottom edge of the conversation-container */
     z-index: 9999;
+    pointer-events: none;
   }
 
   .tooltip-content {

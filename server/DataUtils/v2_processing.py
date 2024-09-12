@@ -5,6 +5,37 @@ import jieba
 import numpy as np
 
 
+def collect_nodes(chunks, var_types):
+    nodes = {}
+    for var_type in var_types:
+        nodes[var_type] = {"variable_type": var_type, "variable_mentions": {}}
+    for chunk in chunks:
+        chunk_id = chunk["id"]
+        identify_vars_result = chunk["identify_vars_result"]
+        for identified_var_type, variable_mentions in identify_vars_result.items():
+            for variable_mention in variable_mentions:
+                variable_name = variable_mention["var"]
+                evidence = variable_mention["evidence"]
+                explanation = variable_mention["explanation"]
+                keywords = variable_mention["keywords"]
+                if variable_name not in nodes[identified_var_type]["variable_mentions"]:
+                    nodes[identified_var_type]["variable_mentions"][variable_name] = {
+                        "variable_name": variable_name,
+                        "mentions": [],
+                    }
+                nodes[identified_var_type]["variable_mentions"][variable_name][
+                    "mentions"
+                ].append(
+                    {
+                        "chunk_id": chunk_id,
+                        "conversation_ids": evidence,
+                        "explanation": explanation,
+                        "keywords": keywords,
+                    }
+                )
+    return nodes
+
+
 def generate_DPSIR_data(
     chunks,
     var_type_mentions,
@@ -65,6 +96,7 @@ def generate_keyword_data(
     }
     all_keywords = set()
     keyword_statistics = defaultdict(int)
+    keyword_occurrences = defaultdict(list)
     keyword_coordinates = {}
     for chunk in chunks:
         if chunk["identify_var_types_result"] == []:
@@ -84,20 +116,38 @@ def generate_keyword_data(
                 ]
             )
         )
-        evidence_messages = [chunk["conversation"][i]["content"] for i in evidences]
         chunk_keywords = set()
-        for sentence in evidence_messages:
+        for evidence_index in evidences:
+            sentence = chunk["conversation"][evidence_index]["content"]
             words = jieba.cut(sentence)
             words = list(filter(lambda x: x not in stopwords, words))
             words = list(filter(lambda x: x in keyword_embeddings_dict, words))
             chunk_keywords.update(words)
+            for word in words:
+                if word not in keyword_occurrences:
+                    keyword_occurrences[word] = []
+                keyword_occurrences[word].append((chunk["id"], evidence_index))
         for keyword in chunk_keywords:
             keyword_statistics[keyword] += 1
         all_keywords.update(chunk_keywords)
     all_keywords = list(all_keywords)
+    # reorganize keyword_occurrences
+    for word, occurrences in keyword_occurrences.items():
+        evidence_by_chunk = {}
+        for chunk_id, evidence_index in occurrences:
+            if chunk_id not in evidence_by_chunk:
+                evidence_by_chunk[chunk_id] = {"chunk_id": chunk_id, "evidence": []}
+            evidence_by_chunk[chunk_id]["evidence"].append(evidence_index)
+        keyword_occurrences[word] = list(evidence_by_chunk.values())
+
     keyword_statistics = {
-        keyword: {"frequency": freq} for keyword, freq in keyword_statistics.items()
+        keyword: {
+            "frequency": freq,
+            "mentions": keyword_occurrences[keyword],
+        }
+        for keyword, freq in keyword_statistics.items()
     }
+
     all_keyword_embeddings = [
         keyword_embeddings_dict[keyword]["embedding"] for keyword in all_keywords
     ]

@@ -1,18 +1,10 @@
 {
-    "system_prompt_blocks": [
-        [
-            "persona",
-            "You are a research assistant."
-        ],
-        [
-            "context",
-            "You are working on a project to analyze transcripts from an interview. You need to identify if the transcript mentions any of these concepts: ${var_types}.  If so, extract the indices of conversation that mention these concepts as evidence and explain why the evidence indicates the presence of these concepts."
-        ]
-    ],
-    "user_prompt_blocks": [
-        [
-            "user",
-            "Transcript: ${conversation}"
-        ]
+  "system_prompt_blocks": [
+    ["persona", "You are a research assistant."],
+    [
+      "context",
+      "You are working on a project to analyze transcripts from an interview. You need to identify if the transcript mentions any of these concepts: ${indicators}.  If so, extract the indices of conversation that mention these concepts as evidence and explain why the evidence indicates the presence of these concepts."
     ]
+  ],
+  "user_prompt_blocks": [["user", "Transcript: ${conversation}"]]
 }

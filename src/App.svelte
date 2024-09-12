@@ -37,7 +37,6 @@
   let versionedPrompt: { [key: string]: tServerPromptData } = {};
   let var_data: tDPSIR;
   let vis_links: tVisLink[];
-  let summary_interviews: tChunk[];
   let data_loading: boolean = true;
   let show_dpsir: boolean = true;
   let show_prompts: boolean = false;
@@ -72,7 +71,7 @@
     });
   }
   function fetchData(){
-    fetch(`${server_address}/data/`)
+    fetch(`${server_address}/v1_data/`)
       .then((res) => res.json())
       .then((res: tServerData) => {
         console.log({ res });
@@ -212,7 +211,6 @@
     }
   }
   function handleEvidenceSelected(e) {
-    // console.log("evidence selected", e.detail);
     // interview_viewer_component.handleEvidenceSelected(e.detail);
     const { chunk_id, evidence, explanation } = e.detail;
     interview_viewer_component.handleEvidenceSelected(
@@ -221,46 +219,13 @@
       explanation,
     );
   }
-  function handleVarOrLinkSelected(e) {
+  function handleHighlightChunks(e) {
+    console.log("handle highlight chunks", e.detail);
     if (!interview_data) return;
-    //deselect var/link
     if (e.detail === null) {
       interview_viewer_component.highlight_chunks(null); //dehighlight chunks
-      summary_interviews = []; //clear summary view
     } else {
-      const chunks: tMention[] = e.detail.mentions;
-      // console.log({ chunks });
-      interview_viewer_component.highlight_chunks(chunks);
-      // console.log(interview_data);
-      const flattenedInterviewData = interview_data.flatMap(
-        (item) => item.data,
-      );
-      // console.log(chunks);
-      const enhanceChunks = (chunks: any[]): any[] => {
-        return chunks
-          .map((chunk) => {
-            const match = flattenedInterviewData.find(
-              (item) => item.id === chunk.chunk_id,
-            );
-
-            if (match) {
-              return {
-                id: chunk.chunk_id,
-                conversation: chunk.conversation,
-                emotion: match.emotion,
-                title: match.title,
-                topic: match.topic,
-                raw_keywords: match.raw_keywords,
-              };
-            } else {
-              console.error(`No match found for chunk_id: ${chunk.chunk_id}`);
-              return null;
-            }
-          })
-          .filter((chunk) => chunk !== null);
-      };
-
-      summary_interviews = enhanceChunks(chunks);
+      interview_viewer_component.highlight_chunks(e.detail as tMention[]);
     }
   }
   function handleRemoveVarType(e) {
@@ -386,6 +351,7 @@
         >
           <KeywordSeaViewer
             data={var_data}
+            on:keywordSelected={handleHighlightChunks}
             on:close={() => (show_keywordsea = false)}
           ></KeywordSeaViewer>
         </div>
@@ -414,28 +380,24 @@
             <span>Sea of</span> <br />
             <span class="title-hidden absolute mt-[-25px] h-fit">Voices</span>
           </div> -->
+
+          <!-- these cases are mutual, but writing it this way has less nesting -->
           {#if data_loading}
             <div>Data Loading...</div>
           {/if}
-          {#if show_dpsir}
-            {#if data_loading}
-              <div></div>
-            {:else}
-              <DPSIR
-                data={var_data}
-                links={vis_links}
-                on:var-selected={handleVarOrLinkSelected}
-              ></DPSIR>
-            {/if}
-          {:else}
+          {#if !data_loading && show_dpsir}
+            <DPSIR
+              data={var_data}
+              links={vis_links}
+              on:var-selected={handleHighlightChunks}
+            ></DPSIR>
+          {/if}
+          {#if !data_loading && !show_dpsir}
             <SimGraph topic_data={chunk_graph} {keyword_data}></SimGraph>
           {/if}
         </div>
       </div>
       <div class="flex h-full grow flex-col">
-        <!-- <div class="gap-y-1">
-          <SummaryView {summary_interviews} id="statistics" />
-        </div> -->
         <div
           class="interview-viewer-container relative w-full grow bg-[#fefbf1]"
         >

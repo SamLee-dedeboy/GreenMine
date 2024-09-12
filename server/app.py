@@ -16,10 +16,9 @@ app = Flask(__name__)
 CORS(app)
 dirname = os.path.dirname(__file__)
 relative_path = lambda dirname, filename: os.path.join(dirname, filename)
-node_data_path = relative_path(dirname, "data/v2/user/nodes/")
+# node_data_path = relative_path(dirname, "data/v2/user/nodes/")
 chunk_data_path = relative_path(dirname, "data/v2/user/chunk/")
 keyword_data_path = relative_path(dirname, "data/v2/user/keyword/")
-metadata_path = relative_path(dirname, "data/v2/user/variable_definitions/")
 v1_data_path = relative_path(dirname, "data/v1/")
 # pipeline result path
 pipeline_result_path = relative_path(dirname, "data/v2/user/pipeline/")
@@ -39,7 +38,7 @@ def test():
     return "Hello Lyudao"
 
 
-@app.route("/data/")
+@app.route("/v1_data/")
 def get_data():
     interview_data = process_interview(
         glob.glob(chunk_data_path + f"chunk_summaries_w_ktte/*.json")
@@ -124,11 +123,6 @@ def get_pipeline(step,version):
 
 @app.route("/dpsir/<link_version>/")
 def getDPSIR(link_version):
-    nodes = {}
-    for var_type in var_types:
-        nodes[var_type] = json.load(
-            open(node_data_path + f"{var_type}_nodes.json", encoding="utf-8")
-        )
     link_version_number = link_version.replace("v", "")
 
     # old_links = json.load(open(node_data_path + "connections.json", encoding="utf-8"))
@@ -142,6 +136,7 @@ def getDPSIR(link_version):
         link for chunk in identify_links for link in chunk["identify_links_result"]
     ]
 
+    nodes = v2_processing.collect_nodes(identify_links, var_types)
     keyword_embeddings = json.load(
         open(keyword_data_path + "keywords.json", encoding="utf-8")
     )
@@ -164,56 +159,6 @@ def getDPSIR(link_version):
         "pipeline_links": pipeline_links,
     }
 
-# @app.route("/var_extraction/", methods=["POST"])
-# def var_extraction():
-#     var_type = request.json["var_type"]
-#     var_name = request.json["var_name"]
-#     var_definition = request.json["var_definition"]
-#     factor_type = request.json["factor_type"]
-#     chunks = collect_chunks(
-#         glob.glob(chunk_data_path + f"chunk_summaries_w_ktte/*.json")
-#     )
-#     all_nodes = collect_nodes(
-#         [node_data_path + f"{var_type}_nodes.json" for var_type in var_types]
-#     )
-#     chunk_dict = chunk_w_var_mentions(chunks, all_nodes)
-#     all_def_dict = local.all_definitions(
-#         file_paths=[
-#             metadata_path + f"{var_type}_variables_def.json" for var_type in var_types
-#         ]
-#     )
-#     local.add_variable(
-#         metadata_path + f"{var_type}_variables_def.json",
-#         var_name,
-#         var_definition,
-#         factor_type,
-#     )
-#     query.var_extraction(
-#         openai_client,
-#         node_data_path + f"{var_type}_nodes.json",
-#         node_data_path + "connections.json",
-#         chunk_dict,
-#         var_name,
-#         var_type,
-#         var_definition,
-#         all_def_dict,
-#     )
-#     return "success"
-
-
-# @app.route("/curation/remove/", methods=["POST"])
-# def remove_var():
-#     var_type = request.json["var_type"]
-#     var_names = request.json["var_names"]
-#     for var_name in var_names:
-#         local.remove_variable(
-#             node_file_path=node_data_path + f"{var_type}_nodes.json",
-#             def_file_path=metadata_path + f"{var_type}_variables_def.json",
-#             link_file_path=node_data_path + "connections.json",
-#             var_name=var_name,
-#         )
-#     return "success"
-
 
 @app.route("/curation/identify_var_types/", methods=["POST"])
 def curate_identify_var_types():
@@ -221,7 +166,7 @@ def curate_identify_var_types():
     system_prompt_blocks = request.json["system_prompt_blocks"]
     user_prompt_blocks = request.json["user_prompt_blocks"]
     prompt_variables = {
-        "var_types": "\n".join(
+        "indicators": "\n".join(
             [
                 f"{var_type}: {var_type_def}"
                 for var_type, var_type_def in var_type_definitions.items()
@@ -332,7 +277,10 @@ def curate_identify_vars():
             user_prompt_blocks,
             prompt_variables,
         )
-        return json.dumps(all_chunks, default=vars)
+        local.save_json(
+            all_chunks,
+            pipeline_result_path + "identify_vars/chunk_w_vars_keywords.json",
+        )
     else:
         all_chunks = uncertainty.identify_vars_uncertainty(
             all_chunks,
@@ -344,7 +292,7 @@ def curate_identify_vars():
         # local.save_json(
         #     all_chunks, pipeline_result_path + "identify_vars/chunk_w_vars.json"
         # )
-        return json.dumps(all_chunks, default=vars)
+    return json.dumps(all_chunks, default=vars)
 
 
 @app.route("/curation/identify_vars/save/", methods=["POST"])
@@ -408,7 +356,10 @@ def curate_identify_links():
             user_prompt_blocks,
             prompt_variables,
         )
-        return json.dumps(all_chunks, default=vars)
+        # local.save_json(
+        #     all_chunks,
+        #     pipeline_result_path + "identify_links/chunk_w_links_new_prompt_3.json",
+        # )
     else:
         all_chunks = uncertainty.identify_links_uncertainty(
             all_chunks,
@@ -418,11 +369,11 @@ def curate_identify_links():
             user_prompt_blocks,
             prompt_variables,
         )
-        # local.save_json(
-        #     all_chunks,
-        #     pipeline_result_path + "identify_links/chunk_w_links_uncertainty.json",
-        # )
-        return json.dumps(all_chunks, default=vars)
+        local.save_json(
+            all_chunks,
+            pipeline_result_path + "identify_links/chunk_w_links_uncertainty.json",
+        )
+    return json.dumps(all_chunks, default=vars)
 
 
 @app.route("/curation/identify_links/save/", methods=["POST"])

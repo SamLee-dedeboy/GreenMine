@@ -1,11 +1,6 @@
 {
   "driver": [
     {
-      "definition": "test",
-      "factor_type": "Factor Type",
-      "var_name": "Test"
-    },
-    {
       "definition": "包括航運、海事活動、航運產業、船舶交通、商用船隻、高運輸成本和運輸實踐。",
       "factor_type": "social",
       "var_name": "交通運輸"
@@ -69,6 +64,11 @@
       "definition": "包括施肥、灌溉、集約化畜牧場的糞肥、農場廢水、水產養殖（魚類、大型藻類、貝類養殖）、珍珠農場和林業。",
       "factor_type": "social",
       "var_name": "農業"
+    },
+    {
+      "definition": "以上均不符合",
+      "factor_type": "none",
+      "var_name": "其他"
     }
   ],
   "impact": [
@@ -131,6 +131,11 @@
       "definition": "包括食物供應和可用性的減少",
       "factor_type": "ecological",
       "var_name": "食物生產的損失"
+    },
+    {
+      "definition": "以上均不符合",
+      "factor_type": "none",
+      "var_name": "其他"
     }
   ],
   "pressure": [
@@ -193,6 +198,11 @@
       "definition": "包括過度開發，過度提取，過度開採，過度捕獵，過度收穫，增加捕魚時間和陷阱數量，漁網網眼變小以及漁業壓力增加。",
       "factor_type": "social",
       "var_name": "過度捕撈"
+    },
+    {
+      "definition": "以上均不符合",
+      "factor_type": "none",
+      "var_name": "其他"
     }
   ],
   "response": [
@@ -230,6 +240,11 @@
       "definition": "包括陸地保護區、海洋保護區、建議的保護區、禁捕區、國家公園、州立公園、避難所和生物走廊；海洋保護區宣告和擴張。",
       "factor_type": "ecological",
       "var_name": "設立自然保護區"
+    },
+    {
+      "definition": "以上均不符合",
+      "factor_type": "none",
+      "var_name": "其他"
     }
   ],
   "state": [
@@ -252,6 +267,11 @@
       "definition": "包括珊瑚、浮游植物、底棲生物、魚類、貝類、海鳥、紅樹林、海草、海膽、水生植物（微型底質藻類、大型藻類、海草和鹽沼植物）等的物種、存量、組成、豐度、族群和生物量，以及海洋和淡水生物系統。",
       "factor_type": "ecological",
       "var_name": "生態狀態（生物品質）"
+    },
+    {
+      "definition": "以上均不符合",
+      "factor_type": "none",
+      "var_name": "其他"
     }
   ]
 }

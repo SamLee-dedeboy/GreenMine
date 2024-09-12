@@ -3,13 +3,14 @@
   import { fade, slide } from "svelte/transition";
   import type { tPrompt } from "lib/types";
   export let data: tPrompt | undefined = undefined;
+  const dispatch = createEventDispatcher();
   let show_prompts = true;
 
   function highlight_variables(text: string) {
     // replace ${var} with <span class="bg-yellow-200">${var}</span>
     return text.replace(
       /\${(.*?)}/g,
-      '<span class="text-yellow-600">${$1}</span>',
+      '<span class="text-yellow-600" contenteditable=false>${$1}</span>',
     );
   }
 
@@ -18,14 +19,8 @@
 
 <div class="">
   <div class="flex flex-col px-1">
-    <div
-      tabindex="0"
-      role="button"
-      class="entry-trigger"
-      on:click={() => (show_prompts = !show_prompts)}
-      on:keyup={() => {}}
-    >
-      Prompts
+    <div class="entry-trigger">
+      <span> Prompts </span>
     </div>
   </div>
   {#if show_prompts}
@@ -70,6 +65,6 @@
 
 <style lang="postcss">
   .entry-trigger {
-    @apply rounded-sm bg-gray-200 text-gray-700 outline-double outline-1 outline-gray-600 hover:bg-gray-300;
+    @apply rounded-sm bg-gray-200 text-gray-700 outline-double outline-1 outline-gray-600;
   }
 </style>
