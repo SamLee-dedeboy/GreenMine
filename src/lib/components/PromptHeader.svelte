@@ -20,7 +20,7 @@
   }}
 >
   <h2 class="text-lg font-medium text-black">{title}</h2>
-  <div class="flex flex-col gap-y-1">
+  <div class="flex flex-col py-1">
     <div class="flex">
       <div
         role="button"
@@ -46,7 +46,7 @@
       </div>
     </div>
   </div>
-  <div class="flex flex-col py-1">
+  <div class="flex flex-col gap-y-1">
     <div
       tabindex="0"
       role="button"
@@ -58,7 +58,7 @@
     </div>
   </div>
   {#if show_versions}
-  <div class="flex divide-x justify-center ">
+  <div class="flex divide-x justify-center pt-1">
     <div class="flex flex-wrap gap-2 justify-center">
       {#each versionCount.versions as version}
         <button 

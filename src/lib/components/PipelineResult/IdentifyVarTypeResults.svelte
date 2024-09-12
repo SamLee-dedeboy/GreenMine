@@ -141,7 +141,7 @@
                   {#if isNone}
                     <div class="text-sm">None</div>
                     <!-- <label for="varType" class="text-sm mr-2">Enter var type...</label> -->
-                    <div
+                    <!-- <div
                       class="editable-area min-w-[50px] rounded-sm px-1 text-sm italic outline-dashed outline-1 outline-gray-300"
                       style="flex: 1;"
                       contenteditable="true"
@@ -151,7 +151,7 @@
                       on:input={(event) => handleInput(datum.id, event)}
                       on:keydown={(event) => handleKeydown(datum.id, event)}
                       on:blur={(event) => handleBlur(datum.id, event)}
-                    ></div>
+                    ></div> -->
                   {:else}
                     <div class="flex w-full flex-col">
                       {#if datum.uncertainty?.identify_var_types}
@@ -215,8 +215,8 @@
                             {/if}
                           </div>
                         {/each}
-                        {#if datum.identify_var_types_result.length < 5}
-                          <div
+                        <!-- {#if datum.identify_var_types_result.length < 5} -->
+                          <!-- <div
                             class="editable-area min-w-[50px] rounded-sm px-1 text-sm italic outline-dashed outline-1 outline-gray-300"
                             style="flex: 1;"
                             contenteditable="true"
@@ -227,8 +227,8 @@
                             on:keydown={(event) =>
                               handleKeydown(datum.id, event)}
                             on:blur={(event) => handleBlur(datum.id, event)}
-                          ></div>
-                        {/if}
+                          ></div> -->
+                        <!-- {/if} -->
                       </div>
                     </div>
                   {/if}

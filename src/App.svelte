@@ -22,7 +22,7 @@
   import DPSIR from "lib/views/DPSIR.svelte";
   import BrowserBlockingPage from "lib/views/BrowserBlockingPage.svelte";
   import * as utils from "lib/utils";
-  import { server_address } from "lib/constants";
+  import { server_address, stepMap } from "lib/constants";
   import * as d3 from "d3";
   import { varTypeColorScale } from "lib/store";
   import Prompts from "lib/views/Prompts.svelte";
@@ -50,11 +50,11 @@
   let titleOptions:string[] = [];
 
   let versionsCount: { [key: string]: tVersionInfo } = {};
-  const stepMap = {
-    1: "var_type",
-    2: "var",
-    3: "link"
-  };
+  // const stepMap = {
+  //   1: "var_type",
+  //   2: "var",
+  //   3: "link"
+  // };
   // pipeline
   // v1
   let keyword_data: any;
@@ -314,18 +314,13 @@
   }
   function updateCurrentData(step: string) {
     const latestVersion = versionsCount[step].versions[versionsCount[step].versions.length - 1];
-    
-    if (step === 'var_type' && show_step === 1) {
-      prompt_data = versionedPrompt[latestVersion];
-      pipeline_result = versionedPipelineResults[latestVersion];
+    prompt_data = versionedPrompt[latestVersion];
+    pipeline_result = versionedPipelineResults[latestVersion];
+    if (step === 'var_type' && show_step === 1) {      
       pipeline_ids = pipeline_result.identify_var_types.map(item => item.id);
     } else if (step === 'var' && show_step === 2) {
-      prompt_data = versionedPrompt[latestVersion];
-      pipeline_result = versionedPipelineResults[latestVersion];
       pipeline_ids = pipeline_result.identify_vars.map(item => item.id);
     } else if (step === 'link' && show_step === 3) {
-      prompt_data = versionedPrompt[latestVersion];
-      pipeline_result = versionedPipelineResults[latestVersion];
       pipeline_ids = pipeline_result.identify_links.map(item => item.id);
     }
   }

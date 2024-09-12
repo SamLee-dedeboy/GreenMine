@@ -77,7 +77,7 @@
     duration: 100,
   }}
 >
-  <div class="flex flex-col py-1">
+  <div class="flex flex-col ">
     <div
       tabindex="0"
       role="button"

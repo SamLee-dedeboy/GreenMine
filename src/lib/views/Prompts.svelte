@@ -18,7 +18,7 @@
     tVersionInfo
   } from "lib/types";
   import { updateTmpData } from "lib/utils/update_with_log";
-  import { server_address } from "lib/constants";
+  import { server_address, stepMap } from "lib/constants";
   import { createEventDispatcher, tick, getContext } from "svelte";
     import { Rule } from "postcss";
   const dispatch = createEventDispatcher();
@@ -30,6 +30,7 @@
   export let selectedTitle: string;
   export let titleOptions: string[];
   export let versionsCount: { [key: string]: tVersionInfo };
+  export let show_step: number;
   // console.log(pipeline_result)
 
   let data_loading: boolean = false;
@@ -40,7 +41,15 @@
       identify_links: any[]
     }
   } = {};
-  export let show_step: number;
+
+  let current_version = versionsCount[stepMap[show_step]].versions[versionsCount[stepMap[show_step]].versions.length - 1];
+  if (current_version) {
+    tmp_data[current_version] = {
+      identify_var_types: [],
+      identify_vars: [],
+      identify_links: []
+    };
+  }
   // console.log(show_step)
 
   let log_record: LogRecord = {
@@ -69,7 +78,7 @@
     show_step = newStep;
     dispatch('step_change', newStep);
   }
-  let current_version = "";
+  
 
   function navigate_evidence(e) {
     if (!e) return;
@@ -77,6 +86,9 @@
   }
   function update_rules() {
     // To Be Modified
+    // need to save tmp data and fetch pipline data again
+    // Apply rules to tmp_data
+    // tmp_data[current_version] = updateTmpData(tmp_data[current_version], log_record);
     if (log_record) {
       // Update remove_element
       for (const item of removeVar) {
@@ -124,19 +136,17 @@
     .then((res) => res.json())
     .then((res) => {
       // Update the tmp_data for the current version and key
+      console.log(tmp_data);
       tmp_data[current_version][key] = res;
       console.log({ res });
       
       save_data(data, tmp_data[current_version], key, current_version);
       
-      // Apply rules to tmp_data
-      tmp_data[current_version] = updateTmpData(tmp_data[current_version], log_record);
       
       data_loading = false;
       // compute_uncertainty(data, key);
     });
 
-    // const nextVersion = getNextVersion();
   }
 
   function compute_uncertainty(data: tServerPromptData, key: string) {
@@ -237,33 +247,37 @@
       });
   }
   function remove_var_type(data: { id: string; indicator: string }, key: string): void {
+    // add check exists condition for both pipeline and tmp_data    
+    // need to update to all the versions
     if (!data) return;
     console.log("remove_var_type", data);
     // add to log
     // TODO: modify log data
     // removeVar.push(data);
     //right side
-    dispatch("remove_var_type", { id:data.id, variable: {var_type:data.indicator} }); // to App.svelte
-    //left side
-    // TODO: modify tmp data
-    // console.log("modify tmp_data");
-    // if (tmp_data === undefined) return;
-    // tmp_data.identify_var_types = tmp_data.identify_var_types.map((item) => {
-    //   if (item.id === data.id) {
-    //     return {
-    //       ...item,
-    //       identify_var_types_result: item.identify_var_types_result.filter(
-    //         (result) => result.var_type !== data.variable.var_type,
-    //       ),
-    //     };
-    //   }
-    //   return item;
-    // });
+    if(key === "identify_var_types"){
+        dispatch("remove_var_type", { id:data.id, variable: {var_type:data.indicator} }); // to App.svelte
+        if (tmp_data === undefined) return;
+        tmp_data[current_version].identify_var_types = tmp_data[current_version].identify_var_types.map((item) => {
+          if (item.id === data.id) {
+            return {
+              ...item,
+              identify_var_types_result: item.identify_var_types_result.filter(
+                (result) => result.var_type !== data.indicator,
+              ),
+            };
+          }
+          return item;
+        });
+    }
+    
   }
   function add_var_type(
     data: { id: string; indicator: string },
     key: string
-  ): void {
+  ): void {    
+    // add check exists condition for both pipeline and tmp_data
+    // need to update to all the versions
     if (!data) return;
     console.log("add_var_type", data);
     const newVarTypeResult: VarTypeItem = {
@@ -280,32 +294,36 @@
     // TODO: modify log data
     // addVar.push(newVarTypeResult);
 
-    //right side
     let pipe_datum
+    let tmp_datum
     if(key === "identify_var_types") {
       pipe_datum = pipeline_result?.identify_var_types.find((item) => item.id === data.id);
+      tmp_datum = tmp_data[current_version]?.identify_var_types.find((item) => item.id === data.id);
+    
+      const pipe_alreadyExists = pipe_datum.identify_var_types_result.some(
+            (item) => item.var_type === data.indicator,
+          );
+      const tmp_alreadyExists = tmp_datum.identify_var_types_result.some(
+            (item) => item.var_type === data.indicator,
+          );
+      // console.log(alreadyExists);
+      if (!pipe_alreadyExists && !tmp_alreadyExists) {
+        dispatch("add_var_type", newVarTypeResult);
+        console.log("modify tmp_data");
+        console.log(tmp_data[current_version].identify_var_types);
+        tmp_data[current_version].identify_var_types = tmp_data[current_version].identify_var_types.map((item) => {
+            if (item.id === data.id) {
+              const updatedNewData = { ...newVarTypeResult.variable };
+              item.identify_var_types_result.push(updatedNewData);
+            }
+            return item;
+        });
+      } else {
+        alert("Var type already exists");
+      }
     }
-    const alreadyExists = pipe_datum.identify_var_types_result.some(
-          (item) => item.var_type === data.indicator,
-        );
-    console.log(alreadyExists);
-    if (!alreadyExists ) {
-      dispatch("add_var_type", newVarTypeResult);
-    } else if (alreadyExists) {
-      alert("Var type already exists");
-    }
-     // to App.svelte
-    //left side
-    // TODO: modify tmp data
-    // console.log("modify tmp_data");
-    // if (tmp_data === undefined) return;
-    // tmp_data.identify_var_types = tmp_data.identify_var_types.map((item) => {
-    //   if (item.id === data.id) {
-    //     const updatedNewData = { ...newVarTypeResult.variable };
-    //     item.identify_var_types_result.push(updatedNewData);
-    //   }
-    //   return item;
-    // });
+
+    
   }
 
 
