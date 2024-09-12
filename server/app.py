@@ -46,7 +46,7 @@ def get_data():
     )
     v1_data = get_data_v1(v1_data_path)
     return {"interviews": interview_data, "v1": v1_data}
-@app.route("/pipeline/<step>/versions/")
+@app.route("/pipeline/<step>/all_versions/")
 def get_pipeline_versions(step):
     versions = set()
 

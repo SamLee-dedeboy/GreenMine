@@ -9,6 +9,7 @@
     total_versions: 0,
     versions: [],
   }
+  export let current_version: string;
   let show_versions = true;
 </script>
 
@@ -61,12 +62,20 @@
     <div class="flex flex-wrap gap-2 justify-center">
       {#each versionCount.versions as version}
         <button 
-          class="h-6 w-6 rounded-full bg-blue-500 opacity-80 text-white text-sm hover:bg-blue-600 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 focus:bg-blue-600 focus:opacity-100"
+          class="h-6 w-6 rounded-full bg-blue-500 opacity-80 text-white text-sm hover:bg-blue-600 hover:opacity-100 "
+          class:selected={version === current_version}
           on:click={() => dispatch('select-version', version)}
         >
           {version}
         </button>
       {/each}
+      <button 
+          class="h-6 w-6 rounded-full bg-gray-400 text-white text-lg font-bold hover:bg-gray-500 flex items-center justify-center"
+          on:click={() => dispatch('add-version')}
+          aria-label="Add new version"
+        >
+          +
+      </button>
     </div>
   </div>
   {/if}
@@ -77,7 +86,11 @@
     @apply bg-green-300;
     transition: all 0.5s;
   }
+  .selected {
+    @apply bg-blue-700 opacity-100;
+  }
   .entry-trigger {
     @apply rounded-sm bg-gray-200 text-gray-700 outline-double outline-1 outline-gray-600 hover:bg-gray-300;
   }
 </style>
+

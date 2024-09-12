@@ -205,7 +205,7 @@
                                 }}
                                 on:keyup={() => {}}
                               >
-                                ×
+                                
                               </button>
                             </div>
                             {#if var_type_wrapper.confidence}

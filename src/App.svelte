@@ -27,12 +27,12 @@
   import { varTypeColorScale } from "lib/store";
   import Prompts from "lib/views/Prompts.svelte";
   import KeywordSeaViewer from "lib/views/KeywordSeaViewer.svelte";
-  // import { version } from "os";
 
   let interview_data: tTranscript[];
   let interview_viewer_component;
   let prompt_data: tServerPromptData;
   let pipeline_result: tServerPipelineData;
+  let pipeline_ids: string[] = [];
   let versionedPipelineResults: { [key: string]: tServerPipelineData } = {};
   let versionedPrompt: { [key: string]: tServerPromptData } = {};
   let var_data: tDPSIR;
@@ -47,7 +47,7 @@
   // let versions: string[] = [];
   let log_record: any;
   let selectedTitle = "version 0";
-  let titleOptions = ["version 0"];
+  let titleOptions:string[] = [];
 
   let versionsCount: { [key: string]: tVersionInfo } = {};
   const stepMap = {
@@ -94,37 +94,62 @@
         };
       })
   }
-  function fetchVersionsCount(step: string) {
-    fetch(`${server_address}/pipeline/${step}/versions`)
-      .then(res => res.json())
-      .then(data => {
-        versionsCount = { 
-          ...versionsCount, 
-          [step]: {
-            total_versions: data.total_versions,
-            versions: data.versions
-          }
-        };
-        console.log("Versions count:", versionsCount);
+  function fetchVersionsCount(step: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      fetch(`${server_address}/pipeline/${step}/all_versions`)
+        .then(res => res.json())
+        .then(data => {
+          versionsCount = { 
+            ...versionsCount, 
+            [step]: {
+              total_versions: data.total_versions,
+              versions: data.versions
+            }
+          };
+          titleOptions = data.versions.map(version => "version " + version.slice(1));
+          console.log("Versions count:", versionsCount);
+          resolve();
+        })
+        .catch(error => {
+          console.error(`Error fetching versions count for ${step}:`, error);
+          reject(error);
+        });
+    });
+  }
+  function fetchPipelineData(step: string, data_loading = true) {
+    data_loading = data_loading;
+    
+    if (!versionsCount[step]) {
+      console.error(`No version information available for step: ${step}`);
+      return Promise.reject(`No version information available for step: ${step}`);
+    }
+
+    const versions = versionsCount[step].versions;
+    
+    const fetchPromises = versions.map(version => 
+      fetch(`${server_address}/pipeline/${step}/${version}/`)
+        .then(res => res.json())
+    );
+
+    return Promise.all(fetchPromises)
+      .then((results: tServerData[]) => {
+        results.forEach((res, index) => {
+          const version = versions[index];
+          versionedPrompt[version] = res.prompts;
+          versionedPipelineResults[version] = res.pipeline_result;
+        });
+
+        // Set prompt_data and pipeline_result based on the current step
+        updateCurrentData(step);
+
+        console.log(`Fetched data for all versions of step: ${step}`);
       })
       .catch(error => {
-        console.error(`Error fetching versions count for ${step}:`, error);
-      });
-  }
-  function fetchPipelineData(step: string, version: string, data_loading = true) {
-    data_loading = data_loading;
-    fetch(`${server_address}/pipeline/${step}/${version}/`)
-      .then((res) => res.json())
-      .then((res: tServerData) => {
-        console.log({ res });
-        versionedPrompt[version] = res.prompts;
-        prompt_data = res.prompts;
-        versionedPipelineResults[version] = res.pipeline_result;
-        pipeline_result = res.pipeline_result; //set the initial pipeline result
-        // console.log({pipeline_result})
-        // data_loading = false;
-  
+        console.error(`Error fetching pipeline data for step ${step}:`, error);
       })
+      .finally(() => {
+        data_loading = false;
+      });
   }
   function fetchDPSIRData(link_version:string = "v0"){
     data_loading = true;
@@ -145,8 +170,8 @@
   }
 
   function updateVersion(e, key: string) {
-    // console.log(versionedPipelineResults);
-    // console.log(versionedPrompt);
+    console.log(versionedPipelineResults);
+    console.log(versionedPrompt);
     if (key === "version_changed") {
       selectedTitle = e.detail.pipe_version;
       let pipe_version = "v" + selectedTitle.replace("version ", "")
@@ -155,25 +180,35 @@
         pipeline_result = versionedPipelineResults[pipe_version];
         prompt_data = versionedPrompt[prompt_version];
       } else {
+        console.log({versionedPipelineResults})
         console.error("No data for this version");
       }
     } else if (key === "version_selected") {
       let pipe_version = e.detail.pipe_version;
       let prompt_version = e.detail.prompt_version;
+      console.log({prompt_version})
       if (versionedPrompt[prompt_version]) {
         pipeline_result = versionedPipelineResults[pipe_version];
         prompt_data = versionedPrompt[prompt_version];
       } else {
+        console.log({versionedPrompt})
         console.error("No data for this version");
       }
     } else if (key === "new_verison_added") {
-      let new_version = "version "+(e.detail.version).slice(1); //title
+      let new_version_title = "version "+(e.detail.version).slice(1);
       let step = e.detail.step;
-      if (!titleOptions.includes(new_version)) {
-          titleOptions = [...titleOptions, new_version];
+      versionsCount[step].versions.push(e.detail.version);
+      versionsCount[step].total_versions += 1;
+      console.log(versionsCount)
+      versionedPipelineResults[e.detail.version] = versionedPipelineResults["v0"];
+      versionedPrompt[e.detail.version] = versionedPrompt["v0"];
+
+      if (!titleOptions.includes(new_version_title)) {
+          titleOptions = [...titleOptions, new_version_title];
+          
+          console.log(titleOptions)
       }
-      // fetch new version prompt and pipline data
-      fetchPipelineData(step,e.detail.version,false);
+      // fetchVersionsCount(step);
     }
   }
   function handleEvidenceSelected(e) {
@@ -229,7 +264,7 @@
     }
   }
   function handleRemoveVarType(e) {
-    // console.log("e.detail", e.detail)
+    console.log("e.detail", e.detail)
     const { id, variable } = e.detail;
     if (pipeline_result === undefined) return;
 
@@ -266,17 +301,42 @@
     show_step = newStep;
     const step = stepMap[show_step];
     if (step) {
-      fetchPipelineData(step, "v0");
-      fetchVersionsCount(step);
-      data_loading = false;
+      // data_loading = true;
+      fetchVersionsCount(step)
+        .then(() => fetchPipelineData(step))
+        .then(() => {
+          updateCurrentData(step);
+        })
+        .finally(() => {
+          data_loading = false;
+        });
+    }
+  }
+  function updateCurrentData(step: string) {
+    const latestVersion = versionsCount[step].versions[versionsCount[step].versions.length - 1];
+    
+    if (step === 'var_type' && show_step === 1) {
+      prompt_data = versionedPrompt[latestVersion];
+      pipeline_result = versionedPipelineResults[latestVersion];
+      pipeline_ids = pipeline_result.identify_var_types.map(item => item.id);
+    } else if (step === 'var' && show_step === 2) {
+      prompt_data = versionedPrompt[latestVersion];
+      pipeline_result = versionedPipelineResults[latestVersion];
+      pipeline_ids = pipeline_result.identify_vars.map(item => item.id);
+    } else if (step === 'link' && show_step === 3) {
+      prompt_data = versionedPrompt[latestVersion];
+      pipeline_result = versionedPipelineResults[latestVersion];
+      pipeline_ids = pipeline_result.identify_links.map(item => item.id);
     }
   }
   onMount(async () => {
     await fetchTest();
     await fetchData();
     await fetchDPSIRData();
-    await fetchPipelineData("var_type", "v0");
-    fetchVersionsCount("var_type");
+    await fetchVersionsCount("var_type");    
+    await fetchPipelineData("var_type");
+    updateCurrentData("var_type")
+    // data_loading = false;
   });
 
   setContext("fetchData", fetchData);
@@ -296,6 +356,7 @@
           <Prompts
             data={prompt_data}
             {pipeline_result}
+            {pipeline_ids}
             {selectedTitle}
             {titleOptions}
             {show_step}
@@ -308,6 +369,18 @@
             on:version_selected={(e) => updateVersion(e, "version_selected")}
             on:version_changed={(e) => updateVersion(e, "version_changed")} 
             on:new_verison_added={(e) => updateVersion(e, "new_verison_added")}
+            on:new_version_saved={(e) => {
+              console.log("save and fetch new");
+              data_loading = true;
+              fetchVersionsCount(e.detail.step)
+                .then(() => fetchPipelineData(e.detail.step))
+                .then(() => {
+                  updateCurrentData(e.detail.step);
+                })
+                .finally(() => {
+                  data_loading = false;
+                });
+            }}
           ></Prompts>
         </div>
       {/if}
