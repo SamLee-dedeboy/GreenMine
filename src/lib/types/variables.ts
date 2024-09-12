@@ -138,4 +138,7 @@ export type tUtilityHandlers = {
   [key: string]: Function;
 };
 
-export type SelectedType = { source: string; target: string };
+export type tBbox = {
+  center: [number, number];
+  size: [number, number];
+};
