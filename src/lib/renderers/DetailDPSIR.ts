@@ -52,7 +52,9 @@ export const DetailDPSIR = {
   on(event, handler) {
     this.dispatch.on(event, handler);
   },
-
+  highlighting() {
+    return this.rectClicked || this.linkClicked;
+  },
   resetHighlights() {
     d3.selectAll("rect.box")
       .classed("box-highlight", false)
