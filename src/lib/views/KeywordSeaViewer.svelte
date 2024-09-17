@@ -32,7 +32,7 @@
       </button>
     {/each}
   </div>
-  <div class="keywordsea-container flex grow bg-white">
+  <div class=" flex grow bg-white">
     {#if keywordsea_var_type}
       <KeywordSea
         data={data[keywordsea_var_type].keyword_data}

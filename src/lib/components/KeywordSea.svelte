@@ -6,7 +6,8 @@
   const dispatch = createEventDispatcher();
   export let data: tKeywordData;
   export let key: string = "keyword";
-  const degree_key = "tf_idf";
+  export let show_key: boolean = true;
+  export let degree_key = "tf_idf";
   // const degree_key = "frequency";
   const svgId = `keyword-sea-${key}-svg`;
   // const keyword_sea_renderer = new KeyWordSea();
@@ -43,13 +44,15 @@
   });
 </script>
 
-<div class="relative h-full w-full p-2">
-  <div
-    class="absolute left-2 top-0 w-fit rounded font-serif text-[2rem] font-bold capitalize"
-    style={`color: ${$varTypeColorScale(key)}`}
-  >
-    {key}
-  </div>
+<div class=" keywordsea-container relative h-full w-full p-2">
+  {#if show_key}
+    <div
+      class="absolute left-2 top-0 w-fit rounded font-serif text-[2rem] font-bold capitalize"
+      style={`color: ${$varTypeColorScale(key)}`}
+    >
+      {key}
+    </div>
+  {/if}
   <div
     class="tooltip pointer-events-none absolute h-fit w-fit rounded border border-black bg-white py-1 pl-0.5 pr-1 text-xs opacity-0"
   ></div>

@@ -3,14 +3,22 @@
   import { onMount, createEventDispatcher } from "svelte";
   import { varTypeColorScale } from "lib/store";
   import { sort_by_id, setOpacity, sort_by_var_type } from "lib/utils";
+  import { var_type_names } from "lib/constants";
+  import { server_address } from "lib/constants";
+  import KeywordSea from "lib/components/KeywordSea.svelte";
 
   const dispatch = createEventDispatcher();
   export let data: tIdentifyVars[];
   export let data_loading: boolean;
   export let title: string = "baseline";
-  onMount(() => {
-    console.log({ data });
-  });
+  let clicked_var_type_for_others: string = "driver";
+
+  // let data_for_others;
+  /**
+   * the flag is used to switch between showing all variables or only '其他'
+   * @type {boolean}
+   */
+  let show_others = true;
   function sort_by_uncertainty(data: tIdentifyVars[]) {
     if (data.length === 0) return data;
     if (!data[0].uncertainty) {
@@ -28,6 +36,25 @@
   ) {
     return `<span style="background-color: ${$varTypeColorScale(var_type)}; text-transform: capitalize; padding-left: 0.125rem; padding-right: 0.125rem;">${var_name}</span>:${explanation}`;
   }
+
+  async function fetch_data_for_others(data: tIdentifyVars[]) {
+    const res = await fetch(
+      `${server_address}/compute/identify_vars_keywords/others/`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ data }),
+      },
+    ).then((response) => response.json());
+    console.log({ res });
+    return res;
+  }
+  onMount(() => {
+    console.log({ data });
+    // fetch_data_for_others(data);
+  });
 </script>
 
 <div
@@ -35,12 +62,56 @@
 >
   <h2 class="text-lg font-medium capitalize text-black">{title}</h2>
   <div class="flex grow flex-col divide-y divide-black">
-    <div class="flex divide-x">
-      <div class="w-[4rem] shrink-0">Snippet</div>
-      <div class="flex pl-2">Variables</div>
+    <div class="flex divide-x py-0.5">
+      {#if show_others}
+        <div class="ml-1">Keywords around "其他"</div>
+      {:else}
+        <div class="w-[4rem] shrink-0">Snippet</div>
+        <div class="flex pl-2">Variables</div>
+      {/if}
+      <div
+        role="button"
+        tabindex="0"
+        class="ml-auto flex items-center gap-x-0.5 px-1 py-0.5 text-xs hover:bg-gray-300"
+        on:click={() => (show_others = !show_others)}
+        on:keyup={() => {}}
+      >
+        <img class="h-4 w-4" src="book_open.svg" alt="explore" />其他
+      </div>
     </div>
     {#if data_loading}
       <div class="flex h-full items-center justify-center">Data Loading...</div>
+    {:else if show_others}
+      {#await fetch_data_for_others(data)}
+        <div>Loading...</div>
+      {:then data_for_others}
+        <div class="flex grow flex-col">
+          <div class="flex justify-between px-1 pt-0.5">
+            {#each var_type_names as var_type}
+              <div class="flex flex-col">
+                <div
+                  tabindex="0"
+                  role="button"
+                  class="rounded-sm px-1 capitalize text-gray-700"
+                  style={`background-color: ${setOpacity($varTypeColorScale(var_type), 0.7)};`}
+                  on:click={() => (clicked_var_type_for_others = var_type)}
+                  on:keyup={() => {}}
+                >
+                  {var_type}
+                </div>
+              </div>
+            {/each}
+          </div>
+          <div class="grow">
+            <KeywordSea
+              data={data_for_others[clicked_var_type_for_others]}
+              key={clicked_var_type_for_others}
+              show_key={false}
+              degree_key="frequency"
+            ></KeywordSea>
+          </div>
+        </div>
+      {/await}
     {:else}
       <div
         class="flex h-1 grow flex-col divide-y divide-black overflow-y-auto pr-3"

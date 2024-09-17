@@ -78,6 +78,7 @@ export type tVarResult = Record<
   {
     var: string;
     evidence: number[];
+    keywords: string[];
     explanation: string;
   }[]
 >;
@@ -101,4 +102,4 @@ export type LogRecord = {
 export type tVersionInfo = {
   total_versions: number;
   versions: string[];
-}
+};

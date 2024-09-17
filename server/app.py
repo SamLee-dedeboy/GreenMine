@@ -31,6 +31,14 @@ openai_api_key = open(relative_path(dirname, "openai_api_key")).read()
 openai_client = OpenAI(api_key=openai_api_key, timeout=10)
 
 var_types = ["driver", "pressure", "state", "impact", "response"]
+keyword_embeddings = json.load(
+    open(keyword_data_path + "keywords.json", encoding="utf-8")
+)
+userdict = keyword_data_path + "userdict.txt"
+stopwords = ["綠島"]
+kpca_reducer = dr.init_kpca_reducer(
+    list(map(lambda x: x["embedding"], keyword_embeddings))
+)
 
 
 @app.route("/test/")
@@ -45,6 +53,8 @@ def get_data():
     )
     v1_data = get_data_v1(v1_data_path)
     return {"interviews": interview_data, "v1": v1_data}
+
+
 @app.route("/pipeline/<step>/all_versions/")
 def get_pipeline_versions(step):
     versions = set()
@@ -53,14 +63,14 @@ def get_pipeline_versions(step):
     prompt_files = os.listdir(prompt_path)
     for file in prompt_files:
         if file.endswith(f"_identify_{step}s.json"):
-            version = file.split('_')[0]
+            version = file.split("_")[0]
             versions.add(version)
 
     # Check pipeline results
     result_files = os.listdir(os.path.join(pipeline_result_path, f"identify_{step}s"))
     for file in result_files:
-        if file.startswith('v') and file.endswith(f"_chunk_w_{step}s.json"):
-            version = file.split('_')[0]
+        if file.startswith("v") and file.endswith(f"_chunk_w_{step}s.json"):
+            version = file.split("_")[0]
             versions.add(version)
 
     # Check definitions (only for var_type and var)
@@ -68,19 +78,21 @@ def get_pipeline_versions(step):
         definition_files = os.listdir(prompt_context_path)
         for file in definition_files:
             if file.endswith(f"_{step}_definitions.json"):
-                version = file.split('_')[0]
+                version = file.split("_")[0]
                 versions.add(version)
 
     # Convert versions to a sorted list of integers
-    version_numbers = sorted([int(v.replace('v', '')) for v in versions])
+    version_numbers = sorted([int(v.replace("v", "")) for v in versions])
 
-    return ({
+    return {
         "step": step,
         "total_versions": len(version_numbers),
-        "versions": [f"v{v}" for v in version_numbers]
-    })
+        "versions": [f"v{v}" for v in version_numbers],
+    }
+
+
 @app.route("/pipeline/<step>/<version>/")
-def get_pipeline(step,version):
+def get_pipeline(step, version):
     # step = var_type, var, link
     version_number = version.replace("v", "")
     print(version_number)
@@ -106,8 +118,7 @@ def get_pipeline(step,version):
             encoding="utf-8",
         )
     )
-    
-    
+
     return {
         "prompts": {
             f"identify_{step}s": {
@@ -116,10 +127,9 @@ def get_pipeline(step,version):
                 "user_prompt_blocks": identify_prompts["user_prompt_blocks"],
             }
         },
-        "pipeline_result": {
-            f"identify_{step}s": identify_data
-        }
+        "pipeline_result": {f"identify_{step}s": identify_data},
     }
+
 
 @app.route("/dpsir/<link_version>/")
 def getDPSIR(link_version):
@@ -137,14 +147,6 @@ def getDPSIR(link_version):
     ]
 
     nodes = v2_processing.collect_nodes(identify_links, var_types)
-    keyword_embeddings = json.load(
-        open(keyword_data_path + "keywords.json", encoding="utf-8")
-    )
-    userdict = keyword_data_path + "userdict.txt"
-    stopwords = ["綠島"]
-    kpca_reducer = dr.init_kpca_reducer(
-        list(map(lambda x: x["embedding"], keyword_embeddings))
-    )
     DPSIR_data = v2_processing.generate_DPSIR_data(
         identify_links,
         nodes,
@@ -390,6 +392,41 @@ def save_identify_links():
 #         node['variable_type'] = node['variable_type'][:-1]
 #     node['variable_type'] = node['variable_type'].lower()
 #     return node
+
+
+@app.route("/compute/identify_vars_keywords/others/", methods=["POST"])
+def compute_identify_vars_keywords_others():
+    identify_vars_result = request.json["data"]
+    others_mentioned_chunks_by_var_type = defaultdict(lambda: defaultdict(list))
+    for chunk in identify_vars_result:
+        for var_type, variables in chunk["identify_vars_result"].items():
+            other_variables = [var for var in variables if var["var"] == "其他"]
+            for occurrence in other_variables:
+                for keyword in occurrence["keywords"]:
+                    others_mentioned_chunks_by_var_type[var_type][keyword].append(
+                        {
+                            "chunk_id": chunk["id"],
+                            "evidence": occurrence["evidence"],
+                            "explanation": occurrence["explanation"],
+                        }
+                    )
+    res = {}
+    for var_type, keywords_mentions in others_mentioned_chunks_by_var_type.items():
+        keyword_list, keyword_statistics, keyword_coordinates = (
+            v2_processing.generate_keyword_data(
+                keywords_mentions,
+                keyword_embeddings,
+                stopwords,
+                kpca_reducer,
+            )
+        )
+        res[var_type] = {
+            "keyword_list": keyword_list,
+            "keyword_statistics": keyword_statistics,
+            "keyword_coordinates": keyword_coordinates,
+        }
+
+    return json.dumps(res, default=vars)
 
 
 def process_interview(filepaths):
