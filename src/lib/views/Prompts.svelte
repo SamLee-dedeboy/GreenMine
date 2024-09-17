@@ -11,6 +11,7 @@
   import { cubicOut } from "svelte/easing";
 
   import type {
+    tServerData,
     tServerPipelineData,
     tServerPromptData,
     tVarTypeResult,
@@ -20,12 +21,13 @@
   import { updateTmpData } from "lib/utils/update_with_log";
   import { server_address, stepMap } from "lib/constants";
   import { createEventDispatcher, tick, getContext } from "svelte";
-    import { Rule } from "postcss";
+  import { Rule } from "postcss";
   const dispatch = createEventDispatcher();
   const fetchPipelineData = getContext("fetchPipelineData");
 
   export let data: tServerPromptData;
   export let pipeline_result: tServerPipelineData | undefined = undefined;
+  let pipeline_result_right: tServerPipelineData | undefined = undefined;
   export let pipeline_ids: string[];
   export let selectedTitle: string;
   export let titleOptions: string[];
@@ -86,9 +88,9 @@
   }
   function update_rules() {
     // To Be Modified
-    // need to save tmp data and fetch pipline data again
-    // Apply rules to tmp_data
-    // tmp_data[current_version] = updateTmpData(tmp_data[current_version], log_record);
+    // Apply rules to pipeline_result and pipeline_result_right
+    // pipeline_result = updateTmpData(pipeline_result, log_record);
+    // pipeline_result_right = updateTmpData(pipeline_result_right, log_record);
     if (log_record) {
       // Update remove_element
       for (const item of removeVar) {
@@ -136,11 +138,18 @@
     .then((res) => res.json())
     .then((res) => {
       // Update the tmp_data for the current version and key
-      console.log(tmp_data);
-      tmp_data[current_version][key] = res;
-      console.log({ res });
+      // console.log(tmp_data);
+      if(pipeline_result === undefined) {
+        pipeline_result = {
+          identify_var_types: [],
+          identify_vars: [],
+          identify_links: []
+        };
+      }
+      pipeline_result[key] = res;
+      // console.log({ pipeline_result });
       
-      save_data(data, tmp_data[current_version], key, current_version);
+      save_data(data, pipeline_result, key, current_version);
       
       
       data_loading = false;
@@ -168,45 +177,44 @@
     // console.log("version selected", current_v);
     current_version = current_v;
     dispatch("version_selected", {
-              pipe_version:"v" + selectedTitle.replace("version ", ""),
-              prompt_version:current_version              
+              version:current_v,             
             });//To App.svelte to reload prompt_data
 
     // if the version has been run before, load the data as tmp
     if (tmp_data[current_v]) {
       console.log(`Loading existing data for version ${current_v}`);
-    } else {
-      console.log(`Initializing data for new version ${current_v}`);
-      tmp_data[current_v] = {
-        identify_var_types: [],
-        identify_vars: [],
-        identify_links: [],
-      };
-    }
+    } 
   }
   function handle_title_change(newTitle: string) {
     // console.log("version changed",newTitle);
     selectedTitle = newTitle;
-    dispatch("version_changed", {
-              pipe_version:selectedTitle, 
-              prompt_version:current_version,
-            }); //To App.svelte to reload pipeline_data
+    let step = stepMap[show_step];
+    let version = "v" + selectedTitle.replace("version ", "");
+    console.log("fetch pipeline data for db");
+    return fetch(`${server_address}/pipeline/${step}/${version}/`)
+      .then(res => res.json())
+      .then((res: tServerData) => {
+        pipeline_result_right = res.pipeline_result;
+        console.log(`Fetched data for step: ${step}, version: ${version}`);
+
+      })
+      .catch(error => {
+        console.error(`Error fetching pipeline data for step ${step}, version ${version}:`, error);
+    });
   }
   function handle_version_added(key:string) {
     // Add the new version to titleOptions if it's not already there
     const nextVersionNumber = versionsCount[key].total_versions; // start from 0
     const newVersion = `v${nextVersionNumber}`;
     current_version = newVersion;
-    // Initialize empty execution result data for the new version
-    tmp_data[newVersion] = {
-      identify_var_types: [],
-      identify_vars: [],
-      identify_links: [],
+    pipeline_result = {
+        identify_var_types: [],
+        identify_vars: [],
+        identify_links: []
     };
     if (!titleOptions.includes(newVersion)) {
       dispatch("new_verison_added", {
-        version:newVersion, 
-        step:key
+        version:newVersion
       }); //To App.svelte
     }
   }
@@ -234,9 +242,8 @@
       .then((response) => response.text()) // Change this line from response.json() to response.text()
       .then((data) => {
         if (data === "success") {
-            const step = key.startsWith("identify_") ? key.slice("identify_".length).replace(/s$/, '') : key;
-            // fetchPipelineData(step, current_version,false);
-            dispatch('new_version_saved', {step:step, version:version});
+            // const step = key.startsWith("identify_") ? key.slice("identify_".length).replace(/s$/, '') : key;
+            dispatch('new_version_saved', {version:version});
             console.log("saved");
         } else {
           console.error("Unexpected response:", data);
@@ -247,8 +254,6 @@
       });
   }
   function remove_var_type(data: { id: string; indicator: string }, key: string): void {
-    // add check exists condition for both pipeline and tmp_data    
-    // need to update to all the versions
     if (!data) return;
     console.log("remove_var_type", data);
     // add to log
@@ -256,19 +261,20 @@
     // removeVar.push(data);
     //right side
     if(key === "identify_var_types"){
-        dispatch("remove_var_type", { id:data.id, variable: {var_type:data.indicator} }); // to App.svelte
-        if (tmp_data === undefined) return;
-        tmp_data[current_version].identify_var_types = tmp_data[current_version].identify_var_types.map((item) => {
-          if (item.id === data.id) {
-            return {
-              ...item,
-              identify_var_types_result: item.identify_var_types_result.filter(
-                (result) => result.var_type !== data.indicator,
-              ),
-            };
-          }
-          return item;
-        });
+        if (pipeline_result === undefined) return;
+        pipeline_result.identify_var_types = pipeline_result.identify_var_types.map(
+          (item) => {
+            if (item.id === data.id) {
+              return {
+                ...item,
+                identify_var_types_result: item.identify_var_types_result.filter(
+                  (result) => result.var_type !== data.indicator,
+                ),
+              };
+            }
+            return item;
+          },
+        );
     }
     
   }
@@ -295,29 +301,22 @@
     // addVar.push(newVarTypeResult);
 
     let pipe_datum
-    let tmp_datum
     if(key === "identify_var_types") {
       pipe_datum = pipeline_result?.identify_var_types.find((item) => item.id === data.id);
-      tmp_datum = tmp_data[current_version]?.identify_var_types.find((item) => item.id === data.id);
-    
       const pipe_alreadyExists = pipe_datum.identify_var_types_result.some(
             (item) => item.var_type === data.indicator,
           );
-      const tmp_alreadyExists = tmp_datum.identify_var_types_result.some(
-            (item) => item.var_type === data.indicator,
-          );
-      // console.log(alreadyExists);
-      if (!pipe_alreadyExists && !tmp_alreadyExists) {
-        dispatch("add_var_type", newVarTypeResult);
-        console.log("modify tmp_data");
-        console.log(tmp_data[current_version].identify_var_types);
-        tmp_data[current_version].identify_var_types = tmp_data[current_version].identify_var_types.map((item) => {
-            if (item.id === data.id) {
-              const updatedNewData = { ...newVarTypeResult.variable };
+      if (!pipe_alreadyExists ) {
+        if (pipeline_result === undefined) return;
+        pipeline_result.identify_var_types = pipeline_result.identify_var_types.map(
+          (item) => {
+            if (item.id === newVarTypeResult.id) {
+              const updatedNewData = { ...newVarTypeResult.variable, var_type: newVarTypeResult.variable.var_type };
               item.identify_var_types_result.push(updatedNewData);
             }
             return item;
-        });
+          },
+        );
       } else {
         alert("Var type already exists");
       }
@@ -399,14 +398,14 @@
           />
         </div>
         <IdentifyVarTypeResults
-          data={tmp_data[current_version]?.identify_var_types || []}
+          data={pipeline_result?.identify_var_types || []}
           title={`Running: version ${current_version.slice(1)}`}
           titleOptions = {[]}
           {data_loading}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}          
         />
         <IdentifyVarTypeResults
-          data={pipeline_result?.identify_var_types || []}
+          data={pipeline_result_right?.identify_var_types || []}
           title={selectedTitle}
           {titleOptions}
           data_loading={false}

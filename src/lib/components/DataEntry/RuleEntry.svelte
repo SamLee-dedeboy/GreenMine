@@ -5,7 +5,6 @@
 
   // export let current_version: string;
   export let pipeline_ids: string[] = [];
-  console.log(pipeline_ids);
   let show_rules = true;
   const validTypes = ["driver", "pressure", "state", "impact", "response"];
   function handleBlur(key: string, event: FocusEvent) {
@@ -125,7 +124,7 @@
                 class="my-1 capitalize inline-flex items-center px-5 py-0.5 justify-center rounded-sm bg-green-200 outline outline-1 outline-gray-300 hover:bg-green-300"
                 on:click={() => dispatch("base_or_new_button_click")}
             >
-                update rules
+                update rules to log
             </button>
             </div>
             <div class="flex grow divide-x ">

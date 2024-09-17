@@ -33,8 +33,6 @@
   let prompt_data: tServerPromptData;
   let pipeline_result: tServerPipelineData;
   let pipeline_ids: string[] = [];
-  let versionedPipelineResults: { [key: string]: tServerPipelineData } = {};
-  let versionedPrompt: { [key: string]: tServerPromptData } = {};
   let var_data: tDPSIR;
   let vis_links: tVisLink[];
   let data_loading: boolean = true;
@@ -45,15 +43,14 @@
   let current_prompt_data:any;
   // let versions: string[] = [];
   let log_record: any;
-  let selectedTitle = "version 0";
+  let selectedTitle :string;
   let titleOptions:string[] = [];
 
   let versionsCount: { [key: string]: tVersionInfo } = {};
-  // const stepMap = {
-  //   1: "var_type",
-  //   2: "var",
-  //   3: "link"
-  // };
+  let step: string = "var_type";
+  // let new_version = "";
+  let unsaved_versions: Set<string> = new Set();
+
   // pipeline
   // v1
   let keyword_data: any;
@@ -62,6 +59,9 @@
   // let timeline_data: any;
 
   let fetch_success = false;
+  $: latestVersion = versionsCount[step] 
+                    ? versionsCount[step].versions[versionsCount[step].versions.length - 1]
+                    : "v0";
 
   function fetchTest() {
     // fetch data from backend
@@ -115,41 +115,40 @@
         });
     });
   }
-  function fetchPipelineData(step: string, data_loading = true) {
-    data_loading = data_loading;
-    
-    if (!versionsCount[step]) {
-      console.error(`No version information available for step: ${step}`);
-      return Promise.reject(`No version information available for step: ${step}`);
-    }
-
-    const versions = versionsCount[step].versions;
-    
-    const fetchPromises = versions.map(version => 
-      fetch(`${server_address}/pipeline/${step}/${version}/`)
-        .then(res => res.json())
-    );
-
-    return Promise.all(fetchPromises)
-      .then((results: tServerData[]) => {
-        results.forEach((res, index) => {
-          const version = versions[index];
-          versionedPrompt[version] = res.prompts;
-          versionedPipelineResults[version] = res.pipeline_result;
-        });
-
-        // Set prompt_data and pipeline_result based on the current step
-        updateCurrentData(step);
-
-        console.log(`Fetched data for all versions of step: ${step}`);
-      })
-      .catch(error => {
-        console.error(`Error fetching pipeline data for step ${step}:`, error);
-      })
-      .finally(() => {
-        data_loading = false;
-      });
+  function fetchPipelineData(step: string, version: string) {
+  if (!versionsCount[step]) {
+    console.error(`No version information available for step: ${step}`);
+    return Promise.reject(`No version information available for step: ${step}`);
   }
+
+  if (!versionsCount[step].versions.includes(version) && version !== "v0") {
+    console.error(`Version ${version} not found for step: ${step}`);
+    return Promise.reject(`Version ${version} not found for step: ${step}`);
+  }
+
+  return fetch(`${server_address}/pipeline/${step}/${version}/`)
+    .then(res => res.json())
+    .then((res: tServerData) => {
+      // For saved versions, update both prompt_data and pipeline_result
+      prompt_data = res.prompts;
+      pipeline_result = res.pipeline_result;
+      updateCurrentData(step);
+      console.log(`Fetched data for step: ${step}, version: ${version}`);
+    })
+    .catch(error => {
+      console.error(`Error fetching pipeline data for step ${step}, version ${version}:`, error);
+    });
+}
+  function updateCurrentData(step: string) {
+    if (step === 'var_type' && show_step === 1) {      
+      pipeline_ids = pipeline_result.identify_var_types.map(item => item.id);
+    } else if (step === 'var' && show_step === 2) {
+      pipeline_ids = pipeline_result.identify_vars.map(item => item.id);
+    } else if (step === 'link' && show_step === 3) {
+      pipeline_ids = pipeline_result.identify_links.map(item => item.id);
+    }
+  }
+
   function fetchDPSIRData(link_version:string = "v0"){
     data_loading = true;
     fetch(`${server_address}/dpsir/${link_version}/`)
@@ -169,45 +168,48 @@
   }
 
   function updateVersion(e, key: string) {
-    console.log(versionedPipelineResults);
-    console.log(versionedPrompt);
-    if (key === "version_changed") {
-      selectedTitle = e.detail.pipe_version;
-      let pipe_version = "v" + selectedTitle.replace("version ", "")
-      let prompt_version = e.detail.prompt_version;
-      if (versionedPipelineResults[pipe_version]) {
-        pipeline_result = versionedPipelineResults[pipe_version];
-        prompt_data = versionedPrompt[prompt_version];
-      } else {
-        console.log({versionedPipelineResults})
-        console.error("No data for this version");
-      }
-    } else if (key === "version_selected") {
-      let pipe_version = e.detail.pipe_version;
-      let prompt_version = e.detail.prompt_version;
-      console.log({prompt_version})
-      if (versionedPrompt[prompt_version]) {
-        pipeline_result = versionedPipelineResults[pipe_version];
-        prompt_data = versionedPrompt[prompt_version];
-      } else {
-        console.log({versionedPrompt})
-        console.error("No data for this version");
-      }
-    } else if (key === "new_verison_added") {
-      let new_version_title = "version "+(e.detail.version).slice(1);
-      let step = e.detail.step;
+    if (key === "version_selected") {
+      let v = e.detail.version;   
+        if(!unsaved_versions.has(v)){
+          fetchPipelineData(step, v)
+        } else {
+          console.log("This version is not saved yet")
+          fetchPipelineData(step, "v0")
+          .then(() => {
+            // Ensure pipeline_result is empty after fetching
+            pipeline_result = {
+              identify_var_types: [],
+              identify_vars: [],
+              identify_links: []
+            };
+            console.log("New version added with v0 prompt and empty pipeline result");
+          });
+        }
+    } else if (key === "new_verison_added") {  
       versionsCount[step].versions.push(e.detail.version);
       versionsCount[step].total_versions += 1;
       console.log(versionsCount)
-      versionedPipelineResults[e.detail.version] = versionedPipelineResults["v0"];
-      versionedPrompt[e.detail.version] = versionedPrompt["v0"];
-
+      unsaved_versions.add(e.detail.version);
+      // assign the v0 prompt and empty pipeline data to the new version
+      fetchPipelineData(step, "v0")
+      .then(() => {
+        // Ensure pipeline_result is empty after fetching
+        pipeline_result = {
+          identify_var_types: [],
+          identify_vars: [],
+          identify_links: []
+        };
+        console.log("New version added with v0 prompt and empty pipeline result");
+      });
+      
+    } else if (key === "new_version_saved") {
+      console.log("saved new version");
+      unsaved_versions.delete(e.detail.version);
+      let new_version_title = "version "+(e.detail.version).slice(1);
       if (!titleOptions.includes(new_version_title)) {
-          titleOptions = [...titleOptions, new_version_title];
-          
+          titleOptions = [...titleOptions, new_version_title];          
           console.log(titleOptions)
       }
-      // fetchVersionsCount(step);
     }
   }
   function handleEvidenceSelected(e) {
@@ -228,47 +230,15 @@
       interview_viewer_component.highlight_chunks(e.detail as tMention[]);
     }
   }
-  function handleRemoveVarType(e) {
-    console.log("e.detail", e.detail)
-    const { id, variable } = e.detail;
-    if (pipeline_result === undefined) return;
-
-    pipeline_result.identify_var_types = pipeline_result.identify_var_types.map(
-      (item) => {
-        if (item.id === id) {
-          return {
-            ...item,
-            identify_var_types_result: item.identify_var_types_result.filter(
-              (result) => result.var_type !== variable.var_type,
-            ),
-          };
-        }
-        return item;
-      },
-    );
-  }
-  function handleAddVarType(e) {
-    // console.log("e.detail", e.detail);
-    const { id, variable } = e.detail;
-    if (pipeline_result === undefined) return;
-    pipeline_result.identify_var_types = pipeline_result.identify_var_types.map(
-      (item) => {
-        if (item.id === id) {
-          // console.log(newdata.var_type);
-          const updatedNewData = { ...variable, var_type: variable.var_type };
-          item.identify_var_types_result.push(updatedNewData);
-        }
-        return item;
-      },
-    );
-  }
   function handleStepChange(newStep: number) {
-    show_step = newStep;
-    const step = stepMap[show_step];
+    // step change
+    // fetch versions count and fetchpipeline data based on the latest version
+    show_step = newStep; // number
+    step = stepMap[show_step];//string
     if (step) {
       // data_loading = true;
       fetchVersionsCount(step)
-        .then(() => fetchPipelineData(step))
+        .then(() => fetchPipelineData(step, latestVersion))
         .then(() => {
           updateCurrentData(step);
         })
@@ -277,25 +247,14 @@
         });
     }
   }
-  function updateCurrentData(step: string) {
-    const latestVersion = versionsCount[step].versions[versionsCount[step].versions.length - 1];
-    prompt_data = versionedPrompt[latestVersion];
-    pipeline_result = versionedPipelineResults[latestVersion];
-    if (step === 'var_type' && show_step === 1) {      
-      pipeline_ids = pipeline_result.identify_var_types.map(item => item.id);
-    } else if (step === 'var' && show_step === 2) {
-      pipeline_ids = pipeline_result.identify_vars.map(item => item.id);
-    } else if (step === 'link' && show_step === 3) {
-      pipeline_ids = pipeline_result.identify_links.map(item => item.id);
-    }
-  }
+
   onMount(async () => {
     await fetchTest();
     await fetchData();
     await fetchDPSIRData();
-    await fetchVersionsCount("var_type");    
-    await fetchPipelineData("var_type");
-    updateCurrentData("var_type")
+    await fetchVersionsCount(step);    
+    await fetchPipelineData(step, latestVersion);
+    updateCurrentData(step)
     // data_loading = false;
   });
 
@@ -324,22 +283,12 @@
             on:step_change={(e) => handleStepChange(e.detail)}
             on:close={() => (show_prompts = false)}
             on:navigate_evidence={handleEvidenceSelected}
-            on:remove_var_type={handleRemoveVarType}
-            on:add_var_type={handleAddVarType}
             on:version_selected={(e) => updateVersion(e, "version_selected")}
             on:version_changed={(e) => updateVersion(e, "version_changed")} 
             on:new_verison_added={(e) => updateVersion(e, "new_verison_added")}
             on:new_version_saved={(e) => {
-              console.log("save and fetch new");
-              data_loading = true;
-              fetchVersionsCount(e.detail.step)
-                .then(() => fetchPipelineData(e.detail.step))
-                .then(() => {
-                  updateCurrentData(e.detail.step);
-                })
-                .finally(() => {
-                  data_loading = false;
-                });
+              updateVersion(e, "new_version_saved");
+              fetchVersionsCount(step);
             }}
           ></Prompts>
         </div>

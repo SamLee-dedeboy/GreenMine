@@ -10,6 +10,7 @@
     versions: [],
   }
   export let current_version: string;
+  console.log(current_version)
   let show_versions = true;
 </script>
 
