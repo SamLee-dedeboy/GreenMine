@@ -16,12 +16,14 @@
     tServerPromptData,
     tVarTypeResult,
     LogRecord,
+    LogEntry,
     tVersionInfo
   } from "lib/types";
   import { updateTmpData } from "lib/utils/update_with_log";
   import { server_address, stepMap } from "lib/constants";
   import { createEventDispatcher, tick, getContext } from "svelte";
   import { Rule } from "postcss";
+    import type { LoadFnOutput } from "module";
   const dispatch = createEventDispatcher();
   const fetchPipelineData = getContext("fetchPipelineData");
 
@@ -54,15 +56,6 @@
   }
   // console.log(show_step)
 
-  let log_record: LogRecord = {
-    identify_type_results:
-      pipeline_result?.identify_var_types.map((item: any) => ({
-        id: item.id,
-        add_element: [],
-        remove_element: [],
-      })) || [],
-  };
-
   type VarTypeItem = {
     id: string;
     variable: {
@@ -73,6 +66,12 @@
       uncertainty: number;
     };
   };
+  let log: LogRecord = {
+    identify_var_type_results: [],
+    identify_var_results: [],
+    identify_link_results: []
+  };
+
   let removeVar: VarTypeItem[] = [];
   let addVar: VarTypeItem[] = [];
   let measure_uncertainty = false;
@@ -86,36 +85,43 @@
     if (!e) return;
     dispatch("navigate_evidence", e); //To App.sevelte
   }
-  function update_rules() {
+  function update_rules(e) {
+    let record: LogEntry = e.detail;
+    const key = `identify_${stepMap[show_step]}_results` as keyof LogRecord;
+    if (key in log) {
+      log[key].push(record);
+      log = log; // Trigger reactivity
+    }
+    console.log("update log", log);
     // To Be Modified
     // Apply rules to pipeline_result and pipeline_result_right
     // pipeline_result = updateTmpData(pipeline_result, log_record);
     // pipeline_result_right = updateTmpData(pipeline_result_right, log_record);
-    if (log_record) {
-      // Update remove_element
-      for (const item of removeVar) {
-        const logItem = log_record.identify_type_results.find(
-          (result: any) => result.id === item.id,
-        );
-        if (logItem) {
-          logItem.remove_element.push(item.variable);
-        }
-      }
+    // if (log_record) {
+    //   // Update remove_element
+    //   for (const item of removeVar) {
+    //     const logItem = log_record.identify_type_results.find(
+    //       (result: any) => result.id === item.id,
+    //     );
+    //     if (logItem) {
+    //       logItem.remove_element.push(item.variable);
+    //     }
+    //   }
 
-      // Update add_element
-      for (const item of addVar) {
-        const logItem = log_record.identify_type_results.find(
-          (result: any) => result.id === item.id,
-        );
-        if (logItem) {
-          logItem.add_element.push(item.variable);
-        }
-      }
-    }
-    console.log({ log_record });
-    alert("Rules updated");
-    removeVar = [];
-    addVar = [];
+    //   // Update add_element
+    //   for (const item of addVar) {
+    //     const logItem = log_record.identify_type_results.find(
+    //       (result: any) => result.id === item.id,
+    //     );
+    //     if (logItem) {
+    //       logItem.add_element.push(item.variable);
+    //     }
+    //   }
+    // }
+    // console.log({ log_record });
+    // alert("Rules updated");
+    // removeVar = [];
+    // addVar = [];
   }
   function execute_prompt(data: tServerPromptData, key: string, current_version: string) {
     if (!data) return;
@@ -394,7 +400,7 @@
             {pipeline_ids}
             on:remove_var_type={(e) => remove_var_type(e.detail,"identify_var_types")}
             on:add_var_type={(e) => add_var_type(e.detail,"identify_var_types")}
-            on:base_or_new_button_click={() => update_rules()}
+            on:rule_change={(e) => update_rules(e)}
           />
         </div>
         <IdentifyVarTypeResults
