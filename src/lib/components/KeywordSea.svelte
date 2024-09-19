@@ -44,7 +44,7 @@
   });
 </script>
 
-<div class=" keywordsea-container relative h-full w-full p-2">
+<div class="keywordsea-container relative h-full w-full p-2">
   {#if show_key}
     <div
       class="absolute left-2 top-0 w-fit rounded font-serif text-[2rem] font-bold capitalize"
