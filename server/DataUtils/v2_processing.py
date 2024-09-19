@@ -75,7 +75,7 @@ def generate_DPSIR_data(
         mentioned_chunk_data = [
             chunks_dict[chunk_id] for chunk_id in mentioned_chunk_ids
         ]
-        keyword_list, keyword_statistics, keyword_coordinates = generate_keyword_data(
+        keyword_list, keyword_statistics, keyword_coordinates = _generate_keyword_data(
             var_type, mentioned_chunk_data, keyword_embeddings, stopwords, reducer
         )
         res[var_type]["keyword_data"] = {
@@ -88,6 +88,44 @@ def generate_DPSIR_data(
 
 
 def generate_keyword_data(
+    keyword_mentions, keyword_embeddings, stopwords=[], reducer=None
+):
+    keyword_embeddings_dict = {
+        keyword["keyword"]: keyword for keyword in keyword_embeddings
+    }
+    keyword_list = list(keyword_mentions.keys())
+    keyword_list = list(filter(lambda x: x not in stopwords, keyword_list))
+    keyword_list = list(filter(lambda x: x in keyword_embeddings_dict, keyword_list))
+
+    keyword_statistics = {
+        keyword: {"frequency": len(mentions)}
+        for keyword, mentions in keyword_mentions.items()
+        if keyword in keyword_list
+    }
+
+    all_keyword_embeddings = [
+        keyword_embeddings_dict[keyword]["embedding"] for keyword in keyword_list
+    ]
+    if reducer is None:
+        XY, reducer, dr_scaler, min_coord, max_coord, init_positions = dr.scatter_plot(
+            all_keyword_embeddings, method="kernel_pca"
+        )
+    else:
+        XY = dr.reapply_dr(
+            all_keyword_embeddings,
+            scaler=reducer["scaler"],
+            estimator=reducer["estimator"],
+            min_val=reducer["min_val"],
+            max_val=reducer["max_val"],
+        )
+    keyword_coordinates = {}
+    for keyword, coordinate in zip(keyword_list, XY):
+        keyword_coordinates[keyword] = coordinate.tolist()
+
+    return keyword_list, keyword_statistics, keyword_coordinates
+
+
+def _generate_keyword_data(
     var_type, chunks, keyword_embeddings, stopwords=[], reducer=None
 ):
 

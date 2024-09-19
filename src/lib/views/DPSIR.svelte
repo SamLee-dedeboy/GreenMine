@@ -94,6 +94,13 @@
   //
   function handleEmptySpaceClicked(e) {
     if (!e.defaultPrevented) {
+      // reset detail highlights
+      if (DetailDPSIR.highlighting()) {
+        DetailDPSIR.resetHighlights();
+        dispatch("var-selected", null); // for app.svelte to reset hightlight the chunks
+        return;
+      }
+      // reset all highlights
       console.log("empty space clicked", e);
       DetailDPSIR.resetHighlights();
       OverviewDPSIR.resetHighlights();
@@ -150,7 +157,7 @@
       Constants.var_type_names,
       bboxes,
     );
-    console.log({ bboxes });
+    // console.log({ bboxes });
     render(data, links, var_type_states);
   });
 </script>

@@ -5,10 +5,6 @@ export type tServerData = {
   v1: tV1ServerData;
 };
 
-export type tServerDataP = {
-  prompts: tServerPromptData;
-  pipeline_result: tServerPipelineData;
-};
 
 export type tServerDataDPSIR = {
   links: tLink[];
@@ -82,6 +78,7 @@ export type tVarResult = Record<
   {
     var: string;
     evidence: number[];
+    keywords: string[];
     explanation: string;
   }[]
 >;
@@ -107,4 +104,4 @@ export type LogRecord = {
 export type tVersionInfo = {
   total_versions: number;
   versions: string[];
-}
+};

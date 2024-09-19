@@ -385,12 +385,12 @@ export const OverviewDPSIR = {
     bboxes: Record<string, tBbox>,
     var_type_states: Record<string, { revealed: boolean }>,
   ) {
-    console.log({ bboxes, var_type_states });
+    // console.log({ bboxes, var_type_states });
     const self = this;
     const not_revealed_var_types = Object.keys(var_type_states).filter(
       (var_type) => !var_type_states[var_type].revealed,
     );
-    console.log({ not_revealed_var_types });
+    // console.log({ not_revealed_var_types });
     d3.select("#" + this.svgId)
       .select(".overview_bbox_region")
       .selectAll("g.bbox")

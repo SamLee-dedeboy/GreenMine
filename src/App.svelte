@@ -7,18 +7,11 @@
   import { draggable } from "lib/utils/draggable";
   import type {
     tMention,
-    tVariableType,
     tTranscript,
-    tLink,
     tVisLink,
     tServerData,
-    tServerDataP,
     tServerDataDPSIR,
-    tVariable,
-    tChunk,
     tDPSIR,
-    tServerPromptData,
-    tServerPipelineData,
     tVersionInfo,
   } from "lib/types";
   import DPSIR from "lib/views/DPSIR.svelte";
@@ -40,11 +33,7 @@
   let show_dpsir: boolean = true;
   let show_prompts: boolean = false;
   let show_keywordsea: boolean = false;
-  let current_prompt_data: any;
-  // let versions: string[] = [];
-  let log_record: any;
-  let selectedTitle: string;
-  // let titleOptions:string[] = [];
+  // let selectedTitle: string;
   let versionsCount: { [key: string]: tVersionInfo } = {};
 
   // pipeline
@@ -59,7 +48,7 @@
   function fetchTest() {
     // fetch data from backend
     fetch(server_address + "/test/").then((res) => {
-      console.log({ res });
+      // console.log({ res });
       fetch_success = res.ok;
     });
   }
@@ -94,8 +83,8 @@
       .then((res: tServerDataDPSIR) => {
         var_data = res.DPSIR_data;
         vis_links = utils.link_to_vis_link(res.pipeline_links);
-        console.log(vis_links);
-        console.log(res.pipeline_links);
+        // console.log(vis_links);
+        // console.log(res.pipeline_links);
         const var_types = Object.keys(var_data);
         $varTypeColorScale = d3
           .scaleOrdinal()
@@ -145,7 +134,6 @@
         >
           <Prompts
             {interview_ids}
-            {selectedTitle}
             {versionsCount}
             on:close={() => (show_prompts = false)}
             on:navigate_evidence={handleEvidenceSelected}

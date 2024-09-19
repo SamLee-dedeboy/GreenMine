@@ -11,10 +11,8 @@
   import { cubicOut } from "svelte/easing";
 
   import type {
-    tServerData,
     tServerPipelineData,
     tServerPromptData,
-    tVarTypeResult,
     LogRecord,
     LogEntry,
     tVersionInfo,
@@ -27,12 +25,11 @@
 
   let prompt_data: tServerPromptData;
   let pipeline_result: tServerPipelineData;
-  let pipeline_result_right: tServerPipelineData;
+  let pipeline_result_menu: tServerPipelineData;
   export let interview_ids: string[];
-  export let selectedTitle: string;
-  let titleOptions: string[];
   export let versionsCount: { [key: string]: tVersionInfo };
-  let show_step: number = 1;
+  let show_step: number = 1;  
+  let selectedTitle: string = "v0";
   // console.log(pipeline_result)
 
   let data_loading: boolean = false;
@@ -69,6 +66,7 @@
       // data_loading = true;
       fetchVersionsCount(step)
         .then(() => fetchPipelineData(step, current_version))
+        .then(() => fetchMenuData(step, selectedTitle))
         .finally(() => {
           data_loading = false;
         });
@@ -87,7 +85,6 @@
               versions: data.versions,
             },
           };
-          // titleOptions = data.versions.map(version => "version " + version.slice(1));
           console.log("Versions count:", versionsCount);
           resolve();
         })
@@ -118,6 +115,26 @@
         } else {
           interview_ids = pipeline_result[key].map((item) => item.id);
         }
+        console.log(`Fetched data for step: ${step}, version: ${version}`);
+      })
+      .catch((error) => {
+        console.error(
+          `Error fetching pipeline data for step ${step}, version ${version}:`,
+          error,
+        );
+      });
+  }
+  function fetchMenuData(step: string, version: string) {
+    return fetch(`${server_address}/pipeline/${step}/${version}/`)
+      .then((res) => res.json())
+      .then((res) => {
+        const key = `identify_${step}s`;
+        pipeline_result_menu = {
+          ...pipeline_result_menu,
+          [key]: res.pipeline_result,
+        };
+        // check the data for right panel
+        console.log(pipeline_result_menu);
         console.log(`Fetched data for step: ${step}, version: ${version}`);
       })
       .catch((error) => {
@@ -193,24 +210,11 @@
     })
       .then((res) => res.json())
       .then((res) => {
-        // Update the tmp_data for the current version and key
-        // console.log(tmp_data);
-        // if(pipeline_result === undefined) {
-        //   pipeline_result = {
-        //     identify_var_types: [],
-        //     identify_vars: [],
-        //     identify_links: []
-        //   };
-        // }
-        // pipeline_result[key] = res;
         pipeline_result = {
           ...pipeline_result,
           [key]: res,
         };
-        // console.log({ pipeline_result });
-
         save_data(data, pipeline_result, key, current_version);
-
         data_loading = false;
         // compute_uncertainty(data, key);
       });
@@ -236,29 +240,13 @@
     fetchPipelineData(step, current_v);
   }
   function handle_title_change(newTitle: string) {
-    console.log(newTitle);
     selectedTitle = newTitle;
-    const key = `identify_${step}s`;
     let version = newTitle;
     console.log("fetch pipeline data for db");
-    return fetch(`${server_address}/pipeline/${step}/${version}/`)
-      .then((res) => res.json())
-      .then((res) => {
-        pipeline_result_right = {
-          ...pipeline_result_right,
-          [key]: res.pipeline_result,
-        };
-        console.log(pipeline_result_right);
-        console.log(`Fetched data for step: ${step}, version: ${version}`);
-      })
-      .catch((error) => {
-        console.error(
-          `Error fetching pipeline data for step ${step}, version ${version}:`,
-          error,
-        );
-      });
+    fetchMenuData(step, version); 
   }
   function handle_version_added(key: string) {
+    console.log(`adding ${step} version`);
     const nextVersionNumber = versionsCount[key].total_versions; // start from 0
     const newVersion = `v${nextVersionNumber}`;
     current_version = newVersion;
@@ -296,7 +284,7 @@
     // console.log(version);
     if (!pipeline_tmp_data) return;
     console.log(
-      `saving ${version} tmp data`,
+      `saving ${version} data`,
       pipeline_tmp_data[key],
       data[key],
     );
@@ -401,6 +389,7 @@
   onMount(async () => {
     await fetchVersionsCount(step);
     await fetchPipelineData(step, current_version);
+    await fetchMenuData(step, selectedTitle);
   });
 </script>
 
@@ -459,7 +448,7 @@
             on:toggle-measure-uncertainty={() =>
               (measure_uncertainty = !measure_uncertainty)}
             on:select-version={(e) => handle_version_selected(e.detail)}
-            on:add-version={(e) => handle_version_added("var_type")}
+            on:add-version={() => handle_version_added("var_type")}
           ></PromptHeader>
           <VarTypeDataEntry
             bind:data={prompt_data.identify_var_types.var_type_definitions}
@@ -489,7 +478,7 @@
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
         <IdentifyVarTypeResults
-          data={pipeline_result_right?.identify_var_types || []}
+          data={pipeline_result_menu?.identify_var_types || []}
           title={selectedTitle}
           versions={versionsCount["var_type"].versions}
           data_loading={false}
@@ -503,10 +492,13 @@
           <PromptHeader
             title="Identify Variables"
             versionCount={versionsCount["var"]}
-            on:run={() => execute_prompt(prompt_data, "identify_vars")}
+            {current_version}
+            on:run={() => execute_prompt(prompt_data, "identify_vars", current_version)}
             bind:measure_uncertainty
             on:toggle-measure-uncertainty={() =>
               (measure_uncertainty = !measure_uncertainty)}
+            on:select-version={(e) => handle_version_selected(e.detail)}
+            on:add-version={() => handle_version_added("var")}
           ></PromptHeader>
           <VarDataEntry bind:data={prompt_data.identify_vars.var_definitions}
           ></VarDataEntry>
@@ -519,16 +511,19 @@
           />
         </div>
         <IdentifyVarResults
-          title="baseline"
           data={pipeline_result?.identify_vars || []}
-          data_loading={false}
+          title={`Running: version ${current_version.slice(1)}`}
+          versions={[]}
+          {data_loading}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
         <IdentifyVarResults
-          title="new"
-          data={tmp_data?.identify_vars || []}
+          data={pipeline_result_menu?.identify_vars || []}
+          title={selectedTitle}
+          versions = {versionsCount["var"].versions}
           {data_loading}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+          on:title_change={(e) => handle_title_change(e.detail)}
         />
       </div>
     {:else if show_step === 3 && prompt_data.identify_links}
@@ -539,10 +534,13 @@
           <PromptHeader
             title="Identify Links"
             versionCount={versionsCount["link"]}
-            on:run={() => execute_prompt(prompt_data, "identify_links")}
+            {current_version}
+            on:run={() => execute_prompt(prompt_data, "identify_links", current_version)}
             bind:measure_uncertainty
             on:toggle-measure-uncertainty={() =>
               (measure_uncertainty = !measure_uncertainty)}
+            on:select-version={(e) => handle_version_selected(e.detail)}
+            on:add-version={() => handle_version_added("link")}
           ></PromptHeader>
           <PromptEntry
             data={{
@@ -553,16 +551,19 @@
           />
         </div>
         <IdentifyLinkResults
-          title="baseline"
           data={pipeline_result?.identify_links || []}
+          title={`Running: version ${current_version.slice(1)}`}
+          versions={[]}
           data_loading={false}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
         <IdentifyLinkResults
-          title="new"
-          data={tmp_data?.identify_links || []}
+          data={pipeline_result_menu?.identify_links || []}
+          title={selectedTitle}
+          versions = {versionsCount["link"].versions}
           {data_loading}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+          on:title_change={(e) => handle_title_change(e.detail)}
         />
       </div>
     {/if}

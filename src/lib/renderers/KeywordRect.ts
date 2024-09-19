@@ -49,10 +49,10 @@ export class KeyWordRect {
     // this.clicked_rect = undefined;
     d3.select("#" + this.svgId)
       .append("g")
-      .attr("class", "rect-group");
-    d3.select("#" + this.svgId)
-      .append("g")
-      .attr("class", "label-group");
+      .attr("class", "node-group");
+    // d3.select("#" + this.svgId)
+    //   .append("g")
+    //   .attr("class", "label-group");
   }
 
   // call this when data is updated
@@ -68,14 +68,6 @@ export class KeyWordRect {
       .scaleLinear()
       .domain([0, Math.sqrt(maxStat)])
       .range(["#eeeeee", color]);
-    const scaleWidth = d3
-      .scaleLinear()
-      .domain([0, maxStat])
-      .range([0.03 * this.width, 0.12 * this.width]);
-    const scaleHeight = d3
-      .scaleLinear()
-      .domain([0, maxStat])
-      .range([0.02 * this.height, 0.1 * this.height]);
     const scaleFontSize = d3
       .scaleLinear()
       .domain([0, Math.sqrt(maxStat)])
@@ -86,93 +78,69 @@ export class KeyWordRect {
     const self = this;
     const svg = d3.select("#" + this.svgId);
     const nodes = svg
-      .select("g.rect-group")
-      .selectAll("rect")
+      .select("g.node-group")
+      .selectAll("g.node")
       .data(Object.values(nodes_dict))
-      .join("rect")
-      .attr("class", "keyword")
-      .attr("x", (d) => d.x)
-      .attr("y", (d) => d.y)
-      .attr("width", (d) => (d.width = scaleWidth(d.degree)))
-      .attr("height", (d) => (d.height = scaleHeight(d.degree)))
-      .attr("fill", (d) => scaleColor(d.degree))
-      .attr("stroke", "white")
-      .attr("stroke-width", 0.5)
-      .attr("rx", 5)
-      .attr("filter", "drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5))")
-      .attr("cursor", "pointer")
-      .on("mousemove", function (e) {
-        // d3.select(".tooltip")
-        //   .style("left", rect.left + "px")
-        //   .style("top", rect.top + "px");
-        //   .style("left", e.clientX + "px")
-        //   .style("top", e.clientY + "px");
-        //   .style("left", e.layerX + 10 + "px")
-        //   .style("top", e.layerY - 30 + "px");
-      })
-      .on("mouseover", function (e, d) {
-        d3.select(this).classed("rect-hover", true).raise();
-        d3.selectAll("text.label")
-          .classed("rect-label-hover", false)
-          .filter((label) => label[0] === d.label)
-          .classed("rect-label-hover", true);
-        // self.hoveredHexKeywords = d
-        // d3.select(".tooltip").classed("show-tooltip", true).text(d.label);
-      })
-      .on("mouseout", function (_, d) {
-        d3.select(this).classed("rect-hover", false);
-        d3.selectAll("text.label")
-          .filter((label) => label[0] === d.label)
-          .classed("rect-label-hover", false);
-        // self.hoveredHexKeywords = null
-        // d3.select(".tooltip").classed("show-tooltip", false);
-      })
-      .on("click", function (e, d) {
-        // console.log("click", d, self.clicked_rect);
-        e.preventDefault();
-        const hexes = d3
-          .selectAll("rect.keyword")
-          .classed("rect-selected", false)
-          .classed("rect-not-selected", true);
-        d3.select(this)
-          .classed("rect-selected", true)
-          .classed("rect-not-selected", false)
-          .raise();
-        self.dispatch.call("keywordSelected", null, d.label);
-        // if (self.clicked_rect === d.label) {
-        //   self.clicked_rect = undefined;
-        //   self.dispatch.call("keywordSelected", null, null);
-        //   hexes
-        //     .classed("hex-selected", false)
-        //     .classed("hex-not-selected", false);
-        // } else {
-        //   self.clicked_rect = d.label;
-        //   self.dispatch.call("keywordSelected", null, d.label);
-        //   d3.select(this)
-        //     .classed("rect-selected", true)
-        //     .classed("rect-not-selected", false)
-        //     .raise();
-        // }
+      .join("g")
+      .attr("class", "node")
+      .each(function (d) {
+        const group = d3.select(this);
+        group.selectAll("*").remove();
+        group
+          .append("text")
+          .text(d.label)
+          .attr("x", d.x)
+          .attr("y", d.y)
+          .attr("fill", (d) => {
+            return d.degree / maxStat > 0.5 ? "white" : "black";
+          })
+          .attr("font-size", (d) => scaleFontSize(d.degree) + "rem")
+          .attr("text-anchor", "middle")
+          .attr("dominant-baseline", "middle")
+          .attr("pointer-events", "none");
+        const bbox = group.select("text").node().getBBox();
+        group
+          .append("rect")
+          .attr("x", d.x - bbox.width / 2)
+          .attr("y", d.y - bbox.height / 2)
+          .attr("width", (d) => (d.width = bbox.width))
+          .attr("height", (d) => (d.height = bbox.height))
+          .attr("fill", (d) => scaleColor(d.degree))
+          .attr("stroke", "white")
+          .attr("stroke-width", 0.5)
+          .attr("rx", 5)
+          .attr("filter", "drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5))")
+          .attr("cursor", "pointer")
+          .on("mouseover", function (e, d) {
+            d3.select(this.parentNode).raise();
+            d3.select(this).classed("rect-hover", true);
+            d3.selectAll("text.label")
+              .classed("rect-label-hover", false)
+              .filter((label) => label[0] === d.label)
+              .classed("rect-label-hover", true);
+          })
+          .on("mouseout", function (_, d) {
+            d3.select(this).classed("rect-hover", false);
+            d3.selectAll("text.label")
+              .filter((label) => label[0] === d.label)
+              .classed("rect-label-hover", false);
+          })
+          .on("click", function (e, d) {
+            // console.log("click", d, self.clicked_rect);
+            e.preventDefault();
+            const hexes = d3
+              .selectAll("rect.keyword")
+              .classed("rect-selected", false)
+              .classed("rect-not-selected", true);
+            d3.select(this)
+              .classed("rect-selected", true)
+              .classed("rect-not-selected", false)
+              .raise();
+            self.dispatch.call("keywordSelected", null, d.label);
+          })
+          .lower();
       });
-    const node_labels = svg
-      .select("g.label-group")
-      .selectAll("text.label")
-      // .data(hex_labels)
-      .data(Object.values(nodes_dict))
-      .join("text")
-      .text((d) => d.label)
-      //   .text((d) => wrapChinese(d.label) || "")
-      .attr("class", "label")
-      .attr("x", (d) => d.x + scaleWidth(d.degree) / 2)
-      .attr("y", (d) => d.y + scaleHeight(d.degree) / 2)
-      .attr("fill", (d) => {
-        // return "black";
-        return d.degree / maxStat > 0.5 ? "white" : "black";
-      })
-      .attr("font-size", (d) => scaleFontSize(d.degree) + "rem")
-      .attr("text-anchor", "middle")
-      .attr("dominant-baseline", "middle")
-      .attr("pointer-events", "none");
+
     const scalePositionForce = d3
       .scaleLinear()
       .domain([0, maxStat])
@@ -199,15 +167,22 @@ export class KeyWordRect {
           .strength((d) => scalePositionForce(d.degree)),
       )
       .on("tick", () => {
-        const threshold = 0.5;
-        nodes
-          //   .filter((d) => d.degree < threshold)
-          .attr("x", (d) => (d.x = clip(d.x, [0, this.width - d.width])))
-          .attr("y", (d) => (d.y = clip(d.y, [0, this.height - d.height])));
-        node_labels
-          //   .filter((d) => d.degree < threshold)
-          .attr("x", (d) => d.x + d.width / 2)
-          .attr("y", (d) => d.y + d.height / 2);
+        nodes.each(function (d) {
+          const bbox = d3.select(this).select("text").node().getBBox();
+          d.x = clip(d.x, [
+            self.paddings.left + bbox.width / 2,
+            self.width - self.paddings.right - bbox.width / 2,
+          ]);
+          d.y = clip(d.y, [
+            self.paddings.top + bbox.height / 2,
+            self.height - self.paddings.bottom - bbox.height / 2,
+          ]);
+          d3.select(this).select("text").attr("x", d.x).attr("y", d.y);
+          d3.select(this)
+            .select("rect")
+            .attr("x", d.x - bbox.width / 2)
+            .attr("y", d.y - bbox.height / 2);
+        });
       });
   }
 }

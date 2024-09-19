@@ -52,7 +52,9 @@ export const DetailDPSIR = {
   on(event, handler) {
     this.dispatch.on(event, handler);
   },
-
+  highlighting() {
+    return this.rectClicked || this.linkClicked;
+  },
   resetHighlights() {
     d3.selectAll("rect.box")
       .classed("box-highlight", false)
@@ -299,7 +301,7 @@ export const DetailDPSIR = {
     );
 
     const svg = d3.select("#" + this.svgId);
-    console.log({ links });
+    // console.log({ links });
     const mergedData: (tLinkObject | undefined)[] = links.map((link) => {
       const source_var_type_bbox = d3.select(`g.${link.source.var_type}`);
       const source_block = document
@@ -355,7 +357,7 @@ export const DetailDPSIR = {
         mentions: link.mentions,
       };
     });
-    console.log({ mergedData });
+    // console.log({ mergedData });
     let filteredMergeData: tLinkObject[] = mergedData.filter(
       (data) => data !== null,
     ) as tLinkObject[];
@@ -500,7 +502,7 @@ export const DetailDPSIR = {
       }
     };
 
-    console.log({ filteredMergeData });
+    // console.log({ filteredMergeData });
     const link_paths = svg
       .select("g.detail-link-group")
       .selectAll(".link")
