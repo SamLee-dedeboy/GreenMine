@@ -84,6 +84,7 @@ def get_pipeline(step,version):
     # step = var_type, var, link
     version_number = version.replace("v", "")
     print(version_number)
+    
     definitions = {}
     if step in ["var_type", "var"]:
         definitions = json.load(
@@ -110,16 +111,42 @@ def get_pipeline(step,version):
     
     return {
         "prompts": {
-            f"identify_{step}s": {
                 f"{step}_definitions": definitions,
                 "system_prompt_blocks": identify_prompts["system_prompt_blocks"],
                 "user_prompt_blocks": identify_prompts["user_prompt_blocks"],
-            }
         },
-        "pipeline_result": {
-            f"identify_{step}s": identify_data
-        }
+        "pipeline_result": identify_data
+        
     }
+@app.route("/pipeline/<step>/create_and_save_new/", methods=["POST"])
+def create_and_save_new_pipeline(step):
+    version_number = request.json["version"].replace("v", "")
+    definitions = json.load(
+        open(
+            f"{prompt_context_path}v0_{step}_definitions.json",
+            encoding="utf-8",
+        )
+    )
+    prompts = json.load(
+        open(
+            f"{prompt_path}v0_identify_{step}s.json",
+            encoding="utf-8",
+        )
+    )
+    pipeline_result = []
+    local.save_json(
+        definitions,
+        f"{prompt_context_path}v{version_number}_{step}_definitions.json",
+    )
+    local.save_json(
+        prompts,
+        f"{prompt_path}v{version_number}_identify_{step}s.json",
+    )
+    local.save_json(
+        pipeline_result,
+        f"{pipeline_result_path}identify_{step}s/v{version_number}_chunk_w_{step}s.json",
+    )
+    return "success"
 
 @app.route("/dpsir/<link_version>/")
 def getDPSIR(link_version):

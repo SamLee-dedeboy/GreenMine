@@ -6,7 +6,7 @@
   export let data: tIdentifyVarTypes[];
   // export let title: string = "Results";
   export let title: string;
-  export let titleOptions: string[] = [];
+  export let versions: string[] = [];
   export let buttonText: string = ""; // New prop for button text
   export let data_loading: boolean;
   import { createEventDispatcher, onMount } from "svelte";
@@ -92,13 +92,15 @@
       duration: 100,
     }}
   >
-    {#if titleOptions.length > 0}
+    {#if versions.length > 0}
       <select
         bind:value={selectedTitle}
         class="text-center text-lg font-medium capitalize text-black"
       >
-        {#each titleOptions as option}
-          <option class="capitalize" value={option}>{option}</option>
+        {#each versions as option}
+          <option class="capitalize" value={option}
+            >{"version " + option.slice(1)}</option
+          >
         {/each}
       </select>
     {:else}
@@ -110,7 +112,7 @@
       <div class="flex divide-x">
         <div class="w-[4rem] shrink-0">Snippet</div>
         <div class="flex pl-2">Indicators</div>
-        {#if buttonText!==""}
+        {#if buttonText !== ""}
           <div
             role="button"
             tabindex="0"
@@ -205,7 +207,6 @@
                                 }}
                                 on:keyup={() => {}}
                               >
-                                
                               </button>
                             </div>
                             {#if var_type_wrapper.confidence}
@@ -216,7 +217,7 @@
                           </div>
                         {/each}
                         <!-- {#if datum.identify_var_types_result.length < 5} -->
-                          <!-- <div
+                        <!-- <div
                             class="editable-area min-w-[50px] rounded-sm px-1 text-sm italic outline-dashed outline-1 outline-gray-300"
                             style="flex: 1;"
                             contenteditable="true"

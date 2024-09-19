@@ -2,15 +2,19 @@ import type { tTranscript, tVariableType, tDPSIR, tLink, tChunk } from ".";
 
 export type tServerData = {
   interviews: tTranscript[];
-  // nodes: tDPSIR;
-  links: tLink[];
-  pipeline_links: tLink[];
-  // variable_definitions: Record<string, tVarDef>;
-  DPSIR_data: tDPSIR;
   v1: tV1ServerData;
+};
+
+export type tServerDataP = {
   prompts: tServerPromptData;
   pipeline_result: tServerPipelineData;
 };
+
+export type tServerDataDPSIR = {
+  links: tLink[];
+  pipeline_links: tLink[];
+  DPSIR_data: tDPSIR;
+}
 
 export type tV1ServerData = {
   interviews: tTranscript[];
