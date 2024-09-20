@@ -52,7 +52,7 @@
   function sort_by_uncertainty(data: tIdentifyLinks[]) {
     console.log("sort_by_uncertainty", data);
     if (data.length === 0) return data;
-    if (data[0].uncertainty.identify_links === undefined) {
+    if (!data[0].uncertainty) {
       return sort_by_id(data);
     }
     console.log("sorting_by_uncertainty", data);
@@ -128,7 +128,7 @@
                   >
                     list view
                   </div>
-                  {#if datum.uncertainty.identify_links}
+                  {#if datum.uncertainty?.identify_links}
                     <div
                       class="ml-auto flex items-center pl-1 text-xs italic text-gray-600"
                     >
@@ -178,7 +178,7 @@
                   >
                     graph view
                   </div>
-                  {#if datum.uncertainty.identify_links}
+                  {#if datum.uncertainty?.identify_links}
                     <div
                       class="ml-auto flex items-center pl-1 text-xs italic text-gray-600"
                     >

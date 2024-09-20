@@ -14,7 +14,7 @@
    * the flag is used to switch between showing all variables or only '其他'
    * @type {boolean}
    */
-  let show_others = true;
+  let show_others = false;
   import VersionsMenu from "./VersionsMenu.svelte";
   export let data: tIdentifyVars[];
   export let title: string;
@@ -152,7 +152,7 @@
               <div class="pl-1 text-sm">None</div>
             {:else}
               <div class="result flex w-full flex-col divide-gray-300">
-                {#if datum.uncertainty.identify_vars}
+                {#if datum.uncertainty?.identify_vars}
                   <div
                     class=" flex w-full items-center justify-end bg-gray-200 pl-1 text-xs italic text-gray-600"
                   >

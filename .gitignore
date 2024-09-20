@@ -22,5 +22,5 @@ openai_api_key
 node_modules
 .prettierrc
 server/request_log.txt
-server/GPTUtils/context/*.json
+server/GPTUtils/contexts/*.json
 server/GPTUtils/prompts/*.json
