@@ -25,10 +25,10 @@
 
   let prompt_data: tServerPromptData;
   let pipeline_result: tServerPipelineData;
-  let pipeline_result_menu: tServerPipelineData;
+  let right_panel_result: tServerPipelineData;
   export let interview_ids: string[];
   export let versionsCount: { [key: string]: tVersionInfo };
-  let show_step: number = 1;  
+  let show_step: number = 1;
   let selectedTitle: string = "v0";
   // console.log(pipeline_result)
 
@@ -138,12 +138,12 @@
       .then((res) => res.json())
       .then((res) => {
         const key = `identify_${step}s`;
-        pipeline_result_menu = {
-          ...pipeline_result_menu,
+        right_panel_result = {
+          ...right_panel_result,
           [key]: res.pipeline_result,
         };
         // check the data for right panel
-        console.log(pipeline_result_menu);
+        console.log(right_panel_result);
         console.log(`Fetched data for step: ${step}, version: ${version}`);
       })
       .catch((error) => {
@@ -195,13 +195,10 @@
     // removeVar = [];
     // addVar = [];
   }
-  function execute_prompt(
-    data: tServerPromptData,
-    key: string
-  ) {
+  function execute_prompt(data: tServerPromptData, key: string) {
     if (!data) return;
     data_loading = true;
-    
+
     fetch(server_address + `/curation/${key}/`, {
       method: "POST",
       headers: {
@@ -219,25 +216,15 @@
           ...pipeline_result,
           [key]: res,
         };
+        if (selectedTitle === current_versions[step]) {
+          right_panel_result = {
+            ...right_panel_result,
+            [key]: res,
+          };
+        }
         console.log("pipeline_result", pipeline_result);
         save_data(data, pipeline_result, key);
         data_loading = false;
-        // compute_uncertainty(data, key);
-      });
-  }
-
-  function compute_uncertainty(data: tServerPromptData, key: string) {
-    if (!data) return;
-    fetch(server_address + `/curation/${key}/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ ...data[key], compute_uncertainty: true }),
-    })
-      .then((res) => res.json())
-      .then((res) => {
-        console.log("uncertainty: ", { res });
       });
   }
 
@@ -249,7 +236,7 @@
     selectedTitle = newTitle;
     let version = newTitle;
     console.log("fetch pipeline data for db");
-    fetchMenuData(step, version); 
+    fetchMenuData(step, version);
   }
   function handle_version_added(key: string) {
     console.log(`adding ${step} version`);
@@ -443,12 +430,8 @@
           <PromptHeader
             title="Identify Indicators"
             versionCount={versionsCount["var_type"]}
-            current_version = {current_versions["var_type"]}
-            on:run={() =>
-              execute_prompt(
-                prompt_data,
-                "identify_var_types"
-              )}
+            current_version={current_versions["var_type"]}
+            on:run={() => execute_prompt(prompt_data, "identify_var_types")}
             bind:measure_uncertainty
             on:toggle-measure-uncertainty={() =>
               (measure_uncertainty = !measure_uncertainty)}
@@ -483,10 +466,10 @@
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
         <IdentifyVarTypeResults
-          data={pipeline_result_menu?.identify_var_types || []}
+          data={right_panel_result?.identify_var_types || []}
           title={selectedTitle}
           versions={versionsCount["var_type"].versions}
-          {data_loading}
+          data_loading={false}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
           on:title_change={(e) => handle_title_change(e.detail)}
         />
@@ -497,7 +480,7 @@
           <PromptHeader
             title="Identify Variables"
             versionCount={versionsCount["var"]}
-            current_version = {current_versions["var"]}
+            current_version={current_versions["var"]}
             on:run={() => execute_prompt(prompt_data, "identify_vars")}
             bind:measure_uncertainty
             on:toggle-measure-uncertainty={() =>
@@ -523,10 +506,10 @@
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
         <IdentifyVarResults
-          data={pipeline_result_menu?.identify_vars || []}
+          data={right_panel_result?.identify_vars || []}
           title={selectedTitle}
-          versions = {versionsCount["var"].versions}
-          {data_loading}
+          versions={versionsCount["var"].versions}
+          data_loading={false}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
           on:title_change={(e) => handle_title_change(e.detail)}
         />
@@ -539,7 +522,7 @@
           <PromptHeader
             title="Identify Links"
             versionCount={versionsCount["link"]}
-            current_version = {current_versions["link"]}
+            current_version={current_versions["link"]}
             on:run={() => execute_prompt(prompt_data, "identify_links")}
             bind:measure_uncertainty
             on:toggle-measure-uncertainty={() =>
@@ -563,10 +546,10 @@
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
         <IdentifyLinkResults
-          data={pipeline_result_menu?.identify_links || []}
+          data={right_panel_result?.identify_links || []}
           title={selectedTitle}
-          versions = {versionsCount["link"].versions}
-          {data_loading}
+          versions={versionsCount["link"].versions}
+          data_loading={false}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
           on:title_change={(e) => handle_title_change(e.detail)}
         />
