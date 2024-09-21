@@ -2,7 +2,7 @@
   import { createEventDispatcher, onMount } from "svelte";
   import { fade, slide } from "svelte/transition";
   import type { tPrompt } from "lib/types";
-  export let data: tPrompt | undefined = undefined;
+  export let data: tPrompt;
   const dispatch = createEventDispatcher();
   let show_prompts = true;
 

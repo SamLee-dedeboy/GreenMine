@@ -15,9 +15,6 @@
       ...data[shown_var_type],
     ];
   }
-  onMount(() => {
-    console.log({ data });
-  });
 </script>
 
 <div class="flex flex-col gap-y-0.5 px-1">

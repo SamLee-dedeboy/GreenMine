@@ -68,7 +68,7 @@
         <div class="w-[4rem] shrink-0">Snippet</div>
         <div class="flex pl-2">Indicators</div>
       </div>
-      {#if data_loading}
+      {#if data_loading }
         <div class="flex h-full items-center justify-center">
           Data Loading...
         </div>
@@ -77,7 +77,7 @@
           class="flex h-1 grow flex-col divide-y divide-black overflow-y-scroll"
         >
           {#each sort_by_uncertainty(data) as datum, i}
-            {#if datum.identify_var_types_result}
+            {#if datum.identify_var_types_result }
               {@const isNone = datum.identify_var_types_result.length === 0}
               <div class="flex items-center divide-x bg-gray-200" class:isNone>
                 <div class="w-[4rem] shrink-0 text-[0.9rem]">{datum.id}</div>

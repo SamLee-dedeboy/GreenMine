@@ -23,10 +23,6 @@
   export let selectedTitle: string = title;
   const dispatch = createEventDispatcher();
 
-  onMount(() => {
-    console.log({ data });
-  });
-
   function handleTitleChange(e) {
     selectedTitle = e.detail;
     if (selectedTitle !== title) {
@@ -67,10 +63,6 @@
     console.log({ res });
     return res;
   }
-  onMount(() => {
-    console.log({ data });
-    // fetch_data_for_others(data);
-  });
 </script>
 
 <div
