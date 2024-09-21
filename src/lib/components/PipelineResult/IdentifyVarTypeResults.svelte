@@ -2,68 +2,28 @@
   import { fade } from "svelte/transition";
   import type { tIdentifyVarTypes, tVarTypeResult } from "lib/types";
   import { varTypeColorScale } from "lib/store";
-  import { compare_var_types, sort_by_id } from "lib/utils";
-  export let data: tIdentifyVarTypes[];
-  // export let title: string = "Results";
-  export let title: string;
-  export let titleOptions: string[] = [];
-  export let buttonText: string = ""; // New prop for button text
-  export let data_loading: boolean;
+  import { compare_var_types, sort_by_id } from "lib/utils";  
   import { createEventDispatcher, onMount } from "svelte";
-  let selectedTitle: string = title;
+  import VersionsMenu from "./VersionsMenu.svelte";
+  export let data: tIdentifyVarTypes[];
+  export let title: string;
+  export let versions: string[] = [];
+  export let data_loading: boolean;
+  export let selectedTitle: string = title;
   const dispatch = createEventDispatcher();
-  const validTypes = ["driver", "pressure", "state", "impact", "response"];
 
   function varTypeConfidenceShadow(confidence: number | undefined) {
     if (!confidence) return `unset`;
     if (confidence > 0.5) return "; color: rgb(31 41 55)";
     return `1px 1px 1px 1px black`;
   }
-  function handleInput(id: string, event: Event) {
-    if (!(event.target instanceof HTMLElement)) return;
-    const currentDatum = data.find((datum) => datum.id === id);
-    const inputText = event.target.textContent?.trim().toLowerCase() || "";
 
-    if (currentDatum && inputText) {
-      const alreadyExists = currentDatum.identify_var_types_result.some(
-        (item) => item.var_type === inputText,
-      );
-      if (!alreadyExists && validTypes.includes(inputText)) {
-        // console.log({ inputText });
-        dispatch("add_var_type", { id, var_type: inputText });
-        event.target.textContent = ""; // Clear the input after dispatching
-      } else if (alreadyExists) {
-        alert("Var type already exists");
-        event.target.textContent = "";
-      }
-    }
-  }
-
-  function handleKeydown(id: string, event: KeyboardEvent) {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      handleInput(id, event);
-    } else if (event.key === "Escape") {
-      (event.target as HTMLElement).blur();
-    }
-  }
-
-  function handleBlur(id: string, event: FocusEvent) {
-    handleInput(id, event);
-  }
-  function handleFocus(event: FocusEvent) {
-    const target = event.target as HTMLElement;
-    if (target.textContent?.trim() === "Enter var type") {
-      target.textContent = "";
-    }
-  }
-  function handleTitleChange() {
+  function handleTitleChange(e) {
+    selectedTitle = e.detail;
     if (selectedTitle !== title) {
-      dispatch("title_change", selectedTitle);
+      dispatch("title_change", selectedTitle); // To Prompts.svelte
     }
   }
-
-  $: selectedTitle, handleTitleChange();
   function sort_by_uncertainty(data: tIdentifyVarTypes[]) {
     if (data.length === 0) return data;
     if (!data[0].uncertainty) {
@@ -92,15 +52,12 @@
       duration: 100,
     }}
   >
-    {#if titleOptions.length > 0}
-      <select
-        bind:value={selectedTitle}
-        class="text-center text-lg font-medium capitalize text-black"
-      >
-        {#each titleOptions as option}
-          <option class="capitalize" value={option}>{option}</option>
-        {/each}
-      </select>
+    {#if versions.length > 0}
+      <VersionsMenu
+        {versions}
+        bind:selectedTitle
+        on:title_change={handleTitleChange}
+      />
     {:else}
       <h2 class="text-center text-lg font-medium capitalize text-black">
         {title}
@@ -110,17 +67,6 @@
       <div class="flex divide-x">
         <div class="w-[4rem] shrink-0">Snippet</div>
         <div class="flex pl-2">Indicators</div>
-        {#if buttonText!==""}
-          <div
-            role="button"
-            tabindex="0"
-            class="ml-auto flex items-center justify-center self-center rounded-sm bg-gray-200 px-2 py-1 text-[0.7rem] normal-case italic leading-3 text-gray-600 text-gray-700 outline-double outline-1 outline-gray-600 transition-colors duration-200 hover:bg-gray-300"
-            on:click={() => dispatch("base_or_new_button_click")}
-            on:keyup={() => {}}
-          >
-            {buttonText}
-          </div>
-        {/if}
       </div>
       {#if data_loading}
         <div class="flex h-full items-center justify-center">
@@ -140,18 +86,6 @@
                 >
                   {#if isNone}
                     <div class="text-sm">None</div>
-                    <!-- <label for="varType" class="text-sm mr-2">Enter var type...</label> -->
-                    <!-- <div
-                      class="editable-area min-w-[50px] rounded-sm px-1 text-sm italic outline-dashed outline-1 outline-gray-300"
-                      style="flex: 1;"
-                      contenteditable="true"
-                      role="textbox"
-                      tabindex="0"
-                      aria-label="Enter var type"
-                      on:input={(event) => handleInput(datum.id, event)}
-                      on:keydown={(event) => handleKeydown(datum.id, event)}
-                      on:blur={(event) => handleBlur(datum.id, event)}
-                    ></div> -->
                   {:else}
                     <div class="flex w-full flex-col">
                       {#if datum.uncertainty?.identify_var_types}
@@ -205,7 +139,6 @@
                                 }}
                                 on:keyup={() => {}}
                               >
-                                
                               </button>
                             </div>
                             {#if var_type_wrapper.confidence}
@@ -215,20 +148,6 @@
                             {/if}
                           </div>
                         {/each}
-                        <!-- {#if datum.identify_var_types_result.length < 5} -->
-                          <!-- <div
-                            class="editable-area min-w-[50px] rounded-sm px-1 text-sm italic outline-dashed outline-1 outline-gray-300"
-                            style="flex: 1;"
-                            contenteditable="true"
-                            role="textbox"
-                            tabindex="0"
-                            aria-label="Enter var type"
-                            on:input={(event) => handleInput(datum.id, event)}
-                            on:keydown={(event) =>
-                              handleKeydown(datum.id, event)}
-                            on:blur={(event) => handleBlur(datum.id, event)}
-                          ></div> -->
-                        <!-- {/if} -->
                       </div>
                     </div>
                   {/if}

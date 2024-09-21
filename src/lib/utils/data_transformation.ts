@@ -75,7 +75,7 @@ export function link_to_graph(links, nodes, link_threshold, chunk_coordinates) {
   // filter links and build weights
   links = links.filter((link) => link[2] > link_threshold);
   let group_links: any = {};
-  console.log({ nodes_dict, links });
+  // console.log({ nodes_dict, links });
   links.forEach((link) => {
     const source = link[0];
     const target = link[1];

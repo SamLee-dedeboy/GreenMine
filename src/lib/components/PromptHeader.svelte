@@ -5,10 +5,10 @@
   const dispatch = createEventDispatcher();
   export let title: string = "Prompt Viewer";
   export let measure_uncertainty: boolean = false;
-  export let versionCount: tVersionInfo={
+  export let versionCount: tVersionInfo = {
     total_versions: 0,
     versions: [],
-  }
+  };
   export let current_version: string;
   let show_versions = true;
 </script>
@@ -54,30 +54,30 @@
       on:click={() => (show_versions = !show_versions)}
       on:keyup={() => {}}
     >
-      Version list (Total: {versionCount.total_versions}) 
+      Version list (Total: {versionCount.total_versions})
     </div>
   </div>
   {#if show_versions}
-  <div class="flex divide-x justify-center pt-1">
-    <div class="flex flex-wrap gap-2 justify-center">
-      {#each versionCount.versions as version}
-        <button 
-          class="h-6 w-6 rounded-full bg-blue-500 opacity-80 text-white text-sm hover:bg-blue-600 hover:opacity-100 "
-          class:selected={version === current_version}
-          on:click={() => dispatch('select-version', version)}
-        >
-          {version}
-        </button>
-      {/each}
-      <button 
-          class="h-6 w-6 rounded-full bg-gray-400 text-white text-lg font-bold hover:bg-gray-500 flex items-center justify-center"
-          on:click={() => dispatch('add-version')}
+    <div class="flex justify-center divide-x pt-1">
+      <div class="flex flex-wrap justify-center gap-2">
+        {#each versionCount.versions as version}
+          <button
+            class="h-6 w-6 rounded-full bg-blue-500 text-sm text-white opacity-80 hover:bg-blue-600 hover:opacity-100"
+            class:selected={version === current_version}
+            on:click={() => dispatch("select-version", version)}
+          >
+            {version}
+          </button>
+        {/each}
+        <button
+          class="flex h-6 w-6 items-center justify-center rounded-full bg-gray-400 text-lg font-bold text-white hover:bg-gray-500"
+          on:click={() => dispatch("add-version")}
           aria-label="Add new version"
         >
           +
-      </button>
+        </button>
+      </div>
     </div>
-  </div>
   {/if}
 </div>
 
@@ -93,4 +93,3 @@
     @apply rounded-sm bg-gray-200 text-gray-700 outline-double outline-1 outline-gray-600 hover:bg-gray-300;
   }
 </style>
-

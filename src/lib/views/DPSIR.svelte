@@ -157,7 +157,7 @@
       Constants.var_type_names,
       bboxes,
     );
-    console.log({ bboxes });
+    // console.log({ bboxes });
     render(data, links, var_type_states);
   });
 </script>

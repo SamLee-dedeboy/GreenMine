@@ -7,10 +7,6 @@
   import { server_address } from "lib/constants";
   import KeywordSea from "lib/components/KeywordSea.svelte";
 
-  const dispatch = createEventDispatcher();
-  export let data: tIdentifyVars[];
-  export let data_loading: boolean;
-  export let title: string = "baseline";
   let clicked_var_type_for_others: string = "driver";
 
   // let data_for_others;
@@ -18,7 +14,26 @@
    * the flag is used to switch between showing all variables or only '其他'
    * @type {boolean}
    */
-  let show_others = true;
+  let show_others = false;
+  import VersionsMenu from "./VersionsMenu.svelte";
+  export let data: tIdentifyVars[];
+  export let title: string;
+  export let versions: string[] = [];
+  export let data_loading: boolean;
+  export let selectedTitle: string = title;
+  const dispatch = createEventDispatcher();
+
+  onMount(() => {
+    console.log({ data });
+  });
+
+  function handleTitleChange(e) {
+    selectedTitle = e.detail;
+    if (selectedTitle !== title) {
+      dispatch("title_change", selectedTitle); // To Prompts.svelte
+    }
+  }
+
   function sort_by_uncertainty(data: tIdentifyVars[]) {
     if (data.length === 0) return data;
     if (!data[0].uncertainty) {
@@ -60,7 +75,17 @@
 <div
   class="flex h-full min-w-[25rem] flex-1 flex-col bg-gray-100 px-1 shadow-lg"
 >
-  <h2 class="text-lg font-medium capitalize text-black">{title}</h2>
+  {#if versions.length > 0}
+    <VersionsMenu
+      {versions}
+      bind:selectedTitle
+      on:title_change={handleTitleChange}
+    />
+  {:else}
+    <h2 class="text-center text-lg font-medium capitalize text-black">
+      {title}
+    </h2>
+  {/if}
   <div class="flex grow flex-col divide-y divide-black">
     <div class="flex divide-x py-0.5">
       {#if show_others}
@@ -126,7 +151,7 @@
               <div class="pl-1 text-sm">None</div>
             {:else}
               <div class="result flex w-full flex-col divide-gray-300">
-                {#if datum.uncertainty.identify_vars}
+                {#if datum.uncertainty?.identify_vars}
                   <div
                     class=" flex w-full items-center justify-end bg-gray-200 pl-1 text-xs italic text-gray-600"
                   >

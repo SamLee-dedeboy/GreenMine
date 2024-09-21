@@ -2,15 +2,15 @@ import type { tTranscript, tVariableType, tDPSIR, tLink, tChunk } from ".";
 
 export type tServerData = {
   interviews: tTranscript[];
-  // nodes: tDPSIR;
+  v1: tV1ServerData;
+};
+
+
+export type tServerDataDPSIR = {
   links: tLink[];
   pipeline_links: tLink[];
-  // variable_definitions: Record<string, tVarDef>;
   DPSIR_data: tDPSIR;
-  v1: tV1ServerData;
-  prompts: tServerPromptData;
-  pipeline_result: tServerPipelineData;
-};
+}
 
 export type tV1ServerData = {
   interviews: tTranscript[];
@@ -90,13 +90,15 @@ export type tVarDef = {
 };
 
 export type LogEntry = {
+  action: string;
   id: string;
-  add_element: tVarTypeResult;
-  remove_element: tVarTypeResult;
+  value: string;
 };
 
 export type LogRecord = {
-  identify_type_results: LogEntry[];
+  identify_var_type_results: LogEntry[];
+  identify_var_results: LogEntry[];
+  identify_link_results: LogEntry[];
 };
 
 export type tVersionInfo = {

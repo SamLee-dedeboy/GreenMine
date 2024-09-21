@@ -13,53 +13,26 @@
   import type {
     tServerPipelineData,
     tServerPromptData,
-    tVarTypeResult,
     LogRecord,
-    tVersionInfo
+    LogEntry,
+    tVersionInfo,
   } from "lib/types";
   import { updateTmpData } from "lib/utils/update_with_log";
   import { server_address, stepMap } from "lib/constants";
-  import { createEventDispatcher, tick, getContext } from "svelte";
-    import { Rule } from "postcss";
+  import { createEventDispatcher, tick, getContext, onMount } from "svelte";
+  import { Rule } from "postcss";
   const dispatch = createEventDispatcher();
-  const fetchPipelineData = getContext("fetchPipelineData");
 
-  export let data: tServerPromptData;
-  export let pipeline_result: tServerPipelineData | undefined = undefined;
-  export let pipeline_ids: string[];
-  export let selectedTitle: string;
-  export let titleOptions: string[];
+  let prompt_data: tServerPromptData;
+  let pipeline_result: tServerPipelineData;
+  let right_panel_result: tServerPipelineData;
+  export let interview_ids: string[];
   export let versionsCount: { [key: string]: tVersionInfo };
-  export let show_step: number;
+  let show_step: number = 1;
+  let selectedTitle: string = "v0";
   // console.log(pipeline_result)
 
   let data_loading: boolean = false;
-  let tmp_data: {
-    [version: string]: {
-      identify_var_types: any[],
-      identify_vars: any[],
-      identify_links: any[]
-    }
-  } = {};
-
-  let current_version = versionsCount[stepMap[show_step]].versions[versionsCount[stepMap[show_step]].versions.length - 1];
-  if (current_version) {
-    tmp_data[current_version] = {
-      identify_var_types: [],
-      identify_vars: [],
-      identify_links: []
-    };
-  }
-  // console.log(show_step)
-
-  let log_record: LogRecord = {
-    identify_type_results:
-      pipeline_result?.identify_var_types.map((item: any) => ({
-        id: item.id,
-        add_element: [],
-        remove_element: [],
-      })) || [],
-  };
 
   type VarTypeItem = {
     id: string;
@@ -71,143 +44,230 @@
       uncertainty: number;
     };
   };
+  let log: LogRecord = {
+    identify_var_type_results: [],
+    identify_var_results: [],
+    identify_link_results: [],
+  };
+
   let removeVar: VarTypeItem[] = [];
   let addVar: VarTypeItem[] = [];
   let measure_uncertainty = false;
+  let current_versions = {
+    var_type: "v0",
+    var: "v0",
+    link: "v0",
+  };
+
+  $: step = stepMap[show_step];
+  $: {
+    if (versionsCount[step]) {
+      const versions = versionsCount[step].versions;
+      current_versions[step] = versions[versions.length - 1];
+    }
+  }
+
   function changeStep(newStep: number) {
     show_step = newStep;
-    dispatch('step_change', newStep);
+    step = stepMap[show_step]; //string
+    selectedTitle = "v0";
+    if (step) {
+      // data_loading = true;
+      // fetchVersionsCount(step)
+      //   .then(() => fetchPipelineData(step, current_versions[step]))
+      //   .then(() => fetchMenuData(step, selectedTitle))
+      //   .finally(() => {
+      //     data_loading = false;
+      //   });
+      fetchVersionsCount(step);
+      fetchPipelineData(step, current_versions[step]);
+    }
   }
-  
 
+  function fetchVersionsCount(step: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      fetch(`${server_address}/pipeline/${step}/all_versions`)
+        .then((res) => res.json())
+        .then((data) => {
+          versionsCount = {
+            ...versionsCount,
+            [step]: {
+              total_versions: data.total_versions,
+              versions: data.versions,
+            },
+          };
+          console.log("Versions count:", versionsCount);
+          resolve();
+        })
+        .catch((error) => {
+          console.error(`Error fetching versions count for ${step}:`, error);
+          reject(error);
+        });
+    });
+  }
+  function fetchPipelineData(step: string, version: string) {
+    return fetch(`${server_address}/pipeline/${step}/${version}/`)
+      .then((res) => res.json())
+      .then((res) => {
+        const key = `identify_${step}s`;
+        // console.log(res)
+        prompt_data = {
+          ...prompt_data,
+          [key]: res.prompts,
+        };
+        pipeline_result = {
+          ...pipeline_result,
+          [key]: res.pipeline_result,
+        };
+        // console.log(prompt_data)
+        // console.log({pipeline_result})
+        if (pipeline_result[key].length === 0) {
+          interview_ids = ["none"];
+        } else {
+          interview_ids = pipeline_result[key].map((item) => item.id);
+        }
+        console.log(`Fetched data for step: ${step}, version: ${version}`);
+      })
+      .catch((error) => {
+        console.error(
+          `Error fetching pipeline data for step ${step}, version ${version}:`,
+          error,
+        );
+      });
+  }
+  function fetchMenuData(step: string, version: string) {
+    return fetch(`${server_address}/pipeline/${step}/${version}/`)
+      .then((res) => res.json())
+      .then((res) => {
+        const key = `identify_${step}s`;
+        right_panel_result = {
+          ...right_panel_result,
+          [key]: res.pipeline_result,
+        };
+        // check the data for right panel
+        console.log(right_panel_result);
+        console.log(`Fetched data for step: ${step}, version: ${version}`);
+      })
+      .catch((error) => {
+        console.error(
+          `Error fetching pipeline data for step ${step}, version ${version}:`,
+          error,
+        );
+      });
+  }
   function navigate_evidence(e) {
     if (!e) return;
     dispatch("navigate_evidence", e); //To App.sevelte
   }
-  function update_rules() {
+  function update_rules(e) {
+    let record: LogEntry = e.detail;
+    const key = `identify_${stepMap[show_step]}_results` as keyof LogRecord;
+    if (key in log) {
+      log[key].push(record);
+      log = log; // Trigger reactivity
+    }
+    console.log("update log", log);
     // To Be Modified
-    // need to save tmp data and fetch pipline data again
-    // Apply rules to tmp_data
-    // tmp_data[current_version] = updateTmpData(tmp_data[current_version], log_record);
-    if (log_record) {
-      // Update remove_element
-      for (const item of removeVar) {
-        const logItem = log_record.identify_type_results.find(
-          (result: any) => result.id === item.id,
-        );
-        if (logItem) {
-          logItem.remove_element.push(item.variable);
-        }
-      }
+    // Apply rules to pipeline_result and pipeline_result_right
+    // pipeline_result = updateTmpData(pipeline_result, log_record);
+    // pipeline_result_right = updateTmpData(pipeline_result_right, log_record);
+    // if (log_record) {
+    //   // Update remove_element
+    //   for (const item of removeVar) {
+    //     const logItem = log_record.identify_type_results.find(
+    //       (result: any) => result.id === item.id,
+    //     );
+    //     if (logItem) {
+    //       logItem.remove_element.push(item.variable);
+    //     }
+    //   }
 
-      // Update add_element
-      for (const item of addVar) {
-        const logItem = log_record.identify_type_results.find(
-          (result: any) => result.id === item.id,
-        );
-        if (logItem) {
-          logItem.add_element.push(item.variable);
-        }
-      }
-    }
-    console.log({ log_record });
-    alert("Rules updated");
-    removeVar = [];
-    addVar = [];
+    //   // Update add_element
+    //   for (const item of addVar) {
+    //     const logItem = log_record.identify_type_results.find(
+    //       (result: any) => result.id === item.id,
+    //     );
+    //     if (logItem) {
+    //       logItem.add_element.push(item.variable);
+    //     }
+    //   }
+    // }
+    // console.log({ log_record });
+    // alert("Rules updated");
+    // removeVar = [];
+    // addVar = [];
   }
-  function execute_prompt(data: tServerPromptData, key: string, current_version: string) {
+  function execute_prompt(data: tServerPromptData, key: string) {
     if (!data) return;
-    if(current_version === "") {
-      alert("Please select a version");
-      return;
-    }
     data_loading = true;
+
     fetch(server_address + `/curation/${key}/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      // body: JSON.stringify(data[key]),
       body: JSON.stringify({
         ...data[key],
         compute_uncertainty: measure_uncertainty,
+        current_versions: current_versions,
       }),
-    })
-    .then((res) => res.json())
-    .then((res) => {
-      // Update the tmp_data for the current version and key
-      console.log(tmp_data);
-      tmp_data[current_version][key] = res;
-      console.log({ res });
-      
-      save_data(data, tmp_data[current_version], key, current_version);
-      
-      
-      data_loading = false;
-      // compute_uncertainty(data, key);
-    });
-
-  }
-
-  function compute_uncertainty(data: tServerPromptData, key: string) {
-    if (!data) return;
-    fetch(server_address + `/curation/${key}/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ ...data[key], compute_uncertainty: true }),
     })
       .then((res) => res.json())
       .then((res) => {
-        console.log("uncertainty: ", { res });
+        pipeline_result = {
+          ...pipeline_result,
+          [key]: res,
+        };
+        if (selectedTitle === current_versions[step]) {
+          right_panel_result = {
+            ...right_panel_result,
+            [key]: res,
+          };
+        }
+        console.log("pipeline_result", pipeline_result);
+        save_data(data, pipeline_result, key);
+        data_loading = false;
       });
   }
 
   function handle_version_selected(current_v: string) {
-    // console.log("version selected", current_v);
-    current_version = current_v;
-    dispatch("version_selected", {
-              pipe_version:"v" + selectedTitle.replace("version ", ""),
-              prompt_version:current_version              
-            });//To App.svelte to reload prompt_data
-
-    // if the version has been run before, load the data as tmp
-    if (tmp_data[current_v]) {
-      console.log(`Loading existing data for version ${current_v}`);
-    } else {
-      console.log(`Initializing data for new version ${current_v}`);
-      tmp_data[current_v] = {
-        identify_var_types: [],
-        identify_vars: [],
-        identify_links: [],
-      };
-    }
+    current_versions[step] = current_v;
+    fetchPipelineData(step, current_v);
   }
   function handle_title_change(newTitle: string) {
-    // console.log("version changed",newTitle);
     selectedTitle = newTitle;
-    dispatch("version_changed", {
-              pipe_version:selectedTitle, 
-              prompt_version:current_version,
-            }); //To App.svelte to reload pipeline_data
+    let version = newTitle;
+    console.log("fetch pipeline data for db");
+    fetchMenuData(step, version);
   }
-  function handle_version_added(key:string) {
-    // Add the new version to titleOptions if it's not already there
+  function handle_version_added(key: string) {
+    console.log(`adding ${step} version`);
     const nextVersionNumber = versionsCount[key].total_versions; // start from 0
     const newVersion = `v${nextVersionNumber}`;
-    current_version = newVersion;
-    // Initialize empty execution result data for the new version
-    tmp_data[newVersion] = {
-      identify_var_types: [],
-      identify_vars: [],
-      identify_links: [],
-    };
-    if (!titleOptions.includes(newVersion)) {
-      dispatch("new_verison_added", {
-        version:newVersion, 
-        step:key
-      }); //To App.svelte
+    current_versions[step] = newVersion;
+    console.log("current_versions", current_versions);
+    if (!versionsCount[key].versions.includes(newVersion)) {
+      fetch(server_address + `/pipeline/${step}/create_and_save_new/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          version: newVersion,
+        }),
+      })
+        .then((response) => response.text()) // Change this line from response.json() to response.text()
+        .then((data) => {
+          if (data === "success") {
+            fetchVersionsCount(step);
+            fetchPipelineData(step, newVersion);
+          } else {
+            console.error("Unexpected response:", data);
+          }
+        })
+        .catch((error) => {
+          console.error("Error saving data:", error);
+        });
     }
   }
 
@@ -215,11 +275,14 @@
     data: tServerPromptData,
     pipeline_tmp_data: tServerPipelineData,
     key: string,
-    version: string,
   ) {
     // console.log(version);
     if (!pipeline_tmp_data) return;
-    console.log(`saving ${version} tmp data`, pipeline_tmp_data[key], data[key]);
+    console.log(
+      `saving ${current_versions[step]} data`,
+      pipeline_tmp_data[key],
+      data[key],
+    );
     fetch(server_address + `/curation/${key}/save/`, {
       method: "POST",
       headers: {
@@ -228,16 +291,13 @@
       body: JSON.stringify({
         result: pipeline_tmp_data[key],
         context: data[key],
-        version: version,
+        version: current_versions[step],
       }),
     })
       .then((response) => response.text()) // Change this line from response.json() to response.text()
       .then((data) => {
         if (data === "success") {
-            const step = key.startsWith("identify_") ? key.slice("identify_".length).replace(/s$/, '') : key;
-            // fetchPipelineData(step, current_version,false);
-            dispatch('new_version_saved', {step:step, version:version});
-            console.log("saved");
+          console.log("saved");
         } else {
           console.error("Unexpected response:", data);
         }
@@ -246,19 +306,20 @@
         console.error("Error saving data:", error);
       });
   }
-  function remove_var_type(data: { id: string; indicator: string }, key: string): void {
-    // add check exists condition for both pipeline and tmp_data    
-    // need to update to all the versions
+  function remove_var_type(
+    data: { id: string; indicator: string },
+    key: string,
+  ): void {
     if (!data) return;
     console.log("remove_var_type", data);
     // add to log
     // TODO: modify log data
     // removeVar.push(data);
     //right side
-    if(key === "identify_var_types"){
-        dispatch("remove_var_type", { id:data.id, variable: {var_type:data.indicator} }); // to App.svelte
-        if (tmp_data === undefined) return;
-        tmp_data[current_version].identify_var_types = tmp_data[current_version].identify_var_types.map((item) => {
+    if (key === "identify_var_types") {
+      if (pipeline_result === undefined) return;
+      pipeline_result.identify_var_types =
+        pipeline_result.identify_var_types.map((item) => {
           if (item.id === data.id) {
             return {
               ...item,
@@ -270,12 +331,11 @@
           return item;
         });
     }
-    
   }
   function add_var_type(
     data: { id: string; indicator: string },
-    key: string
-  ): void {    
+    key: string,
+  ): void {
     // add check exists condition for both pipeline and tmp_data
     // need to update to all the versions
     if (!data) return;
@@ -294,39 +354,38 @@
     // TODO: modify log data
     // addVar.push(newVarTypeResult);
 
-    let pipe_datum
-    let tmp_datum
-    if(key === "identify_var_types") {
-      pipe_datum = pipeline_result?.identify_var_types.find((item) => item.id === data.id);
-      tmp_datum = tmp_data[current_version]?.identify_var_types.find((item) => item.id === data.id);
-    
+    let pipe_datum;
+    if (key === "identify_var_types") {
+      pipe_datum = pipeline_result?.identify_var_types.find(
+        (item) => item.id === data.id,
+      );
       const pipe_alreadyExists = pipe_datum.identify_var_types_result.some(
-            (item) => item.var_type === data.indicator,
-          );
-      const tmp_alreadyExists = tmp_datum.identify_var_types_result.some(
-            (item) => item.var_type === data.indicator,
-          );
-      // console.log(alreadyExists);
-      if (!pipe_alreadyExists && !tmp_alreadyExists) {
-        dispatch("add_var_type", newVarTypeResult);
-        console.log("modify tmp_data");
-        console.log(tmp_data[current_version].identify_var_types);
-        tmp_data[current_version].identify_var_types = tmp_data[current_version].identify_var_types.map((item) => {
-            if (item.id === data.id) {
-              const updatedNewData = { ...newVarTypeResult.variable };
+        (item) => item.var_type === data.indicator,
+      );
+      if (!pipe_alreadyExists) {
+        if (pipeline_result === undefined) return;
+        pipeline_result.identify_var_types =
+          pipeline_result.identify_var_types.map((item) => {
+            if (item.id === newVarTypeResult.id) {
+              const updatedNewData = {
+                ...newVarTypeResult.variable,
+                var_type: newVarTypeResult.variable.var_type,
+              };
               item.identify_var_types_result.push(updatedNewData);
             }
             return item;
-        });
+          });
       } else {
         alert("Var type already exists");
       }
     }
-
-    
   }
 
-
+  onMount(async () => {
+    await fetchVersionsCount(step);
+    await fetchPipelineData(step, current_versions[step]);
+    await fetchMenuData(step, selectedTitle);
+  });
 </script>
 
 <div class="flex grow cursor-auto flex-col">
@@ -337,7 +396,7 @@
       role="button"
       class="pipeline-step-button"
       class:active={show_step === 1}
-      on:click={() => (changeStep(1))}
+      on:click={() => changeStep(1)}
       on:keyup={() => {}}
     >
       Indicators
@@ -347,7 +406,7 @@
       role="button"
       class="pipeline-step-button"
       class:active={show_step === 2}
-      on:click={() => (changeStep(2))}
+      on:click={() => changeStep(2)}
       on:keyup={() => {}}
     >
       Variables
@@ -357,7 +416,7 @@
       role="button"
       class="pipeline-step-button"
       class:active={show_step === 3}
-      on:click={() => (changeStep(3))}
+      on:click={() => changeStep(3)}
       on:keyup={() => {}}
     >
       Links
@@ -365,119 +424,136 @@
   </div>
 
   {#key show_step}
-    {#if show_step === 1 && data.identify_var_types}
+    {#if show_step === 1 && prompt_data?.identify_var_types}
       <div in:slide|global class="step-1 flex grow">
         <div
           class="flex min-w-[25rem] max-w-[30rem] flex-col gap-y-1 overflow-y-auto bg-gray-100"
         >
           <PromptHeader
             title="Identify Indicators"
-            versionCount={versionsCount['var_type']}
-            {current_version}
-            on:run={() => execute_prompt(data, "identify_var_types", current_version)}
+            versionCount={versionsCount["var_type"]}
+            current_version={current_versions["var_type"]}
+            on:run={() => execute_prompt(prompt_data, "identify_var_types")}
             bind:measure_uncertainty
             on:toggle-measure-uncertainty={() =>
               (measure_uncertainty = !measure_uncertainty)}
             on:select-version={(e) => handle_version_selected(e.detail)}
-            on:add-version={(e) => handle_version_added("var_type")}
+            on:add-version={() => handle_version_added("var_type")}
           ></PromptHeader>
           <VarTypeDataEntry
-            bind:data={data.identify_var_types.var_type_definitions}
+            bind:data={prompt_data.identify_var_types.var_type_definitions}
           ></VarTypeDataEntry>
           <PromptEntry
             data={{
               system_prompt_blocks:
-                data.identify_var_types.system_prompt_blocks,
-              user_prompt_blocks: data.identify_var_types.user_prompt_blocks,
+                prompt_data.identify_var_types.system_prompt_blocks,
+              user_prompt_blocks:
+                prompt_data.identify_var_types.user_prompt_blocks,
             }}
           />
           <RuleEntry
-            {pipeline_ids}
-            on:remove_var_type={(e) => remove_var_type(e.detail,"identify_var_types")}
-            on:add_var_type={(e) => add_var_type(e.detail,"identify_var_types")}
-            on:base_or_new_button_click={() => update_rules()}
+            {interview_ids}
+            on:remove_var_type={(e) =>
+              remove_var_type(e.detail, "identify_var_types")}
+            on:add_var_type={(e) =>
+              add_var_type(e.detail, "identify_var_types")}
+            on:rule_change={(e) => update_rules(e)}
           />
         </div>
         <IdentifyVarTypeResults
-          data={tmp_data[current_version]?.identify_var_types || []}
-          title={`Running: version ${current_version.slice(1)}`}
-          titleOptions = {[]}
+          data={pipeline_result?.identify_var_types || []}
+          title={`Running: version ${current_versions[step].slice(1)}`}
+          versions={[]}
           {data_loading}
-          on:navigate_evidence={(e) => navigate_evidence(e.detail)}          
+          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
         <IdentifyVarTypeResults
-          data={pipeline_result?.identify_var_types || []}
+          data={right_panel_result?.identify_var_types || []}
           title={selectedTitle}
-          {titleOptions}
+          versions={versionsCount["var_type"].versions}
           data_loading={false}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
           on:title_change={(e) => handle_title_change(e.detail)}
         />
       </div>
-    {:else if show_step === 2 && data.identify_vars}
+    {:else if show_step === 2 && prompt_data.identify_vars}
       <div in:slide|global class="step-2 flex grow">
         <div class="flex min-w-[25] max-w-[30rem] flex-col gap-y-1 bg-gray-100">
           <PromptHeader
             title="Identify Variables"
-            versionCount={versionsCount['var']}
-            on:run={() => execute_prompt(data, "identify_vars")}
+            versionCount={versionsCount["var"]}
+            current_version={current_versions["var"]}
+            on:run={() => execute_prompt(prompt_data, "identify_vars")}
             bind:measure_uncertainty
             on:toggle-measure-uncertainty={() =>
               (measure_uncertainty = !measure_uncertainty)}
+            on:select-version={(e) => handle_version_selected(e.detail)}
+            on:add-version={() => handle_version_added("var")}
           ></PromptHeader>
-          <VarDataEntry bind:data={data.identify_vars.var_definitions}
+          <VarDataEntry bind:data={prompt_data.identify_vars.var_definitions}
           ></VarDataEntry>
           <PromptEntry
             data={{
-              system_prompt_blocks: data.identify_vars.system_prompt_blocks,
-              user_prompt_blocks: data.identify_vars.user_prompt_blocks,
+              system_prompt_blocks:
+                prompt_data.identify_vars.system_prompt_blocks,
+              user_prompt_blocks: prompt_data.identify_vars.user_prompt_blocks,
             }}
           />
         </div>
         <IdentifyVarResults
-          title="baseline"
           data={pipeline_result?.identify_vars || []}
-          data_loading={false}
-          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
-        />
-        <IdentifyVarResults
-          title="new"
-          data={tmp_data?.identify_vars || []}
+          title={`Running: version ${current_versions[step].slice(1)}`}
+          versions={[]}
           {data_loading}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
+        <IdentifyVarResults
+          data={right_panel_result?.identify_vars || []}
+          title={selectedTitle}
+          versions={versionsCount["var"].versions}
+          data_loading={false}
+          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+          on:title_change={(e) => handle_title_change(e.detail)}
+        />
       </div>
-    {:else if show_step === 3 && data.identify_links}
+    {:else if show_step === 3 && prompt_data.identify_links}
       <div in:slide|global class="step-2 flex grow">
         <div
           class="flex min-w-[25rem] max-w-[30rem] flex-col gap-y-1 bg-gray-100"
         >
           <PromptHeader
             title="Identify Links"
-            versionCount={versionsCount['link']}
-            on:run={() => execute_prompt(data, "identify_links")}
+            versionCount={versionsCount["link"]}
+            current_version={current_versions["link"]}
+            on:run={() => execute_prompt(prompt_data, "identify_links")}
             bind:measure_uncertainty
             on:toggle-measure-uncertainty={() =>
               (measure_uncertainty = !measure_uncertainty)}
+            on:select-version={(e) => handle_version_selected(e.detail)}
+            on:add-version={() => handle_version_added("link")}
           ></PromptHeader>
           <PromptEntry
             data={{
-              system_prompt_blocks: data.identify_links.system_prompt_blocks,
-              user_prompt_blocks: data.identify_links.user_prompt_blocks,
+              system_prompt_blocks:
+                prompt_data.identify_links.system_prompt_blocks,
+              user_prompt_blocks: prompt_data.identify_links.user_prompt_blocks,
             }}
           />
         </div>
         <IdentifyLinkResults
-          title="baseline"
           data={pipeline_result?.identify_links || []}
-          data_loading={false}
+          title={`Running: version ${current_versions[step].slice(1)}`}
+          versions={[]}
+          {data_loading}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
         <IdentifyLinkResults
-          title="new"
-          data={tmp_data?.identify_links || []}
-          {data_loading}
+          data={right_panel_result?.identify_links || []}
+          title={selectedTitle}
+          versions={versionsCount["link"].versions}
+          data_loading={false}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+          on:title_change={(e) => handle_title_change(e.detail)}
         />
       </div>
     {/if}
