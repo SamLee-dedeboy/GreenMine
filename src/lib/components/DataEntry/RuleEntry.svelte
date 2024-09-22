@@ -60,7 +60,7 @@
     <div
       tabindex="0"
       role="button"
-      class="entry-trigger"
+      class="entry-trigger font-serif"
       on:click={() => (show_rules = !show_rules)}
       on:keyup={() => {}}
     >

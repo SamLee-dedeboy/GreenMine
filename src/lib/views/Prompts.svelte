@@ -18,9 +18,18 @@
     tVersionInfo,
   } from "lib/types";
   import { updateTmpData } from "lib/utils/update_with_log";
-  import { server_address, stepMap } from "lib/constants";
+  import { server_address } from "lib/constants";
   import { createEventDispatcher, tick, getContext, onMount } from "svelte";
-  import { Rule } from "postcss";
+  const stepMap = {
+    1: "var_type",
+    2: "var",
+    3: "link",
+  };
+  const step_to_numbers = {
+    identify_var_types: 1,
+    identify_vars: 2,
+    identify_links: 3,
+  };
   const dispatch = createEventDispatcher();
 
   let prompt_data: tServerPromptData;
@@ -29,10 +38,11 @@
   export let interview_ids: string[];
   export let versionsCount: { [key: string]: tVersionInfo };
   let show_step: number = 1;
-  let selectedTitle: string = "v0";
+  let right_panel_version: string = "v0";
   // console.log(pipeline_result)
 
   let data_loading: boolean = false;
+  let last_execute_prompt_step_number: number = 0;
 
   type VarTypeItem = {
     id: string;
@@ -70,17 +80,18 @@
   function changeStep(newStep: number) {
     show_step = newStep;
     step = stepMap[show_step]; //string
-    selectedTitle = "v0";
+    right_panel_version = "v0";
     if (step) {
       // data_loading = true;
       // fetchVersionsCount(step)
       //   .then(() => fetchPipelineData(step, current_versions[step]))
-      //   .then(() => fetchMenuData(step, selectedTitle))
+      //   .then(() => fetchMenuData(step, right_panel_version))
       //   .finally(() => {
       //     data_loading = false;
       //   });
       fetchVersionsCount(step);
       fetchPipelineData(step, current_versions[step]);
+      fetchMenuData(step, right_panel_version);
     }
   }
 
@@ -126,7 +137,9 @@
         } else {
           interview_ids = pipeline_result[key].map((item) => item.id);
         }
-        console.log(`Fetched data for step: ${step}, version: ${version}`);
+        console.log(
+          `Fetched pipeline data for step: ${step}, version: ${version}`,
+        );
       })
       .catch((error) => {
         console.error(
@@ -145,8 +158,8 @@
           [key]: res.pipeline_result,
         };
         // check the data for right panel
-        console.log(right_panel_result);
-        console.log(`Fetched data for step: ${step}, version: ${version}`);
+        console.log("right panel result: ", right_panel_result);
+        console.log(`Fetched menu data for step: ${step}, version: ${version}`);
       })
       .catch((error) => {
         console.error(
@@ -200,6 +213,7 @@
   function execute_prompt(data: tServerPromptData, key: string) {
     if (!data) return;
     data_loading = true;
+    last_execute_prompt_step_number = step_to_numbers[key];
 
     fetch(server_address + `/curation/${key}/`, {
       method: "POST",
@@ -218,7 +232,7 @@
           ...pipeline_result,
           [key]: res,
         };
-        if (selectedTitle === current_versions[step]) {
+        if (right_panel_version === current_versions[step]) {
           right_panel_result = {
             ...right_panel_result,
             [key]: res,
@@ -235,9 +249,9 @@
     fetchPipelineData(step, current_v);
   }
   function handle_title_change(newTitle: string) {
-    selectedTitle = newTitle;
+    right_panel_version = newTitle;
     let version = newTitle;
-    console.log("fetch pipeline data for db");
+    console.log("fetch pipeline data for db", version);
     fetchMenuData(step, version);
   }
   function handle_version_added(key: string) {
@@ -384,13 +398,15 @@
   onMount(async () => {
     await fetchVersionsCount(step);
     await fetchPipelineData(step, current_versions[step]);
-    await fetchMenuData(step, selectedTitle);
+    await fetchMenuData(step, right_panel_version);
   });
 </script>
 
 <div class="flex grow cursor-auto flex-col">
   <!-- side panel -->
-  <div class="mt-[-1.4rem] flex w-fit items-end gap-y-0.5 px-0.5 text-sm">
+  <div
+    class="mt-[-1.4rem] flex w-fit items-end gap-x-1 gap-y-0.5 px-0.5 text-sm"
+  >
     <div
       tabindex="0"
       role="button"
@@ -401,6 +417,15 @@
     >
       Indicators
     </div>
+    <div class="flex h-full items-center p-0.5">
+      <img
+        src={last_execute_prompt_step_number >= 2
+          ? "arrow-right-filled-green.svg"
+          : "arrow-right-empty.svg"}
+        alt="->"
+      />
+    </div>
+
     <div
       tabindex="0"
       role="button"
@@ -410,6 +435,14 @@
       on:keyup={() => {}}
     >
       Variables
+    </div>
+    <div class="flex h-full items-center p-0.5">
+      <img
+        src={last_execute_prompt_step_number >= 3
+          ? "arrow-right-filled-green.svg"
+          : "arrow-right-empty.svg"}
+        alt="->"
+      />
     </div>
     <div
       tabindex="0"
@@ -462,18 +495,20 @@
         </div>
         <IdentifyVarTypeResults
           data={pipeline_result?.identify_var_types || []}
-          title={`Running: version ${current_versions[step].slice(1)}`}
+          title={`Results: Version ${+current_versions[step].slice(1) + 1}`}
+          current_version={current_versions["var_type"]}
           versions={[]}
           {data_loading}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
         <IdentifyVarTypeResults
           data={right_panel_result?.identify_var_types || []}
-          title={selectedTitle}
+          title={right_panel_version}
+          current_version={right_panel_version}
           versions={versionsCount["var_type"].versions}
           data_loading={false}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
-          on:title_change={(e) => handle_title_change(e.detail)}
+          on:version_changed={(e) => handle_title_change(e.detail)}
         />
       </div>
     {:else if show_step === 2 && prompt_data.identify_vars}
@@ -502,18 +537,20 @@
         </div>
         <IdentifyVarResults
           data={pipeline_result?.identify_vars || []}
-          title={`Running: version ${current_versions[step].slice(1)}`}
+          title={`Results: Version ${+current_versions[step].slice(1) + 1}`}
           versions={[]}
+          current_version={right_panel_version}
           {data_loading}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
         <IdentifyVarResults
           data={right_panel_result?.identify_vars || []}
-          title={selectedTitle}
+          title={right_panel_version}
           versions={versionsCount["var"].versions}
+          current_version={right_panel_version}
           data_loading={false}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
-          on:title_change={(e) => handle_title_change(e.detail)}
+          on:version_changed={(e) => handle_title_change(e.detail)}
         />
       </div>
     {:else if show_step === 3 && prompt_data.identify_links}
@@ -542,18 +579,20 @@
         </div>
         <IdentifyLinkResults
           data={pipeline_result?.identify_links || []}
-          title={`Running: version ${current_versions[step].slice(1)}`}
+          title={`Results: Version ${+current_versions[step].slice(1) + 1}`}
           versions={[]}
+          current_version={right_panel_version}
           {data_loading}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
         <IdentifyLinkResults
           data={right_panel_result?.identify_links || []}
-          title={selectedTitle}
+          title={right_panel_version}
           versions={versionsCount["link"].versions}
+          current_version={right_panel_version}
           data_loading={false}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
-          on:title_change={(e) => handle_title_change(e.detail)}
+          on:version_changed={(e) => handle_title_change(e.detail)}
         />
       </div>
     {/if}
@@ -573,11 +612,11 @@
 
 <style lang="postcss">
   .pipeline-step-button {
-    @apply w-[5.5rem]  rounded-sm border-r  border-gray-600 bg-gray-200 p-1 text-center opacity-50 hover:bg-gray-300;
+    @apply w-[5.5rem]  rounded-sm  border-gray-600 bg-gray-200 p-1 text-center opacity-50 hover:bg-gray-300;
     transition: all 0.2s;
   }
   .active {
-    @apply pointer-events-none w-[5rem] bg-green-300 opacity-100;
+    @apply pointer-events-none w-[5rem] bg-yellow-100 opacity-100;
   }
   .container {
   }

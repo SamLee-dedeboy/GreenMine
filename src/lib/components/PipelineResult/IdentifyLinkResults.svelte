@@ -11,16 +11,10 @@
   export let title: string;
   export let versions: string[] = [];
   export let data_loading: boolean;
-  export let selectedTitle: string = title;
+  export let current_version: string;
   let show_graph = Array(data.length).fill(false);
   $: max_degree = compute_max_degree(data);
-
-  function handleTitleChange(e) {
-    selectedTitle = e.detail;
-    if (selectedTitle !== title) {
-      dispatch("title_change", selectedTitle); // To Prompts.svelte
-    }
-  }
+  $: dispatch("version_changed", current_version);
 
   function compute_max_degree(data: tIdentifyLinks[]) {
     let chunk_max_degree = 0;
@@ -86,18 +80,14 @@
   class="flex h-full min-w-[25rem] flex-1 flex-col bg-gray-100 px-1 shadow-lg"
 >
   {#if versions.length > 0}
-      <VersionsMenu
-        {versions}
-        bind:selectedTitle
-        on:title_change={handleTitleChange}
-      />
+    <VersionsMenu {versions} bind:current_version />
   {:else}
-    <h2 class="text-center text-lg font-medium capitalize text-black">
+    <h2 class="text-center font-serif text-lg font-medium text-black">
       {title}
     </h2>
   {/if}
   <div class="flex grow flex-col divide-y divide-black">
-    <div class="flex divide-x">
+    <div class="flex divide-x font-serif">
       <div class="w-[4rem] shrink-0">ID</div>
       <div class="flex pl-2">Links</div>
     </div>

@@ -19,17 +19,20 @@
     duration: 100,
   }}
 >
-  <h2 class="text-lg font-medium text-black">{title}</h2>
+  <h2 class="bg-yellow-100 font-serif text-xl font-medium text-black shadow-md">
+    {title}
+  </h2>
   <div class="flex flex-col py-1">
-    <div class="flex">
+    <div class="flex font-mono">
       <div
         role="button"
         tabindex="0"
-        class="flex-1 rounded-sm bg-green-200 outline outline-1 outline-gray-300 hover:bg-green-300"
+        class="flex flex-1 items-center justify-center gap-x-1 rounded-sm bg-green-200 px-1 outline outline-1 outline-gray-300 hover:bg-green-300"
         on:click={() => dispatch("run")}
         on:keyup={() => {}}
       >
-        Run and Save
+        <img src="refresh.svg" alt="" class="h-4 w-4" />
+        Execute Prompt
       </div>
       <div
         role="button"
@@ -46,7 +49,7 @@
       </div>
     </div>
   </div>
-  <div class="flex flex-col gap-y-1">
+  <div class="flex flex-col gap-y-1 font-serif">
     <div
       tabindex="0"
       role="button"
@@ -54,7 +57,8 @@
       on:click={() => (show_versions = !show_versions)}
       on:keyup={() => {}}
     >
-      Version list (Total: {versionCount.total_versions})
+      Version list
+      <!-- (Total: {versionCount.total_versions}) -->
     </div>
   </div>
   {#if show_versions}
@@ -62,19 +66,19 @@
       <div class="flex flex-wrap justify-center gap-2">
         {#each versionCount.versions as version}
           <button
-            class="h-6 w-6 rounded-full bg-blue-500 text-sm text-white opacity-80 hover:bg-blue-600 hover:opacity-100"
+            class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 font-semibold text-gray-600 opacity-80 outline outline-[1.5px] outline-gray-400 hover:bg-green-200 hover:opacity-100"
             class:selected={version === current_version}
             on:click={() => dispatch("select-version", version)}
           >
-            {version}
+            {+version.slice(1) + 1}
           </button>
         {/each}
         <button
-          class="flex h-6 w-6 items-center justify-center rounded-full bg-gray-400 text-lg font-bold text-white hover:bg-gray-500"
+          class="flex h-8 w-8 items-center justify-center rounded-full text-white hover:bg-gray-300"
           on:click={() => dispatch("add-version")}
           aria-label="Add new version"
         >
-          +
+          <img src="add.svg" alt="+" />
         </button>
       </div>
     </div>
@@ -87,7 +91,7 @@
     transition: all 0.5s;
   }
   .selected {
-    @apply bg-blue-700 opacity-100;
+    @apply bg-green-200 text-black opacity-100 shadow-md outline-2 outline-black;
   }
   .entry-trigger {
     @apply rounded-sm bg-gray-200 text-gray-700 outline-double outline-1 outline-gray-600 hover:bg-gray-300;

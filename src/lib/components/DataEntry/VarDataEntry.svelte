@@ -21,7 +21,7 @@
 </script>
 
 <div class="flex flex-col gap-y-0.5 px-1">
-  <div class="entry-trigger">Variable Definitions</div>
+  <div class="entry-trigger font-serif">Variable Definitions</div>
   {#if show}
     <div
       class="var-type-definition-content flex gap-x-1 gap-y-1 divide-y px-2 text-sm"

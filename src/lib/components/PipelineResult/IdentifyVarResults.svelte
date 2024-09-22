@@ -20,19 +20,13 @@
   export let title: string;
   export let versions: string[] = [];
   export let data_loading: boolean;
-  export let selectedTitle: string = title;
+  export let current_version: string;
   const dispatch = createEventDispatcher();
+  $: dispatch("version_changed", current_version);
 
   onMount(() => {
     console.log({ data });
   });
-
-  function handleTitleChange(e) {
-    selectedTitle = e.detail;
-    if (selectedTitle !== title) {
-      dispatch("title_change", selectedTitle); // To Prompts.svelte
-    }
-  }
 
   function sort_by_uncertainty(data: tIdentifyVars[]) {
     if (data.length === 0) return data;
@@ -76,18 +70,14 @@
   class="flex h-full min-w-[25rem] flex-1 flex-col bg-gray-100 px-1 shadow-lg"
 >
   {#if versions.length > 0}
-    <VersionsMenu
-      {versions}
-      bind:selectedTitle
-      on:title_change={handleTitleChange}
-    />
+    <VersionsMenu {versions} bind:current_version />
   {:else}
-    <h2 class="text-center text-lg font-medium capitalize text-black">
+    <h2 class="text-center font-serif text-lg font-medium text-black">
       {title}
     </h2>
   {/if}
   <div class="flex grow flex-col divide-y divide-black">
-    <div class="flex divide-x py-0.5">
+    <div class="flex divide-x py-0.5 font-serif">
       {#if show_others}
         <div class="ml-1">Keywords around "其他"</div>
       {:else}
