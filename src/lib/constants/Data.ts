@@ -23,14 +23,3 @@ export const topicname = [
   "陸地生態環境",
 ];
 export const emotionname = ["resigned", "neutral", "worried", "angry", "proud"];
-export const stepMap = {
-  1: "var_type",
-  2: "var",
-  3: "link",
-};
-
-export const stepInfo = [
-  { number: 1, key: 'var_type', name: 'Indicators' },
-  { number: 2, key: 'var', name: 'Variables' },
-  { number: 3, key: 'link', name: 'Links' }
-];

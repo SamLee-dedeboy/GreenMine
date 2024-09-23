@@ -19,7 +19,7 @@
 
 <div class="">
   <div class="flex flex-col px-1">
-    <div class="entry-trigger">
+    <div class="entry-trigger font-serif">
       <span> Prompts </span>
     </div>
   </div>

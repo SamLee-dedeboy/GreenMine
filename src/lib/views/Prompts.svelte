@@ -18,29 +18,31 @@
     tVersionInfo,
   } from "lib/types";
   import { updateTmpData } from "lib/utils/update_with_log";
-  import { server_address, stepMap, stepInfo } from "lib/constants";
+  import { server_address } from "lib/constants";
   import { createEventDispatcher, tick, getContext, onMount } from "svelte";
-  import { Rule } from "postcss";
+  const stepMap = {
+    1: "var_type",
+    2: "var",
+    3: "link",
+  };
+  const step_to_numbers = {
+    identify_var_types: 1,
+    identify_vars: 2,
+    identify_links: 3,
+  };
   const dispatch = createEventDispatcher();
 
-  export let interview_ids: string[];
-  export let versionsCount: { [key: string]: tVersionInfo };
   let prompt_data: tServerPromptData;
   let pipeline_result: tServerPipelineData;
   let right_panel_result: tServerPipelineData;
-  let show_step: number = 1;  
-  // let step: string = stepMap[show_step];
-  let step: string = stepInfo.find((item) => item.number === show_step)?.key || "var_type";
-  let current_versions = {
-    var_type: "v0",
-    var: "v0",
-    link: "v0",
-  };
-  let selectedTitle: string = "v0";
+  export let interview_ids: string[];
+  export let versionsCount: { [key: string]: tVersionInfo };
+  let show_step: number = 1;
+  let right_panel_version: string = "v0";
+  // console.log(pipeline_result)
+
   let data_loading: boolean = false;
-  let pipeline_data_loading: boolean = false;
-  let menu_data_loading: boolean = false;
-  let prompt_data_loading: boolean = false;
+  let last_execute_prompt_step_number: number = 0;
 
   type VarTypeItem = {
     id: string;
@@ -61,32 +63,39 @@
   let removeVar: VarTypeItem[] = [];
   let addVar: VarTypeItem[] = [];
   let measure_uncertainty = false;
+  let current_versions = {
+    var_type: "v0",
+    var: "v0",
+    link: "v0",
+  };
 
+  $: step = stepMap[show_step];
+  $: {
+    if (versionsCount[step]) {
+      const versions = versionsCount[step].versions;
+      current_versions[step] = versions[versions.length - 1];
+    }
+  }
 
   function changeStep(newStep: number) {
     show_step = newStep;
-    step = stepInfo.find((item) => item.number === show_step)?.key || "";    
-    console.log("change step",current_versions);
-    selectedTitle = "v0";
-    data_loading = true;
-    // the version of each step is set to the latest version ?
-    fetchVersionsCount(step)
-      .then(() => {
-        return Promise.all([
-          fetchPipelineData(step, current_versions[step]),
-          fetchMenuData(step, selectedTitle)
-        ]);
-      })
-      .catch((error) => {
-        console.error("Error in changeStep:", error);
-      })
-      .finally(() => {
-        data_loading = false;
-      });
+    step = stepMap[show_step]; //string
+    right_panel_version = "v0";
+    if (step) {
+      // data_loading = true;
+      // fetchVersionsCount(step)
+      //   .then(() => fetchPipelineData(step, current_versions[step]))
+      //   .then(() => fetchMenuData(step, right_panel_version))
+      //   .finally(() => {
+      //     data_loading = false;
+      //   });
+      fetchVersionsCount(step);
+      fetchPipelineData(step, current_versions[step]);
+      fetchMenuData(step, right_panel_version);
+    }
   }
 
   function fetchVersionsCount(step: string): Promise<void> {
-    data_loading = true;
     return new Promise((resolve, reject) => {
       fetch(`${server_address}/pipeline/${step}/all_versions`)
         .then((res) => res.json())
@@ -98,25 +107,21 @@
               versions: data.versions,
             },
           };
-          const versions = versionsCount[step].versions;
-          current_versions[step] = versions[versions.length - 1];
+          console.log("Versions count:", versionsCount);
           resolve();
         })
         .catch((error) => {
           console.error(`Error fetching versions count for ${step}:`, error);
           reject(error);
-        })
-        .finally(() => {
-          data_loading = false;
         });
     });
   }
-  function fetchPipelineData(step: string, version: string): Promise <void> {
-    pipeline_data_loading = true;
+  function fetchPipelineData(step: string, version: string) {
     return fetch(`${server_address}/pipeline/${step}/${version}/`)
       .then((res) => res.json())
       .then((res) => {
         const key = `identify_${step}s`;
+        // console.log(res)
         prompt_data = {
           ...prompt_data,
           [key]: res.prompts,
@@ -125,24 +130,25 @@
           ...pipeline_result,
           [key]: res.pipeline_result,
         };
+        // console.log(prompt_data)
+        // console.log({pipeline_result})
         if (pipeline_result[key].length === 0) {
           interview_ids = ["none"];
         } else {
           interview_ids = pipeline_result[key].map((item) => item.id);
         }
+        console.log(
+          `Fetched pipeline data for step: ${step}, version: ${version}`,
+        );
       })
       .catch((error) => {
         console.error(
           `Error fetching pipeline data for step ${step}, version ${version}:`,
           error,
         );
-      })
-      .finally(() => {
-        pipeline_data_loading = false;
       });
   }
-  function fetchMenuData(step: string, version: string): Promise<void> {
-    menu_data_loading = true;
+  function fetchMenuData(step: string, version: string) {
     return fetch(`${server_address}/pipeline/${step}/${version}/`)
       .then((res) => res.json())
       .then((res) => {
@@ -151,16 +157,15 @@
           ...right_panel_result,
           [key]: res.pipeline_result,
         };
-        
+        // check the data for right panel
+        console.log("right panel result: ", right_panel_result);
+        console.log(`Fetched menu data for step: ${step}, version: ${version}`);
       })
       .catch((error) => {
         console.error(
           `Error fetching pipeline data for step ${step}, version ${version}:`,
           error,
         );
-      })
-      .finally(() => {
-        menu_data_loading = false;
       });
   }
   function navigate_evidence(e) {
@@ -169,7 +174,7 @@
   }
   function update_rules(e) {
     let record: LogEntry = e.detail;
-    const key = `identify_${step}_results` as keyof LogRecord;
+    const key = `identify_${stepMap[show_step]}_results` as keyof LogRecord;
     if (key in log) {
       log[key].push(record);
       log = log; // Trigger reactivity
@@ -205,11 +210,12 @@
     // removeVar = [];
     // addVar = [];
   }
-  function execute_prompt(data: tServerPromptData, key: string): Promise<void> {
-    if (!data) return Promise.resolve();
-    pipeline_data_loading = true;
-    menu_data_loading = true;
-    return fetch(server_address + `/curation/${key}/`, {
+  function execute_prompt(data: tServerPromptData, key: string) {
+    if (!data) return;
+    data_loading = true;
+    last_execute_prompt_step_number = step_to_numbers[key];
+
+    fetch(server_address + `/curation/${key}/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -226,75 +232,72 @@
           ...pipeline_result,
           [key]: res,
         };
-        // update right panel after execution
-        if (selectedTitle === current_versions[step]) {
+        if (right_panel_version === current_versions[step]) {
           right_panel_result = {
             ...right_panel_result,
             [key]: res,
           };
         }
-        return save_data(data, pipeline_result, key);
-      })
-      .catch((error) => {
-        console.error("Error executing prompt:", error);
-        throw error;
-      })
-      .finally(() => {
-        pipeline_data_loading = false;
-        menu_data_loading = false;
+        console.log("pipeline_result", pipeline_result);
+        save_data(data, pipeline_result, key);
+        data_loading = false;
       });
   }
 
   function handle_version_selected(current_v: string) {
     current_versions[step] = current_v;
-    console.log("version selected",current_versions);
     fetchPipelineData(step, current_v);
   }
-  function handle_version_change(current_v: string) {
-    selectedTitle = current_v;
-    fetchMenuData(step, current_v);
+  function handle_title_change(newTitle: string) {
+    right_panel_version = newTitle;
+    let version = newTitle;
+    console.log("fetch pipeline data for db", version);
+    fetchMenuData(step, version);
   }
   function handle_version_added(key: string) {
-    pipeline_data_loading = true;
+    console.log(`adding ${step} version`);
     const nextVersionNumber = versionsCount[key].total_versions; // start from 0
     const newVersion = `v${nextVersionNumber}`;
     current_versions[step] = newVersion;
-    fetch(server_address + `/pipeline/${step}/create_and_save_new/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        version: newVersion,
-      }),
-    })
-      .then((response) => response.text()) // Change this line from response.json() to response.text()
-      .then((data) => {
-        if (data === "success") {
-          return Promise.all([
-            fetchVersionsCount(step),
-            fetchPipelineData(step, newVersion),
-          ]);
-        } else {
-          console.error("Unexpected response:", data);
-        }
+    console.log("current_versions", current_versions);
+    if (!versionsCount[key].versions.includes(newVersion)) {
+      fetch(server_address + `/pipeline/${step}/create_and_save_new/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          version: newVersion,
+        }),
       })
-      .catch((error) => {
-        console.error("Error adding version data:", error);
-      })
-      .finally(() => {
-        pipeline_data_loading = false;
-      });
+        .then((response) => response.text()) // Change this line from response.json() to response.text()
+        .then((data) => {
+          if (data === "success") {
+            fetchVersionsCount(step);
+            fetchPipelineData(step, newVersion);
+          } else {
+            console.error("Unexpected response:", data);
+          }
+        })
+        .catch((error) => {
+          console.error("Error saving data:", error);
+        });
+    }
   }
 
   function save_data(
     data: tServerPromptData,
     pipeline_tmp_data: tServerPipelineData,
     key: string,
-  ): Promise<void> {
+  ) {
     // console.log(version);
-    if (!pipeline_tmp_data) return Promise.resolve();
-    return fetch(server_address + `/curation/${key}/save/`, {
+    if (!pipeline_tmp_data) return;
+    console.log(
+      `saving ${current_versions[step]} data`,
+      pipeline_tmp_data[key],
+      data[key],
+    );
+    fetch(server_address + `/curation/${key}/save/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -393,49 +396,68 @@
   }
 
   onMount(async () => {
-    data_loading = true;
-    try {
-      await fetchVersionsCount(step);
-      await Promise.all([
-        fetchPipelineData(step, current_versions[step]),
-        fetchMenuData(step, selectedTitle)
-      ]);
-    } catch (error) {
-      console.error("Error in onMount:", error);
-    } finally {      
-      data_loading = false;
-    }
+    await fetchVersionsCount(step);
+    await fetchPipelineData(step, current_versions[step]);
+    await fetchMenuData(step, right_panel_version);
   });
 </script>
 
 <div class="flex grow cursor-auto flex-col">
   <!-- side panel -->
-  <div class="mt-[-1.4rem] flex w-fit items-end gap-y-0.5 px-0.5 text-sm">
-    {#each stepInfo as { number, key, name }, index}
-      <div class="flex flex-col items-center">
-        <div
-          tabindex="0"
-          role="button"
-          class="pipeline-step-button flex items-center justify-center"
-          class:active={show_step === number}
-          on:click={() => changeStep(number)}
-          on:keyup={() => {}}
-        >
-          <div class="text-base pr-2">{name}</div>
-          <div class="flex h-6 w-6 items-center justify-center rounded-full bg-yellow-100 text-xs font-semibold">{current_versions[key]}</div>
-        </div>
-        <!-- {#if index < stepInfo.length - 1}
-          <div class="dashed-arrow"></div>
-        {/if} -->
-      </div>
-    {/each}
+  <div
+    class="mt-[-1.4rem] flex w-fit items-end gap-x-1 gap-y-0.5 px-0.5 text-sm"
+  >
+    <div
+      tabindex="0"
+      role="button"
+      class="pipeline-step-button"
+      class:active={show_step === 1}
+      on:click={() => changeStep(1)}
+      on:keyup={() => {}}
+    >
+      Indicators
+    </div>
+    <div class="flex h-full items-center p-0.5">
+      <img
+        src={last_execute_prompt_step_number >= 2
+          ? "arrow-right-filled-green.svg"
+          : "arrow-right-empty.svg"}
+        alt="->"
+      />
+    </div>
+
+    <div
+      tabindex="0"
+      role="button"
+      class="pipeline-step-button"
+      class:active={show_step === 2}
+      on:click={() => changeStep(2)}
+      on:keyup={() => {}}
+    >
+      Variables
+    </div>
+    <div class="flex h-full items-center p-0.5">
+      <img
+        src={last_execute_prompt_step_number >= 3
+          ? "arrow-right-filled-green.svg"
+          : "arrow-right-empty.svg"}
+        alt="->"
+      />
+    </div>
+    <div
+      tabindex="0"
+      role="button"
+      class="pipeline-step-button"
+      class:active={show_step === 3}
+      on:click={() => changeStep(3)}
+      on:keyup={() => {}}
+    >
+      Links
+    </div>
   </div>
 
   {#key show_step}
-    {#if data_loading}
-      <div>Data Loading...</div>
-    {/if}
-    {#if !data_loading && show_step === 1 && prompt_data?.identify_var_types}
+    {#if show_step === 1 && prompt_data?.identify_var_types}
       <div in:slide|global class="step-1 flex grow">
         <div
           class="flex min-w-[25rem] max-w-[30rem] flex-col gap-y-1 overflow-y-auto bg-gray-100"
@@ -473,21 +495,23 @@
         </div>
         <IdentifyVarTypeResults
           data={pipeline_result?.identify_var_types || []}
-          title={`Running: version ${current_versions[step].slice(1)}`}
+          title={`Results: Version ${+current_versions[step].slice(1) + 1}`}
+          current_version={current_versions["var_type"]}
           versions={[]}
-          data_loading = {pipeline_data_loading}
+          {data_loading}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
         <IdentifyVarTypeResults
           data={right_panel_result?.identify_var_types || []}
-          title={selectedTitle}
+          title={right_panel_version}
+          current_version={right_panel_version}
           versions={versionsCount["var_type"].versions}
-          data_loading={menu_data_loading}
+          data_loading={false}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
-          on:title_change={(e) => handle_version_change(e.detail)}
+          on:version_changed={(e) => handle_title_change(e.detail)}
         />
       </div>
-    {:else if !data_loading && show_step === 2 && prompt_data?.identify_vars}
+    {:else if show_step === 2 && prompt_data.identify_vars}
       <div in:slide|global class="step-2 flex grow">
         <div class="flex min-w-[25] max-w-[30rem] flex-col gap-y-1 bg-gray-100">
           <PromptHeader
@@ -513,21 +537,24 @@
         </div>
         <IdentifyVarResults
           data={pipeline_result?.identify_vars || []}
-          title={`Running: version ${current_versions[step].slice(1)}`}
+          title={`Results: Version ${+current_versions[step].slice(1) + 1}`}
           versions={[]}
-          data_loading = {pipeline_data_loading}
-          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
-        />
-        <IdentifyVarResults
-          data={right_panel_result?.identify_vars || []}
-          title={selectedTitle}
-          versions={versionsCount["var"].versions}
-          data_loading={menu_data_loading}
+          current_version={right_panel_version}
+          {data_loading}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
           on:title_change={(e) => handle_version_change(e.detail)}
         />
+        <IdentifyVarResults
+          data={right_panel_result?.identify_vars || []}
+          title={right_panel_version}
+          versions={versionsCount["var"].versions}
+          current_version={right_panel_version}
+          data_loading={false}
+          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+          on:version_changed={(e) => handle_title_change(e.detail)}
+        />
       </div>
-    {:else if !data_loading && show_step === 3 && prompt_data?.identify_links}
+    {:else if show_step === 3 && prompt_data.identify_links}
       <div in:slide|global class="step-2 flex grow">
         <div
           class="flex min-w-[25rem] max-w-[30rem] flex-col gap-y-1 bg-gray-100"
@@ -553,18 +580,20 @@
         </div>
         <IdentifyLinkResults
           data={pipeline_result?.identify_links || []}
-          title={`Running: version ${current_versions[step].slice(1)}`}
+          title={`Results: Version ${+current_versions[step].slice(1) + 1}`}
           versions={[]}
-          data_loading = {pipeline_data_loading}
+          current_version={right_panel_version}
+          {data_loading}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
         <IdentifyLinkResults
           data={right_panel_result?.identify_links || []}
-          title={selectedTitle}
+          title={right_panel_version}
           versions={versionsCount["link"].versions}
-          data_loading={menu_data_loading}
+          current_version={right_panel_version}
+          data_loading={false}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
-          on:title_change={(e) => handle_version_change(e.detail)}
+          on:version_changed={(e) => handle_title_change(e.detail)}
         />
       </div>
     {/if}
@@ -584,11 +613,11 @@
 
 <style lang="postcss">
   .pipeline-step-button {
-    @apply w-[9rem] rounded-sm border-gray-600 bg-gray-200 p-2 opacity-50 hover:bg-gray-300;
+    @apply w-[5.5rem]  rounded-sm  border-gray-600 bg-gray-200 p-1 text-center opacity-50 hover:bg-gray-300;
     transition: all 0.2s;
   }
   .active {
-    @apply pointer-events-none bg-green-300 opacity-100;
+    @apply pointer-events-none w-[5rem] bg-yellow-100 opacity-100;
   }
   .dashed-arrow {
     width: 20px;

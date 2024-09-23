@@ -17,7 +17,7 @@
   import DPSIR from "lib/views/DPSIR.svelte";
   import BrowserBlockingPage from "lib/views/BrowserBlockingPage.svelte";
   import * as utils from "lib/utils";
-  import { server_address, stepMap } from "lib/constants";
+  import { server_address } from "lib/constants";
   import * as d3 from "d3";
   import { varTypeColorScale } from "lib/store";
   import Prompts from "lib/views/Prompts.svelte";

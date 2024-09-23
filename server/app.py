@@ -96,7 +96,6 @@ def get_pipeline(step, version):
     # step = var_type, var, link
     # version_number = version.replace("v", "")
     # print(version_number)
-    
     definitions = {}
     if step in ["var_type", "var"]:
         definitions = json.load(
@@ -122,12 +121,11 @@ def get_pipeline(step, version):
 
     return {
         "prompts": {
-                f"{step}_definitions": definitions,
-                "system_prompt_blocks": identify_prompts["system_prompt_blocks"],
-                "user_prompt_blocks": identify_prompts["user_prompt_blocks"],
+            f"{step}_definitions": definitions,
+            "system_prompt_blocks": identify_prompts["system_prompt_blocks"],
+            "user_prompt_blocks": identify_prompts["user_prompt_blocks"],
         },
-        "pipeline_result": identify_data
-        
+        "pipeline_result": identify_data,
     }
 @app.route("/pipeline/<step>/create_and_save_new/", methods=["POST"])
 def create_and_save_new_pipeline(step):
@@ -274,12 +272,17 @@ def curate_identify_vars():
     # get var type version
     var_type_version = current_versions["var_type"]
     var_type_definitions = json.load(
-        open(f"{prompt_context_path}{var_type_version}_var_type_definitions.json", encoding="utf-8")
+        open(
+            f"{prompt_context_path}{var_type_version}_var_type_definitions.json",
+            encoding="utf-8",
+        )
     )
     # get var version
     var_version = current_versions["var"]
     var_definitions = json.load(
-        open(f"{prompt_context_path}{var_version}_var_definitions.json", encoding="utf-8")
+        open(
+            f"{prompt_context_path}{var_version}_var_definitions.json", encoding="utf-8"
+        )
     )
     prompt_variables = {}
     for var_type, var_type_def in var_type_definitions.items():
@@ -339,12 +342,11 @@ def save_identify_vars():
     all_chunks = request.json["result"]
     context = request.json["context"]
     var_definitions = context["var_definitions"]
-    version = request.json["version"]    
+    version = request.json["version"]
     prompts = {
         "system_prompt_blocks": context["system_prompt_blocks"],
         "user_prompt_blocks": context["user_prompt_blocks"],
     }
-    
     local.save_json(
         var_definitions,
         f"{prompt_context_path}{version}_var_definitions.json",
@@ -365,10 +367,15 @@ def curate_identify_links():
     # get var version
     var_version = current_versions["var"]
     all_chunks = json.load(
-        open(f"{pipeline_result_path}identify_vars/{var_version}_chunk_w_vars.json", encoding="utf-8")
+        open(
+            f"{pipeline_result_path}identify_vars/{var_version}_chunk_w_vars.json",
+            encoding="utf-8",
+        )
     )
     raw_variable_definitions = json.load(
-        open(f"{prompt_context_path}{var_version}_var_definitions.json", encoding="utf-8")
+        open(
+            f"{prompt_context_path}{var_version}_var_definitions.json", encoding="utf-8"
+        )
     )
     # get link version
     link_version = current_versions["link"]
