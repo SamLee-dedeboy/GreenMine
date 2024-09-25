@@ -22,25 +22,10 @@ export const DetailDPSIR = {
     this.clicked_link = null;
     this.rectClicked = false;
     this.linkClicked = false;
-    this.width = 1550;
-    this.height = 950;
-    this.padding = { top: 10, right: 50, bottom: 10, left: 50 };
-    this.rows = 300;
-    this.columns = 240;
-    this.global_rects = [];
-    this.grid_renderer = grid_layout.grid_renderer;
-    this.grid_renderer.init(this.rows, this.columns);
-    this.cellWidth = this.width / this.grid_renderer.columns;
-    this.cellHeight = this.height / this.grid_renderer.rows;
     this.svgId = svgId;
     this.dispatch = d3.dispatch("VarOrLinkSelected", "VarTypeUnSelected");
     this.varTypeColorScale = null;
-    this.varCoordinatesDict = {};
-    const self = this;
-    const svg = d3
-      .select("#" + svgId)
-      .attr("viewBox", `0 0 ${this.width} ${this.height}`);
-
+    const svg = d3.select("#" + svgId);
     const bbox_group = svg.append("g").attr("class", "detail-bbox-group");
     const link_group = svg.append("g").attr("class", "detail-link-group");
     const tag_group = svg.append("g").attr("class", "detail-var-type-group");
@@ -85,214 +70,48 @@ export const DetailDPSIR = {
     this.linkClicked = false;
   },
 
-  // toggleLinks(showLinks: boolean) {
-  //   this.showLinks = showLinks;
-  // },
-  categorizedLinkByVarType(
-    vars: Record<string, { variable_mentions: Record<string, any> }>,
-    links: Array<{
-      source: { var_type: string; variable_name: string };
-      target: { var_type: string; variable_name: string };
-    }>,
-    var_type_names: Array<string>,
-  ): Record<
-    string,
-    Record<string, { inGroup_link: number; outGroup_link: number }>
-  > {
-    type VarTypeNames = string;
-
-    let categorizedLinks: Record<
-      VarTypeNames,
-      Record<string, { inGroup_link: number; outGroup_link: number }>
-    > = {};
-
-    // Initialize categorizedLinks with var_type_names
-    var_type_names.forEach((name) => {
-      categorizedLinks[name] = {};
-    });
-
-    // Initialize categorizedLinks with variable names
-    Object.keys(vars).forEach((varType) => {
-      const type = vars[varType];
-      Object.keys(type.variable_mentions).forEach((varName) => {
-        if (!categorizedLinks[varType][varName]) {
-          categorizedLinks[varType][varName] = {
-            inGroup_link: 0,
-            outGroup_link: 0,
-          };
-        }
-      });
-    });
-
-    // Categorize links
-    links.forEach((link) => {
-      const { source, target } = link;
-      const isInGroup = source.var_type === target.var_type;
-
-      // Ensure source and target entries exist
-      [source, target].forEach((node) => {
-        if (!categorizedLinks[node.var_type][node.variable_name]) {
-          categorizedLinks[node.var_type][node.variable_name] = {
-            inGroup_link: 0,
-            outGroup_link: 0,
-          };
-        }
-      });
-
-      // Increment link counts
-      if (isInGroup) {
-        categorizedLinks[source.var_type][source.variable_name].inGroup_link +=
-          1;
-        categorizedLinks[target.var_type][target.variable_name].inGroup_link +=
-          1;
-      } else {
-        categorizedLinks[source.var_type][source.variable_name].outGroup_link +=
-          1;
-        categorizedLinks[target.var_type][target.variable_name].outGroup_link +=
-          1;
-      }
-    });
-
-    return categorizedLinks;
-  },
-
-  calculateBoxInfo(
-    vars,
-    links,
-    var_type_names: string[],
-    bboxes: Record<string, tBbox>,
-  ) {
-    const categorizedLinks = this.categorizedLinkByVarType(
-      vars,
-      links,
-      var_type_names,
-    );
-    Object.values(var_type_names).forEach((varType: string) => {
-      let linkCount = categorizedLinks[varType];
-      const rectWidth = 20; //(g)
-      const rectangles = Object.entries(linkCount)
-        .map(([name, counts]) => {
-          return {
-            name,
-            width: rectWidth,
-            height: 12, // height might be adjusted later as needed
-            outgroup_degree:
-              linkCount[name].outGroup_link + linkCount[name].inGroup_link,
-          };
-        })
-        .sort(
-          (a, b) =>
-            linkCount[b.name].outGroup_link - linkCount[a.name].outGroup_link,
-        );
-      // console.log({ rectangles });
-      const { rectangleCoordinates, bbox } = grid_layout.squareLayout(
-        rectangles,
-        bboxes[varType],
-      );
-      bboxes[varType] = bbox;
-      this.varCoordinatesDict[varType] = rectangleCoordinates;
-    });
-
-    return bboxes;
-  },
   update_vars(
     vars: tDPSIR,
     links: tVisLink[],
     varTypeColorScale: Function,
     var_type_states: Record<string, { revealed: boolean }>,
     bboxes: Record<string, tBbox>,
+    varCoordinatesDict: Record<string, any>,
   ) {
-    this.grid_renderer?.reset_global_grid(this.rows, this.columns);
-    this.drawVars(varTypeColorScale, vars, bboxes, var_type_states);
-    this.drawLinks(links, bboxes, var_type_states);
-  },
-  drawGids(svg, svgId) {
-    // Get the dimensions of the SVG
-    const self = this;
-    let cellWidth: number = self.cellWidth;
-    let cellHeight: number = self.cellHeight;
-    let columns = self.grid_renderer.columns;
-    let rows = self.grid_renderer.rows;
-    let width = self.width;
-    let height = self.height;
-    const svgElement = document.getElementById(svgId);
-
-    // Append the grid group
-    let gridGroup = svg.append("g").attr("class", "grid_group");
-    // .attr("transform", `translate(${padding.left}, ${padding.top})`);
-
-    // Function to draw horizontal lines
-    for (let i = 0; i <= rows; i++) {
-      gridGroup
-        .append("line")
-        .attr("x1", 0)
-        .attr("y1", i * cellHeight)
-        .attr("x2", width)
-        .attr("y2", i * cellHeight)
-        .attr("stroke", "#D3D3D3")
-        .attr("stroke-width", 1)
-        .attr("opacity", 0.3);
-    }
-
-    // Function to draw vertical lines
-    for (let i = 0; i <= columns; i++) {
-      gridGroup
-        .append("line")
-        .attr("x1", i * cellWidth)
-        .attr("y1", 0) //-padding.top
-        .attr("x2", i * cellWidth)
-        .attr("y2", height) //+padding.bottom
-        .attr("stroke", "#D3D3D3")
-        .attr("stroke-width", 1)
-        .attr("opacity", 0.3);
-    }
+    this.drawVars(
+      varTypeColorScale,
+      vars,
+      bboxes,
+      varCoordinatesDict,
+      var_type_states,
+    );
+    this.drawLinks(links, bboxes, varCoordinatesDict, var_type_states);
   },
 
-  //center(gridX,gridY), size(x grids,y grids)
   drawVars(
     varTypeColorScale: Function,
     var_data: tDPSIR,
     bboxes: { center: [number, number]; size: [number, number] },
+    varCoordinatesDict: Record<string, any>,
     var_type_states: Record<string, { revealed: boolean }>,
   ) {
     this.varTypeColorScale = varTypeColorScale;
     this.drawBboxes(bboxes, var_type_states);
-    this.drawTags(var_data, var_type_states);
+    this.drawTags(var_data, varCoordinatesDict, var_type_states);
   },
 
   drawLinks(
     links: tVisLink[],
     bboxes: Record<string, tBbox>,
+    varsCoordinatesDict: Record<string, any[]>,
     var_type_states: Record<string, { revealed: boolean }>,
   ) {
     const self = this;
-    // let global_grid: string[][] = this.grid_renderer.global_grid;
-    let cellWidth: number = self.cellWidth;
-    let cellHeight: number = self.cellHeight;
-    const frequencyList = grid_layout.calculateFrequencyList(links); // includes variables frequency and link frequency among all groups
-    // console.log(frequencyList);
-    const varTypeOrder = {
-      "driver-pressure": 1,
-      "pressure-state": 2,
-      "state-impact": 7,
-      "impact-response": 6,
-      "response-driver": 5,
-      "response-pressure": 4,
-      "response-state": 3,
-    };
-
-    // Function to get the order of the var_type pair
-    function getVarTypePairOrder(sourceType, targetType) {
-      const pair = `${sourceType}-${targetType}`;
-      return varTypeOrder[pair] || 999; // Default order if pair is not found
-    }
-
-    function getManhattanDistance(rect1, rect2, prioritize = "y") {
-      const xDistance = Math.abs(rect1?.x - rect2?.x);
-      const yDistance = Math.abs(rect1?.y - rect2?.y);
-
-      return xDistance + yDistance;
-    }
+    const frequencyList = calculateFrequencyList(links); // includes variables frequency and link frequency among all groups
+    const widthSacle = d3
+      .scaleLinear()
+      .domain([frequencyList.minLinkFrequency, frequencyList.maxLinkFrequency])
+      .range([2, 10]);
 
     links = links.filter(
       (link) =>
@@ -302,245 +121,74 @@ export const DetailDPSIR = {
 
     const svg = d3.select("#" + this.svgId);
     // console.log({ links });
-    const mergedData: (tLinkObject | undefined)[] = links.map((link) => {
-      const source_var_type_bbox = d3.select(`g.${link.source.var_type}`);
-      const source_block = document
-        .querySelector(`g.${link.source.var_type}`)
-        ?.querySelector(`#${link.source.var_type}`);
-      const target_block = document
-        .querySelector(`g.${link.target.var_type}`)
-        ?.querySelector(`#${link.target.var_type}`);
-      const sourceElement = this.global_rects?.find(
-        (rect) => rect.variable_name === link.source.variable_name,
-      );
-      const targetElement = this.global_rects?.find(
-        (rect) => rect.variable_name === link.target.variable_name,
-      );
+    const filteredMergeData: tVisLink[] = links
+      .map((link) => {
+        const source_variable_bbox = varsCoordinatesDict[
+          link.source.var_type
+        ].find((rect) => rect[4] === link.source.variable_name);
+        const target_variable_bbox = varsCoordinatesDict[
+          link.target.var_type
+        ].find((rect) => rect[4] === link.target.variable_name);
 
-      if (
-        sourceElement === undefined ||
-        targetElement === undefined ||
-        target_block === undefined ||
-        source_block === undefined
-      ) {
-        return undefined;
-      }
-
-      const sourcePosition = {
-        var_type: link.source.var_type,
-        var_name: link.source.variable_name,
-        leftTop: [sourceElement.x, sourceElement.y],
-        width: sourceElement.width,
-        height: sourceElement.height,
-        position: sourceElement.position,
-        boundary: sourceElement.boundary,
-        newX_source: 0,
-        newY_source: 0,
-      };
-
-      const targetPosition = {
-        var_type: link.target.var_type,
-        var_name: link.target.variable_name,
-        leftTop: [targetElement.x, targetElement.y],
-        width: targetElement.width,
-        height: targetElement.height,
-        position: targetElement.position,
-        boundary: targetElement.boundary,
-        newX_target: 0,
-        newY_target: 0,
-      };
-
-      return {
-        source: sourcePosition,
-        target: targetPosition,
-        frequency: link.frequency,
-        mentions: link.mentions,
-      };
-    });
-    // console.log({ mergedData });
-    let filteredMergeData: tLinkObject[] = mergedData.filter(
-      (data) => data !== null,
-    ) as tLinkObject[];
-
-    let linkCounts = {};
-
-    filteredMergeData.forEach((item) => {
-      if (item === null) return;
-
-      const sourceVarName = item?.source.var_name;
-      const targetVarName = item?.target.var_name;
-      const isInGroup = item?.source.var_type === item?.target.var_type;
-
-      // Initialize or update the source
-      if (!linkCounts[sourceVarName]) {
-        linkCounts[sourceVarName] = {
-          InGroup_links: 0,
-          OutGroup_links: 0,
-          InGroup_inLinks: 0,
-          InGroup_outLinks: 0,
-          OutGroup_inLinks: 0,
-          OutGroup_outLinks: 0,
-          x: item?.source.leftTop[0],
-          y: item?.source.leftTop[1],
-          width: item?.source.width,
-          height: item?.source.height,
-          boundry: item?.source.boundary,
-          position: item?.source.position,
-        };
-      }
-      // Initialize or update the target
-      if (!linkCounts[targetVarName]) {
-        linkCounts[targetVarName] = {
-          InGroup_links: 0,
-          OutGroup_links: 0,
-          InGroup_inLinks: 0,
-          InGroup_outLinks: 0,
-          OutGroup_inLinks: 0,
-          OutGroup_outLinks: 0,
-          x: item?.target.leftTop[0],
-          y: item?.target.leftTop[1],
-          width: item?.target.width,
-          height: item?.target.height,
-          boundry: item?.target.boundary,
-          position: item?.target.position,
-        };
-      }
-      if (isInGroup) {
-        linkCounts[sourceVarName].InGroup_outLinks += 1;
-        linkCounts[targetVarName].InGroup_inLinks += 1;
-        linkCounts[sourceVarName].InGroup_links += 1;
-        linkCounts[targetVarName].InGroup_links += 1;
-      } else {
-        linkCounts[sourceVarName].OutGroup_outLinks += 1;
-        linkCounts[targetVarName].OutGroup_inLinks += 1;
-        linkCounts[sourceVarName].OutGroup_links += 1;
-        linkCounts[targetVarName].OutGroup_links += 1;
-      }
-    });
-    // console.log(filteredMergeData);
-    // // filteredMergeData = filteredMergeData.slice(0, 10);
-    // console.log("link filtered");
-    const points = grid_layout.generatePoints(linkCounts);
-
-    // M: move to, H: horizontal line, V: vertical line
-    const lineGenerator = (link, i, bbox_source, bbox_target) => {
-      let source_grid, target_grid;
-
-      source_grid = [link.source.newX_source, link.source.newY_source];
-      target_grid = [link.target.newX_target, link.target.newY_target];
-
-      let path_points;
-
-      path_points = grid_layout.pathFinding(
-        link,
-        this.grid_renderer.global_grid,
-        points,
-      );
-      // }
-
-      if (path_points) {
-        const svgPath = path_points.map((point) =>
-          grid_layout.gridToSvgCoordinate(
-            point[0],
-            point[1],
-            cellWidth,
-            cellHeight,
-          ),
-        );
-
-        const d3Path = d3.path();
-        // d3Path.moveTo(svgPath[0].x, svgPath[0].y);
-        if (link.source.var_type == link.target.var_type) {
-          d3Path.moveTo(svgPath[0].x, svgPath[0].y);
-          d3Path.quadraticCurveTo(
-            grid_layout.gridToSvgCoordinate(
-              bboxes[link.source.var_type].center[0],
-              bboxes[link.source.var_type].center[1],
-              cellWidth,
-              cellHeight,
-            ).x,
-            grid_layout.gridToSvgCoordinate(
-              bboxes[link.source.var_type].center[0],
-              bboxes[link.source.var_type].center[1],
-              cellWidth,
-              cellHeight,
-            ).y,
-            svgPath[1].x,
-            svgPath[1].y,
-          );
-          return d3Path.toString();
-        } else {
-          // for (let i = 1; i < svgPath.length; i++) {
-          //   d3Path.lineTo(svgPath[i].x, svgPath[i].y);
-          // }
-          const sourcePoint = svgPath[0];
-          const targetPoint = svgPath[1];
-          const dx = targetPoint.x - sourcePoint.x;
-          const dy = targetPoint.y - sourcePoint.y;
-          const dr = Math.sqrt(dx * dx + dy * dy) * 0.8; // Increase radius by 20% for more pronounced curves
-          // const dScale = d3
-          //   .scaleLinear()
-          //   .domain([
-          //     Math.min(...pairInfo.map((d) => d.count)),
-          //     Math.max(...pairInfo.map((d) => d.count)),
-          //   ])
-          //   .range([0.99, 0.84]); // Adjust this range as needed
-          // const startPoint = {
-          //   x: sourcePoint.x + dx * 0.05,
-          //   y: sourcePoint.y + dy * 0.05,
-          // };
-          // const endPoint = {
-          //   x: sourcePoint.x + dx * 0.95,
-          //   y: sourcePoint.y + dy * 0.95,
-          // };
-          // const sweepFlag = link.reverse ? 1 : 0;
-          // Create the partial arc path
-          return `M${sourcePoint.x},${sourcePoint.y}A${dr},${dr} 0 0 0 ${targetPoint.x},${targetPoint.y}`;
+        if (
+          source_variable_bbox === undefined ||
+          target_variable_bbox === undefined
+        ) {
+          return undefined;
         }
 
-        // return d3Path.toString();
+        link.source.x = source_variable_bbox[0] + source_variable_bbox[2] / 2;
+        link.source.y = source_variable_bbox[1] + source_variable_bbox[3] / 2;
+        link.target.x = target_variable_bbox[0] + target_variable_bbox[2] / 2;
+        link.target.y = target_variable_bbox[1] + target_variable_bbox[3] / 2;
+        return link;
+      })
+      .filter((link) => link !== undefined);
+
+    const lineGenerator = (link: tVisLink) => {
+      const d3Path = d3.path();
+      if (link.source.var_type == link.target.var_type) {
+        d3Path.moveTo(link.source.x, link.source.y);
+        d3Path.quadraticCurveTo(
+          bboxes[link.source.var_type].center[0],
+          bboxes[link.source.var_type].center[1],
+          link.target.x,
+          link.target.y,
+        );
+        return d3Path.toString();
+      } else {
+        const sourcePoint = { x: link.source.x, y: link.source.y };
+        const targetPoint = { x: link.target.x, y: link.target.y };
+        const dx = targetPoint.x - sourcePoint.x;
+        const dy = targetPoint.y - sourcePoint.y;
+        const dr = Math.sqrt(dx * dx + dy * dy) * 0.8; // Increase radius by 20% for more pronounced curves
+
+        return `M${sourcePoint.x},${sourcePoint.y}A${dr},${dr} 0 0 0 ${targetPoint.x},${targetPoint.y}`;
       }
     };
 
-    // console.log({ filteredMergeData });
     const link_paths = svg
       .select("g.detail-link-group")
       .selectAll(".link")
       .data(filteredMergeData)
       .join("path")
       .attr("class", (d) => `link ${d.source.var_type}-${d.target.var_type}`)
-      .attr("id", (d) => `${d.source.var_name}` + "-" + `${d.target.var_name}`)
+      .attr(
+        "id",
+        (d: tVisLink) =>
+          `${d.source.variable_name}` + "-" + `${d.target.variable_name}`,
+      )
       .attr("cursor", "pointer")
       .attr("fill", "none")
-      // .attr("stroke", "url(#grad)")
-      // .attr("stroke",d=> scaleColor(d.frequency))
-      .attr("stroke", (d) => {
-        return "gray";
-      })
-      .attr("stroke-width", function (d: tLinkObject) {
-        const widthSacle = d3
-          .scaleLinear()
-          .domain([
-            frequencyList.minLinkFrequency,
-            frequencyList.maxLinkFrequency,
-          ])
-          .range([2, 10]);
-        return widthSacle(d.frequency);
-        return 1;
-      })
-      .attr("opacity", (d) => {
-        return d.source.var_type == d.target.var_type ? 0.1 : 0.1;
-      })
-      .on("mouseover", function (e, d: tLinkObject) {
+      .attr("stroke", "gray")
+      .attr("stroke-width", (d: tVisLink) => widthSacle(d.frequency))
+      .attr("opacity", (d) =>
+        d.source.var_type == d.target.var_type ? 0.1 : 0.1,
+      )
+      .on("mouseover", function (e, d: tVisLink) {
         if (!self.rectClicked && !self.linkClicked) {
-          // if(!self.rectClicked ){
           d3.select(this).classed("line-hover", true);
         }
-        // .attr("stroke", (d: tLinkObject) => {
-        //   // const svg = d3.select("#" + self.svgId);
-        //   // return createOrUpdateGradient(svg, d, self);
-        //   return self.varTypeColorScale(d.source.var_type);
-        // });
       })
       .on("mouseout", function (e, d) {
         d3.select(this).classed("line-hover", false);
@@ -559,8 +207,6 @@ export const DetailDPSIR = {
           .classed("link-highlight", false)
           .classed("detail-link-not-highlight", true)
           .attr("stroke", "gray");
-        // .attr("pointer-events","none")
-        // .attr("marker-end", "");
 
         const rects = d3
           .selectAll("rect.box")
@@ -610,15 +256,12 @@ export const DetailDPSIR = {
             .classed("link-highlight", true)
             .classed("detail-link-not-highlight", false)
             .raise()
-            .attr("stroke", (d: tLinkObject) => {
-              // const svg = d3.select("#" + self.svgId);
-              // return createOrUpdateGradient(svg, d, self);
-              return self.varTypeColorScale(d.source.var_type);
-            })
-            .attr("marker-end", (d: tLinkObject) => {
-              const svg = d3.select("#" + self.svgId);
-              return grid_layout.createArrow(svg, d, self);
-            });
+            .attr("stroke", (d: tVisLink) =>
+              self.varTypeColorScale(d.source.var_type),
+            )
+            .attr("marker-end", (d: tVisLink) =>
+              createArrow(d3.select("#" + self.svgId), d, self),
+            );
 
           rects
             .filter(
@@ -651,13 +294,8 @@ export const DetailDPSIR = {
 
     link_paths
       // .filter((d) => d.source.var_type === d.target.var_type)
-      .attr("d", function (d, i) {
-        return lineGenerator(
-          d,
-          i,
-          bboxes[d.source.var_type],
-          bboxes[d.target.var_type],
-        );
+      .attr("d", function (d: tVisLink) {
+        return lineGenerator(d);
       });
   },
 
@@ -669,8 +307,6 @@ export const DetailDPSIR = {
     const revealed_var_types = Object.keys(var_type_states).filter(
       (var_type) => var_type_states[var_type].revealed,
     );
-    let cellWidth: number = self.cellWidth;
-    let cellHeight: number = self.cellHeight;
     let varTypeColorScale = self.varTypeColorScale;
     d3.select("#" + this.svgId)
       .select("g.detail-bbox-group")
@@ -681,22 +317,26 @@ export const DetailDPSIR = {
       .each(function (var_type_name: string) {
         const bbox_center = bboxes[var_type_name].center;
         const [bboxWidth, bboxHeight] = bboxes[var_type_name].size;
-        const bbox_coordinates = grid_layout.gridToSvgCoordinate(
-          bbox_center[0],
-          bbox_center[1],
-          cellWidth,
-          cellHeight,
-        );
+        // const bbox_coordinates = grid_layout.gridToSvgCoordinate(
+        //   bbox_center[0],
+        //   bbox_center[1],
+        //   cellWidth,
+        //   cellHeight,
+        // );
 
         const group = d3.select(this);
         group.selectAll("*").remove();
         group
           .append("rect")
           .attr("class", "bbox-label-container")
-          .attr("x", bbox_coordinates.x - (bboxWidth * cellWidth) / 2)
-          .attr("y", bbox_coordinates.y - (bboxHeight * cellHeight) / 2)
-          .attr("width", bboxWidth * cellWidth)
-          .attr("height", bboxHeight * cellHeight)
+          .attr("x", bbox_center[0] - bboxWidth / 2)
+          .attr("y", bbox_center[1] - bboxHeight / 2)
+          .attr("width", bboxWidth)
+          .attr("height", bboxHeight)
+          // .attr("x", bbox_coordinates.x - (bboxWidth * cellWidth) / 2)
+          // .attr("y", bbox_coordinates.y - (bboxHeight * cellHeight) / 2)
+          // .attr("width", bboxWidth * cellWidth)
+          // .attr("height", bboxHeight * cellHeight)
           .attr("fill", "white")
           .lower();
         group
@@ -705,21 +345,23 @@ export const DetailDPSIR = {
           .attr("id", `${var_type_name}` + `_label`)
           .attr(
             "x",
-            grid_layout.gridToSvgCoordinate(
-              bbox_center[0],
-              bbox_center[1] - bboxHeight / 2 - 5,
-              cellWidth,
-              cellHeight,
-            ).x,
+            bbox_center[0],
+            // grid_layout.gridToSvgCoordinate(
+            //   bbox_center[0],
+            //   bbox_center[1] - bboxHeight / 2 - 5,
+            //   cellWidth,
+            //   cellHeight,
+            // ).x,
           )
           .attr(
             "y",
-            grid_layout.gridToSvgCoordinate(
-              bbox_center[0],
-              bbox_center[1] - bboxHeight / 2 - 5,
-              cellWidth,
-              cellHeight,
-            ).y,
+            bbox_center[1] - bboxHeight / 2 - 5,
+            // grid_layout.gridToSvgCoordinate(
+            //   bbox_center[0],
+            //   bbox_center[1] - bboxHeight / 2 - 5,
+            //   cellWidth,
+            //   cellHeight,
+            // ).y,
           )
           .attr("text-anchor", "middle")
           .attr("cursor", "pointer")
@@ -762,21 +404,23 @@ export const DetailDPSIR = {
           })
           .attr(
             "x",
-            grid_layout.gridToSvgCoordinate(
-              bbox_center[0] + (5.8 * var_type_name.length) / 2,
-              bbox_center[1] - bboxHeight / 2 - 7,
-              cellWidth,
-              cellHeight,
-            ).x,
+            bbox_center[0] + 12 * var_type_name.length,
+            // grid_layout.gridToSvgCoordinate(
+            //   bbox_center[0] + (5.8 * var_type_name.length) / 2,
+            //   bbox_center[1] - bboxHeight / 2 - 7,
+            //   cellWidth,
+            //   cellHeight,
+            // ).x,
           )
           .attr(
             "y",
-            grid_layout.gridToSvgCoordinate(
-              bbox_center[0] + (2 * var_type_name.length) / 2,
-              bbox_center[1] - bboxHeight / 2 - 5 - 5,
-              cellWidth,
-              cellHeight,
-            ).y,
+            bbox_center[1] - bboxHeight / 2 - 20,
+            // grid_layout.gridToSvgCoordinate(
+            //   bbox_center[0] + (2 * var_type_name.length) / 2,
+            //   bbox_center[1] - bboxHeight / 2 - 5 - 5,
+            //   cellWidth,
+            //   cellHeight,
+            // ).y,
           )
           .attr("width", 30)
           .attr("height", 30);
@@ -786,11 +430,10 @@ export const DetailDPSIR = {
 
   drawTags(
     var_data: tDPSIR,
+    varCoordinatesDict: Record<string, any[]>,
     var_type_states: Record<string, { revealed: boolean }>,
   ) {
     const self = this;
-    const cellWidth: number = self.cellWidth;
-    const cellHeight: number = self.cellHeight;
     const revealed_var_types = Object.keys(var_type_states).filter(
       (var_type) => var_type_states[var_type].revealed,
     );
@@ -802,24 +445,13 @@ export const DetailDPSIR = {
       .attr("id", (d) => d)
       .attr("class", "detail-tag-group")
       .each(function (var_type_name: string) {
-        const varCoordinates = self.varCoordinatesDict[var_type_name];
+        const varCoordinates = varCoordinatesDict[var_type_name];
         const variables = var_data[var_type_name];
-        const rectWithVar = grid_layout.combineData(
+        const { rectWithVar, minMentions, maxMentions } = combineData(
           variables,
           varCoordinates,
-          self.grid_renderer?.global_grid,
         ); //return as an object
-        rectWithVar.forEach((rect) => {
-          self.global_rects?.push(rect);
-        });
-        let minMentions = Infinity;
-        let maxMentions = -Infinity;
-
-        Object.values(rectWithVar).forEach((rect: tRectObject) => {
-          const degree = rect.degree;
-          if (degree < minMentions) minMentions = degree;
-          if (degree > maxMentions) maxMentions = degree;
-        });
+        console.log({ varCoordinates, rectWithVar });
         const scaleVarColor = d3
           .scaleLinear()
           .domain([minMentions, maxMentions])
@@ -840,16 +472,18 @@ export const DetailDPSIR = {
               .attr("id", d.variable_name)
               .attr(
                 "x",
-                grid_layout.gridToSvgCoordinate(d.x, d.y, cellWidth, cellHeight)
-                  .x,
+                d.x,
+                // grid_layout.gridToSvgCoordinate(d.x, d.y, cellWidth, cellHeight)
+                //   .x,
               )
               .attr(
                 "y",
-                grid_layout.gridToSvgCoordinate(d.x, d.y, cellWidth, cellHeight)
-                  .y,
+                d.y,
+                // grid_layout.gridToSvgCoordinate(d.x, d.y, cellWidth, cellHeight)
+                //   .y,
               )
-              .attr("width", d.width * cellWidth)
-              .attr("height", d.height * cellHeight)
+              .attr("width", d.width)
+              .attr("height", d.height)
               .attr("stroke", "#cdcdcd")
               .attr("stroke-width", "1px")
               .attr(
@@ -965,17 +599,17 @@ export const DetailDPSIR = {
                     .classed("detail-link-not-highlight", false)
 
                     .raise()
-                    .attr("stroke", (link_data: tLinkObject) => {
+                    .attr("stroke", (link_data: tVisLink) => {
                       return self.varTypeColorScale(link_data.source.var_type);
                     })
-                    .attr("marker-end", (d: tLinkObject) => {
+                    .attr("marker-end", (d: tVisLink) => {
                       const svg = d3.select("#" + self.svgId);
-                      return grid_layout.createArrow(svg, d, self);
+                      return createArrow(svg, d, self);
                     })
-                    .each(function (link_data: tLinkObject) {
+                    .each(function (link_data: tVisLink) {
                       // Highlight the target rect of each related link
-                      const targetRectId = link_data.target.var_name;
-                      const sourceRectId = link_data.source.var_name;
+                      const targetRectId = link_data.target.variable_name;
+                      const sourceRectId = link_data.source.variable_name;
 
                       if (sourceRectId !== d.variable_name) {
                         d3.select(`rect#${sourceRectId}`)
@@ -1009,7 +643,7 @@ export const DetailDPSIR = {
                 }
               });
 
-            const tagWidth = d.width * cellWidth * 0.8; //width space for text
+            const tagWidth = d.width * 0.8; //width space for text
             tag
               .append("text")
               .attr("class", "label")
@@ -1017,21 +651,23 @@ export const DetailDPSIR = {
               .attr("class", "label")
               .attr(
                 "x",
-                grid_layout.gridToSvgCoordinate(
-                  d.x + d.width / 2,
-                  d.y + d.height / 2,
-                  cellWidth,
-                  cellHeight,
-                ).x,
+                d.x + d.width / 2,
+                // grid_layout.gridToSvgCoordinate(
+                //   d.x + d.width / 2,
+                //   d.y + d.height / 2,
+                //   cellWidth,
+                //   cellHeight,
+                // ).x,
               ) // slightly move text to the left within the rectangle
               .attr(
                 "y",
-                grid_layout.gridToSvgCoordinate(
-                  d.x + d.width / 2,
-                  d.y + d.height / 2,
-                  cellWidth,
-                  cellHeight,
-                ).y,
+                d.y + d.height / 2,
+                // grid_layout.gridToSvgCoordinate(
+                //   d.x + d.width / 2,
+                //   d.y + d.height / 2,
+                //   cellWidth,
+                //   cellHeight,
+                // ).y,
               )
               .attr("fill", "black")
               .attr("font-size", "0.8rem")
@@ -1052,21 +688,23 @@ export const DetailDPSIR = {
                 .attr("id", d.variable_name)
                 .attr(
                   "x",
-                  grid_layout.gridToSvgCoordinate(
-                    d.x + d.width - 2.4,
-                    d.y,
-                    cellWidth,
-                    cellHeight,
-                  ).x,
+                  d.x + d.width - 2.4,
+                  // grid_layout.gridToSvgCoordinate(
+                  //   d.x + d.width - 2.4,
+                  //   d.y,
+                  //   cellWidth,
+                  //   cellHeight,
+                  // ).x,
                 )
                 .attr(
                   "y",
-                  grid_layout.gridToSvgCoordinate(
-                    d.x + d.width - 2.4,
-                    d.y,
-                    cellWidth,
-                    cellHeight,
-                  ).y,
+                  d.y,
+                  // grid_layout.gridToSvgCoordinate(
+                  //   d.x + d.width - 2.4,
+                  //   d.y,
+                  //   cellWidth,
+                  //   cellHeight,
+                  // ).y,
                 )
                 .attr("width", icon_size) // icon width
                 .attr("height", icon_size) // icon height
@@ -1076,3 +714,116 @@ export const DetailDPSIR = {
       });
   },
 };
+
+function calculateFrequencyList(new_links: tVisLink[]) {
+  const maxLinkFrequency = new_links.reduce(
+    (max, link) => Math.max(max, link.frequency),
+    0,
+  );
+  const minLinkFrequency = new_links.reduce(
+    (min, link) => Math.min(min, link.frequency),
+    Infinity,
+  );
+
+  const frequencyList = {
+    // minLength: minLength,
+    // maxLength: maxLength,
+    minLinkFrequency: minLinkFrequency,
+    maxLinkFrequency: maxLinkFrequency,
+  };
+
+  return frequencyList;
+}
+
+function createArrow(svg, d: tVisLink, self) {
+  const arrowId = `arrow-${d.source.variable_name}-${d.target.variable_name}`;
+  let arrow = svg.select(`#${arrowId}`);
+  if (arrow.empty()) {
+    svg
+      .select("defs")
+      .append("marker")
+      .attr("id", arrowId)
+      .attr("viewBox", [0, 0, 10, 10])
+      .attr("refX", 5)
+      .attr("refY", 5)
+      .attr("markerWidth", 4)
+      .attr("markerHeight", 4)
+      .attr("orient", "auto-start-reverse")
+      .append("path")
+      .attr(
+        "d",
+        d3.line()([
+          [0, 0],
+          [10, 5],
+          [0, 10],
+        ]),
+      )
+      .attr("fill", self.varTypeColorScale(d.source.var_type));
+    // .attr('fill', 'gray')
+  }
+
+  return `url(#${arrowId})`;
+}
+
+function combineData(
+  vars: tVariableType,
+  rectangles: [number, number, number, number, string, string, number][],
+) {
+  // console.log({rectangles})
+  const allX = rectangles.map((rect) => rect[0]);
+  const allY = rectangles.map((rect) => rect[1]);
+  const allXPlusWidth = rectangles.map((rect) => rect[0] + rect[2]);
+  const allYPlusHeight = rectangles.map((rect) => rect[1] + rect[3]);
+
+  // const x_value = Array.from(new Set(allX)).sort((a, b) => a - b);
+  // const min_x = vars.variable_type === "state" ? x_value[0] : x_value[1]; // if var type is response, choose the third min value
+  const min_x = Math.min(...allXPlusWidth);
+  const max_x = Math.max(...allX);
+  const min_y = Math.min(...allYPlusHeight);
+  const max_y = Math.max(...allY);
+  // console.log("combine data")
+  // mark boundary for outGroup links with "-" in the grid
+  // let boundary_arr: { x: number; y: number; width: number; height: number }[] =
+  //   [];
+  // boundary_arr.push({
+  //   x: min_x + 1,
+  //   y: min_y + 1,
+  //   width: max_x - min_x - 1,
+  //   height: max_y - min_y - 1,
+  // });
+  // markOccupiedGrid(global_grid, boundary_arr, "-");
+
+  const rectWithVar = rectangles.map((rect) => {
+    let [x, y, width, height, variable_name, position, degree] = rect;
+    const variable = vars.variable_mentions[variable_name];
+    const mentions = variable?.mentions || [];
+    const factor_type = variable?.factor_type;
+    const definition = variable?.definition;
+    const frequency = mentions.length;
+    const boundary = { min_x, max_x, min_y, max_y };
+
+    return {
+      x,
+      y,
+      width,
+      height,
+      variable_name,
+      position,
+      mentions,
+      factor_type,
+      frequency,
+      definition,
+      boundary,
+      degree,
+    };
+  });
+  let minMentions = Infinity;
+  let maxMentions = -Infinity;
+
+  Object.values(rectWithVar).forEach((rect: tRectObject) => {
+    const degree = rect.degree;
+    if (degree < minMentions) minMentions = degree;
+    if (degree > maxMentions) maxMentions = degree;
+  });
+  return { rectWithVar, minMentions, maxMentions };
+}

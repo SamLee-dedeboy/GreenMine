@@ -701,31 +701,17 @@ export function combineData(
   const max_y = Math.max(...allY);
   // console.log("combine data")
   // mark boundary for outGroup links with "-" in the grid
-  let boundary_arr: { x: number; y: number; width: number; height: number }[] =
-    [];
-  boundary_arr.push({
-    x: min_x + 1,
-    y: min_y + 1,
-    width: max_x - min_x - 1,
-    height: max_y - min_y - 1,
-  });
-  markOccupiedGrid(global_grid, boundary_arr, "-");
+  // let boundary_arr: { x: number; y: number; width: number; height: number }[] =
+  //   [];
+  // boundary_arr.push({
+  //   x: min_x + 1,
+  //   y: min_y + 1,
+  //   width: max_x - min_x - 1,
+  //   height: max_y - min_y - 1,
+  // });
+  // markOccupiedGrid(global_grid, boundary_arr, "-");
   return rectangles.map((rect) => {
     let [x, y, width, height, variable_name, position, degree] = rect;
-    // if (variable_name == "珊瑚礁狀態") {
-    //   position = "bottom";
-    // } else if (
-    //   variable_name == "物理和化學品質" ||
-    //   variable_name == "漁業減少"
-    // ) {
-    //   position = "right";
-    // } else if (variable_name == "自然棲息地變化") {
-    //   position = "left";
-    // }
-    // else if (variable_name == "漁業減少"){
-    //   position = "top"
-    // }
-
     const variable = vars.variable_mentions[variable_name];
     const mentions = variable?.mentions || [];
     const factor_type = variable?.factor_type;
@@ -787,71 +773,7 @@ export function createOrUpdateGradient(svg, link_data: tLinkObject, self) {
   return `url(#${gradientId})`;
 }
 
-export function createArrow(svg, d: tLinkObject, self) {
-  const arrowId = `arrow-${d.source.var_name}-${d.target.var_name}`;
-  let arrow = svg.select(`#${arrowId}`);
-  if (arrow.empty()) {
-    svg
-      .select("defs")
-      .append("marker")
-      .attr("id", arrowId)
-      .attr("viewBox", [0, 0, 10, 10])
-      .attr("refX", 5)
-      .attr("refY", 5)
-      .attr("markerWidth", 4)
-      .attr("markerHeight", 4)
-      .attr("orient", "auto-start-reverse")
-      .append("path")
-      .attr(
-        "d",
-        d3.line()([
-          [0, 0],
-          [10, 5],
-          [0, 10],
-        ]),
-      )
-      .attr("fill", self.varTypeColorScale(d.source.var_type));
-    // .attr('fill', 'gray')
-  }
-
-  return `url(#${arrowId})`;
-}
-
 // includes variables frequency and link frequency among all groups
-export function calculateFrequencyList(new_links: tVisLink[]) {
-  // console.log(new_links);
-  // let { minLength, maxLength } = variables.reduce((result, item) => {
-  //     if (item.variable_mentions) {
-  //     Object.values(item.variable_mentions).forEach((variable:any) => {
-  //         if (variable.mentions) {
-  //         const mentionsLength = variable.mentions.length;
-  //         result.minLength = Math.min(result.minLength, mentionsLength);
-  //         result.maxLength = Math.max(result.maxLength, mentionsLength);
-  //         }
-  //     });
-  //     }
-  //     return result;
-  // }, { minLength: Infinity, maxLength: -Infinity });
-
-  const maxLinkFrequency = new_links.reduce(
-    (max, link) => Math.max(max, link.frequency),
-    0,
-  );
-  const minLinkFrequency = new_links.reduce(
-    (min, link) => Math.min(min, link.frequency),
-    Infinity,
-  );
-
-  const frequencyList = {
-    // minLength: minLength,
-    // maxLength: maxLength,
-    minLinkFrequency: minLinkFrequency,
-    maxLinkFrequency: maxLinkFrequency,
-  };
-
-  return frequencyList;
-}
-
 // text longer than `width` will be in next line
 export function wrap(text, width) {
   text.each(function (d, i) {
@@ -1496,7 +1418,6 @@ export function generatePoints(linkCounts) {
       x + width / 2,
       y + height / 2,
     );
-    
 
     // // Set points for outGroup links
     // if (position === "top" || position === "top-left") {

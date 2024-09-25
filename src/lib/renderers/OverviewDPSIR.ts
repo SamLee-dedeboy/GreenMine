@@ -1,6 +1,4 @@
 import * as d3 from "d3";
-// import {tick} from 'svelte';
-// import { scale } from 'svelte/transition';
 import type {
   tVariable,
   tVariableType,
@@ -15,58 +13,24 @@ import type {
   tLinkObjectOverview,
   tBbox,
 } from "../types/variables";
-import * as Constants from "../constants";
-import * as grid_layout from "./grid_layout";
-import { toggle } from "@melt-ui/svelte/internal/helpers";
 import { setOpacity } from "lib/utils";
+import { updateTmpData } from "lib/utils/update_with_log";
 // import { link } from "fs";
 
 export const OverviewDPSIR = {
   init(svgId: string) {
     // this.clicked_rect = null;
     this.clicked_link = null;
-    this.width = 1550;
-    this.height = 950;
-    this.padding = { top: 10, right: 50, bottom: 10, left: 50 };
-    this.grid_renderer = grid_layout.grid_renderer;
-    this.grid_renderer.init(300, 240);
-    // console.log(this.grid_renderer.columns, this.grid_renderer.rows);
-    this.cellWidth = this.width / this.grid_renderer.columns;
-    this.cellHeight = this.height / this.grid_renderer.rows;
-    // console.log(this.cellWidth, this.cellHeight);
     this.svgId = svgId;
-    // this.dispatch = d3.dispatch("VarOrLinkSelected");
     this.dispatch = d3.dispatch(
       "VarTypeLinkSelected",
-      //   "VarTypeHovered",
       "VarTypeSelected",
       "VarTypeUnSelected",
     );
-    // this.utilities = utilities;
-    // this.handlers = handlers;
     this.varTypeColorScale = null;
-    // this.showLinks = true;
-    // this.enable = false;
-    const self = this;
-    const svg = d3
-      .select("#" + svgId)
-      .attr("viewBox", `0 0 ${this.width} ${this.height}`)
-      .attr("width", this.width)
-      .attr("height", this.height);
-
-    // this.drawGids(svg, svgId);
+    const svg = d3.select("#" + svgId);
     svg.append("g").attr("class", "overview_link_group");
-
-    // .attr("transform", `translate(${padding.left}, ${padding.top})`);
     svg.append("g").attr("class", "overview_bbox_region");
-    // Constants.var_type_names.forEach((var_type_name) => {
-    //   const var_type_region = svg
-    //     .append("g")
-    //     .attr("class", `overview_${var_type_name}_region`);
-    //   // .attr("transform", `translate(${padding.left}, ${padding.top})`);
-    //   var_type_region.append("g").attr("class", "tag-group");
-    //   var_type_region.append("g").attr("class", "bbox-group");
-    // });
   },
   on(event, handler) {
     // console.log(event, handler);
@@ -89,74 +53,66 @@ export const OverviewDPSIR = {
       .attr("stroke", "gray");
 
     d3.selectAll("marker").select("path").attr("fill", "gray");
-    // this.dispatch.call("VarTypeLinkSelected", null, null);
-    // this.dispatch.call("VarTypeHovered", null, null);
-    // this.dispatch.call("VarTypeUnSelected", null, null);
     this.clicked_link = null;
   },
-  //   toggleLinks(showLinks: boolean) {
-  //     this.showLinks = showLinks;
-  //   },
+
   update_vars(
     links: tVisLink[],
     varTypeColorScale: Function,
     bboxes: Record<string, tBbox>,
     var_type_states: Record<string, { revealed: boolean }>,
   ) {
-    this.grid_renderer?.reset_global_grid(300, 240);
+    // this.grid_renderer?.reset_global_grid(300, 240);
     this.varTypeColorScale = varTypeColorScale;
 
     this.drawBboxes(bboxes, var_type_states);
-    this.drawLinks(links, bboxes, var_type_states);
+    // this.drawLinks(links, bboxes, var_type_states);
   },
-  drawGids(svg, svgId) {
-    // Get the dimensions of the SVG
-    const self = this;
-    let cellWidth: number = self.cellWidth;
-    let cellHeight: number = self.cellHeight;
-    let columns = self.grid_renderer.columns;
-    let rows = self.grid_renderer.rows;
-    let width = self.width;
-    let height = self.height;
-    const svgElement = document.getElementById(svgId);
+  // drawGids(svg, svgId) {
+  //   // Get the dimensions of the SVG
+  //   const self = this;
+  //   let cellWidth: number = self.cellWidth;
+  //   let cellHeight: number = self.cellHeight;
+  //   let columns = self.grid_renderer.columns;
+  //   let rows = self.grid_renderer.rows;
+  //   let width = self.width;
+  //   let height = self.height;
+  //   const svgElement = document.getElementById(svgId);
 
-    // Append the grid group
-    let gridGroup = svg.append("g").attr("class", "grid_group");
-    // .attr("transform", `translate(${padding.left}, ${padding.top})`);
+  //   // Append the grid group
+  //   let gridGroup = svg.append("g").attr("class", "grid_group");
+  //   // .attr("transform", `translate(${padding.left}, ${padding.top})`);
 
-    // Function to draw horizontal lines
-    for (let i = 0; i <= rows; i++) {
-      gridGroup
-        .append("line")
-        .attr("x1", 0)
-        .attr("y1", i * cellHeight)
-        .attr("x2", width)
-        .attr("y2", i * cellHeight)
-        .attr("stroke", "#D3D3D3")
-        .attr("stroke-width", 1)
-        .attr("opacity", 0.3);
-    }
+  //   // Function to draw horizontal lines
+  //   for (let i = 0; i <= rows; i++) {
+  //     gridGroup
+  //       .append("line")
+  //       .attr("x1", 0)
+  //       .attr("y1", i * cellHeight)
+  //       .attr("x2", width)
+  //       .attr("y2", i * cellHeight)
+  //       .attr("stroke", "#D3D3D3")
+  //       .attr("stroke-width", 1)
+  //       .attr("opacity", 0.3);
+  //   }
 
-    // Function to draw vertical lines
-    for (let i = 0; i <= columns; i++) {
-      gridGroup
-        .append("line")
-        .attr("x1", i * cellWidth)
-        .attr("y1", 0) //-padding.top
-        .attr("x2", i * cellWidth)
-        .attr("y2", height) //+padding.bottom
-        .attr("stroke", "#D3D3D3")
-        .attr("stroke-width", 1)
-        .attr("opacity", 0.3);
-    }
-  },
+  //   // Function to draw vertical lines
+  //   for (let i = 0; i <= columns; i++) {
+  //     gridGroup
+  //       .append("line")
+  //       .attr("x1", i * cellWidth)
+  //       .attr("y1", 0) //-padding.top
+  //       .attr("x2", i * cellWidth)
+  //       .attr("y2", height) //+padding.bottom
+  //       .attr("stroke", "#D3D3D3")
+  //       .attr("stroke-width", 1)
+  //       .attr("opacity", 0.3);
+  //   }
+  // },
 
-  //center(gridX,gridY), size(x grids,y grids)
   drawVars(vars: tVariableType, bbox_info: tBbox) {
     // console.log(vars);
     const self = this;
-    let cellWidth: number = self.cellWidth;
-    let cellHeight: number = self.cellHeight;
     const var_type_name = vars.variable_type;
 
     this.drawBbox(
@@ -191,12 +147,11 @@ export const OverviewDPSIR = {
   drawLinks(
     links: tVisLink[],
     bboxes: Record<string, tBbox>,
-    var_type_states: Record<string, { revealed: boolean }>,
+    var_type_states: Record<string, { revealed: boolean; visible: boolean }>,
   ) {
+    console.log({ var_type_states });
     const self = this;
-    let cellWidth: number = self.cellWidth;
-    let cellHeight: number = self.cellHeight;
-    const Ports = generatePorts(bboxes);
+    const ports = generatePorts(bboxes);
     links = links.filter(
       (link) => link.source.var_type !== link.target.var_type,
     );
@@ -204,6 +159,11 @@ export const OverviewDPSIR = {
       (link) =>
         !var_type_states[link.source.var_type].revealed ||
         !var_type_states[link.target.var_type].revealed,
+    );
+    links = links.filter(
+      (link) =>
+        var_type_states[link.source.var_type].visible &&
+        var_type_states[link.target.var_type].visible,
     );
     const uniquePairs = this.extractUniquePairs(links);
     const pairCounts: Record<string, number> = {};
@@ -220,20 +180,20 @@ export const OverviewDPSIR = {
         let sourceCenter, targetCenter;
         let reverse = false;
 
-        if (Ports[linkKey]) {
-          sourceCenter = [Ports[linkKey].source.x, Ports[linkKey].source.y];
-          targetCenter = [Ports[linkKey].target.x, Ports[linkKey].target.y];
-          reverse = Ports[linkKey].reverse;
-        } else if (Ports[inverseKey]) {
+        if (ports[linkKey]) {
+          sourceCenter = [ports[linkKey].source.x, ports[linkKey].source.y];
+          targetCenter = [ports[linkKey].target.x, ports[linkKey].target.y];
+          reverse = ports[linkKey].reverse;
+        } else if (ports[inverseKey]) {
           sourceCenter = [
-            Ports[inverseKey].target.x,
-            Ports[inverseKey].target.y,
+            ports[inverseKey].target.x,
+            ports[inverseKey].target.y,
           ];
           targetCenter = [
-            Ports[inverseKey].source.x,
-            Ports[inverseKey].source.y,
+            ports[inverseKey].source.x,
+            ports[inverseKey].source.y,
           ];
-          reverse = Ports[inverseKey].reverse;
+          reverse = ports[inverseKey].reverse;
         } else {
           sourceCenter = bboxes[sourceType]?.center || [0, 0];
           targetCenter = bboxes[targetType]?.center || [0, 0];
@@ -252,20 +212,27 @@ export const OverviewDPSIR = {
 
     // Modify the lineGenerator function to handle the direction
     const lineGenerator = (link) => {
-      //   console.log({ link });
-      const sourcePoint = grid_layout.gridToSvgCoordinate(
-        link.source_center[0],
-        link.source_center[1],
-        cellWidth,
-        cellHeight,
-      );
+      const sourcePoint = {
+        x: link.source_center[0],
+        y: link.source_center[1],
+      };
+      const targetPoint = {
+        x: link.target_center[0],
+        y: link.target_center[1],
+      };
+      // const sourcePoint = grid_layout.gridToSvgCoordinate(
+      //   link.source_center[0],
+      //   link.source_center[1],
+      //   cellWidth,
+      //   cellHeight,
+      // );
 
-      const targetPoint = grid_layout.gridToSvgCoordinate(
-        link.target_center[0],
-        link.target_center[1],
-        cellWidth,
-        cellHeight,
-      );
+      // const targetPoint = grid_layout.gridToSvgCoordinate(
+      //   link.target_center[0],
+      //   link.target_center[1],
+      //   cellWidth,
+      //   cellHeight,
+      // );
 
       const dx = targetPoint.x - sourcePoint.x;
       const dy = targetPoint.y - sourcePoint.y;
@@ -383,142 +350,157 @@ export const OverviewDPSIR = {
 
   drawBboxes(
     bboxes: Record<string, tBbox>,
-    var_type_states: Record<string, { revealed: boolean }>,
+    var_type_states: Record<string, { revealed: boolean; visible: boolean }>,
   ) {
     // console.log({ bboxes, var_type_states });
     const self = this;
     const not_revealed_var_types = Object.keys(var_type_states).filter(
-      (var_type) => !var_type_states[var_type].revealed,
+      (var_type) =>
+        !var_type_states[var_type].revealed &&
+        var_type_states[var_type].visible,
     );
     // console.log({ not_revealed_var_types });
     d3.select("#" + this.svgId)
       .select(".overview_bbox_region")
       .selectAll("g.bbox")
-      .data(not_revealed_var_types)
-      .join("g")
-      .attr("class", "bbox")
-      .attr("id", (d) => `overview_${d}_bbox_container`)
-      .each(function (d) {
-        const bbox_center = bboxes[d].center;
-        const [bboxWidth, bboxHeight] = bboxes[d].size;
-        let cellWidth: number = self.cellWidth;
-        let cellHeight: number = self.cellHeight;
-        let varTypeColorScale = self.varTypeColorScale;
-        const group = d3.select(this);
-        group.selectAll("*").remove();
-        group
-          .append("rect")
-          .attr("class", "bbox")
-          .attr("id", d)
-          .attr(
-            "x",
-            grid_layout.gridToSvgCoordinate(
-              bbox_center[0] - bboxWidth / 2,
-              bbox_center[1] - bboxHeight / 2,
-              cellWidth,
-              cellHeight,
-            ).x,
-          )
-          .attr(
-            "y",
-            grid_layout.gridToSvgCoordinate(
-              bbox_center[0] - bboxWidth / 2,
-              bbox_center[1] - bboxHeight / 2,
-              cellWidth,
-              cellHeight,
-            ).y,
-          )
-          .attr("width", bboxWidth * cellWidth)
-          .attr("height", bboxHeight * cellHeight)
-          .attr("fill", setOpacity(varTypeColorScale(d), 0.8, "rgbHex"))
-          .attr("rx", "0.4%")
-          .attr("cursor", "pointer")
-          .on("mouseover", function () {
-            // apply hovering effect
-            d3.selectAll(".link")
-              .classed("overview-link-highlight", false)
-              .classed("link-not-highlight", true)
-              .attr("stroke", "gray")
-              .filter(
-                (link_data) => link_data.source === d || link_data.target === d,
-              )
-              .classed("overview-link-highlight", true)
-              .classed("link-not-highlight", false)
-              .raise()
-              .attr("stroke", (d: tLinkObject) => {
-                return self.varTypeColorScale(d.source);
-              });
+      .data(not_revealed_var_types, (d) => d)
+      .join(
+        (enter) => {
+          enter
+            .append("g")
+            .attr("class", "bbox")
+            .attr("id", (d) => `overview_${d}_bbox_container`)
+            .each(function (d) {
+              const group = d3.select(this);
+              const bbox_center = bboxes[d].center;
+              const [bboxWidth, bboxHeight] = bboxes[d].size;
+              const rect = group
+                .append("rect")
+                .attr("class", "bbox")
+                .attr("id", d)
+                .attr(
+                  "fill",
+                  setOpacity(self.varTypeColorScale(d), 0.8, "rgbHex"),
+                )
+                .attr("rx", "0.4%")
+                .attr("cursor", "pointer")
+                .attr("x", bbox_center[0])
+                .attr("y", bbox_center[1])
+                .attr("width", 0)
+                .attr("height", 0);
+              rect
+                .transition()
+                .duration(500)
+                .attr("x", bbox_center[0] - bboxWidth / 2)
+                .attr("y", bbox_center[1] - bboxHeight / 2)
+                .attr("width", bboxWidth)
+                .attr("height", bboxHeight);
+              rect
+                .on("mouseover", function () {
+                  // apply hovering effect
+                  d3.selectAll(".link")
+                    .classed("overview-link-highlight", false)
+                    .classed("link-not-highlight", true)
+                    .attr("stroke", "gray")
+                    .filter(
+                      (link_data) =>
+                        link_data.source === d || link_data.target === d,
+                    )
+                    .classed("overview-link-highlight", true)
+                    .classed("link-not-highlight", false)
+                    .raise()
+                    .attr("stroke", (d: tVisLink) => {
+                      return self.varTypeColorScale(d.source);
+                    });
 
-            d3.selectAll("marker")
-              .filter(function () {
-                const [, source, target] = this.id.split("-");
-                return source === d || target === d;
-              })
-              .select("path")
-              .attr("fill", function () {
-                const [, source, target] = this.parentElement.id.split("-");
-                return self.varTypeColorScale(source);
-              });
+                  d3.selectAll("marker")
+                    .filter(function () {
+                      const [, source, target] = this.id.split("-");
+                      return source === d || target === d;
+                    })
+                    .select("path")
+                    .attr("fill", function () {
+                      const [, source, target] =
+                        this.parentElement.id.split("-");
+                      return self.varTypeColorScale(source);
+                    });
 
-            d3.select(this).classed("overview-var-type-hover", true);
-          })
-          .on("mouseout", function () {
-            // self.dispatch.call("VarTypeHovered", null, undefined);
-            d3.selectAll(".link")
-              .classed("overview-link-highlight", false)
-              .classed("link-not-highlight", false)
-              .attr("stroke", "gray");
+                  d3.select(this).classed("overview-var-type-hover", true);
+                })
+                .on("mouseout", function () {
+                  d3.selectAll(".link")
+                    .classed("overview-link-highlight", false)
+                    .classed("link-not-highlight", false)
+                    .attr("stroke", "gray");
 
-            d3.selectAll("marker").select("path").attr("fill", "gray");
+                  d3.selectAll("marker").select("path").attr("fill", "gray");
 
-            d3.select(this).classed("overview-var-type-hover", false);
-          })
-          .on("click", function (event) {
-            event.preventDefault();
-            // console.log("click", var_type_name);
-            self.dispatch.call("VarTypeSelected", null, d);
+                  d3.select(this).classed("overview-var-type-hover", false);
+                })
+                .on("click", function (event) {
+                  event.preventDefault();
+                  self.dispatch.call("VarTypeSelected", null, d);
 
-            d3.selectAll(".link")
-              .classed("overview-link-highlight", false)
-              .classed("link-not-highlight", false)
-              .attr("stroke", "gray");
+                  d3.selectAll(".link")
+                    .classed("overview-link-highlight", false)
+                    .classed("link-not-highlight", false)
+                    .attr("stroke", "gray");
 
-            d3.selectAll("marker").select("path").attr("fill", "gray");
-          });
-        //group name
-        group
-          .append("text")
-          .attr("class", "bbox-label")
-          .attr("id", `${d}` + `_label`)
-          .attr(
-            "x",
-            grid_layout.gridToSvgCoordinate(
-              bbox_center[0],
-              bbox_center[1] - bboxHeight / 2 - 2,
-              cellWidth,
-              cellHeight,
-            ).x,
-          )
-          .attr(
-            "y",
-            grid_layout.gridToSvgCoordinate(
-              bbox_center[0],
-              bbox_center[1],
-              cellWidth,
-              cellHeight,
-            ).y,
-          )
-          .attr("text-anchor", "middle")
-          .attr("dominant-baseline", "middle")
-          .text(d.charAt(0).toUpperCase() + d.slice(1) + "s")
-          .attr("text-transform", "capitalize")
-          .attr("pointer-events", "none")
-          .attr("font-family", "serif")
-          .attr("font-style", "italic")
-          .attr("font-size", "3rem")
-          .attr("font-weight", "bold")
-          .attr("fill", "#636363");
-      });
+                  d3.selectAll("marker").select("path").attr("fill", "gray");
+                });
+              group
+                .append("text")
+                .attr("class", "bbox-label")
+                .attr("id", `${d}` + `_label`)
+                .attr("text-anchor", "middle")
+                .attr("dominant-baseline", "middle")
+                .text(d.charAt(0).toUpperCase() + d.slice(1) + "s")
+                .attr("text-transform", "capitalize")
+                .attr("pointer-events", "none")
+                .attr("font-family", "serif")
+                .attr("font-style", "italic")
+                .attr("font-size", "3rem")
+                .attr("font-weight", "bold")
+                .attr("fill", "#636363")
+                .attr("x", bbox_center[0])
+                .attr("y", bbox_center[1])
+                .attr("opacity", 0)
+                .transition()
+                .duration(500)
+                .attr("opacity", 1);
+            });
+        },
+        (update) =>
+          update.each(function (d) {
+            const group = d3.select(this);
+            const bbox_center = bboxes[d].center;
+            const [bboxWidth, bboxHeight] = bboxes[d].size;
+            group
+              .select("rect")
+              .transition()
+              .duration(500)
+              .attr("width", bboxWidth)
+              .attr("height", bboxHeight)
+              .attr("x", bbox_center[0] - bboxWidth / 2)
+              .attr("y", bbox_center[1] - bboxHeight / 2);
+            group
+              .select("text")
+              .transition()
+              .duration(500)
+              .attr("x", bbox_center[0])
+              .attr("y", bbox_center[1]);
+          }),
+        (exit) => {
+          exit.select("text").remove();
+          exit
+            .select("rect")
+            .transition()
+            .duration(200)
+            .attr("width", 0)
+            .attr("height", 0)
+            .on("end", () => exit.remove());
+        },
+      );
   },
 };
 
@@ -553,6 +535,24 @@ function createArrow(svg, d: tLinkObject) {
 }
 
 function generatePorts(bboxes: Record<string, tBbox>) {
+  let ports = {};
+  for (let key1 in bboxes) {
+    for (let key2 in bboxes) {
+      if (key1 === key2) continue;
+      ports[`${key1}-${key2}`] = {
+        source: {
+          x: bboxes[key1].center[0] + bboxes[key1].size[0] / 2,
+          y: bboxes[key1].center[1],
+        },
+        target: {
+          x: bboxes[key2].center[0] - bboxes[key2].size[0] / 2,
+          y: bboxes[key2].center[1],
+        },
+      };
+    }
+  }
+  return ports;
+
   let origins: Record<string, [number, number]> = {};
   for (let key in bboxes) {
     origins[key] = [

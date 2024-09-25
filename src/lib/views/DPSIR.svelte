@@ -3,6 +3,7 @@
   import * as d3 from "d3";
   import { DetailDPSIR } from "lib/renderers/DetailDPSIR";
   import { OverviewDPSIR } from "lib/renderers/OverviewDPSIR";
+  import { DPSIRLayout } from "lib/renderers/DPSIRLayout";
   import * as Constants from "lib/constants";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
@@ -21,20 +22,12 @@
   export let links: tVisLink[];
   const svgId = "model-svg";
 
-  let bboxes: Record<string, tBbox> = {
-    driver: { center: [58, 90], size: [0, 0] },
-    pressure: { center: [170, 30], size: [0, 0] },
-    state: { center: [270, 75], size: [0, 0] },
-    impact: { center: [240, 190], size: [0, 0] },
-    response: { center: [70, 210], size: [0, 0] },
-  };
-
   let var_type_states = {
-    driver: { revealed: false },
-    pressure: { revealed: false },
-    state: { revealed: false },
-    impact: { revealed: false },
-    response: { revealed: false },
+    driver: { revealed: false, visible: true },
+    pressure: { revealed: false, visible: true },
+    state: { revealed: false, visible: true },
+    impact: { revealed: false, visible: true },
+    response: { revealed: false, visible: true },
   };
   $: isDetailMode = Object.values(var_type_states).every(
     (state) => state.revealed,
@@ -44,6 +37,7 @@
     d3.select(`#${svgId}`).selectAll("*").remove();
     OverviewDPSIR.init(svgId);
     DetailDPSIR.init(svgId);
+    DPSIRLayout.init(svgId);
 
     DetailDPSIR.on("VarOrLinkSelected", handleVarOrLinkSelected);
     DetailDPSIR.on("VarTypeUnSelected", handleOverviewVarTypeUnSelected);
@@ -72,12 +66,13 @@
   async function render(
     vars: tDPSIR,
     links: tVisLink[],
-    var_type_states: Record<string, { revealed: boolean }>,
+    var_type_states: Record<string, { revealed: boolean; visible: boolean }>,
   ) {
+    DPSIRLayout.update(data, links, var_type_states);
     OverviewDPSIR.update_vars(
       links,
       $varTypeColorScale,
-      bboxes,
+      DPSIRLayout.bboxes,
       var_type_states,
     );
     DetailDPSIR.update_vars(
@@ -85,7 +80,8 @@
       links,
       $varTypeColorScale,
       var_type_states,
-      bboxes,
+      DPSIRLayout.bboxes,
+      DPSIRLayout.varCoordinatesDict,
     );
   }
 
@@ -150,14 +146,6 @@
     await tick();
     initializeRenderer();
 
-    // calculate box size and small rectangle layout
-    bboxes = DetailDPSIR.calculateBoxInfo(
-      data,
-      links,
-      Constants.var_type_names,
-      bboxes,
-    );
-    // console.log({ bboxes });
     render(data, links, var_type_states);
   });
 </script>
@@ -166,12 +154,64 @@
   <svg id={svgId} class="varbox-svg relative h-full w-full">
     <defs></defs>
   </svg>
-  <button
-    class="absolute right-4 top-4 z-10 rounded-md bg-gray-300 p-2 text-black transition-colors hover:bg-gray-500 hover:text-white"
-    on:click={switchRenderer}
-  >
-    Show {isDetailMode ? "Overview" : "Full Detail"}
-  </button>
+  <div class="absolute right-4 top-4 z-10 flex flex-col items-center gap-y-2">
+    <!-- <div class="flex items-center gap-x-1">
+      <button
+        class="w-[6rem] rounded-md bg-gray-300 p-2 text-black transition-colors hover:bg-gray-500 hover:text-white"
+        on:click={switchRenderer}
+      >
+        {isDetailMode ? "Hide All" : "Show All"}
+      </button>
+    </div> -->
+    {#each Constants.var_type_names as var_type}
+      <div class="flex items-center gap-x-1">
+        <div
+          role="button"
+          tabindex="0"
+          on:click={() => {
+            var_type_states[var_type].revealed = false;
+            var_type_states[var_type].visible =
+              !var_type_states[var_type].visible;
+            render(data, links, var_type_states);
+          }}
+          on:keyup={() => {}}
+        >
+          {#if var_type_states[var_type].visible}
+            <img
+              src="visible.svg"
+              alt="hide"
+              class="h-6 w-6 rounded-full p-0.5 hover:bg-gray-300"
+            />
+          {:else}
+            <img
+              src="invisible.svg"
+              alt="show"
+              class="h-6 w-6 rounded-full p-0.5 hover:bg-gray-300"
+            />
+          {/if}
+        </div>
+        <div
+          role="button"
+          tabindex="0"
+          class="pointer-events-none w-[6rem] rounded-md px-2 py-1 capitalize italic text-gray-700 opacity-70 outline outline-0 hover:!opacity-100 hover:shadow"
+          class:visible={var_type_states[var_type].visible}
+          class:revealed={var_type_states[var_type].revealed}
+          style={`
+          background-color: ${var_type_states[var_type].visible ? $varTypeColorScale(var_type) : "lightgray"};
+          outline-color: ${$varTypeColorScale(var_type)}
+          `}
+          on:click={() => {
+            var_type_states[var_type].revealed =
+              !var_type_states[var_type].revealed;
+            render(data, links, var_type_states);
+          }}
+          on:keyup={() => {}}
+        >
+          {var_type}s
+        </div>
+      </div>
+    {/each}
+  </div>
   <div class="tooltip-content"></div>
 </div>
 
@@ -256,5 +296,14 @@
     & span {
       @apply rounded px-1 capitalize text-[#222222];
     }
+  }
+  .visible {
+    opacity: 0.7;
+    color: black;
+    pointer-events: auto;
+  }
+  .revealed {
+    background-color: white !important;
+    outline-width: 3px !important;
   }
 </style>
