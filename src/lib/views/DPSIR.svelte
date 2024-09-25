@@ -152,9 +152,7 @@
 </script>
 
 <div class="container relative h-full w-full">
-  <svg id={svgId} class="varbox-svg relative h-full w-full">
-    <defs></defs>
-  </svg>
+  <svg id={svgId} class="varbox-svg relative h-full w-full"> </svg>
   <div class="absolute right-4 top-4 z-10 flex items-center gap-x-2">
     <!-- <div class="flex items-center gap-x-1">
       <button

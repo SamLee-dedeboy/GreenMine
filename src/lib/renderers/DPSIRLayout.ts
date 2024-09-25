@@ -30,7 +30,21 @@ export const DPSIRLayout = {
     );
     this.calculateBboxCenters(vars, visible_var_types);
     this.calculateBboxSizes(vars, links, visible_var_types);
+    this.clipBboxCenters();
   },
+
+  clipBboxCenters() {
+    Object.entries(this.bboxes).forEach(([varType, bbox]) => {
+      const [center_x, center_y] = bbox.center;
+      const [width, height] = bbox.size;
+      bbox.center = [
+        Math.max(width / 2, Math.min(this.width - width / 2, center_x)),
+        Math.max(height / 2, Math.min(this.height - height / 2, center_y)),
+      ];
+      this.bboxes[varType] = bbox;
+    });
+  },
+
   calculateBboxCenters(vars: tDPSIR, var_type_names: string[]) {
     console.log({ vars });
     const self = this;
@@ -77,16 +91,7 @@ export const DPSIRLayout = {
         (a, b) => bbox_order[a] - bbox_order[b],
       );
       const angles = calculateAngles(sequence, vars);
-      const max_degree = Math.max(
-        ...Object.keys(this.bboxes).map(
-          (varType) => Object.keys(vars[varType].variable_mentions).length,
-        ),
-      );
-      const min_degree = Math.min(
-        ...Object.keys(this.bboxes).map(
-          (varType) => Object.keys(vars[varType].variable_mentions).length,
-        ),
-      );
+
       Object.keys(this.bboxes)
         .sort((a, b) => bbox_order[a] - bbox_order[b])
         .forEach((varType, i) => {
@@ -94,13 +99,12 @@ export const DPSIRLayout = {
           const [x, y] = polarToCartesian(
             this.width / 2, // center x
             this.height / 2, // center y
-            this.width * 0.35, // a
-            this.height * 0.4, // b
+            this.width * 0.4, // a
+            this.height * 0.48, // b
             angle,
           );
           this.bboxes[varType].center = [x, y];
         });
-      console.log({ bboxes: this.bboxes });
       return;
     }
   },
