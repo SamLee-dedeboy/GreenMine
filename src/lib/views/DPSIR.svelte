@@ -4,6 +4,7 @@
   import { DetailDPSIR } from "lib/renderers/DetailDPSIR";
   import { OverviewDPSIR } from "lib/renderers/OverviewDPSIR";
   import { DPSIRLayout } from "lib/renderers/DPSIRLayout";
+  import { setOpacity } from "lib/utils";
   import * as Constants from "lib/constants";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
@@ -154,7 +155,7 @@
   <svg id={svgId} class="varbox-svg relative h-full w-full">
     <defs></defs>
   </svg>
-  <div class="absolute right-4 top-4 z-10 flex flex-col items-center gap-y-2">
+  <div class="absolute right-4 top-4 z-10 flex items-center gap-x-2">
     <!-- <div class="flex items-center gap-x-1">
       <button
         class="w-[6rem] rounded-md bg-gray-300 p-2 text-black transition-colors hover:bg-gray-500 hover:text-white"
@@ -164,10 +165,21 @@
       </button>
     </div> -->
     {#each Constants.var_type_names as var_type}
-      <div class="flex items-center gap-x-1">
+      <div
+        class="flex items-center gap-x-0.5 rounded outline outline-0"
+        class:visible={var_type_states[var_type].visible}
+        class:revealed={var_type_states[var_type].revealed}
+        style={`outline-color: ${$varTypeColorScale(var_type)} `}
+      >
         <div
           role="button"
           tabindex="0"
+          class="w-[6rem] rounded-md px-2 py-1 capitalize italic text-gray-700 hover:shadow"
+          class:visible={var_type_states[var_type].visible}
+          class:revealed={var_type_states[var_type].revealed}
+          style={`
+          background-color: ${var_type_states[var_type].visible ? setOpacity($varTypeColorScale(var_type), 0.7, "rgbHex") : "lightgray"};
+          `}
           on:click={() => {
             var_type_states[var_type].revealed = false;
             var_type_states[var_type].visible =
@@ -176,30 +188,13 @@
           }}
           on:keyup={() => {}}
         >
-          {#if var_type_states[var_type].visible}
-            <img
-              src="visible.svg"
-              alt="hide"
-              class="h-6 w-6 rounded-full p-0.5 hover:bg-gray-300"
-            />
-          {:else}
-            <img
-              src="invisible.svg"
-              alt="show"
-              class="h-6 w-6 rounded-full p-0.5 hover:bg-gray-300"
-            />
-          {/if}
+          {var_type}s
         </div>
         <div
           role="button"
           tabindex="0"
-          class="pointer-events-none w-[6rem] rounded-md px-2 py-1 capitalize italic text-gray-700 opacity-70 outline outline-0 hover:!opacity-100 hover:shadow"
+          class="pointer-events-none h-7 w-7 rounded-full p-1 opacity-50 hover:bg-gray-300"
           class:visible={var_type_states[var_type].visible}
-          class:revealed={var_type_states[var_type].revealed}
-          style={`
-          background-color: ${var_type_states[var_type].visible ? $varTypeColorScale(var_type) : "lightgray"};
-          outline-color: ${$varTypeColorScale(var_type)}
-          `}
           on:click={() => {
             var_type_states[var_type].revealed =
               !var_type_states[var_type].revealed;
@@ -207,7 +202,11 @@
           }}
           on:keyup={() => {}}
         >
-          {var_type}s
+          {#if var_type_states[var_type].revealed}
+            <img src="minimize.svg" alt="hide" />
+          {:else}
+            <img src="maximize.svg" alt="show" />
+          {/if}
         </div>
       </div>
     {/each}
@@ -298,9 +297,9 @@
     }
   }
   .visible {
-    opacity: 0.7;
-    color: black;
+    color: #333333;
     pointer-events: auto;
+    opacity: 1;
   }
   .revealed {
     background-color: white !important;

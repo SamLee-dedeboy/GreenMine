@@ -66,7 +66,7 @@ export const OverviewDPSIR = {
     this.varTypeColorScale = varTypeColorScale;
 
     this.drawBboxes(bboxes, var_type_states);
-    // this.drawLinks(links, bboxes, var_type_states);
+    this.drawLinks(links, bboxes, var_type_states);
   },
   // drawGids(svg, svgId) {
   //   // Get the dimensions of the SVG

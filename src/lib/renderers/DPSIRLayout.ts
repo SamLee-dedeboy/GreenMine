@@ -94,8 +94,8 @@ export const DPSIRLayout = {
           const [x, y] = polarToCartesian(
             this.width / 2, // center x
             this.height / 2, // center y
-            this.width / 3, // a
-            this.height / 3, // b
+            this.width * 0.35, // a
+            this.height * 0.4, // b
             angle,
           );
           this.bboxes[varType].center = [x, y];
