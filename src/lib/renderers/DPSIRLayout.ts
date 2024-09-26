@@ -30,31 +30,22 @@ export const DPSIRLayout = {
     );
     this.calculateBboxCenters(vars, visible_var_types);
     this.calculateBboxSizes(vars, links, visible_var_types);
-    this.clipBboxCenters();
+    // this.clipBboxCenters();
   },
 
-  clipBboxCenters() {
-    Object.entries(this.bboxes).forEach(([varType, bbox]) => {
-      const [center_x, center_y] = bbox.center;
-      const [width, height] = bbox.size;
-      bbox.center = [
-        Math.max(width / 2, Math.min(this.width - width / 2, center_x)),
-        Math.max(height / 2, Math.min(this.height - height / 2, center_y)),
-      ];
-      this.bboxes[varType] = bbox;
-    });
-  },
+  //   clipBboxCenters() {
+  //     Object.entries(this.bboxes).forEach(([varType, bbox]) => {
+  //       const [center_x, center_y] = bbox.center;
+  //       const [width, height] = bbox.size;
+  //       bbox.center = [
+  //         Math.max(width / 2, Math.min(this.width - width / 2, center_x)),
+  //         Math.max(height / 2, Math.min(this.height - height / 2, center_y)),
+  //       ];
+  //       this.bboxes[varType] = bbox;
+  //     });
+  //   },
 
   calculateBboxCenters(vars: tDPSIR, var_type_names: string[]) {
-    console.log({ vars });
-    const self = this;
-    // this.bboxes = {
-    //   driver: { center: [58, 90], size: [0, 0] },
-    //   pressure: { center: [170, 30], size: [0, 0] },
-    //   state: { center: [270, 75], size: [0, 0] },
-    //   impact: { center: [240, 190], size: [0, 0] },
-    //   response: { center: [70, 210], size: [0, 0] },
-    // };
     this.bboxes = var_type_names.reduce((acc, varType) => {
       acc[varType] = { center: [0, 0], size: [0, 0] };
       return acc;
@@ -149,6 +140,8 @@ export const DPSIRLayout = {
         self.bboxes[varType],
         offset.x,
         offset.y,
+        this.width,
+        this.height,
       );
       self.bboxes[varType] = bbox;
       self.varCoordinatesDict[varType] = rectangleCoordinates;
@@ -247,9 +240,10 @@ function squareLayout(
   bbox: { center: [number, number]; size: [number, number] },
   x_offset: number,
   y_offset: number,
+  full_width: number,
+  full_height: number,
 ) {
   // create a local rectangle array to avoid modifying the original array
-  const center = bbox.center;
   const rect_width = rectangles[0].width;
 
   let first_row_rect_number = rectangles.length <= 7 ? 2 : 4;
@@ -331,6 +325,11 @@ function squareLayout(
   );
   // console.log(bboxes);
   bbox.size = [box_width, box_height];
+  const [center_x, center_y] = bbox.center;
+  bbox.center = [
+    Math.max(box_width / 2, Math.min(full_width - box_width / 2, center_x)),
+    Math.max(box_height / 2, Math.min(full_height - box_height / 2, center_y)),
+  ];
 
   let first_space_between_rectangles = Math.round(
     (box_width - rect_width * first_row_rect_number) /
@@ -342,8 +341,8 @@ function squareLayout(
   );
 
   const bbox_origin: [number, number] = [
-    Math.round(center[0] - box_width / 2),
-    Math.round(center[1] - box_height / 2),
+    Math.round(bbox.center[0] - box_width / 2),
+    Math.round(bbox.center[1] - box_height / 2),
   ];
 
   let rectangleCoordinates: [

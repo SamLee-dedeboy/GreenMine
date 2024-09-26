@@ -14,6 +14,7 @@ import type {
 } from "../types/variables";
 import * as Constants from "../constants";
 import * as grid_layout from "./grid_layout";
+import * as arc from "./Arcs";
 
 export const DetailDPSIR = {
   init(svgId: string) {
@@ -28,11 +29,11 @@ export const DetailDPSIR = {
     const svg = d3.select("#" + svgId);
     const bbox_group = svg.append("g").attr("class", "detail-bbox-group");
     const link_group = svg.append("g").attr("class", "detail-link-group");
-    const tag_group = svg.append("g").attr("class", "detail-var-type-group");
-    Constants.var_type_names.forEach((var_type_name) => {
-      bbox_group.append("g").attr("class", `${var_type_name}`);
-      tag_group.append("g").attr("class", `${var_type_name}`);
-    });
+    const tag_group = svg.append("g").attr("class", "detail-var-group");
+    // Constants.var_type_names.forEach((var_type_name) => {
+    //   bbox_group.append("g").attr("class", `${var_type_name}`);
+    //   tag_group.append("g").attr("class", `${var_type_name}`);
+    // });
   },
   on(event, handler) {
     this.dispatch.on(event, handler);
@@ -97,7 +98,7 @@ export const DetailDPSIR = {
   ) {
     this.varTypeColorScale = varTypeColorScale;
     this.drawBboxes(bboxes, var_type_states);
-    this.drawTags(var_data, varCoordinatesDict, var_type_states);
+    this.drawTags(var_data, varCoordinatesDict, var_type_states, bboxes);
   },
 
   drawLinks(
@@ -118,10 +119,14 @@ export const DetailDPSIR = {
         var_type_states[link.source.var_type].revealed &&
         var_type_states[link.target.var_type].revealed,
     );
-
+    console.log({ links, var_type_states });
     const svg = d3.select("#" + this.svgId);
-    // console.log({ links });
-    const filteredMergeData: tVisLink[] = links
+    const [_1, _2, svgWidth, svgHeight] = d3
+      .select("#" + self.svgId)
+      .attr("viewBox")
+      .split(" ")
+      .map((d) => +d);
+    const linkData = links
       .map((link) => {
         const source_variable_bbox = varsCoordinatesDict[
           link.source.var_type
@@ -141,162 +146,150 @@ export const DetailDPSIR = {
         link.source.y = source_variable_bbox[1] + source_variable_bbox[3] / 2;
         link.target.x = target_variable_bbox[0] + target_variable_bbox[2] / 2;
         link.target.y = target_variable_bbox[1] + target_variable_bbox[3] / 2;
-        return link;
+        const path = arc.detailPathGenerator(link, bboxes, svgWidth, svgHeight);
+        return { ...link, ...path };
       })
       .filter((link) => link !== undefined);
 
-    const lineGenerator = (link: tVisLink) => {
-      const d3Path = d3.path();
-      if (link.source.var_type == link.target.var_type) {
-        d3Path.moveTo(link.source.x, link.source.y);
-        d3Path.quadraticCurveTo(
-          bboxes[link.source.var_type].center[0],
-          bboxes[link.source.var_type].center[1],
-          link.target.x,
-          link.target.y,
-        );
-        return d3Path.toString();
-      } else {
-        const sourcePoint = { x: link.source.x, y: link.source.y };
-        const targetPoint = { x: link.target.x, y: link.target.y };
-        const dx = targetPoint.x - sourcePoint.x;
-        const dy = targetPoint.y - sourcePoint.y;
-        const dr = Math.sqrt(dx * dx + dy * dy) * 0.8; // Increase radius by 20% for more pronounced curves
-
-        return `M${sourcePoint.x},${sourcePoint.y}A${dr},${dr} 0 0 0 ${targetPoint.x},${targetPoint.y}`;
-      }
-    };
-
+    console.log({ linkData });
     const link_paths = svg
       .select("g.detail-link-group")
       .selectAll(".link")
-      .data(filteredMergeData)
-      .join("path")
-      .attr("class", (d) => `link ${d.source.var_type}-${d.target.var_type}`)
-      .attr(
-        "id",
-        (d: tVisLink) =>
-          `${d.source.variable_name}` + "-" + `${d.target.variable_name}`,
+      .data(
+        linkData,
+        (d) => `${d.source.variable_name}-${d.target.variable_name}`,
       )
-      .attr("cursor", "pointer")
-      .attr("fill", "none")
-      .attr("stroke", "gray")
-      .attr("stroke-width", (d: tVisLink) => widthSacle(d.frequency))
-      .attr("opacity", (d) =>
-        d.source.var_type == d.target.var_type ? 0.1 : 0.1,
-      )
-      .on("mouseover", function (e, d: tVisLink) {
-        if (!self.rectClicked && !self.linkClicked) {
-          d3.select(this).classed("line-hover", true);
-        }
-      })
-      .on("mouseout", function (e, d) {
-        d3.select(this).classed("line-hover", false);
-        if (!d3.select(this).classed("link-highlight")) {
-          //if the link is clicked then do not change the color
-          d3.select(this).attr("stroke", "gray");
-        }
-        d3.selectAll(".link-frequency-text").remove();
-      })
-      .on("click", function (e, d: tLinkObject) {
-        e.preventDefault();
-
-        const detailLinks = d3.select("g.detail-link-group");
-        const links = detailLinks
-          .selectAll("path.link")
-          .classed("link-highlight", false)
-          .classed("detail-link-not-highlight", true)
-          .attr("stroke", "gray");
-
-        const rects = d3
-          .selectAll("rect.box")
-          .classed("box-highlight", false)
-          .classed("clicked-box-highlight", false)
-          .classed("box-not-highlight", true);
-
-        const labels = d3
-          .selectAll("text.label")
-          .classed("box-label-highlight", false)
-          .classed("box-label-not-highlight", true);
-
-        const icons = d3
-          .selectAll("g.tag")
-          .select("image")
-          .classed("box-icon-highlight", false)
-          .classed("box-icon-not-highlight", true);
-
-        if (self.clicked_link === d) {
-          self.clicked_link = null;
-          self.linkClicked = false;
-          // self.handlers.VarOrLinkSelected(null);
-          self.dispatch.call("VarOrLinkSelected", null, null);
-          d3.selectAll("rect.box")
-            .classed("box-highlight", false)
-            .classed("clicked-box-highlight", false)
-            .classed("box-not-highlight", false);
-          d3.selectAll("text.label")
-            .classed("box-label-highlight", false)
-            .classed("box-label-not-highlight", false);
-          d3.selectAll("path.link")
-            .classed("link-highlight", false)
-            .classed("detail-link-not-highlight", false)
+      .join(
+        (enter) =>
+          enter
+            .append("path")
+            .attr("class", "link")
+            .attr(
+              "id",
+              (d: tVisLink) =>
+                `${d.source.variable_name}` + "-" + `${d.target.variable_name}`,
+            )
+            .attr("d", (d) => arc.arcGenerator(d.arc_data))
+            .attr("cursor", "pointer")
+            .attr("fill", "none")
             .attr("stroke", "gray")
-            .attr("pointer-events", "default");
-          // .attr("marker-end", "");
-          d3.selectAll("g.tag")
-            .select("image")
-            .classed("box-icon-highlight", false)
-            .classed("box-icon-not-highlight", false);
-        } else {
-          self.clicked_link = d;
-          self.linkClicked = true;
-          // self.handlers.VarOrLinkSelected(d);
-          self.dispatch.call("VarOrLinkSelected", null, d.mentions);
-          d3.select(this)
-            .classed("link-highlight", true)
-            .classed("detail-link-not-highlight", false)
-            .raise()
-            .attr("stroke", (d: tVisLink) =>
-              self.varTypeColorScale(d.source.var_type),
+            .attr("stroke-width", (d: tVisLink) => widthSacle(d.frequency))
+            .attr("opacity", (d) =>
+              d.source.var_type == d.target.var_type ? 0.1 : 0.1,
             )
-            .attr("marker-end", (d: tVisLink) =>
-              createArrow(d3.select("#" + self.svgId), d, self),
-            );
+            .on("mouseover", function (e, d: tVisLink) {
+              if (!self.rectClicked && !self.linkClicked) {
+                d3.select(this).classed("line-hover", true);
+              }
+            })
+            .on("mouseout", function (e, d) {
+              d3.select(this).classed("line-hover", false);
+              if (!d3.select(this).classed("link-highlight")) {
+                //if the link is clicked then do not change the color
+                d3.select(this).attr("stroke", "gray");
+              }
+              d3.selectAll(".link-frequency-text").remove();
+            })
+            .on("click", function (e, d: tLinkObject) {
+              e.preventDefault();
 
-          rects
-            .filter(
-              (box_data: tRectObject) =>
-                box_data.variable_name === d.source.var_name ||
-                box_data.variable_name === d.target.var_name,
-            )
-            .classed("clicked-box-highlight", true)
-            .classed("box-not-highlight", false);
+              const detailLinks = d3.select("g.detail-link-group");
+              const links = detailLinks
+                .selectAll("path.link")
+                .classed("link-highlight", false)
+                .classed("detail-link-not-highlight", true)
+                .attr("stroke", "gray");
 
-          d3.select(`image#${d.source.var_name}`)
-            .classed("clicked-box-highlight", true)
-            .classed("box-not-highlight", false);
+              const rects = d3
+                .selectAll("rect.box")
+                .classed("box-highlight", false)
+                .classed("clicked-box-highlight", false)
+                .classed("box-not-highlight", true);
 
-          d3.select(`image#${d.target.var_name}`)
-            .classed("clicked-box-highlight", true)
-            .classed("box-not-highlight", false);
+              const labels = d3
+                .selectAll("text.label")
+                .classed("box-label-highlight", false)
+                .classed("box-label-not-highlight", true);
 
-          labels
-            .filter(
-              (label_data: tRectObject) =>
-                label_data.variable_name === d.source.var_name ||
-                label_data.variable_name === d.target.var_name,
-            )
-            .classed("box-label-highlight", true)
-            .classed("box-label-not-highlight", false)
-            .raise();
-        }
-      });
+              const icons = d3
+                .selectAll("g.tag")
+                .select("image")
+                .classed("box-icon-highlight", false)
+                .classed("box-icon-not-highlight", true);
 
-    link_paths
-      // .filter((d) => d.source.var_type === d.target.var_type)
-      .attr("d", function (d: tVisLink) {
-        return lineGenerator(d);
-      });
+              if (self.clicked_link === d) {
+                self.clicked_link = null;
+                self.linkClicked = false;
+                // self.handlers.VarOrLinkSelected(null);
+                self.dispatch.call("VarOrLinkSelected", null, null);
+                d3.selectAll("rect.box")
+                  .classed("box-highlight", false)
+                  .classed("clicked-box-highlight", false)
+                  .classed("box-not-highlight", false);
+                d3.selectAll("text.label")
+                  .classed("box-label-highlight", false)
+                  .classed("box-label-not-highlight", false);
+                d3.selectAll("path.link")
+                  .classed("link-highlight", false)
+                  .classed("detail-link-not-highlight", false)
+                  .attr("stroke", "gray")
+                  .attr("pointer-events", "default");
+                // .attr("marker-end", "");
+                d3.selectAll("g.tag")
+                  .select("image")
+                  .classed("box-icon-highlight", false)
+                  .classed("box-icon-not-highlight", false);
+              } else {
+                self.clicked_link = d;
+                self.linkClicked = true;
+                // self.handlers.VarOrLinkSelected(d);
+                self.dispatch.call("VarOrLinkSelected", null, d.mentions);
+                d3.select(this)
+                  .classed("link-highlight", true)
+                  .classed("detail-link-not-highlight", false)
+                  .raise()
+                  .attr("stroke", (d: tVisLink) =>
+                    self.varTypeColorScale(d.source.var_type),
+                  )
+                  .attr("marker-end", (d: tVisLink) =>
+                    createArrow(d3.select("#" + self.svgId), d, self),
+                  );
+
+                rects
+                  .filter(
+                    (box_data: tRectObject) =>
+                      box_data.variable_name === d.source.var_name ||
+                      box_data.variable_name === d.target.var_name,
+                  )
+                  .classed("clicked-box-highlight", true)
+                  .classed("box-not-highlight", false);
+
+                d3.select(`image#${d.source.var_name}`)
+                  .classed("clicked-box-highlight", true)
+                  .classed("box-not-highlight", false);
+
+                d3.select(`image#${d.target.var_name}`)
+                  .classed("clicked-box-highlight", true)
+                  .classed("box-not-highlight", false);
+
+                labels
+                  .filter(
+                    (label_data: tRectObject) =>
+                      label_data.variable_name === d.source.var_name ||
+                      label_data.variable_name === d.target.var_name,
+                  )
+                  .classed("box-label-highlight", true)
+                  .classed("box-label-not-highlight", false)
+                  .raise();
+              }
+            }),
+        (update) =>
+          update
+            .transition()
+            .duration(500)
+            .attr("d", (d) => arc.arcGenerator(d.arc_data)),
+        (exit) => exit.remove(),
+      );
   },
 
   drawBboxes(
@@ -317,12 +310,6 @@ export const DetailDPSIR = {
       .each(function (var_type_name: string) {
         const bbox_center = bboxes[var_type_name].center;
         const [bboxWidth, bboxHeight] = bboxes[var_type_name].size;
-        // const bbox_coordinates = grid_layout.gridToSvgCoordinate(
-        //   bbox_center[0],
-        //   bbox_center[1],
-        //   cellWidth,
-        //   cellHeight,
-        // );
 
         const group = d3.select(this);
         group.selectAll("*").remove();
@@ -333,36 +320,14 @@ export const DetailDPSIR = {
           .attr("y", bbox_center[1] - bboxHeight / 2)
           .attr("width", bboxWidth)
           .attr("height", bboxHeight)
-          // .attr("x", bbox_coordinates.x - (bboxWidth * cellWidth) / 2)
-          // .attr("y", bbox_coordinates.y - (bboxHeight * cellHeight) / 2)
-          // .attr("width", bboxWidth * cellWidth)
-          // .attr("height", bboxHeight * cellHeight)
           .attr("fill", "white")
           .lower();
         group
           .append("text")
           .attr("class", "bbox-label")
           .attr("id", `${var_type_name}` + `_label`)
-          .attr(
-            "x",
-            bbox_center[0],
-            // grid_layout.gridToSvgCoordinate(
-            //   bbox_center[0],
-            //   bbox_center[1] - bboxHeight / 2 - 5,
-            //   cellWidth,
-            //   cellHeight,
-            // ).x,
-          )
-          .attr(
-            "y",
-            bbox_center[1] - bboxHeight / 2 - 5,
-            // grid_layout.gridToSvgCoordinate(
-            //   bbox_center[0],
-            //   bbox_center[1] - bboxHeight / 2 - 5,
-            //   cellWidth,
-            //   cellHeight,
-            // ).y,
-          )
+          .attr("x", bbox_center[0])
+          .attr("y", bbox_center[1] - bboxHeight / 2 - 16)
           .attr("text-anchor", "middle")
           .attr("cursor", "pointer")
           .attr("dominant-baseline", "middle")
@@ -402,26 +367,8 @@ export const DetailDPSIR = {
                 ? ""
                 : "ecological.svg";
           })
-          .attr(
-            "x",
-            bbox_center[0] + 12 * var_type_name.length,
-            // grid_layout.gridToSvgCoordinate(
-            //   bbox_center[0] + (5.8 * var_type_name.length) / 2,
-            //   bbox_center[1] - bboxHeight / 2 - 7,
-            //   cellWidth,
-            //   cellHeight,
-            // ).x,
-          )
-          .attr(
-            "y",
-            bbox_center[1] - bboxHeight / 2 - 20,
-            // grid_layout.gridToSvgCoordinate(
-            //   bbox_center[0] + (2 * var_type_name.length) / 2,
-            //   bbox_center[1] - bboxHeight / 2 - 5 - 5,
-            //   cellWidth,
-            //   cellHeight,
-            // ).y,
-          )
+          .attr("x", bbox_center[0] + 12 * var_type_name.length)
+          .attr("y", bbox_center[1] - bboxHeight / 2 - 32)
           .attr("width", 30)
           .attr("height", 30);
         // .attr("opacity", 0.5);
@@ -432,286 +379,303 @@ export const DetailDPSIR = {
     var_data: tDPSIR,
     varCoordinatesDict: Record<string, any[]>,
     var_type_states: Record<string, { revealed: boolean }>,
+    bboxes: Record<string, tBbox>,
   ) {
     const self = this;
     const revealed_var_types = Object.keys(var_type_states).filter(
       (var_type) => var_type_states[var_type].revealed,
     );
     d3.select("#" + this.svgId)
-      .select("g.detail-var-type-group")
+      .select("g.detail-var-group")
       .selectAll("g.detail-tag-group")
-      .data(revealed_var_types)
-      .join("g")
-      .attr("id", (d) => d)
-      .attr("class", "detail-tag-group")
-      .each(function (var_type_name: string) {
-        const varCoordinates = varCoordinatesDict[var_type_name];
-        const variables = var_data[var_type_name];
-        const { rectWithVar, minMentions, maxMentions } = combineData(
-          variables,
-          varCoordinates,
-        ); //return as an object
-        console.log({ varCoordinates, rectWithVar });
-        const scaleVarColor = d3
-          .scaleLinear()
-          .domain([minMentions, maxMentions])
-          .range(["#f7f7f7", self.varTypeColorScale(var_type_name)]);
-        const group = d3.select(this);
-        group.selectAll("*").remove();
-        group
-          .selectAll("g.tag")
-          .data(rectWithVar)
-          .join("g")
-          .attr("class", "tag")
-          .each(function (d: tRectObject) {
-            const tag = d3.select(this);
-            tag.selectAll("*").remove();
-            tag
-              .append("rect")
-              .attr("class", "box")
-              .attr("id", d.variable_name)
-              .attr(
-                "x",
-                d.x,
-                // grid_layout.gridToSvgCoordinate(d.x, d.y, cellWidth, cellHeight)
-                //   .x,
-              )
-              .attr(
-                "y",
-                d.y,
-                // grid_layout.gridToSvgCoordinate(d.x, d.y, cellWidth, cellHeight)
-                //   .y,
-              )
-              .attr("width", d.width)
-              .attr("height", d.height)
-              .attr("stroke", "#cdcdcd")
-              .attr("stroke-width", "1px")
-              .attr(
-                "fill",
-                scaleVarColor(d.degree),
-                // d.degree !== 0 ? scaleVarColor(d.degree) : "#cdcdcd",
-              )
-              .attr("rx", "0.2%")
-              .attr("opacity", "1")
-              .attr("cursor", "pointer")
-              .on("mouseover", function () {
-                d3.select(this).classed("box-hover", true);
-                d3.select(this.parentNode).raise();
-                d3.select(this.parentNode)
-                  .select(".tooltip")
-                  .attr("opacity", 1);
-              })
-              .on("mouseout", function () {
-                d3.select(this).classed("box-hover", false);
-                d3.select(this.parentNode)
-                  .select(".tooltip")
-                  .attr("opacity", 0);
-              })
-              .on("click", function (e) {
-                // console.log("show links", self.showLinks);
-                e.preventDefault();
-                // d3.selectAll("rect.box")
-                //   .transition()
-                //   .duration(250)
-                //   .attr("transform", ""); // Reset transformation on all boxes to remove any previous magnification
+      .data(revealed_var_types, (d) => d)
+      .join(
+        (enter) => {
+          enter
+            .append("g")
+            .attr("id", (d) => d)
+            .attr("class", "detail-tag-group")
+            .each(function (var_type_name: string) {
+              self.drawTagsInVarType(
+                varCoordinatesDict,
+                var_data,
+                self.varTypeColorScale,
+                var_type_name,
+                d3.select(this),
+              );
+            });
+        },
+        (update) =>
+          update.each(function (var_type_name: string) {
+            self.drawTagsInVarType(
+              varCoordinatesDict,
+              var_data,
+              self.varTypeColorScale,
+              var_type_name,
+              d3.select(this),
+            );
+          }),
+        (exit) => exit.remove(),
+      );
+  },
+  drawTagsInVarType(
+    varCoordinatesDict,
+    var_data,
+    varTypeColorScale,
+    var_type_name,
+    parent,
+  ) {
+    const varCoordinates = varCoordinatesDict[var_type_name];
+    const variables = var_data[var_type_name];
+    const { rectWithVar, minMentions, maxMentions } = combineData(
+      variables,
+      varCoordinates,
+    ); //return as an object
+    const scaleVarColor = d3
+      .scaleLinear()
+      .domain([minMentions, maxMentions])
+      .range(["#f7f7f7", varTypeColorScale(var_type_name)]);
+    const self = this;
+    parent
+      .selectAll("g.tag")
+      .data(rectWithVar, (d) => d.variable_name)
+      .join(
+        (enter) => {
+          enter
+            .append("g")
+            .attr("class", "tag")
+            .each(function (d: tRectObject) {
+              const tag = d3.select(this);
+              const rect = tag
+                .append("rect")
+                .attr("class", "box")
+                .attr("id", d.variable_name)
+                .attr("width", d.width)
+                .attr("height", d.height)
+                .attr("stroke", "#cdcdcd")
+                .attr("stroke-width", "1px")
+                .attr(
+                  "fill",
+                  scaleVarColor(d.degree),
+                  // d.degree !== 0 ? scaleVarColor(d.degree) : "#cdcdcd",
+                )
+                .attr("rx", "0.2%")
+                .attr("opacity", "1")
+                .attr("cursor", "pointer")
+                .on("mouseover", function () {
+                  d3.select(this).classed("box-hover", true);
+                  d3.select(this.parentNode).raise();
+                  d3.select(this.parentNode)
+                    .select(".tooltip")
+                    .attr("opacity", 1);
+                })
+                .on("mouseout", function () {
+                  d3.select(this).classed("box-hover", false);
+                  d3.select(this.parentNode)
+                    .select(".tooltip")
+                    .attr("opacity", 0);
+                })
+                .on("click", function (e) {
+                  // console.log("show links", self.showLinks);
+                  e.preventDefault();
+                  // d3.selectAll("rect.box")
+                  //   .transition()
+                  //   .duration(250)
+                  //   .attr("transform", ""); // Reset transformation on all boxes to remove any previous magnification
 
-                const rects = d3
-                  .selectAll("rect.box")
-                  .classed("box-highlight", false)
-                  .classed("clicked-box-highlight", false)
-                  .classed("box-not-highlight", true);
-                const labels = d3
-                  .selectAll("text.label")
-                  .classed("box-label-highlight", false)
-                  .classed("box-label-not-highlight", true);
-
-                //icons
-                d3.selectAll("g.tag")
-                  .select("image")
-                  .classed("box-icon-highlight", false)
-                  .classed("box-icon-not-highlight", true);
-                //links
-
-                const detailLinks = d3.select("g.detail-link-group");
-                const links = detailLinks
-                  .selectAll("path.link")
-                  .classed("link-highlight", false)
-                  .classed("detail-link-not-highlight", true)
-                  .attr("stroke", "gray");
-                // .attr("pointer-events","none")
-
-                // style changing after select a variable, including the links and labels
-                if (self.clicked_rect === d) {
-                  self.clicked_rect = null;
-                  self.rectClicked = false;
-                  self.dispatch.call("VarOrLinkSelected", null, null);
-                  d3.selectAll("rect.box")
+                  const rects = d3
+                    .selectAll("rect.box")
                     .classed("box-highlight", false)
                     .classed("clicked-box-highlight", false)
-                    .classed("box-not-highlight", false);
-                  // .attr("marker-end", "");
-                  d3.selectAll("text.label")
+                    .classed("box-not-highlight", true);
+                  const labels = d3
+                    .selectAll("text.label")
                     .classed("box-label-highlight", false)
-                    .classed("box-label-not-highlight", false);
-                  links
-                    .classed("link-highlight", false)
-                    .classed("detail-link-not-highlight", false);
-                  // .attr("link-not-highlight", false)
+                    .classed("box-label-not-highlight", true);
+
+                  //icons
                   d3.selectAll("g.tag")
                     .select("image")
                     .classed("box-icon-highlight", false)
-                    .classed("box-icon-not-highlight", false);
-                } else {
-                  self.clicked_rect = d;
-                  self.rectClicked = true;
-                  self.dispatch.call("VarOrLinkSelected", null, d.mentions); //this refer to the context of the event
+                    .classed("box-icon-not-highlight", true);
+                  //links
 
-                  d3.select(this)
-                    .classed("clicked-box-highlight", true)
-                    .classed("box-not-highlight", false);
-                  //   // .raise()
-                  //   .transition()
-                  //   .duration(250);
-                  labels
-                    .filter(
-                      (label_data: tRectObject) =>
-                        d.variable_name === label_data.variable_name,
-                    )
-                    .classed("box-label-highlight", true)
-                    .classed("box-label-not-highlight", false)
-                    .raise();
-
-                  d3.select(`image#${d.variable_name}`)
-                    .classed("box-icon-highlight", true)
-                    .classed("box-icon-not-highlight", false);
-
-                  links
+                  const detailLinks = d3.select("g.detail-link-group");
+                  const links = detailLinks
+                    .selectAll("path.link")
                     .classed("link-highlight", false)
                     .classed("detail-link-not-highlight", true)
-                    .attr("stroke", "gray")
-                    // .attr("marker-end", "")
-                    .filter(
-                      (link_data: tLinkObject) =>
-                        link_data.source.var_name === d.variable_name ||
-                        link_data.target.var_name === d.variable_name,
-                    )
-                    .classed("link-highlight", true)
-                    .classed("detail-link-not-highlight", false)
+                    .attr("stroke", "gray");
+                  // .attr("pointer-events","none")
 
-                    .raise()
-                    .attr("stroke", (link_data: tVisLink) => {
-                      return self.varTypeColorScale(link_data.source.var_type);
-                    })
-                    .attr("marker-end", (d: tVisLink) => {
-                      const svg = d3.select("#" + self.svgId);
-                      return createArrow(svg, d, self);
-                    })
-                    .each(function (link_data: tVisLink) {
-                      // Highlight the target rect of each related link
-                      const targetRectId = link_data.target.variable_name;
-                      const sourceRectId = link_data.source.variable_name;
+                  // style changing after select a variable, including the links and labels
+                  if (self.clicked_rect === d) {
+                    self.clicked_rect = null;
+                    self.rectClicked = false;
+                    self.dispatch.call("VarOrLinkSelected", null, null);
+                    d3.selectAll("rect.box")
+                      .classed("box-highlight", false)
+                      .classed("clicked-box-highlight", false)
+                      .classed("box-not-highlight", false);
+                    // .attr("marker-end", "");
+                    d3.selectAll("text.label")
+                      .classed("box-label-highlight", false)
+                      .classed("box-label-not-highlight", false);
+                    links
+                      .classed("link-highlight", false)
+                      .classed("detail-link-not-highlight", false);
+                    // .attr("link-not-highlight", false)
+                    d3.selectAll("g.tag")
+                      .select("image")
+                      .classed("box-icon-highlight", false)
+                      .classed("box-icon-not-highlight", false);
+                  } else {
+                    self.clicked_rect = d;
+                    self.rectClicked = true;
+                    self.dispatch.call("VarOrLinkSelected", null, d.mentions); //this refer to the context of the event
 
-                      if (sourceRectId !== d.variable_name) {
-                        d3.select(`rect#${sourceRectId}`)
-                          .classed("box-highlight", true)
-                          .classed("box-not-highlight", false);
+                    d3.select(this)
+                      .classed("clicked-box-highlight", true)
+                      .classed("box-not-highlight", false);
+                    //   // .raise()
+                    //   .transition()
+                    //   .duration(250);
+                    labels
+                      .filter(
+                        (label_data: tRectObject) =>
+                          d.variable_name === label_data.variable_name,
+                      )
+                      .classed("box-label-highlight", true)
+                      .classed("box-label-not-highlight", false)
+                      .raise();
 
-                        d3.select(`image#${sourceRectId}`)
-                          .classed("box-icon-highlight", true)
-                          .classed("box-icon-not-highlight", false);
-                      } else if (targetRectId !== d.variable_name) {
-                        d3.select(`rect#${targetRectId}`)
-                          .classed("box-highlight", true)
-                          .classed("box-not-highlight", false);
+                    d3.select(`image#${d.variable_name}`)
+                      .classed("box-icon-highlight", true)
+                      .classed("box-icon-not-highlight", false);
 
-                        d3.select(`image#${targetRectId}`)
-                          .classed("box-icon-highlight", true)
-                          .classed("box-icon-not-highlight", false);
-                      }
+                    links
+                      .classed("link-highlight", false)
+                      .classed("detail-link-not-highlight", true)
+                      .attr("stroke", "gray")
+                      // .attr("marker-end", "")
+                      .filter(
+                        (link_data: tVisLink) =>
+                          link_data.source.variable_name === d.variable_name ||
+                          link_data.target.variable_name === d.variable_name,
+                      )
+                      .classed("link-highlight", true)
+                      .classed("detail-link-not-highlight", false)
 
-                      // Highlight the label of the target rect
-                      labels
-                        .filter(
-                          (label_data: tRectObject) =>
-                            targetRectId === label_data.variable_name ||
-                            sourceRectId === label_data.variable_name,
-                        )
-                        .classed("box-label-highlight", true)
-                        .classed("box-label-not-highlight", false)
-                        .raise();
-                    });
-                }
-              });
+                      .raise()
+                      .attr("stroke", (link_data: tVisLink) => {
+                        return self.varTypeColorScale(
+                          link_data.source.var_type,
+                        );
+                      })
+                      // .attr("marker-end", (d: tVisLink) => {
+                      //   const svg = d3.select("#" + self.svgId);
+                      //   return createArrow(svg, d, self);
+                      // })
+                      .each(function (link_data: tVisLink) {
+                        // Highlight the target rect of each related link
+                        const targetRectId = link_data.target.variable_name;
+                        const sourceRectId = link_data.source.variable_name;
 
-            const tagWidth = d.width * 0.8; //width space for text
-            tag
-              .append("text")
-              .attr("class", "label")
-              .text(d.variable_name)
-              .attr("class", "label")
-              .attr(
-                "x",
-                d.x + d.width / 2,
-                // grid_layout.gridToSvgCoordinate(
-                //   d.x + d.width / 2,
-                //   d.y + d.height / 2,
-                //   cellWidth,
-                //   cellHeight,
-                // ).x,
-              ) // slightly move text to the left within the rectangle
-              .attr(
-                "y",
-                d.y + d.height / 2,
-                // grid_layout.gridToSvgCoordinate(
-                //   d.x + d.width / 2,
-                //   d.y + d.height / 2,
-                //   cellWidth,
-                //   cellHeight,
-                // ).y,
-              )
-              .attr("fill", "black")
-              .attr("font-size", "0.8rem")
-              // .attr("font-weight", "bold")
-              .attr("text-anchor", "middle")
-              .attr("dominant-baseline", "middle")
-              .attr("pointer-events", "none")
-              .call(grid_layout.wrap, tagWidth);
+                        if (sourceRectId !== d.variable_name) {
+                          d3.select(`rect#${sourceRectId}`)
+                            .classed("box-highlight", true)
+                            .classed("box-not-highlight", false);
 
-            const icon_size = 20;
-            if (var_type_name === "pressure") {
-              tag
-                .append("image")
-                .attr(
-                  "xlink:href",
-                  d.factor_type === "social" ? "social.svg" : "ecological.svg",
-                )
-                .attr("id", d.variable_name)
-                .attr(
-                  "x",
-                  d.x + d.width - 2.4,
-                  // grid_layout.gridToSvgCoordinate(
-                  //   d.x + d.width - 2.4,
-                  //   d.y,
-                  //   cellWidth,
-                  //   cellHeight,
-                  // ).x,
-                )
-                .attr(
-                  "y",
-                  d.y,
-                  // grid_layout.gridToSvgCoordinate(
-                  //   d.x + d.width - 2.4,
-                  //   d.y,
-                  //   cellWidth,
-                  //   cellHeight,
-                  // ).y,
-                )
-                .attr("width", icon_size) // icon width
-                .attr("height", icon_size) // icon height
+                          d3.select(`image#${sourceRectId}`)
+                            .classed("box-icon-highlight", true)
+                            .classed("box-icon-not-highlight", false);
+                        } else if (targetRectId !== d.variable_name) {
+                          d3.select(`rect#${targetRectId}`)
+                            .classed("box-highlight", true)
+                            .classed("box-not-highlight", false);
+
+                          d3.select(`image#${targetRectId}`)
+                            .classed("box-icon-highlight", true)
+                            .classed("box-icon-not-highlight", false);
+                        }
+
+                        // Highlight the label of the target rect
+                        labels
+                          .filter(
+                            (label_data: tRectObject) =>
+                              targetRectId === label_data.variable_name ||
+                              sourceRectId === label_data.variable_name,
+                          )
+                          .classed("box-label-highlight", true)
+                          .classed("box-label-not-highlight", false)
+                          .raise();
+                      });
+                  }
+                });
+
+              rect.attr("x", d.x).attr("y", d.y);
+              const tagWidth = d.width * 0.8; //width space for text
+              const label = tag
+                .append("text")
+                .attr("class", "label")
+                .text(d.variable_name)
+                .attr("class", "label")
+                .attr("fill", "black")
+                .attr("font-size", "0.8rem")
+                // .attr("font-weight", "bold")
+                .attr("text-anchor", "middle")
+                .attr("dominant-baseline", "middle")
                 .attr("pointer-events", "none");
-            }
-          });
-      });
+              label
+                .attr("x", d.x + d.width / 2)
+                .attr("y", d.y + d.height / 2)
+                .call(grid_layout.wrap, tagWidth);
+
+              const icon_size = 20;
+              if (var_type_name === "pressure") {
+                tag
+                  .append("image")
+                  .attr(
+                    "xlink:href",
+                    d.factor_type === "social"
+                      ? "social.svg"
+                      : "ecological.svg",
+                  )
+                  .attr("id", d.variable_name)
+                  .attr("x", d.x + d.width - 2.4)
+                  .attr("y", d.y)
+                  .attr("width", icon_size) // icon width
+                  .attr("height", icon_size) // icon height
+                  .attr("pointer-events", "none");
+              }
+            });
+        },
+        (update) =>
+          update.each(function (d: tRectObject) {
+            const tag = d3.select(this);
+            const rect = tag.select("rect.box");
+            const label = tag.select("text.label");
+            const icon = tag.select("image");
+            const offset = [d.x - +rect.attr("x"), d.y - +rect.attr("y")];
+            rect.transition().duration(500).attr("x", d.x).attr("y", d.y);
+            label
+              .selectAll("tspan")
+              .transition()
+              .duration(500)
+              .attr("x", function () {
+                return +d3.select(this).attr("x") + offset[0];
+              })
+              .attr("y", function () {
+                return +d3.select(this).attr("y") + offset[1];
+              });
+            icon
+              .transition()
+              .duration(500)
+              .attr("x", d.x + d.width - 2.4)
+              .attr("y", d.y);
+          }),
+        (exit) => exit.remove(),
+      );
   },
 };
 

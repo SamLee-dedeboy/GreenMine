@@ -36,8 +36,8 @@
 
   function initializeRenderer() {
     d3.select(`#${svgId}`).selectAll("*").remove();
-    OverviewDPSIR.init(svgId);
     DetailDPSIR.init(svgId);
+    OverviewDPSIR.init(svgId);
     DPSIRLayout.init(svgId);
 
     DetailDPSIR.on("VarOrLinkSelected", handleVarOrLinkSelected);
@@ -101,9 +101,9 @@
       console.log("empty space clicked", e);
       DetailDPSIR.resetHighlights();
       OverviewDPSIR.resetHighlights();
-      Object.keys(var_type_states).forEach((key) => {
-        var_type_states[key].revealed = false;
-      });
+      // Object.keys(var_type_states).forEach((key) => {
+      //   var_type_states[key].revealed = false;
+      // });
       dispatch("var-selected", null); // for app.svelte to reset hightlight the chunks
       render(data, links, var_type_states);
     }
