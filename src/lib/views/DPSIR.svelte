@@ -36,9 +36,9 @@
 
   function initializeRenderer() {
     d3.select(`#${svgId}`).selectAll("*").remove();
+    DPSIRLayout.init(svgId);
     DetailDPSIR.init(svgId);
     OverviewDPSIR.init(svgId);
-    DPSIRLayout.init(svgId);
 
     DetailDPSIR.on("VarOrLinkSelected", handleVarOrLinkSelected);
     DetailDPSIR.on("VarTypeUnSelected", handleOverviewVarTypeUnSelected);
@@ -235,7 +235,7 @@
       pointer-events: none;
     }
     & .line-hover {
-      stroke: black;
+      /* stroke: black; */
       /* stroke-width: 3; */
       opacity: 0.8;
     }

@@ -109,7 +109,7 @@ export const DetailDPSIR = {
   ) {
     const self = this;
     const frequencyList = calculateFrequencyList(links); // includes variables frequency and link frequency among all groups
-    const widthSacle = d3
+    const widthScale = d3
       .scaleLinear()
       .domain([frequencyList.minLinkFrequency, frequencyList.maxLinkFrequency])
       .range([2, 10]);
@@ -173,13 +173,17 @@ export const DetailDPSIR = {
             .attr("cursor", "pointer")
             .attr("fill", "none")
             .attr("stroke", "gray")
-            .attr("stroke-width", (d: tVisLink) => widthSacle(d.frequency))
+            .attr("stroke-width", (d: tVisLink) => widthScale(d.frequency))
             .attr("opacity", (d) =>
               d.source.var_type == d.target.var_type ? 0.1 : 0.1,
             )
             .on("mouseover", function (e, d: tVisLink) {
               if (!self.rectClicked && !self.linkClicked) {
-                d3.select(this).classed("line-hover", true);
+                d3.select(this)
+                  .classed("line-hover", true)
+                  .attr("stroke", (d: tVisLink) =>
+                    self.varTypeColorScale(d.source.var_type),
+                  );
               }
             })
             .on("mouseout", function (e, d) {
@@ -197,8 +201,8 @@ export const DetailDPSIR = {
               const links = detailLinks
                 .selectAll("path.link")
                 .classed("link-highlight", false)
-                .classed("detail-link-not-highlight", true)
-                .attr("stroke", "gray");
+                .classed("detail-link-not-highlight", true);
+              // .attr("stroke", "gray");
 
               const rects = d3
                 .selectAll("rect.box")
@@ -232,7 +236,7 @@ export const DetailDPSIR = {
                 d3.selectAll("path.link")
                   .classed("link-highlight", false)
                   .classed("detail-link-not-highlight", false)
-                  .attr("stroke", "gray")
+                  // .attr("stroke", "gray")
                   .attr("pointer-events", "default");
                 // .attr("marker-end", "");
                 d3.selectAll("g.tag")
@@ -250,10 +254,10 @@ export const DetailDPSIR = {
                   .raise()
                   .attr("stroke", (d: tVisLink) =>
                     self.varTypeColorScale(d.source.var_type),
-                  )
-                  .attr("marker-end", (d: tVisLink) =>
-                    createArrow(d3.select("#" + self.svgId), d, self),
                   );
+                // .attr("marker-end", (d: tVisLink) =>
+                //   createArrow(d3.select("#" + self.svgId), d, self),
+                // );
 
                 rects
                   .filter(
@@ -504,8 +508,8 @@ export const DetailDPSIR = {
                   const links = detailLinks
                     .selectAll("path.link")
                     .classed("link-highlight", false)
-                    .classed("detail-link-not-highlight", true)
-                    .attr("stroke", "gray");
+                    .classed("detail-link-not-highlight", true);
+                  // .attr("stroke", "gray");
                   // .attr("pointer-events","none")
 
                   // style changing after select a variable, including the links and labels
@@ -556,7 +560,7 @@ export const DetailDPSIR = {
                     links
                       .classed("link-highlight", false)
                       .classed("detail-link-not-highlight", true)
-                      .attr("stroke", "gray")
+                      // .attr("stroke", "gray")
                       // .attr("marker-end", "")
                       .filter(
                         (link_data: tVisLink) =>

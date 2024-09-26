@@ -33,6 +33,31 @@ export const OverviewDPSIR = {
     svg.append("g").attr("class", "overview_link_group").lower();
     svg.append("g").attr("class", "overview_bbox_region");
     svg.append("g").attr("class", "overview_arrow_group");
+    createRingPattern(svg);
+    function createRingPattern(svg) {
+      const [_1, _2, svgWidth, svgHeight] = d3
+        .select("#" + svgId)
+        .attr("viewBox")
+        .split(" ")
+        .map((d) => +d);
+      const pattern = svg
+        .append("defs")
+        .append("pattern")
+        .attr("id", "ringPattern")
+        .attr("width", svgWidth)
+        .attr("height", svgHeight);
+      const ring_offset = 10;
+      const ring_num = Math.round(Math.max(svgWidth, svgHeight) / ring_offset);
+      for (let i = 0; i < ring_num; i++) {
+        pattern
+          .append("circle")
+          .attr("cx", svgWidth / 2)
+          .attr("cy", svgHeight / 2)
+          .attr("r", i * ring_offset)
+          .attr("fill", "none")
+          .attr("stroke", "gray");
+      }
+    }
   },
   on(event, handler) {
     this.dispatch.on(event, handler);
@@ -147,7 +172,7 @@ export const OverviewDPSIR = {
         Math.min(...linkData.map((d) => d.count)),
         Math.max(...linkData.map((d) => d.count)),
       ])
-      .range([3, 15]);
+      .range([8, 20]);
     const opacityScale = d3
       .scaleLinear()
       .domain([
@@ -158,13 +183,13 @@ export const OverviewDPSIR = {
 
     const link_paths = svg
       .select("g.overview_link_group")
-      .selectAll(".link")
+      .selectAll(".overview-link")
       .data(linkData, (d) => `${d.source}-${d.target}`)
       .join(
         (enter) =>
           enter
             .append("path")
-            .attr("class", "link")
+            .attr("class", "overview-link")
             .attr("id", (d) => `${d.source}-${d.target}`)
             .attr("cursor", "pointer")
             .attr("fill", "none")
@@ -342,7 +367,7 @@ export const OverviewDPSIR = {
               rect
                 .on("mouseover", function () {
                   // apply hovering effect
-                  d3.selectAll(".link")
+                  d3.selectAll(".overview-link")
                     .classed("overview-link-highlight", false)
                     .classed("link-not-highlight", true)
                     .attr("stroke", "gray")
@@ -365,7 +390,7 @@ export const OverviewDPSIR = {
                   d3.select(this).classed("overview-var-type-hover", true);
                 })
                 .on("mouseout", function () {
-                  d3.selectAll(".link")
+                  d3.selectAll(".overview-link")
                     .classed("overview-link-highlight", false)
                     .classed("link-not-highlight", false)
                     .attr("stroke", "gray");
@@ -382,7 +407,7 @@ export const OverviewDPSIR = {
                   event.preventDefault();
                   self.dispatch.call("VarTypeSelected", null, d);
 
-                  d3.selectAll(".link")
+                  d3.selectAll(".overview-link")
                     .classed("overview-link-highlight", false)
                     .classed("link-not-highlight", false)
                     .attr("stroke", "gray");
