@@ -17,9 +17,10 @@
     LogEntry,
     tVersionInfo,
   } from "lib/types";
-  import { updateTmpData } from "lib/utils/update_with_log";
+  import { updatePanelData } from "lib/utils/update_with_log";
   import { server_address } from "lib/constants";
   import { createEventDispatcher, tick, getContext, onMount } from "svelte";
+  export let versionsCount: { [key: string]: tVersionInfo };
   const stepMap = {
     1: "var_type",
     2: "var",
@@ -31,37 +32,21 @@
     identify_links: 3,
   };
   const dispatch = createEventDispatcher();
-
   let prompt_data: tServerPromptData;
   let pipeline_result: tServerPipelineData;
   let right_panel_result: tServerPipelineData;
-  export let interview_ids: string[];
-  export let versionsCount: { [key: string]: tVersionInfo };
+  let interview_ids: string[];
+  let menu_data:any;
   let show_step: number = 1;
   let right_panel_version: string = "v0";
-  // console.log(pipeline_result)
-
+  let step: string = stepMap[show_step];
   let data_loading: boolean = false;
   let last_execute_prompt_step_number: number = 0;
-
-  type VarTypeItem = {
-    id: string;
-    variable: {
-      evidence: number[];
-      explanation: string;
-      var_type: string;
-      confidence: number;
-      uncertainty: number;
-    };
-  };
   let log: LogRecord = {
-    identify_var_type_results: [],
-    identify_var_results: [],
-    identify_link_results: [],
+    identify_var_types: [],
+    identify_vars: [],
+    identify_links: [],
   };
-
-  let removeVar: VarTypeItem[] = [];
-  let addVar: VarTypeItem[] = [];
   let measure_uncertainty = false;
   let current_versions = {
     var_type: "v0",
@@ -69,29 +54,36 @@
     link: "v0",
   };
 
-  $: step = stepMap[show_step];
-  $: {
-    if (versionsCount[step]) {
-      const versions = versionsCount[step].versions;
-      current_versions[step] = versions[versions.length - 1];
-    }
-  }
 
+  function extractValuesOfMenu(prompt_data, step) {
+    let result = {}
+      if (step === 'var_type') {
+        const categories = Object.keys(prompt_data.identify_var_types.var_type_definitions);
+        categories.forEach(category => {
+          result[category] = [];
+        })
+      } else {
+          // step: var/link
+          const categories = Object.keys(prompt_data.identify_vars.var_definitions);
+          
+          categories.forEach(category => {
+              if (prompt_data.identify_vars.var_definitions[category]) {
+                  result[category] = prompt_data.identify_vars.var_definitions[category].map(item => item.var_name);
+              } else {
+                  result[category] = [];
+              }
+          });
+      }
+      return result;
+  }
   function changeStep(newStep: number) {
     show_step = newStep;
     step = stepMap[show_step]; //string
     right_panel_version = "v0";
     if (step) {
-      // data_loading = true;
-      // fetchVersionsCount(step)
-      //   .then(() => fetchPipelineData(step, current_versions[step]))
-      //   .then(() => fetchMenuData(step, right_panel_version))
-      //   .finally(() => {
-      //     data_loading = false;
-      //   });
-      fetchVersionsCount(step);
-      fetchPipelineData(step, current_versions[step]);
-      fetchMenuData(step, right_panel_version);
+      fetchVersionsCount(step)
+        .then(() => fetchPipelineData(step, current_versions[step]))
+        .then(() => fetchMenuData(step, right_panel_version))
     }
   }
 
@@ -107,7 +99,8 @@
               versions: data.versions,
             },
           };
-          console.log("Versions count:", versionsCount);
+          const versions = versionsCount[step].versions;
+          current_versions[step] = versions[versions.length - 1];
           resolve();
         })
         .catch((error) => {
@@ -117,11 +110,10 @@
     });
   }
   function fetchPipelineData(step: string, version: string) {
+    const key = `identify_${step}s`;
     return fetch(`${server_address}/pipeline/${step}/${version}/`)
       .then((res) => res.json())
       .then((res) => {
-        const key = `identify_${step}s`;
-        // console.log(res)
         prompt_data = {
           ...prompt_data,
           [key]: res.prompts,
@@ -130,16 +122,18 @@
           ...pipeline_result,
           [key]: res.pipeline_result,
         };
-        // console.log(prompt_data)
-        // console.log({pipeline_result})
+        pipeline_result = updatePanelData(pipeline_result, log, key);
         if (pipeline_result[key].length === 0) {
-          interview_ids = ["none"];
+          interview_ids = [];
+          menu_data = [];
         } else {
           interview_ids = pipeline_result[key].map((item) => item.id);
+          menu_data = extractValuesOfMenu(prompt_data, step);
         }
         console.log(
           `Fetched pipeline data for step: ${step}, version: ${version}`,
         );
+        console.log("interview_ids", interview_ids);
       })
       .catch((error) => {
         console.error(
@@ -149,21 +143,20 @@
       });
   }
   function fetchMenuData(step: string, version: string) {
+    const key = `identify_${step}s`;
     return fetch(`${server_address}/pipeline/${step}/${version}/`)
       .then((res) => res.json())
       .then((res) => {
-        const key = `identify_${step}s`;
+        
         right_panel_result = {
           ...right_panel_result,
           [key]: res.pipeline_result,
         };
-        // check the data for right panel
-        console.log("right panel result: ", right_panel_result);
-        console.log(`Fetched menu data for step: ${step}, version: ${version}`);
+        right_panel_result = updatePanelData(right_panel_result, log, key);
       })
       .catch((error) => {
         console.error(
-          `Error fetching pipeline data for step ${step}, version ${version}:`,
+          `Error fetching right panel data for step ${step}, version ${version}:`,
           error,
         );
       });
@@ -172,44 +165,7 @@
     if (!e) return;
     dispatch("navigate_evidence", e); //To App.sevelte
   }
-  function update_rules(e) {
-    let record: LogEntry = e.detail;
-    const key = `identify_${stepMap[show_step]}_results` as keyof LogRecord;
-    if (key in log) {
-      log[key].push(record);
-      log = log; // Trigger reactivity
-    }
-    console.log("update log", log);
-    // To Be Modified
-    // Apply rules to pipeline_result and pipeline_result_right
-    // pipeline_result = updateTmpData(pipeline_result, log_record);
-    // pipeline_result_right = updateTmpData(pipeline_result_right, log_record);
-    // if (log_record) {
-    //   // Update remove_element
-    //   for (const item of removeVar) {
-    //     const logItem = log_record.identify_type_results.find(
-    //       (result: any) => result.id === item.id,
-    //     );
-    //     if (logItem) {
-    //       logItem.remove_element.push(item.variable);
-    //     }
-    //   }
-
-    //   // Update add_element
-    //   for (const item of addVar) {
-    //     const logItem = log_record.identify_type_results.find(
-    //       (result: any) => result.id === item.id,
-    //     );
-    //     if (logItem) {
-    //       logItem.add_element.push(item.variable);
-    //     }
-    //   }
-    // }
-    // console.log({ log_record });
-    // alert("Rules updated");
-    // removeVar = [];
-    // addVar = [];
-  }
+  
   function execute_prompt(data: tServerPromptData, key: string) {
     if (!data) return;
     data_loading = true;
@@ -238,7 +194,6 @@
             [key]: res,
           };
         }
-        console.log("pipeline_result", pipeline_result);
         save_data(data, pipeline_result, key);
         data_loading = false;
       });
@@ -248,18 +203,15 @@
     current_versions[step] = current_v;
     fetchPipelineData(step, current_v);
   }
-  function handle_title_change(newTitle: string) {
-    right_panel_version = newTitle;
-    let version = newTitle;
-    console.log("fetch pipeline data for db", version);
+  function handle_version_change(new_v: string) {
+    right_panel_version = new_v;
+    let version = new_v;
     fetchMenuData(step, version);
   }
   function handle_version_added(key: string) {
-    console.log(`adding ${step} version`);
     const nextVersionNumber = versionsCount[key].total_versions; // start from 0
     const newVersion = `v${nextVersionNumber}`;
     current_versions[step] = newVersion;
-    console.log("current_versions", current_versions);
     if (!versionsCount[key].versions.includes(newVersion)) {
       fetch(server_address + `/pipeline/${step}/create_and_save_new/`, {
         method: "POST",
@@ -290,13 +242,7 @@
     pipeline_tmp_data: tServerPipelineData,
     key: string,
   ) {
-    // console.log(version);
     if (!pipeline_tmp_data) return;
-    console.log(
-      `saving ${current_versions[step]} data`,
-      pipeline_tmp_data[key],
-      data[key],
-    );
     fetch(server_address + `/curation/${key}/save/`, {
       method: "POST",
       headers: {
@@ -320,80 +266,19 @@
         console.error("Error saving data:", error);
       })
   }
-  function remove_var_type(
-    data: { id: string; indicator: string },
-    key: string,
-  ): void {
-    if (!data) return;
-    console.log("remove_var_type", data);
-    // add to log
-    // TODO: modify log data
-    // removeVar.push(data);
-    //right side
-    if (key === "identify_var_types") {
-      if (pipeline_result === undefined) return;
-      pipeline_result.identify_var_types =
-        pipeline_result.identify_var_types.map((item) => {
-          if (item.id === data.id) {
-            return {
-              ...item,
-              identify_var_types_result: item.identify_var_types_result.filter(
-                (result) => result.var_type !== data.indicator,
-              ),
-            };
-          }
-          return item;
-        });
+  function update_rules(e) {
+    let record: LogEntry = e.detail;
+    const key = `identify_${stepMap[show_step]}s` 
+    if (key in log) {
+      log[key].push(record);
+      log = log; // Trigger reactivity
     }
-  }
-  function add_var_type(
-    data: { id: string; indicator: string },
-    key: string,
-  ): void {
-    // add check exists condition for both pipeline and tmp_data
-    // need to update to all the versions
-    if (!data) return;
-    console.log("add_var_type", data);
-    const newVarTypeResult: VarTypeItem = {
-      id: data.id,
-      variable: {
-        var_type: data.indicator, // Convert to lowercase
-        evidence: [],
-        explanation: "add manually",
-        confidence: 1,
-        uncertainty: 0,
-      },
-    };
-    // add to log
-    // TODO: modify log data
-    // addVar.push(newVarTypeResult);
+    console.log("update log", log);
 
-    let pipe_datum;
-    if (key === "identify_var_types") {
-      pipe_datum = pipeline_result?.identify_var_types.find(
-        (item) => item.id === data.id,
-      );
-      const pipe_alreadyExists = pipe_datum.identify_var_types_result.some(
-        (item) => item.var_type === data.indicator,
-      );
-      if (!pipe_alreadyExists) {
-        if (pipeline_result === undefined) return;
-        pipeline_result.identify_var_types =
-          pipeline_result.identify_var_types.map((item) => {
-            if (item.id === newVarTypeResult.id) {
-              const updatedNewData = {
-                ...newVarTypeResult.variable,
-                var_type: newVarTypeResult.variable.var_type,
-              };
-              item.identify_var_types_result.push(updatedNewData);
-            }
-            return item;
-          });
-      } else {
-        alert("Var type already exists");
-      }
-    }
+    pipeline_result = updatePanelData(pipeline_result, log, key);
+    right_panel_result = updatePanelData(right_panel_result, log, key);
   }
+
 
   onMount(async () => {
     await fetchVersionsCount(step);
@@ -486,10 +371,9 @@
           />
           <RuleEntry
             {interview_ids}
-            on:remove_var_type={(e) =>
-              remove_var_type(e.detail, "identify_var_types")}
-            on:add_var_type={(e) =>
-              add_var_type(e.detail, "identify_var_types")}
+            {menu_data}
+            {step}
+            logData = {log["identify_var_types"]}
             on:rule_change={(e) => update_rules(e)}
           />
         </div>
@@ -508,7 +392,7 @@
           versions={versionsCount["var_type"].versions}
           data_loading={false}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
-          on:version_changed={(e) => handle_title_change(e.detail)}
+          on:version_changed={(e) => handle_version_change(e.detail)}
         />
       </div>
     {:else if show_step === 2 && prompt_data.identify_vars}
@@ -534,6 +418,13 @@
               user_prompt_blocks: prompt_data.identify_vars.user_prompt_blocks,
             }}
           />
+          <RuleEntry
+            {interview_ids}
+            {menu_data}
+            {step}
+            logData = {log["identify_vars"]}
+            on:rule_change={(e) => update_rules(e)}
+          />
         </div>
         <IdentifyVarResults
           data={pipeline_result?.identify_vars || []}
@@ -542,7 +433,6 @@
           current_version={right_panel_version}
           {data_loading}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
-          on:title_change={(e) => handle_version_change(e.detail)}
         />
         <IdentifyVarResults
           data={right_panel_result?.identify_vars || []}
@@ -551,7 +441,7 @@
           current_version={right_panel_version}
           data_loading={false}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
-          on:version_changed={(e) => handle_title_change(e.detail)}
+          on:version_changed={(e) => handle_version_change(e.detail)}
         />
       </div>
     {:else if show_step === 3 && prompt_data.identify_links}
@@ -577,6 +467,13 @@
               user_prompt_blocks: prompt_data.identify_links.user_prompt_blocks,
             }}
           />
+          <RuleEntry
+            {interview_ids}
+            {menu_data}
+            {step}
+            logData = {log["identify_links"]}
+            on:rule_change={(e) => update_rules(e)}
+          />
         </div>
         <IdentifyLinkResults
           data={pipeline_result?.identify_links || []}
@@ -593,7 +490,7 @@
           current_version={right_panel_version}
           data_loading={false}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
-          on:version_changed={(e) => handle_title_change(e.detail)}
+          on:version_changed={(e) => handle_version_change(e.detail)}
         />
       </div>
     {/if}

@@ -43,7 +43,7 @@
       {#if shown_var_type !== ""}
         <div
           transition:slide
-          class="flex max-h-[20rem] flex-col divide-y overflow-y-auto pr-3"
+          class="flex max-h-[15rem] flex-col divide-y overflow-y-auto pr-3"
         >
           <div class="flex divide-x">
             <div

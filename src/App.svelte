@@ -26,14 +26,12 @@
   let interview_data: tTranscript[];
   let interview_viewer_component;
 
-  let interview_ids: string[] = [];
   let var_data: tDPSIR;
   let vis_links: tVisLink[];
   let data_loading: boolean = true;
   let show_dpsir: boolean = true;
   let show_prompts: boolean = false;
   let show_keywordsea: boolean = false;
-  // let selectedTitle: string;
   let versionsCount: { [key: string]: tVersionInfo } = {};
 
   // pipeline
@@ -133,7 +131,6 @@
           use:draggable
         >
           <Prompts
-            {interview_ids}
             {versionsCount}
             on:close={() => (show_prompts = false)}
             on:navigate_evidence={handleEvidenceSelected}
