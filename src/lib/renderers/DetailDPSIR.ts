@@ -569,7 +569,6 @@ export const DetailDPSIR = {
                       )
                       .classed("link-highlight", true)
                       .classed("detail-link-not-highlight", false)
-
                       .raise()
                       .attr("stroke", (link_data: tVisLink) => {
                         return self.varTypeColorScale(

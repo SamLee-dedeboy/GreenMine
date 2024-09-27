@@ -473,36 +473,6 @@ export const OverviewDPSIR = {
   },
 };
 
-function createArrow(svg, d: tLinkObject) {
-  const arrowId = `arrow-${d.source}-${d.target}`;
-  let arrow = svg.select(`#${arrowId}`);
-  if (arrow.empty()) {
-    svg
-      .select("defs")
-      .append("marker")
-      .attr("id", arrowId)
-      .attr("viewBox", [0, 0, 10, 10])
-      .attr("refX", 5)
-      .attr("refY", 5)
-      .attr("markerWidth", 4)
-      .attr("markerHeight", 4)
-      .attr("orient", "auto-start-reverse")
-      .append("path")
-      .attr(
-        "d",
-        d3.line()([
-          [0, 0],
-          [10, 5],
-          [0, 10],
-        ]),
-      )
-      // .attr('fill',self.varTypeColorScale(d.source));
-      .attr("fill", "#777777");
-  }
-
-  return `url(#${arrowId})`;
-}
-
 function extractUniquePairs(links: tVisLink[]) {
   const uniquePairs = new Set<string>();
 
