@@ -229,7 +229,7 @@ function calculateAngles(sequence: string[], vars: tDPSIR) {
   let angle_midpoints: number[] = [];
   let angle_sum = 0;
   angles.forEach((angle) => {
-    angle_midpoints.push(angle_sum + angle / 2 - Math.PI / 2);
+    angle_midpoints.push(angle_sum + angle / 2 - Math.PI);
     angle_sum += angle;
   });
   return angle_midpoints;
