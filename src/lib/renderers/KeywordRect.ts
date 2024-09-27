@@ -16,6 +16,7 @@ export class KeyWordRect {
   yScale_keywords: any;
   // clicked_rect: string | undefined;
   dispatch: any;
+  clickable: boolean = false;
   constructor() {}
   on(event, handler) {
     this.dispatch.on(event, handler);
@@ -134,8 +135,8 @@ export class KeyWordRect {
               .classed("rect-not-selected", true);
             d3.select(this)
               .classed("rect-selected", true)
-              .classed("rect-not-selected", false)
-              .raise();
+              .classed("rect-not-selected", false);
+            // .raise();
             self.dispatch.call("keywordSelected", null, d.label);
           })
           .lower();

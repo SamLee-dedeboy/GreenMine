@@ -103,14 +103,15 @@
       explanation,
     );
   }
-  function handleHighlightChunks(e) {
-    console.log("handle highlight chunks", e.detail);
+  function handleHighlightChunks(mentions: tMention | null) {
+    console.log("handle highlight chunks", mentions);
     if (!interview_data) return;
-    if (e.detail === null) {
-      interview_viewer_component.highlight_chunks(null); //dehighlight chunks
-    } else {
-      interview_viewer_component.highlight_chunks(e.detail as tMention[]);
-    }
+    interview_viewer_component.highlight_chunks(mentions); //dehighlight chunks
+    // if (mentions === null) {
+    //   interview_viewer_component.highlight_chunks(null); //dehighlight chunks
+    // } else {
+    //   interview_viewer_component.highlight_chunks(e.detail as tMention[]);
+    // }
   }
 
   onMount(async () => {
@@ -120,6 +121,7 @@
   });
 
   setContext("fetchData", fetchData);
+  setContext("handleHighlightChunks", handleHighlightChunks);
 </script>
 
 <main class="h-full w-full px-1">
@@ -147,7 +149,6 @@
         >
           <KeywordSeaViewer
             data={var_data}
-            on:keywordSelected={handleHighlightChunks}
             on:close={() => (show_keywordsea = false)}
           ></KeywordSeaViewer>
         </div>

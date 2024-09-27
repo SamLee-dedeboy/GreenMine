@@ -98,7 +98,10 @@ def generate_keyword_data(
     keyword_list = list(filter(lambda x: x in keyword_embeddings_dict, keyword_list))
 
     keyword_statistics = {
-        keyword: {"frequency": len(mentions)}
+        keyword: {
+            "frequency": len(mentions),
+            "mentions": mentions,
+        }
         for keyword, mentions in keyword_mentions.items()
         if keyword in keyword_list
     }
