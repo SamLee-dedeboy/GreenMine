@@ -63,18 +63,36 @@
           </div>
           {#each data[shown_var_type] as { var_name, definition, factor_type }, index}
             <div class="flex divide-x">
-              <div
-                class="relative flex w-[5rem] shrink-0 items-center justify-center capitalize italic text-gray-600"
-                contenteditable
-                on:blur={(e) => {
-                  data[shown_var_type][index].var_name =
-                    e.target.innerText.trim();
-                }}
-              >
-                {var_name}
-                <!-- <span class="absolute left-0 top-0 text-xs text-gray-500"
-                  >{factor_type}</span
-                > -->
+              <div class="flex shrink-0">
+                <div
+                  class="relative flex w-[5rem] shrink-0 items-center justify-center capitalize italic text-gray-600"
+                  contenteditable
+                  on:blur={(e) => {
+                    data[shown_var_type][index].var_name =
+                      e.target.innerText.trim();
+                  }}
+                >
+                  {var_name}
+                </div>
+                {#if factor_type !== "none"}
+                  <div
+                    role="button"
+                    tabindex="0"
+                    class="flex cursor-pointer items-center rounded text-xs text-gray-500 hover:bg-gray-400"
+                    on:click={() =>
+                      (data[shown_var_type][index].factor_type =
+                        data[shown_var_type][index].factor_type === "social"
+                          ? "ecological"
+                          : "social")}
+                    on:keyup={() => {}}
+                  >
+                    <img
+                      src={`${factor_type}.svg`}
+                      alt={factor_type}
+                      class="h-4 w-4"
+                    />
+                  </div>
+                {/if}
               </div>
               <div
                 class="grow pl-2 text-left italic text-gray-500"
