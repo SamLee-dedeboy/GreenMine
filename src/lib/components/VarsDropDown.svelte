@@ -1,5 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
+    
+    import { varTypeColorScale } from "lib/store";
   
     export let menu_data: { [key: string]: string[] };
     export let selectedValue: { varType: string; varName: string } | undefined = undefined;
@@ -31,7 +33,7 @@
   <div class="relative w-full">
     <button
       id="multiLevelDropdownButton"
-      class="text-gray-700 bg-white border border-gray-300 hover:bg-gray-100 focus:border-blue-500 focus:outline-none font-medium rounded-md text-sm inline-flex items-center justify-between w-full"
+      class="text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 focus:border-blue-500 focus:outline-none font-medium rounded-md text-sm inline-flex items-center justify-between w-full"
       type="button"
       on:click={toggleDropdown}
     >
@@ -46,7 +48,8 @@
   
     {#if isOpen}
       <div class="z-10 absolute left-0 right-0 bottom-6 mt-1 bg-white divide-y divide-gray-100 rounded-md shadow">
-        <ul class="text-sm text-gray-700" aria-labelledby="multiLevelDropdownButton">
+        <ul class="text-sm text-gray-500" aria-labelledby="multiLevelDropdownButton">
+          <li class="text-white text-left px-4 cursor-default" style="background-color: rgb(200, 200, 200)">Select</li>
           {#each Object.entries(menu_data) as [value, subValues]}
             <li
               on:mouseenter={() => handleMouseEnter(value)}
@@ -54,7 +57,8 @@
               class="relative"
             >
               <button 
-                class="flex items-center justify-between w-full px-4 hover:bg-blue-600 hover:text-white hover:rounded-md"
+                class="main-item flex items-center justify-between w-full px-4 hover:text-white hover:rounded-md"
+                style="--hover-bg-color: {$varTypeColorScale(value)}"
                 on:click={() => {
                   if (subValues.length === 0) {
                     handleSelect(value);
@@ -70,11 +74,11 @@
               </button>
               {#if subValues.length > 0 && hoveredValue === value}
                 <div class="absolute left-full top-0 ml-1 bg-white divide-y divide-gray-100 rounded-md shadow w-full max-h-48 overflow-y-auto">
-                  <ul class="text-sm text-gray-700">
+                  <ul class="text-sm text-gray-500">
                     {#each subValues as subValue}
                       <li>
                         <button 
-                          class="block w-full text-left px-4 hover:bg-gray-200 hover:rounded-md"
+                          class="sub-item block w-full text-left px-4 hover:rounded-md"
                           on:click={() => handleSelect(value, subValue)}
                         >
                           {subValue}
@@ -90,3 +94,15 @@
       </div>
     {/if}
   </div>
+
+
+  <style lang="postcss">
+  .main-item:hover {
+    background-color: var(--hover-bg-color);
+  }
+
+  .sub-item:hover {
+    background-color: rgb(37 99 235);
+    color: white;
+  }
+  </style>

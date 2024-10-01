@@ -20,6 +20,7 @@
   import { updatePanelData } from "lib/utils/update_with_log";
   import { server_address } from "lib/constants";
   import { createEventDispatcher, tick, getContext, onMount } from "svelte";
+    import { sort_by_id } from "lib/utils";
   export let versionsCount: { [key: string]: tVersionInfo };
   const stepMap = {
     1: "var_type",
@@ -76,6 +77,26 @@
       }
       return result;
   }
+  function sort_id_asc(ids){
+    const sortedArray = ids.sort((a, b) => {
+        // Extract the numeric parts
+        const [prefixA, numA] = a.split('_');
+        const [prefixB, numB] = b.split('_');
+        
+        // Extract the numeric part of the prefix
+        const prefixNumA = parseInt(prefixA.slice(1));
+        const prefixNumB = parseInt(prefixB.slice(1));
+        
+        // Compare the prefix numbers first
+        if (prefixNumA !== prefixNumB) {
+            return prefixNumA - prefixNumB;
+        }
+        
+        // If prefix numbers are the same, compare the second numbers
+        return parseInt(numA) - parseInt(numB);
+    });
+    return sortedArray;
+  }
   function changeStep(newStep: number) {
     show_step = newStep;
     step = stepMap[show_step]; //string
@@ -128,8 +149,10 @@
           menu_data = [];
         } else {
           interview_ids = pipeline_result[key].map((item) => item.id);
+          interview_ids = sort_id_asc(interview_ids);
           menu_data = extractValuesOfMenu(prompt_data, step);
         }
+        console.log({interview_ids})
         console.log(
           `Fetched pipeline data for step: ${step}, version: ${version}`,
         );
@@ -266,10 +289,37 @@
         console.error("Error saving data:", error);
       })
   }
+  function isEqual(arr1, arr2) {
+    return JSON.stringify(arr1) === JSON.stringify(arr2);
+  }
   function update_rules(e) {
     let record: LogEntry = e.detail;
-    const key = `identify_${stepMap[show_step]}s` 
+    const key = `identify_${stepMap[show_step]}s`
+    // TODO: check if doing dif action on the same snippet and value record
     if (key in log) {
+      const exactMatch = log[key].find(entry =>
+        entry.id === record.id && 
+        entry.action === record.action && 
+        isEqual(entry.value, record.value)
+      );
+
+      if (exactMatch) {
+        alert("A rule with the same snippet, value, and action already exists.");
+        return; // Exit the function without adding the duplicate
+      }
+
+      const similarRecord = log[key].find(entry =>
+        entry.id === record.id && isEqual(entry.value, record.value)
+      );
+
+      if (similarRecord) {
+        const actionVerb = similarRecord.action === 'add' ? 'added' : 'removed';
+        const userChoice = confirm(`There is a rule ${actionVerb} with the same content. Do you want to update it?`);
+        if (!userChoice) {
+          return;
+        }
+      }
+
       log[key].push(record);
       log = log; // Trigger reactivity
     }
