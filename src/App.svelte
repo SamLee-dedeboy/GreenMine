@@ -83,8 +83,6 @@
       .then((res: tServerDataDPSIR) => {
         var_data = res.DPSIR_data;
         vis_links = utils.link_to_vis_link(res.pipeline_links);
-        // console.log(vis_links);
-        // console.log(res.pipeline_links);
         const var_types = Object.keys(var_data);
         $varTypeColorScale = d3
           .scaleOrdinal()
@@ -183,11 +181,7 @@
             <div>Data Loading...</div>
           {/if}
           {#if !data_loading && show_dpsir}
-            <DPSIR
-              data={var_data}
-              links={vis_links}
-              on:var-selected={handleHighlightChunks}
-            ></DPSIR>
+            <DPSIR data={var_data} links={vis_links}></DPSIR>
           {/if}
           {#if !data_loading && !show_dpsir}
             <SimGraph topic_data={chunk_graph} {keyword_data}></SimGraph>

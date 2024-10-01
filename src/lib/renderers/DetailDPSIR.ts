@@ -449,6 +449,7 @@ export const DetailDPSIR = {
             .append("g")
             .attr("class", "tag")
             .each(function (d: tRectObject) {
+              console.log({ d });
               const tag = d3.select(this);
               const rect = tag
                 .append("rect")
@@ -736,7 +737,6 @@ function combineData(
   vars: tVariableType,
   rectangles: [number, number, number, number, string, string, number][],
 ) {
-  // console.log({rectangles})
   const allX = rectangles.map((rect) => rect[0]);
   const allY = rectangles.map((rect) => rect[1]);
   const allXPlusWidth = rectangles.map((rect) => rect[0] + rect[2]);

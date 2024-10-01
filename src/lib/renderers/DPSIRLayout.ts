@@ -65,7 +65,6 @@ export const DPSIRLayout = {
         bbox_order[pair[0]] < bbox_order[pair[1]] ? pair[0] : pair[1];
       const right =
         bbox_order[pair[0]] > bbox_order[pair[1]] ? pair[0] : pair[1];
-      console.log({ left, right, pair });
       const pivot_point = calculatePivotPoint([left, right], vars);
       this.bboxes[left].center = [
         (this.width * pivot_point) / 2,
@@ -246,20 +245,8 @@ function squareLayout(
   // create a local rectangle array to avoid modifying the original array
   const rect_width = rectangles[0].width;
 
-  let first_row_rect_number = rectangles.length <= 7 ? 2 : 4;
-  let middle_row_number: number;
-  // Adjust first_row_rect_number until middle_row_number is 3 or less
-  do {
-    middle_row_number = Math.floor(
-      rectangles.length % 2 === 0
-        ? (rectangles.length - first_row_rect_number * 2) / 2
-        : (rectangles.length - first_row_rect_number * 2 - 1) / 2,
-    );
-
-    if (middle_row_number > 3) {
-      first_row_rect_number++;
-    }
-  } while (middle_row_number > 3);
+  let { first_row_rect_number, middle_row_number } =
+    calculate_row_numbers(rectangles);
 
   const { selectedMiddleRectangles } = adjustRectangleHeights(
     rectangles,
@@ -280,41 +267,20 @@ function squareLayout(
     topFour[2],
     ...otherRectangles.slice(first_row_rect_number - 2),
     topFour[3],
-  ];
+  ].filter((r) => r);
   // return;
 
-  let last_row_rect_number =
-    rearrangedRectangles.length - first_row_rect_number - middle_row_number * 2;
-  // Correct box_height calculation
-  let box_height = 0;
+  const last_row_rect_number =
+    middle_row_number < 0
+      ? 0
+      : rearrangedRectangles.length -
+        first_row_rect_number -
+        middle_row_number * 2;
 
-  // First row height
-  box_height += Math.max(
-    ...rearrangedRectangles
-      .slice(0, first_row_rect_number)
-      .map((r) => r.height),
-  );
-
-  // Middle rows height
-  for (let i = 0; i < middle_row_number; i++) {
-    let leftIndex = first_row_rect_number + i * 2;
-    let rightIndex = leftIndex + 1;
-    box_height += Math.max(
-      rearrangedRectangles[leftIndex].height,
-      rearrangedRectangles[rightIndex].height,
-    );
-  }
-
-  // Last row height
-  if (last_row_rect_number > 0) {
-    box_height += Math.max(
-      ...rearrangedRectangles.slice(-last_row_rect_number).map((r) => r.height),
-    );
-  }
-
-  // Add y_offset between rows
-  box_height +=
-    (middle_row_number > 0 ? y_offset : 0) + middle_row_number * y_offset;
+  const box_height =
+    rearrangedRectangles[0].height +
+    (y_offset + rearrangedRectangles[0].height) * middle_row_number +
+    (last_row_rect_number > 0 ? y_offset + rearrangedRectangles[0].height : 0);
 
   const box_width = Math.round(
     Math.max(
@@ -323,11 +289,11 @@ function squareLayout(
       last_row_rect_number * rect_width + (last_row_rect_number - 1) * x_offset,
     ),
   );
-  // console.log(bboxes);
   bbox.size = [box_width, box_height];
   const [center_x, center_y] = bbox.center;
   bbox.center = [
-    Math.max(box_width / 2, Math.min(full_width - box_width / 2, center_x)),
+    Math.max(box_width / 2, Math.min(full_width - box_width / 2, center_x)) -
+      10,
     Math.max(box_height / 2, Math.min(full_height - box_height / 2, center_y)),
   ];
 
@@ -358,10 +324,10 @@ function squareLayout(
 
   // First row
   for (let i = 0; i < first_row_rect_number; i++) {
-    let x = Math.round(
-      bbox_origin[0] + i * (rect_width + first_space_between_rectangles),
-    );
-    let y = Math.round(bbox_origin[1] + accumulative_y_offset);
+    const x =
+      bbox_origin[0] + i * (rect_width + first_space_between_rectangles);
+
+    const y = bbox_origin[1] + accumulative_y_offset;
     let type =
       i === 0
         ? "top-left"
@@ -402,6 +368,7 @@ function squareLayout(
       rearrangedRectangles[leftIndex].outgroup_degree,
     ]);
 
+    if (rightIndex >= rearrangedRectangles.length) break;
     rectangleCoordinates.push([
       bbox_origin[0] + box_width - rect_width,
       Math.round(bbox_origin[1] + accumulative_y_offset),
@@ -447,6 +414,31 @@ function squareLayout(
   return { rectangleCoordinates, bbox };
 }
 
+function calculate_row_numbers(rectangles: tRectangle[]) {
+  if (rectangles.length === 0)
+    return { first_row_rect_number: 0, middle_row_number: 0 };
+  if (rectangles.length === 1)
+    return { first_row_rect_number: 1, middle_row_number: 0 };
+  if (rectangles.length === 2)
+    return { first_row_rect_number: 2, middle_row_number: 0 };
+  if (rectangles.length === 3)
+    return { first_row_rect_number: 2, middle_row_number: 1 };
+  let first_row_rect_number = rectangles.length <= 7 ? 2 : 4;
+  let middle_row_number: number;
+  // Adjust first_row_rect_number until middle_row_number is 3 or less
+  do {
+    middle_row_number = Math.floor(
+      rectangles.length % 2 === 0
+        ? (rectangles.length - first_row_rect_number * 2) / 2
+        : (rectangles.length - first_row_rect_number * 2 - 1) / 2,
+    );
+
+    if (middle_row_number > 3) {
+      first_row_rect_number++;
+    }
+  } while (middle_row_number > 3);
+  return { first_row_rect_number, middle_row_number };
+}
 function adjustRectangleHeights(
   rectangles: tRectangle[],
   middle_row_number: number,

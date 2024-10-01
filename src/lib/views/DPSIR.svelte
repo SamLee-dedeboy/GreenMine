@@ -6,7 +6,7 @@
   import { DPSIRLayout } from "lib/renderers/DPSIRLayout";
   import { setOpacity } from "lib/utils";
   import * as Constants from "lib/constants";
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, getContext } from "svelte";
   const dispatch = createEventDispatcher();
   import type {
     tDPSIR,
@@ -22,6 +22,7 @@
   export let data: tDPSIR;
   export let links: tVisLink[];
   const svgId = "model-svg";
+  const handleHighlightChunks = getContext("handleHighlightChunks") as Function;
 
   let var_type_states = {
     driver: { revealed: false, visible: true },
@@ -111,7 +112,8 @@
 
   function handleVarOrLinkSelected(mentions: tMention[]) {
     console.log("varOrLink", mentions);
-    dispatch("var-selected", mentions); // for App.svelte to hightlight the chunks
+    handleHighlightChunks(mentions);
+    // dispatch("var-selected", mentions); // for App.svelte to hightlight the chunks
   }
 
   function handleVarTypeLinkSelected(varTypeLink: tLinkObjectOverview) {

@@ -5,7 +5,7 @@ import jieba
 import numpy as np
 
 
-def collect_nodes(chunks, var_types):
+def collect_nodes(chunks, var_types, var_definitions):
     nodes = {}
     for var_type in var_types:
         nodes[var_type] = {"variable_type": var_type, "variable_mentions": {}}
@@ -18,10 +18,22 @@ def collect_nodes(chunks, var_types):
                 evidence = variable_mention["evidence"]
                 explanation = variable_mention["explanation"]
                 keywords = variable_mention["keywords"]
+                variable_definition = next(
+                    (
+                        x
+                        for x in var_definitions[identified_var_type]
+                        if x["var_name"] == variable_name
+                    ),
+                    None,
+                )
+                if variable_definition is None:
+                    continue
                 if variable_name not in nodes[identified_var_type]["variable_mentions"]:
                     nodes[identified_var_type]["variable_mentions"][variable_name] = {
                         "variable_name": variable_name,
                         "mentions": [],
+                        "definition": variable_definition["definition"],
+                        "factor_type": variable_definition["factor_type"],
                     }
                 nodes[identified_var_type]["variable_mentions"][variable_name][
                     "mentions"
@@ -65,6 +77,8 @@ def generate_DPSIR_data(
                 res[var_type]["variable_mentions"][variable_name] = {
                     "variable_name": variable_name,
                     "mentions": [],
+                    "definition": variable_data["definition"],
+                    "factor_type": variable_data["factor_type"],
                 }
             res[var_type]["variable_mentions"][variable_name][
                 "mentions"

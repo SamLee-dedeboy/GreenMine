@@ -179,7 +179,9 @@ def getDPSIR(link_version):
         link for chunk in identify_links for link in chunk["identify_links_result"]
     ]
 
-    nodes = v2_processing.collect_nodes(identify_links, var_types)
+    var_definitions = json.load(open(f"{prompt_context_path}v0_var_definitions.json"))
+
+    nodes = v2_processing.collect_nodes(identify_links, var_types, var_definitions)
     DPSIR_data = v2_processing.generate_DPSIR_data(
         identify_links,
         nodes,
@@ -188,9 +190,18 @@ def getDPSIR(link_version):
         userdict,
         kpca_reducer,
     )
+    # filter out variables named '其他'
+    for var_type, var_data in DPSIR_data.items():
+        variable_mentions = var_data["variable_mentions"]
+        filtered_variable_mentions = {
+            var_name: mentions
+            for var_name, mentions in variable_mentions.items()
+            if var_name != "其他"
+        }
+        DPSIR_data[var_type]["variable_mentions"] = filtered_variable_mentions
+
     return {
         "DPSIR_data": DPSIR_data,
-        # "links": old_links,
         "pipeline_links": pipeline_links,
     }
 
