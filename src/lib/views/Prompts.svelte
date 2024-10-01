@@ -22,6 +22,7 @@
   import { createEventDispatcher, tick, getContext, onMount } from "svelte";
     import { sort_by_id } from "lib/utils";
   export let versionsCount: { [key: string]: tVersionInfo };
+  export let interview_ids: string[] = [];
   const stepMap = {
     1: "var_type",
     2: "var",
@@ -36,7 +37,7 @@
   let prompt_data: tServerPromptData;
   let pipeline_result: tServerPipelineData;
   let right_panel_result: tServerPipelineData;
-  let interview_ids: string[];
+  
   let menu_data:any;
   let show_step: number = 1;
   let right_panel_version: string = "v0";
@@ -76,26 +77,6 @@
           });
       }
       return result;
-  }
-  function sort_id_asc(ids){
-    const sortedArray = ids.sort((a, b) => {
-        // Extract the numeric parts
-        const [prefixA, numA] = a.split('_');
-        const [prefixB, numB] = b.split('_');
-        
-        // Extract the numeric part of the prefix
-        const prefixNumA = parseInt(prefixA.slice(1));
-        const prefixNumB = parseInt(prefixB.slice(1));
-        
-        // Compare the prefix numbers first
-        if (prefixNumA !== prefixNumB) {
-            return prefixNumA - prefixNumB;
-        }
-        
-        // If prefix numbers are the same, compare the second numbers
-        return parseInt(numA) - parseInt(numB);
-    });
-    return sortedArray;
   }
   function changeStep(newStep: number) {
     show_step = newStep;
@@ -145,11 +126,8 @@
         };
         pipeline_result = updatePanelData(pipeline_result, log, key);
         if (pipeline_result[key].length === 0) {
-          interview_ids = [];
           menu_data = [];
         } else {
-          interview_ids = pipeline_result[key].map((item) => item.id);
-          interview_ids = sort_id_asc(interview_ids);
           menu_data = extractValuesOfMenu(prompt_data, step);
         }
         console.log({interview_ids})
