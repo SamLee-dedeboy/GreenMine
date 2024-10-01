@@ -467,18 +467,37 @@ export const DetailDPSIR = {
                 .attr("rx", "0.2%")
                 .attr("opacity", "1")
                 .attr("cursor", "pointer")
+                .on("mousemove", function (e, d) {
+                  d3.select(".tooltip")
+                    .html(
+                      `
+                      <div>${d.definition}</div>
+                      <div>Frequency: ${d.frequency}</div>
+                      <div>Mentioned by: ${Array.from(
+                        new Set(
+                          d.mentions.map(
+                            (mention) => mention.chunk_id.split("_")[0],
+                          ),
+                        ),
+                      )
+                        .sort(
+                          (p1: any, p2: any) =>
+                            +p1.replace("N", "") - +p2.replace("N", ""),
+                        )
+                        .join(", ")} </div>
+                      `,
+                    )
+                    .style("left", e.clientX + "px")
+                    .style("top", e.clientY + "px");
+                })
                 .on("mouseover", function () {
                   d3.select(this).classed("box-hover", true);
                   d3.select(this.parentNode).raise();
-                  d3.select(this.parentNode)
-                    .select(".tooltip")
-                    .attr("opacity", 1);
+                  d3.select(".tooltip").style("opacity", 1);
                 })
                 .on("mouseout", function () {
                   d3.select(this).classed("box-hover", false);
-                  d3.select(this.parentNode)
-                    .select(".tooltip")
-                    .attr("opacity", 0);
+                  d3.select(".tooltip").style("opacity", 0);
                 })
                 .on("click", function (e) {
                   // console.log("show links", self.showLinks);

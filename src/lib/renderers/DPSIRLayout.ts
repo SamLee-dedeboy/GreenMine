@@ -125,7 +125,7 @@ export const DPSIRLayout = {
           return {
             name,
             width: rectWidth,
-            height: 30, // height might be adjusted later as needed
+            height: 35, // height might be adjusted later as needed
             outgroup_degree:
               linkCount[name].outGroup_link + linkCount[name].inGroup_link,
           };

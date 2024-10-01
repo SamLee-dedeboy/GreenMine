@@ -211,7 +211,9 @@
       </div>
     {/each}
   </div>
-  <div class="tooltip-content"></div>
+  <div
+    class="tooltip pointer-events-none absolute flex min-w-[20rem] flex-col items-start gap-y-1 divide-y divide-dotted divide-gray-500 rounded bg-white p-1 text-sm opacity-0 outline outline-2 outline-gray-500"
+  ></div>
 </div>
 
 <style lang="postcss">
@@ -280,20 +282,10 @@
       filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.7));
     }
   }
-  .tooltip-content {
-    position: absolute;
-    background: rgb(249, 250, 251);
-    width: fit;
-    white-space: nowrap;
-    text-align: center;
-    border-radius: 6px;
-    padding: 5px 5px;
-    outline: 1.5px solid gray;
-    /* box-shadow: 0px 1px 2px rgba(0, 0, 0, 1); */
-    margin-left: 10px;
-    font-size: 1rem;
-    & span {
-      @apply rounded px-1 capitalize text-[#222222];
+
+  .tooltip {
+    & > div {
+      @apply flex w-full text-start;
     }
   }
   .visible {
