@@ -49,19 +49,8 @@
       </div>
     </div>
   </div>
-  <div class="flex flex-col gap-y-1 font-serif">
-    <div
-      tabindex="0"
-      role="button"
-      class="entry-trigger"
-      on:click={() => (show_versions = !show_versions)}
-      on:keyup={() => {}}
-    >
-      Version list
-      <!-- (Total: {versionCount.total_versions}) -->
-    </div>
-  </div>
-  {#if show_versions}
+  <div class="flex items-center gap-x-2">
+    <div class="rounded px-2 font-serif">Versions:</div>
     <div class="flex justify-center divide-x pt-1">
       <div class="flex flex-wrap justify-center gap-2">
         {#each versionCount.versions as version}
@@ -82,7 +71,7 @@
         </button>
       </div>
     </div>
-  {/if}
+  </div>
 </div>
 
 <style lang="postcss">

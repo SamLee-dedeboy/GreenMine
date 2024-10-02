@@ -19,7 +19,13 @@
 
 <div class="">
   <div class="flex flex-col px-1">
-    <div class="entry-trigger font-serif">
+    <div
+      tabindex="0"
+      role="button"
+      on:click={() => (show_prompts = !show_prompts)}
+      on:keyup={() => {}}
+      class="entry-trigger font-serif"
+    >
       <span> Prompts </span>
     </div>
   </div>
@@ -65,6 +71,6 @@
 
 <style lang="postcss">
   .entry-trigger {
-    @apply rounded-sm bg-gray-200 text-gray-700 outline-double outline-1 outline-gray-600;
+    @apply rounded-sm bg-gray-200 text-gray-700 outline-double outline-1 outline-gray-600 hover:bg-gray-300;
   }
 </style>

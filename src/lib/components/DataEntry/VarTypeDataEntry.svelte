@@ -6,7 +6,16 @@
 </script>
 
 <div class="flex flex-col px-1">
-  <div class="entry-trigger font-serif">Indicator Definitions</div>
+  <div
+    tabindex="0"
+    role="button"
+    on:click={() => (show = !show)}
+    on:keyup={() => {}}
+    class="entry-trigger font-serif
+  "
+  >
+    Indicator Definitions
+  </div>
   {#if show}
     <div transition:slide class="var-type-definition-content divide-y text-sm">
       {#each Object.entries(data) as [var_type, definition], index}
@@ -29,6 +38,6 @@
 
 <style lang="postcss">
   .entry-trigger {
-    @apply rounded-sm bg-gray-200 text-gray-700 outline-double outline-1 outline-gray-600;
+    @apply rounded-sm bg-gray-200 text-gray-700 outline-double outline-1 outline-gray-600 hover:bg-gray-300;
   }
 </style>

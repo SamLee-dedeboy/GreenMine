@@ -458,7 +458,7 @@
 
   {#key show_step}
     {#if show_step === 1 && prompt_data?.identify_var_types}
-      <div in:slide|global class="step-1 flex grow">
+      <div in:slide|global class="step-1 flex h-1 grow">
         <div
           class="flex min-w-[25rem] max-w-[30rem] flex-col gap-y-1 overflow-y-auto bg-gray-100"
         >
@@ -512,8 +512,10 @@
         />
       </div>
     {:else if show_step === 2 && prompt_data.identify_vars}
-      <div in:slide|global class="step-2 flex grow">
-        <div class="flex min-w-[25] max-w-[30rem] flex-col gap-y-1 bg-gray-100">
+      <div in:slide|global class="step-2 flex h-1 grow">
+        <div
+          class="flex min-w-[25] max-w-[30rem] flex-col gap-y-1 overflow-y-auto bg-gray-100"
+        >
           <PromptHeader
             title="Identify Variables"
             versionCount={versionsCount["var"]}
@@ -554,9 +556,9 @@
         />
       </div>
     {:else if show_step === 3 && prompt_data.identify_links}
-      <div in:slide|global class="step-2 flex grow">
+      <div in:slide|global class="step-2 flex h-1 grow">
         <div
-          class="flex min-w-[25rem] max-w-[30rem] flex-col gap-y-1 bg-gray-100"
+          class="flex min-w-[25rem] max-w-[30rem] flex-col gap-y-1 overflow-y-auto bg-gray-100"
         >
           <PromptHeader
             title="Identify Links"
