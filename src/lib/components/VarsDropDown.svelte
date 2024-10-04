@@ -33,7 +33,7 @@
   <div class="relative w-full">
     <button
       id="multiLevelDropdownButton"
-      class="text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 focus:border-blue-500 focus:outline-none font-medium rounded-md text-sm inline-flex items-center justify-between w-full"
+      class="text-gray-500 bg-white border border-gray-300 focus:border-blue-500 focus:outline-none font-medium rounded-md text-sm inline-flex items-center justify-between w-full"
       type="button"
       on:click={toggleDropdown}
     >
@@ -57,7 +57,7 @@
               class="relative"
             >
               <button 
-                class="main-item flex items-center justify-between w-full px-4 hover:text-white hover:rounded-md"
+                class="capitalize main-item flex items-center justify-between w-full px-4 hover:text-white hover:rounded-md"
                 style="--hover-bg-color: {$varTypeColorScale(value)}"
                 on:click={() => {
                   if (subValues.length === 0) {

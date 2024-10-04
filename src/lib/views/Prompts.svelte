@@ -19,8 +19,9 @@
   } from "lib/types";
   import { updatePanelData } from "lib/utils/update_with_log";
   import { server_address } from "lib/constants";
+  import {var_type_names} from "lib/constants";
   import { createEventDispatcher, tick, getContext, onMount } from "svelte";
-    import { sort_by_id } from "lib/utils";
+  import { sort_by_id } from "lib/utils";
   export let versionsCount: { [key: string]: tVersionInfo };
   export let interview_ids: string[] = [];
   const stepMap = {
@@ -37,6 +38,7 @@
   let prompt_data: tServerPromptData;
   let pipeline_result: tServerPipelineData;
   let right_panel_result: tServerPipelineData;
+  let rule_prompt_data: tServerPromptData; //for selection of Rule menu
   
   let menu_data:any;
   let show_step: number = 1;
@@ -86,6 +88,17 @@
       fetchVersionsCount(step)
         .then(() => fetchPipelineData(step, current_versions[step]))
         .then(() => fetchMenuData(step, right_panel_version))
+        .then(() => {
+          if(step === 'var_type'){
+            fetchRuleMenu(step, current_versions[step])
+          }
+          else if (step === 'var'){
+            fetchRuleMenu(step, current_versions[step])
+          }
+          else if (step === 'link'){
+            fetchRuleMenu('var', current_versions['var'])
+          }
+        });
     }
   }
 
@@ -104,12 +117,32 @@
           const versions = versionsCount[step].versions;
           current_versions[step] = versions[versions.length - 1];
           resolve();
+          console.log(current_versions);
         })
         .catch((error) => {
           console.error(`Error fetching versions count for ${step}:`, error);
           reject(error);
         });
     });
+  }
+  function fetchRuleMenu(step:string, version:string){
+    const key = `identify_${step}s`;
+    return fetch(`${server_address}/pipeline/${step}/${version}/`)
+      .then((res) => res.json())
+      .then((res) => {
+        rule_prompt_data = {
+          ...rule_prompt_data,
+          [key]: res.prompts,
+        };
+        menu_data = extractValuesOfMenu(rule_prompt_data, step);
+        console.log({menu_data})
+      })
+      .catch((error) => {
+        console.error(
+          `Error fetching pipeline data for step ${step}, version ${version}:`,
+          error,
+        );
+      });
   }
   function fetchPipelineData(step: string, version: string) {
     const key = `identify_${step}s`;
@@ -125,16 +158,9 @@
           [key]: res.pipeline_result,
         };
         pipeline_result = updatePanelData(pipeline_result, log, key);
-        if (pipeline_result[key].length === 0) {
-          menu_data = [];
-        } else {
-          menu_data = extractValuesOfMenu(prompt_data, step);
-        }
-        console.log({interview_ids})
         console.log(
           `Fetched pipeline data for step: ${step}, version: ${version}`,
         );
-        console.log("interview_ids", interview_ids);
       })
       .catch((error) => {
         console.error(
@@ -148,7 +174,7 @@
     return fetch(`${server_address}/pipeline/${step}/${version}/`)
       .then((res) => res.json())
       .then((res) => {
-        
+
         right_panel_result = {
           ...right_panel_result,
           [key]: res.pipeline_result,
@@ -293,11 +319,17 @@
       if (similarRecord) {
         const actionVerb = similarRecord.action === 'add' ? 'added' : 'removed';
         const userChoice = confirm(`There is a rule ${actionVerb} with the same content. Do you want to update it?`);
-        if (!userChoice) {
+        if(userChoice){
+          log[key].splice(similarRecord, 1);
+          log[key].push(record);
+          log = log
           return;
         }
+        else {
+          return;
+        }
+        
       }
-
       log[key].push(record);
       log = log; // Trigger reactivity
     }
@@ -312,6 +344,7 @@
     await fetchVersionsCount(step);
     await fetchPipelineData(step, current_versions[step]);
     await fetchMenuData(step, right_panel_version);
+    await fetchRuleMenu(step, current_versions[step]);
   });
 </script>
 
@@ -323,12 +356,15 @@
     <div
       tabindex="0"
       role="button"
-      class="pipeline-step-button"
+      class="pipeline-step-button flex items-center justify-center"
       class:active={show_step === 1}
       on:click={() => changeStep(1)}
       on:keyup={() => {}}
     >
-      Indicators
+      <span>Indicators</span>
+      <span class="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-gray-300 text-xs">
+        {`v${+current_versions['var_type'].slice(1) + 1}`}
+      </span>
     </div>
     <div class="flex h-full items-center p-0.5">
       <img
@@ -342,12 +378,15 @@
     <div
       tabindex="0"
       role="button"
-      class="pipeline-step-button"
+      class="pipeline-step-button flex items-center justify-center"
       class:active={show_step === 2}
       on:click={() => changeStep(2)}
       on:keyup={() => {}}
     >
-      Variables
+      <span>Variables</span>
+      <span class="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-gray-300 text-xs">
+        {`v${+current_versions['var'].slice(1) + 1}`}
+      </span>
     </div>
     <div class="flex h-full items-center p-0.5">
       <img
@@ -360,12 +399,15 @@
     <div
       tabindex="0"
       role="button"
-      class="pipeline-step-button"
+      class="pipeline-step-button flex items-center justify-center"
       class:active={show_step === 3}
       on:click={() => changeStep(3)}
       on:keyup={() => {}}
     >
-      Links
+      <span>Links</span>
+      <span class="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-gray-300 text-xs">
+        {`v${+current_versions['link'].slice(1) + 1}`}
+      </span>
     </div>
   </div>
 
@@ -538,11 +580,12 @@
 
 <style lang="postcss">
   .pipeline-step-button {
-    @apply w-[5.5rem]  rounded-sm  border-gray-600 bg-gray-200 p-1 text-center opacity-50 hover:bg-gray-300;
+    @apply inline-flex  rounded-sm  border-gray-600 bg-gray-200 px-3 p-1 text-center opacity-50 hover:bg-gray-400;
     transition: all 0.2s;
+    min-width: 5.5rem;
   }
   .active {
-    @apply pointer-events-none w-[5rem] bg-yellow-100 opacity-100;
+    @apply pointer-events-none bg-yellow-100 opacity-100;
   }
   .dashed-arrow {
     width: 20px;

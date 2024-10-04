@@ -9,7 +9,7 @@
     total_versions: 0,
     versions: [],
   };
-  export let current_version: string;
+  export let current_version: string = "v0";
   let show_versions = true;
 </script>
 
