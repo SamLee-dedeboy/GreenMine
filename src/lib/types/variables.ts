@@ -58,6 +58,8 @@ export type Mention = {
 export type VariableInfo = {
   var_type: string;
   variable_name: string;
+  x: number;
+  y: number;
 };
 
 //for layout each rect for variables

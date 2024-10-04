@@ -62,9 +62,6 @@
         data={data[keywordsea_var_type].keyword_data}
         key={keywordsea_var_type}
         {degree_key}
-        on:keywordSelected={(e) => {
-          dispatch("keywordSelected", e.detail);
-        }}
       />
     {:else}
       <div

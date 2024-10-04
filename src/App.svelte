@@ -33,6 +33,7 @@
   let show_dpsir: boolean = true;
   let show_prompts: boolean = false;
   let show_keywordsea: boolean = false;
+  // let selectedTitle: string;
   let versionsCount: { [key: string]: tVersionInfo } = {};
 
   // pipeline
@@ -97,8 +98,6 @@
       .then((res: tServerDataDPSIR) => {
         var_data = res.DPSIR_data;
         vis_links = utils.link_to_vis_link(res.pipeline_links);
-        // console.log(vis_links);
-        // console.log(res.pipeline_links);
         const var_types = Object.keys(var_data);
         $varTypeColorScale = d3
           .scaleOrdinal()
@@ -117,14 +116,15 @@
       explanation,
     );
   }
-  function handleHighlightChunks(e) {
-    console.log("handle highlight chunks", e.detail);
+  function handleHighlightChunks(mentions: tMention | null) {
+    console.log("handle highlight chunks", mentions);
     if (!interview_data) return;
-    if (e.detail === null) {
-      interview_viewer_component.highlight_chunks(null); //dehighlight chunks
-    } else {
-      interview_viewer_component.highlight_chunks(e.detail as tMention[]);
-    }
+    interview_viewer_component.highlight_chunks(mentions); //dehighlight chunks
+    // if (mentions === null) {
+    //   interview_viewer_component.highlight_chunks(null); //dehighlight chunks
+    // } else {
+    //   interview_viewer_component.highlight_chunks(e.detail as tMention[]);
+    // }
   }
 
   onMount(async () => {
@@ -134,6 +134,7 @@
   });
 
   setContext("fetchData", fetchData);
+  setContext("handleHighlightChunks", handleHighlightChunks);
 </script>
 
 <main class="h-full w-full px-1">
@@ -161,7 +162,6 @@
         >
           <KeywordSeaViewer
             data={var_data}
-            on:keywordSelected={handleHighlightChunks}
             on:close={() => (show_keywordsea = false)}
           ></KeywordSeaViewer>
         </div>
@@ -196,11 +196,7 @@
             <div>Data Loading...</div>
           {/if}
           {#if !data_loading && show_dpsir}
-            <DPSIR
-              data={var_data}
-              links={vis_links}
-              on:var-selected={handleHighlightChunks}
-            ></DPSIR>
+            <DPSIR data={var_data} links={vis_links}></DPSIR>
           {/if}
           {#if !data_loading && !show_dpsir}
             <SimGraph topic_data={chunk_graph} {keyword_data}></SimGraph>

@@ -75,7 +75,8 @@
   ) {
     resetHighlights();
     external_highlights = true;
-    if (!highlight_chunk_mentions) {
+    console.log({ highlight_chunk_mentions });
+    if (highlight_chunk_mentions === null) {
       external_highlights = false;
       highlight_chunk_mentions = [];
     }

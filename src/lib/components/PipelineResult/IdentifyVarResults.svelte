@@ -101,13 +101,14 @@
         <div>Loading...</div>
       {:then data_for_others}
         <div class="flex grow flex-col">
-          <div class="flex justify-between px-1 pt-0.5">
+          <div class="flex justify-between px-1 py-1">
             {#each var_type_names as var_type}
               <div class="flex flex-col">
                 <div
                   tabindex="0"
                   role="button"
-                  class="rounded-sm px-1 capitalize text-gray-700"
+                  class="flex items-center rounded-sm px-1 py-0.5 capitalize italic text-gray-700 outline outline-0 outline-black hover:outline-2"
+                  class:active={clicked_var_type_for_others === var_type}
                   style={`background-color: ${setOpacity($varTypeColorScale(var_type), 0.7)};`}
                   on:click={() => (clicked_var_type_for_others = var_type)}
                   on:keyup={() => {}}
@@ -232,5 +233,8 @@
     & .var-type-tag {
       @apply line-through;
     }
+  }
+  .active {
+    @apply shadow-[0_0_4px_1px_black] outline-2;
   }
 </style>

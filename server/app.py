@@ -127,6 +127,7 @@ def get_pipeline(step, version):
         },
         "pipeline_result": identify_data,
     }
+
 @app.route("/pipeline/<step>/create_and_save_new/", methods=["POST"])
 def create_and_save_new_pipeline(step):
     version = request.json["version"]
@@ -176,7 +177,9 @@ def getDPSIR(link_version):
         link for chunk in identify_links for link in chunk["identify_links_result"]
     ]
 
-    nodes = v2_processing.collect_nodes(identify_links, var_types)
+    var_definitions = json.load(open(f"{prompt_context_path}v0_var_definitions.json", encoding="utf-8"))
+
+    nodes = v2_processing.collect_nodes(identify_links, var_types, var_definitions)
     DPSIR_data = v2_processing.generate_DPSIR_data(
         identify_links,
         nodes,
@@ -185,9 +188,18 @@ def getDPSIR(link_version):
         userdict,
         kpca_reducer,
     )
+    # filter out variables named '其他'
+    for var_type, var_data in DPSIR_data.items():
+        variable_mentions = var_data["variable_mentions"]
+        filtered_variable_mentions = {
+            var_name: mentions
+            for var_name, mentions in variable_mentions.items()
+            if var_name != "其他"
+        }
+        DPSIR_data[var_type]["variable_mentions"] = filtered_variable_mentions
+
     return {
         "DPSIR_data": DPSIR_data,
-        # "links": old_links,
         "pipeline_links": pipeline_links,
     }
 
@@ -577,7 +589,7 @@ def processData(data_path, reload=False):
     interviews = []
     data_by_chunk = {}
     for interview_file in glob.glob(data_path + "chunk_summaries/*.json"):
-        interview_data = json.load(open(interview_file))
+        interview_data = json.load(open(interview_file, encoding="utf-8"))
         interview_file = interview_file.replace("\\", "/")
         file_name = interview_file.split("/")[-1].replace(".json", "")
         participant = file_name.split("_")[0]
@@ -602,18 +614,18 @@ def processData(data_path, reload=False):
     report_embeddings = {}
 
     # chunk_graph
-    chunk_links = json.load(open(data_path + "chunk_similarities.json"))
-    chunk_embeddings = json.load(open(data_path + "chunk_embeddings.json"))
+    chunk_links = json.load(open(data_path + "chunk_similarities.json", encoding="utf-8"))
+    chunk_embeddings = json.load(open(data_path + "chunk_embeddings.json", encoding="utf-8"))
     chunk_nodes = {}
     for interview in interviews:
         for chunk in interview["data"]:
             # chunk['keywords'] = chunk['raw_keywords']
             chunk_nodes[chunk["id"]] = chunk
     # topic tsnes
-    topic_tsnes = json.load(open(data_path + "chunk_coordinates.json"))
+    topic_tsnes = json.load(open(data_path + "chunk_coordinates.json", encoding="utf-8"))
     # keywords
-    keyword_coordinates = json.load(open(data_path + "keyword_coordinates.json"))
-    keyword_statistics = json.load(open(data_path + "keyword_statistics.json"))
+    keyword_coordinates = json.load(open(data_path + "keyword_coordinates.json", encoding="utf-8"))
+    keyword_statistics = json.load(open(data_path + "keyword_statistics.json", encoding="utf-8"))
     # keyword_statistics = {k['keyword']: k for k in keyword_statistics}
 
     if reload:
@@ -626,7 +638,7 @@ def processData(data_path, reload=False):
         chunks_by_topic = v1_processing.group_by_key(chunk_embeddings, "topic")
         topic_tsnes = v1_processing.tsne_by_topic(chunks_by_topic)
         # keyword
-        keywords = json.load(open(data_path + "keywords.json"))
+        keywords = json.load(open(data_path + "keywords.json", encoding="utf-8"))
         keyword_embeddings = [keyword["embedding"] for keyword in keywords]
         coordinates = dr.scatter_plot(keyword_embeddings, method="tsne")
         keyword_coordinates = {

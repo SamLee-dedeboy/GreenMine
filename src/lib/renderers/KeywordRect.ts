@@ -16,6 +16,7 @@ export class KeyWordRect {
   yScale_keywords: any;
   // clicked_rect: string | undefined;
   dispatch: any;
+  clickable: boolean = false;
   constructor() {}
   on(event, handler) {
     this.dispatch.on(event, handler);
@@ -60,7 +61,7 @@ export class KeyWordRect {
     color = "#0d6db1";
     const xScale = this.xScale_keywords;
     const yScale = this.yScale_keywords;
-
+    console.log("update_keywords", keyword_data, stat_key, color);
     const nodes_dict = collect_nodes(keyword_data, stat_key, xScale, yScale);
     const maxStat = Math.max(...Object.values(nodes_dict).map((d) => d.degree));
     // scales
@@ -134,8 +135,8 @@ export class KeyWordRect {
               .classed("rect-not-selected", true);
             d3.select(this)
               .classed("rect-selected", true)
-              .classed("rect-not-selected", false)
-              .raise();
+              .classed("rect-not-selected", false);
+            // .raise();
             self.dispatch.call("keywordSelected", null, d.label);
           })
           .lower();

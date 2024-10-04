@@ -3,8 +3,10 @@
   import * as d3 from "d3";
   import { DetailDPSIR } from "lib/renderers/DetailDPSIR";
   import { OverviewDPSIR } from "lib/renderers/OverviewDPSIR";
+  import { DPSIRLayout } from "lib/renderers/DPSIRLayout";
+  import { setOpacity } from "lib/utils";
   import * as Constants from "lib/constants";
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, getContext } from "svelte";
   const dispatch = createEventDispatcher();
   import type {
     tDPSIR,
@@ -20,21 +22,14 @@
   export let data: tDPSIR;
   export let links: tVisLink[];
   const svgId = "model-svg";
-
-  let bboxes: Record<string, tBbox> = {
-    driver: { center: [58, 90], size: [0, 0] },
-    pressure: { center: [170, 30], size: [0, 0] },
-    state: { center: [270, 75], size: [0, 0] },
-    impact: { center: [240, 190], size: [0, 0] },
-    response: { center: [70, 210], size: [0, 0] },
-  };
+  const handleHighlightChunks = getContext("handleHighlightChunks") as Function;
 
   let var_type_states = {
-    driver: { revealed: false },
-    pressure: { revealed: false },
-    state: { revealed: false },
-    impact: { revealed: false },
-    response: { revealed: false },
+    driver: { revealed: false, visible: true },
+    pressure: { revealed: false, visible: true },
+    state: { revealed: false, visible: true },
+    impact: { revealed: false, visible: true },
+    response: { revealed: false, visible: true },
   };
   $: isDetailMode = Object.values(var_type_states).every(
     (state) => state.revealed,
@@ -42,8 +37,9 @@
 
   function initializeRenderer() {
     d3.select(`#${svgId}`).selectAll("*").remove();
-    OverviewDPSIR.init(svgId);
+    DPSIRLayout.init(svgId);
     DetailDPSIR.init(svgId);
+    OverviewDPSIR.init(svgId);
 
     DetailDPSIR.on("VarOrLinkSelected", handleVarOrLinkSelected);
     DetailDPSIR.on("VarTypeUnSelected", handleOverviewVarTypeUnSelected);
@@ -72,12 +68,13 @@
   async function render(
     vars: tDPSIR,
     links: tVisLink[],
-    var_type_states: Record<string, { revealed: boolean }>,
+    var_type_states: Record<string, { revealed: boolean; visible: boolean }>,
   ) {
+    DPSIRLayout.update(data, links, var_type_states);
     OverviewDPSIR.update_vars(
       links,
       $varTypeColorScale,
-      bboxes,
+      DPSIRLayout.bboxes,
       var_type_states,
     );
     DetailDPSIR.update_vars(
@@ -85,7 +82,8 @@
       links,
       $varTypeColorScale,
       var_type_states,
-      bboxes,
+      DPSIRLayout.bboxes,
+      DPSIRLayout.varCoordinatesDict,
     );
   }
 
@@ -104,9 +102,9 @@
       console.log("empty space clicked", e);
       DetailDPSIR.resetHighlights();
       OverviewDPSIR.resetHighlights();
-      Object.keys(var_type_states).forEach((key) => {
-        var_type_states[key].revealed = false;
-      });
+      // Object.keys(var_type_states).forEach((key) => {
+      //   var_type_states[key].revealed = false;
+      // });
       dispatch("var-selected", null); // for app.svelte to reset hightlight the chunks
       render(data, links, var_type_states);
     }
@@ -114,7 +112,8 @@
 
   function handleVarOrLinkSelected(mentions: tMention[]) {
     console.log("varOrLink", mentions);
-    dispatch("var-selected", mentions); // for App.svelte to hightlight the chunks
+    handleHighlightChunks(mentions);
+    // dispatch("var-selected", mentions); // for App.svelte to hightlight the chunks
   }
 
   function handleVarTypeLinkSelected(varTypeLink: tLinkObjectOverview) {
@@ -150,29 +149,71 @@
     await tick();
     initializeRenderer();
 
-    // calculate box size and small rectangle layout
-    bboxes = DetailDPSIR.calculateBoxInfo(
-      data,
-      links,
-      Constants.var_type_names,
-      bboxes,
-    );
-    // console.log({ bboxes });
     render(data, links, var_type_states);
   });
 </script>
 
 <div class="container relative h-full w-full">
-  <svg id={svgId} class="varbox-svg relative h-full w-full">
-    <defs></defs>
-  </svg>
-  <button
-    class="absolute right-4 top-4 z-10 rounded-md bg-gray-300 p-2 text-black transition-colors hover:bg-gray-500 hover:text-white"
-    on:click={switchRenderer}
-  >
-    Show {isDetailMode ? "Overview" : "Full Detail"}
-  </button>
-  <div class="tooltip-content"></div>
+  <svg id={svgId} class="varbox-svg relative h-full w-full"> </svg>
+  <div class="absolute right-4 top-4 z-10 flex items-center gap-x-2">
+    <!-- <div class="flex items-center gap-x-1">
+      <button
+        class="w-[6rem] rounded-md bg-gray-300 p-2 text-black transition-colors hover:bg-gray-500 hover:text-white"
+        on:click={switchRenderer}
+      >
+        {isDetailMode ? "Hide All" : "Show All"}
+      </button>
+    </div> -->
+    {#each Constants.var_type_names as var_type}
+      <div
+        class="flex items-center gap-x-0.5 rounded outline outline-0"
+        class:visible={var_type_states[var_type].visible}
+        class:revealed={var_type_states[var_type].revealed}
+        style={`outline-color: ${$varTypeColorScale(var_type)} `}
+      >
+        <div
+          role="button"
+          tabindex="0"
+          class="w-[6rem] rounded-md px-2 py-1 capitalize italic text-gray-700 hover:shadow"
+          class:visible={var_type_states[var_type].visible}
+          class:revealed={var_type_states[var_type].revealed}
+          style={`
+          background-color: ${var_type_states[var_type].visible ? setOpacity($varTypeColorScale(var_type), 0.7, "rgbHex") : "lightgray"};
+          `}
+          on:click={() => {
+            var_type_states[var_type].revealed = false;
+            var_type_states[var_type].visible =
+              !var_type_states[var_type].visible;
+            render(data, links, var_type_states);
+          }}
+          on:keyup={() => {}}
+        >
+          {var_type}s
+        </div>
+        <div
+          role="button"
+          tabindex="0"
+          class="pointer-events-none h-7 w-7 rounded-full p-1 opacity-50 hover:bg-gray-300"
+          class:visible={var_type_states[var_type].visible}
+          on:click={() => {
+            var_type_states[var_type].revealed =
+              !var_type_states[var_type].revealed;
+            render(data, links, var_type_states);
+          }}
+          on:keyup={() => {}}
+        >
+          {#if var_type_states[var_type].revealed}
+            <img src="minimize.svg" alt="hide" />
+          {:else}
+            <img src="maximize.svg" alt="show" />
+          {/if}
+        </div>
+      </div>
+    {/each}
+  </div>
+  <div
+    class="tooltip pointer-events-none absolute flex min-w-[20rem] flex-col items-start gap-y-1 divide-y divide-dotted divide-gray-500 rounded bg-white p-1 text-sm opacity-0 outline outline-2 outline-gray-500"
+  ></div>
 </div>
 
 <style lang="postcss">
@@ -198,7 +239,7 @@
       pointer-events: none;
     }
     & .line-hover {
-      stroke: black;
+      /* stroke: black; */
       /* stroke-width: 3; */
       opacity: 0.8;
     }
@@ -241,20 +282,19 @@
       filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.7));
     }
   }
-  .tooltip-content {
-    position: absolute;
-    background: rgb(249, 250, 251);
-    width: fit;
-    white-space: nowrap;
-    text-align: center;
-    border-radius: 6px;
-    padding: 5px 5px;
-    outline: 1.5px solid gray;
-    /* box-shadow: 0px 1px 2px rgba(0, 0, 0, 1); */
-    margin-left: 10px;
-    font-size: 1rem;
-    & span {
-      @apply rounded px-1 capitalize text-[#222222];
+
+  .tooltip {
+    & > div {
+      @apply flex w-full text-start;
     }
+  }
+  .visible {
+    color: #333333;
+    pointer-events: auto;
+    opacity: 1;
+  }
+  .revealed {
+    background-color: white !important;
+    outline-width: 3px !important;
   }
 </style>
