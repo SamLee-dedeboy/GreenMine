@@ -1,12 +1,27 @@
 <script lang="ts">
-  import type { tVarTypeData } from "lib/types";
+  import type { tVarTypeData } from "lib/types";  
+  import { createEventDispatcher } from 'svelte';
   import { slide } from "svelte/transition";
   export let data: tVarTypeData;
+  const dispatch = createEventDispatcher();
   let show = true;
+  function handleSaveDef(updatedData: tVarTypeData) {
+    console.log(updatedData);
+    dispatch('save', { type: 'var_type_definitions', data: updatedData });
+  }
 </script>
 
-<div class="flex flex-col px-1">
+<div class="flex flex-col  gap-y-0.5 px-1">
   <div class="entry-trigger font-serif">Indicator Definitions</div>
+  <div
+    role="button"
+    tabindex="0"
+    class="ml-auto flex w-[7rem] justify-center items-center rounded-sm px-1 py-0.5 text-[0.7rem] normal-case italic leading-3 text-gray-600 outline-double outline-1 outline-gray-300 hover:bg-gray-300"
+    on:click={() => handleSaveDef(data)}
+    on:keyup={() => {}}
+    >
+    save definition
+  </div>
   {#if show}
     <div transition:slide class="var-type-definition-content divide-y text-sm">
       {#each Object.entries(data) as [var_type, definition], index}

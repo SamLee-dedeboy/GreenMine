@@ -263,7 +263,21 @@
         });
     }
   }
+  function handleSave(event) {
+    const { type, data } = event.detail;
+    const key = `identify_${stepMap[show_step]}s`;
 
+    if (type === 'var_definitions') {
+      prompt_data[key].var_definitions = data;
+    } else if (type === 'var_type_definitions') {
+      prompt_data[key].var_type_definitions = data;
+    } else if (type === 'prompt') {
+      prompt_data[key].system_prompt_blocks = data.system_prompt_blocks;
+      prompt_data[key].user_prompt_blocks = data.user_prompt_blocks;
+    }
+    console.log("save", prompt_data);
+    save_data(prompt_data, pipeline_result, key);
+  }
   function save_data(
     data: tServerPromptData,
     pipeline_tmp_data: tServerPipelineData,
@@ -430,6 +444,7 @@
           ></PromptHeader>
           <VarTypeDataEntry
             bind:data={prompt_data.identify_var_types.var_type_definitions}
+            on:save={handleSave}
           ></VarTypeDataEntry>
           <PromptEntry
             data={{
@@ -438,6 +453,7 @@
               user_prompt_blocks:
                 prompt_data.identify_var_types.user_prompt_blocks,
             }}
+            on:save={handleSave}
           />
           <RuleEntry
             {interview_ids}
@@ -480,6 +496,7 @@
             on:add-version={() => handle_version_added("var")}
           ></PromptHeader>
           <VarDataEntry bind:data={prompt_data.identify_vars.var_definitions}
+            on:save={handleSave}
           ></VarDataEntry>
           <PromptEntry
             data={{
@@ -487,6 +504,7 @@
                 prompt_data.identify_vars.system_prompt_blocks,
               user_prompt_blocks: prompt_data.identify_vars.user_prompt_blocks,
             }}
+            on:save={handleSave}
           />
           <RuleEntry
             {interview_ids}
@@ -536,6 +554,7 @@
                 prompt_data.identify_links.system_prompt_blocks,
               user_prompt_blocks: prompt_data.identify_links.user_prompt_blocks,
             }}
+            on:save={handleSave}
           />
           <RuleEntry
             {interview_ids}

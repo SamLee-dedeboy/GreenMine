@@ -13,26 +13,44 @@
       '<span class="text-yellow-600" contenteditable=false>${$1}</span>',
     );
   }
-
+  function updateBlockContent(index: number, newContent: string) {
+    const plainText = newContent.replace(/<[^>]*>/g, '').trim();
+    data.system_prompt_blocks[index][1] = plainText;
+    data = {...data}; // Trigger reactivity
+  }
+  function handleSavePrompt(updatedData: tPrompt) {
+    console.log(updatedData);
+    dispatch('save', { type: 'prompt', data: updatedData });
+  }
   onMount(() => {});
 </script>
 
 <div class="">
-  <div class="flex flex-col px-1">
+  <div class="flex flex-col gap-y-0.5 px-1">
     <div class="entry-trigger font-serif">
       <span> Prompts </span>
+    </div>
+    <div
+        role="button"
+        tabindex="0"
+        class="ml-auto flex w-[7rem] justify-center items-center rounded-sm py-0.5 text-[0.7rem] normal-case italic leading-3 text-gray-600 outline-double outline-1 outline-gray-300 hover:bg-gray-300"
+        on:click={() =>handleSavePrompt(data)} 
+        on:keyup={() => {}}
+        >
+        save prompts
     </div>
   </div>
   {#if show_prompts}
     <div transition:slide class="divide-y text-sm">
       {#each data.system_prompt_blocks as [block_name, block_content], index}
-        <div class="flex divide-x">
+        <div class="flex divide-x ">
           <div class="w-[5rem] shrink-0 pr-2 capitalize italic text-gray-600">
             {block_name}
           </div>
           <div
             class="grow pl-2 text-left text-sm italic text-gray-500"
             contenteditable
+            on:input={(e) => updateBlockContent(index, e.target.innerHTML)}
             on:blur={function () {
               this.innerHTML = highlight_variables(this.innerHTML);
             }}
