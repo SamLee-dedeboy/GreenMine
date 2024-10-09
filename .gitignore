@@ -24,3 +24,4 @@ node_modules
 server/request_log.txt
 server/GPTUtils/contexts/*.json
 server/GPTUtils/prompts/*.json
+notes
