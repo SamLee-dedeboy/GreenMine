@@ -2,7 +2,7 @@
   import { createEventDispatcher, onMount } from "svelte";
   import { fade, slide } from "svelte/transition";
   import type { tPrompt } from "lib/types";
-  export let data: tPrompt | undefined = undefined;
+  export let data: tPrompt;
   const dispatch = createEventDispatcher();
   let show_prompts = true;
 
@@ -13,7 +13,15 @@
       '<span class="text-yellow-600" contenteditable=false>${$1}</span>',
     );
   }
-
+  function updateBlockContent(index: number, newContent: string) {
+    const plainText = newContent.replace(/<[^>]*>/g, "").trim();
+    data.system_prompt_blocks[index][1] = plainText;
+    data = { ...data }; // Trigger reactivity
+  }
+  function handleSavePrompt(updatedData: tPrompt) {
+    console.log(updatedData);
+    dispatch("save", { type: "prompt", data: updatedData });
+  }
   onMount(() => {});
 </script>
 
@@ -28,6 +36,15 @@
     >
       <span> Prompts </span>
     </div>
+    <div
+      role="button"
+      tabindex="0"
+      class="ml-auto flex w-[7rem] items-center justify-center rounded-sm py-0.5 text-[0.7rem] normal-case italic leading-3 text-gray-600 outline-double outline-1 outline-gray-300 hover:bg-gray-300"
+      on:click={() => handleSavePrompt(data)}
+      on:keyup={() => {}}
+    >
+      save prompts
+    </div>
   </div>
   {#if show_prompts}
     <div transition:slide class="divide-y text-sm">
@@ -39,6 +56,7 @@
           <div
             class="grow pl-2 text-left text-sm italic text-gray-500"
             contenteditable
+            on:input={(e) => updateBlockContent(index, e.target.innerHTML)}
             on:blur={function () {
               this.innerHTML = highlight_variables(this.innerHTML);
             }}

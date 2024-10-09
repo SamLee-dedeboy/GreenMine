@@ -92,13 +92,13 @@ export type tVarDef = {
 export type LogEntry = {
   action: string;
   id: string;
-  value: string;
+  value: Array<{ varType: string; varName: string }>;
 };
 
 export type LogRecord = {
-  identify_var_type_results: LogEntry[];
-  identify_var_results: LogEntry[];
-  identify_link_results: LogEntry[];
+  identify_var_types: LogEntry[];
+  identify_vars: LogEntry[];
+  identify_links: LogEntry[];
 };
 
 export type tVersionInfo = {

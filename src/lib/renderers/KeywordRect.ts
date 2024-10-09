@@ -61,7 +61,7 @@ export class KeyWordRect {
     color = "#0d6db1";
     const xScale = this.xScale_keywords;
     const yScale = this.yScale_keywords;
-
+    console.log("update_keywords", keyword_data, stat_key, color);
     const nodes_dict = collect_nodes(keyword_data, stat_key, xScale, yScale);
     const maxStat = Math.max(...Object.values(nodes_dict).map((d) => d.degree));
     // scales

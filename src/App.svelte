@@ -24,9 +24,9 @@
   import KeywordSeaViewer from "lib/views/KeywordSeaViewer.svelte";
 
   let interview_data: tTranscript[];
+  let interview_ids: string[];
   let interview_viewer_component;
 
-  let interview_ids: string[] = [];
   let var_data: tDPSIR;
   let vis_links: tVisLink[];
   let data_loading: boolean = true;
@@ -58,6 +58,21 @@
       .then((res: tServerData) => {
         // console.log({ res });
         interview_data = res.interviews;
+        interview_ids = interview_data.flatMap(file => 
+          file.data.map(interview => interview.id)
+        );
+        interview_ids.sort((a, b) => {
+          const [fileA, numA] = a.split('_');
+          const [fileB, numB] = b.split('_');
+          
+          // First, compare the file names (N1, N2, etc.)
+          const fileComparison = fileA.localeCompare(fileB, undefined, {numeric: true});
+          if (fileComparison !== 0) {
+            return fileComparison;
+          }
+          // If file names are the same, compare the numbers after the underscore
+          return Number(numA) - Number(numB);
+        });
         // data_loading = false;
         // v1
         // report_data = res.reports
