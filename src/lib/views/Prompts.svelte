@@ -284,7 +284,7 @@
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ data }),
+      body: JSON.stringify({ data: dr_data }),
     }).then((res) => res.json());
     return uncertainty_graph_data;
   }
@@ -293,7 +293,21 @@
     data: any,
     key: string,
     version: string,
-  ) {}
+  ) {
+    fetch(`${server_address}/uncertainty_graph/save/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        data,
+        key,
+        version,
+      }),
+    }).then((res) => {
+      console.log("saved uncertainty graph data", res);
+    });
+  }
 
   function handle_version_selected(current_v: string) {
     current_versions[step] = current_v;
@@ -551,18 +565,20 @@
           current_version={current_versions["var_type"]}
           versions={[]}
           {data_loading}
+          {uncertainty_graph_loading}
           {estimated_time}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
-        <!-- <IdentifyVarTypeResults
+        <IdentifyVarTypeResults
           data={right_panel_result?.identify_var_types || []}
           title={right_panel_version}
           current_version={right_panel_version}
           versions={versionsCount["var_type"].versions}
           data_loading={false}
+          uncertainty_graph_loading={false}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
           on:version_changed={(e) => handle_version_change(e.detail)}
-        /> -->
+        />
       </div>
     {:else if show_step === 2 && prompt_data.identify_vars}
       <div in:slide|global class="step-2 flex h-1 grow">

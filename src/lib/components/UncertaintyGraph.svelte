@@ -19,36 +19,21 @@
 
   //   $: uncertaintyGraph.update(data, key);
   $: updatePlotData(version, key);
-  $: updatePlot(dr_result["dr"] || {}, dr_result["noise_cluster"], group);
+  //   $: updatePlot(dr_result["dr"] || {}, dr_result["noise_cluster"], group);
 
-  async function updatePlotData(data, key) {
+  async function updatePlotData(version, key) {
+    fetch(`${server_address}/uncertainty_graph/get/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ key, version }),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        updatePlot(res["dr"] || {}, res["noise_cluster"], group);
+      });
     return;
-    if (data.length === 0) return;
-    let dr_data = {};
-    var_type_names.forEach((t) => {
-      const var_type_dr_data = data
-        .filter(
-          (d) => d[key + "_result"].filter((r) => r.var_type === t).length > 0,
-        )
-        .map((d) => {
-          const group_mention = d[key + "_result"].filter(
-            (r) => r.var_type === t,
-          )[0];
-          return {
-            id: d.id,
-            uncertainty: group_mention.uncertainty,
-            text:
-              evidenceToString(
-                group_mention.evidence,
-                d.conversation.map((c) => c.content),
-              ) +
-              "\n" +
-              group_mention.explanation,
-          };
-        });
-      dr_data[t] = var_type_dr_data;
-    });
-    dr_result = await fetchDR(dr_data);
   }
 
   function updatePlot(dr_w_coordinates, noise_cluster_index, group) {
@@ -56,20 +41,20 @@
     uncertaintyGraph.update(dr_w_coordinates[group], noise_cluster_index);
   }
 
-  function fetchDR(data) {
-    console.log("fetching DR data", data);
-    return fetch(`${server_address}/dr/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ data }),
-    }).then((res) => res.json());
-  }
+  //   function fetchDR(data) {
+  //     console.log("fetching DR data", data);
+  //     return fetch(`${server_address}/dr/`, {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({ data }),
+  //     }).then((res) => res.json());
+  //   }
 
-  function evidenceToString(evidence: number[], conversation: string[]) {
-    return evidence.map((e) => `${conversation[e]}`).join("\n");
-  }
+  //   function evidenceToString(evidence: number[], conversation: string[]) {
+  //     return evidence.map((e) => `${conversation[e]}`).join("\n");
+  //   }
   onMount(() => {
     uncertaintyGraph.init();
     // updatePlotData(data, key);
@@ -77,7 +62,7 @@
   });
 </script>
 
-<div class="relative flex h-full w-full flex-col justify-center">
+<div class="relative flex h-full w-full flex-col">
   <div class="flex justify-around">
     {#each var_type_names as t}
       <div
@@ -96,7 +81,7 @@
   <svg id={svgId} class="max-h-full max-w-full"> </svg>
   <svg
     id={svgId + "-legend"}
-    class="absolute right-0 top-10 h-[10rem] w-[10rem]"
+    class="pointer-events-none absolute right-0 top-10 h-[10rem] w-[10rem]"
     viewBox="0 0 150 150"
   >
     <g class="radius-legend">
@@ -168,10 +153,8 @@
     </g>
   </svg>
   <div
-    class="uncertainty-tooltip absolute bottom-0 left-0 top-7 max-w-[30%] overflow-y-auto text-xs"
-  >
-    tooltip
-  </div>
+    class="uncertainty-tooltip absolute bottom-0 left-0 right-0 max-h-[10rem] overflow-y-auto rounded px-3 text-xs outline outline-1 outline-gray-300"
+  ></div>
 </div>
 
 <style lang="postcss">

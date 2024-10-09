@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { fade, slide } from "svelte/transition";
+  import { slide } from "svelte/transition";
   import { createEventDispatcher, onMount } from "svelte";
   import * as Constants from "lib/constants";
   import type { LogRecord, LogEntry } from "lib/types";
@@ -86,22 +86,17 @@
     }
   }
 
-  const VarSpan = ({ value, action, type }) => (`
+  const VarSpan = ({ value, action, type }) => `
     <span
-      class="rounded-sm px-1 py-0.5 capitalize italic ${action === 'remove' ? ' line-through' : ''}"
+      class="rounded-sm px-1 py-0.5 capitalize italic ${action === "remove" ? " line-through" : ""}"
       style="background-color: ${setOpacity($varTypeColorScale(value.varType), 0.7)};"
     >
-      ${type === 'type' ? value.varType : value.varName}
+      ${type === "type" ? value.varType : value.varName}
     </span>
-  `);
+  `;
 </script>
 
-<div
-  class="relative z-50 flex h-full flex-col px-1"
-  transition:fade={{
-    duration: 100,
-  }}
->
+<div class="relative z-50 flex h-full flex-col px-1">
   <div class="flex flex-col">
     <div
       tabindex="0"
@@ -113,159 +108,173 @@
       Rules
     </div>
     {#if show_rules}
-      <div transition:slide class="text-sm">
-        <div class="flex flex-row space-x-4">
-          <!-- Left column: Control panel -->
-          <div class="flex-1">
-            <div
-              class="control-panel mx-1 flex flex-col border border-gray-200"
-            >
-              <div class="mx-1 my-1 flex flex-grow flex-col space-y-2">
-                <div class="flex flex-row">
-                  <label
-                    for="snippet-select"
-                    class="w-1/3 text-sm italic text-gray-600">Snippet</label
-                  >
-                  <select
-                    id="snippet-select"
-                    class="w-2/3 cursor-pointer rounded-md border border-gray-300 text-gray-500 focus:border-blue-500 focus:outline-none"
-                    on:change={(event) => handleActionSnippetChange(event)}
-                    bind:value={selectedSnippet}
-                  >
-                    <option
-                      value={undefined}
-                      disabled
-                      selected={selectedSnippet === undefined}>Select</option
-                    >
-                    {#if interview_ids.length === 0}
-                      <option value="none" disabled>none</option>
-                    {/if}
-                    {#each interview_ids as id}
-                      <option value={id}>{id}</option>
-                    {/each}
-                  </select>
-                </div>
-                <div class="flex flex-row">
-                  <label
-                    for="action-select"
-                    class="w-1/3 text-sm italic text-gray-600">Action</label
-                  >
-                  <div
-                    role="button"
-                    tabindex="0"
-                    class="flex w-2/3 items-center gap-x-2 rounded-md px-1 text-xs italic outline outline-1 outline-gray-400 hover:outline-2"
-                    on:click={() => {
-                      have_or_not_have = !have_or_not_have;
-                      selectedAction = have_or_not_have ? "add" : "remove";
-                    }}
-                    on:keyup={() => {}}
-                  >
-                    {have_or_not_have ? "Must Have" : "Must Not Have"}
-                  </div>
-                </div>
-                {#if step === "link"}
-                  <div class="flex flex-row">
-                    <label
-                      for="source-value-select"
-                      class="w-1/3 text-sm italic text-gray-600"
-                      >Source Value</label
-                    >
-                    <div class="w-2/3">
-                      <VarsDropDown
-                        {menu_data}
-                        bind:selectedValue={selectedSourceValue}
-                        on:select={(event) =>
-                          handleValueChange(event, "source")}
-                      />
-                    </div>
-                  </div>
-                  <div class="flex flex-row">
-                    <label
-                      for="target-value-select"
-                      class="w-1/3 text-sm italic text-gray-600"
-                      >Target Value</label
-                    >
-                    <div class="w-2/3">
-                      <VarsDropDown
-                        {menu_data}
-                        bind:selectedValue={selectedTargetValue}
-                        on:select={(event) =>
-                          handleValueChange(event, "target")}
-                      />
-                    </div>
-                  </div>
-                {:else}
-                  <div class="flex flex-row">
-                    <label
-                      for="value-select"
-                      class="w-1/3 text-sm italic text-gray-600">Value</label
-                    >
-                    <div class="w-2/3">
-                      <VarsDropDown
-                        {menu_data}
-                        bind:selectedValue
-                        on:select={(event) => handleValueChange(event, "value")}
-                      />
-                    </div>
-                  </div>
-                {/if}
-              </div>
-              <div class="mb-3 flex justify-center font-mono">
-                <button
-                  class=" inline-flex items-center justify-center rounded-sm bg-green-200 px-8 text-base capitalize outline outline-1 outline-gray-300 hover:bg-green-300"
-                  on:click={() => handleRuleChange()}
+      <div transition:slide class="mt-1 flex divide-x text-sm">
+        <!-- Left column: Control panel -->
+        <div class="flex-1">
+          <div class="flex flex-col border-t border-gray-200">
+            <div class="mx-1 my-1 flex flex-grow flex-col space-y-2">
+              <div class="flex flex-row">
+                <label
+                  for="snippet-select"
+                  class="w-1/3 text-sm italic text-gray-600">Snippet</label
                 >
-                  update rules
-                </button>
+                <select
+                  id="snippet-select"
+                  class="w-2/3 cursor-pointer rounded-md border border-gray-300 bg-white pl-1 text-gray-500 focus:border-blue-500 focus:outline-none"
+                  on:change={(event) => handleActionSnippetChange(event)}
+                  bind:value={selectedSnippet}
+                >
+                  <option
+                    value={undefined}
+                    disabled
+                    selected={selectedSnippet === undefined}>Select</option
+                  >
+                  {#if interview_ids.length === 0}
+                    <option value="none" disabled>none</option>
+                  {/if}
+                  {#each interview_ids as id}
+                    <option value={id}>{id}</option>
+                  {/each}
+                </select>
               </div>
+              <div class="flex flex-row">
+                <label
+                  for="action-select"
+                  class="w-1/3 text-sm italic text-gray-600">Action</label
+                >
+                <div
+                  role="button"
+                  tabindex="0"
+                  class="flex w-2/3 items-center gap-x-2 rounded-md px-1 text-xs italic outline outline-1 outline-gray-400 hover:outline-2"
+                  on:click={() => {
+                    have_or_not_have = !have_or_not_have;
+                    selectedAction = have_or_not_have ? "add" : "remove";
+                  }}
+                  on:keyup={() => {}}
+                >
+                  {have_or_not_have ? "Must Have" : "Must Not Have"}
+                </div>
+              </div>
+              {#if step === "link"}
+                <div class="flex flex-row">
+                  <label
+                    for="source-value-select"
+                    class="w-1/3 text-sm italic text-gray-600"
+                    >Source Value</label
+                  >
+                  <div class="w-2/3">
+                    <VarsDropDown
+                      {menu_data}
+                      bind:selectedValue={selectedSourceValue}
+                      on:select={(event) => handleValueChange(event, "source")}
+                    />
+                  </div>
+                </div>
+                <div class="flex flex-row">
+                  <label
+                    for="target-value-select"
+                    class="w-1/3 text-sm italic text-gray-600"
+                    >Target Value</label
+                  >
+                  <div class="w-2/3">
+                    <VarsDropDown
+                      {menu_data}
+                      bind:selectedValue={selectedTargetValue}
+                      on:select={(event) => handleValueChange(event, "target")}
+                    />
+                  </div>
+                </div>
+              {:else}
+                <div class="flex flex-row">
+                  <label
+                    for="value-select"
+                    class="w-1/3 text-sm italic text-gray-600">Value</label
+                  >
+                  <div class="w-2/3">
+                    <VarsDropDown
+                      {menu_data}
+                      bind:selectedValue
+                      on:select={(event) => handleValueChange(event, "value")}
+                    />
+                  </div>
+                </div>
+              {/if}
+            </div>
+            <div class="mb-3 flex justify-center font-mono">
+              <button
+                class="mx-1 inline-flex w-full items-center justify-center rounded-sm bg-green-200 px-8 text-base capitalize outline outline-1 outline-gray-300 hover:bg-green-300"
+                on:click={() => handleRuleChange()}
+              >
+                Add rule
+              </button>
             </div>
           </div>
+        </div>
 
-          <!-- Right column: Record part -->
-          <div class="flex-1">
-            <div
-              class="scroll-panel mx-1 flex grow flex-col border border-gray-200 px-2 text-center text-xs text-gray-500"
-            >
-              <div
-                class="sticky top-0 border-b border-gray-300 bg-gray-100 py-1 font-semibold"
-              >
-                {#if step === "var_type"}
-                  Variable Types Rules Record
-                {:else if step === "var"}
-                  Variables Rules Record
-                {:else if step === "link"}
-                  Links Rules Record
-                {/if}
-              </div>
-              <ul class="w-full">
-                {#if logData.length > 0}
-                  {#each logData as entry}
-                  <li class="mt-2 flex items-center">
-                    <span class="text-gray-600 mr-1 flex-shrink-0">{entry.id}</span>                    
+        <!-- Right column: Record part -->
+        <div class="flex-1">
+          <div
+            class="flex h-1 grow flex-col border-t border-gray-200 px-2 text-center text-xs text-gray-500"
+          >
+            <div class="sticky top-0 bg-gray-100 py-1 font-semibold">
+              {#if step === "var_type"}
+                Indicator Rules Record
+              {:else if step === "var"}
+                Variable Rules Record
+              {:else if step === "link"}
+                Link Rules Record
+              {/if}
+            </div>
+            <div class="flex h-1 w-full grow flex-col">
+              {#if logData.length > 0}
+                {#each logData as entry}
+                  <div class="mt-2 flex items-center">
+                    <span class="mr-1 flex-shrink-0 text-gray-600"
+                      >{entry.id}</span
+                    >
                     {#if step === "var_type"}
-                      {@html VarSpan({ value: entry.value[0], action: entry.action, type: 'type' })}
+                      {@html VarSpan({
+                        value: entry.value[0],
+                        action: entry.action,
+                        type: "type",
+                      })}
                     {:else if step === "var"}
-                      {@html VarSpan({ value: entry.value[0], action: entry.action, type: 'type' })}
-                      <span class="pl-0.5 {entry.action === 'remove' ? 'line-through' : ''}">
+                      {@html VarSpan({
+                        value: entry.value[0],
+                        action: entry.action,
+                        type: "type",
+                      })}
+                      <span
+                        class="pl-0.5 {entry.action === 'remove'
+                          ? 'line-through'
+                          : ''}"
+                      >
                         {entry.value[0].varName}
                       </span>
                     {:else if step === "link"}
-                      <div class="flex items-center min-w-0 flex-grow">
-                        <div class="rounded-sm flex-shrink min-w-0 truncate">
-                          {@html VarSpan({ value: entry.value[0], action: entry.action, type: 'name' })}
+                      <div class="flex min-w-0 flex-grow items-center">
+                        <div class="min-w-0 flex-shrink truncate rounded-sm">
+                          {@html VarSpan({
+                            value: entry.value[0],
+                            action: entry.action,
+                            type: "name",
+                          })}
                         </div>
-                        <span class="px-0.5 flex-shrink-0">---</span>
-                        <div class="rounded-sm flex-shrink min-w-0 truncate">
-                          {@html VarSpan({ value: entry.value[1], action: entry.action, type: 'name' })}
+                        <span class="flex-shrink-0 px-0.5">---</span>
+                        <div class="min-w-0 flex-shrink truncate rounded-sm">
+                          {@html VarSpan({
+                            value: entry.value[1],
+                            action: entry.action,
+                            type: "name",
+                          })}
                         </div>
                       </div>
                     {/if}
-                  </li>
-                  {/each}
-                {:else}
-                  <li class="mt-2">No rules recorded yet.</li>
-                {/if}
-              </ul>
+                  </div>
+                {/each}
+              {:else}
+                <div class="mt-2">No rules recorded yet.</div>
+              {/if}
             </div>
           </div>
         </div>
@@ -292,25 +301,4 @@
     display: flex;
     flex-direction: column;
   } */
-  .control-panel {
-    /* do nothing */
-    position: absolute;
-    /* overflow-y: scroll; */
-    top: 1.8rem;
-    bottom: 0.1rem;
-    /* left and right is not necessary in vertical scroll */
-    /* but it will help set the width */
-    left: 0;
-    right: 15rem;
-  }
-  .scroll-panel {
-    position: absolute;
-    overflow-y: scroll;
-    top: 1.8rem;
-    bottom: 0.1rem;
-    /* left and right is not necessary in vertical scroll */
-    /* but it will help set the width */
-    left: 15rem;
-    right: 0;
-  }
 </style>

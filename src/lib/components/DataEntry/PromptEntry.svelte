@@ -26,7 +26,7 @@
 </script>
 
 <div class="">
-  <div class="flex flex-col px-1">
+  <div class="relative flex flex-col px-1">
     <div
       tabindex="0"
       role="button"
@@ -39,11 +39,20 @@
     <div
       role="button"
       tabindex="0"
-      class="ml-auto flex w-[7rem] items-center justify-center rounded-sm py-0.5 text-[0.7rem] normal-case italic leading-3 text-gray-600 outline-double outline-1 outline-gray-300 hover:bg-gray-300"
-      on:click={() => handleSavePrompt(data)}
+      class="absolute right-2 top-0.5 flex items-center justify-center rounded-sm normal-case italic leading-3 text-gray-600 outline-double outline-1 outline-gray-300 hover:bg-gray-400"
+      on:mouseover={(e) => {
+        e.preventDefault();
+      }}
+      on:focus={(e) => {
+        e.preventDefault();
+      }}
+      on:click={(e) => {
+        e.preventDefault();
+        handleSavePrompt(data);
+      }}
       on:keyup={() => {}}
     >
-      save prompts
+      <img src="save.svg" alt="" class="h-5 w-5" />
     </div>
   </div>
   {#if show_prompts}

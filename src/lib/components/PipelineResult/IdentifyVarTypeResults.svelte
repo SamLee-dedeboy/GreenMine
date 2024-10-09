@@ -12,6 +12,7 @@
   export let title: string;
   export let versions: string[] = [];
   export let data_loading: boolean;
+  export let uncertainty_graph_loading: boolean;
   export let estimated_time = 0;
   export let current_version: string;
   let show_uncertainty_chart = true;
@@ -71,13 +72,16 @@
       <div
         tabindex="0"
         role="button"
-        class:enabled={has_uncertainty}
+        class:enabled={has_uncertainty && !uncertainty_graph_loading}
         class:active={show_uncertainty_chart}
         on:click={() => (show_uncertainty_chart = !show_uncertainty_chart)}
         on:keyup={() => {}}
-        class="pointer-events-none ml-auto flex items-center rounded px-1 py-0.5 text-xs italic opacity-50 hover:bg-green-200"
+        class="pointer-events-none relative ml-auto flex items-center rounded px-1 py-0.5 text-xs italic opacity-50 hover:bg-green-200"
       >
         <img src="chart.svg" alt="chart" class="h-4 w-4" />
+        {#if uncertainty_graph_loading}
+          <img src="loader.svg" alt="loading" class="h-4 w-4 animate-spin" />
+        {/if}
         Uncertainty Chart
       </div>
     </div>
@@ -175,8 +179,10 @@
         <div
           class="flex flex-1 items-center justify-center overflow-hidden rounded-md shadow-md outline outline-1 outline-gray-300"
         >
-          <UncertaintyGraph version={current_version} key="identify_var_types"
-          ></UncertaintyGraph>
+          {#if !uncertainty_graph_loading && has_uncertainty}
+            <UncertaintyGraph version={current_version} key="identify_var_types"
+            ></UncertaintyGraph>
+          {/if}
         </div>
         <!-- <div class="flex flex-1 items-center justify-center overflow-hidden">
           <UncertaintyChart {data} key="identify_var_types"></UncertaintyChart>

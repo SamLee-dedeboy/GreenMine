@@ -132,6 +132,7 @@ def get_pipeline(step, version):
         "pipeline_result": identify_data,
     }
 
+
 @app.route("/pipeline/<step>/create_and_save_new/", methods=["POST"])
 def create_and_save_new_pipeline(step):
     version = request.json["version"]
@@ -181,7 +182,9 @@ def getDPSIR(link_version):
         link for chunk in identify_links for link in chunk["identify_links_result"]
     ]
 
-    var_definitions = json.load(open(f"{prompt_context_path}v0_var_definitions.json", encoding="utf-8"))
+    var_definitions = json.load(
+        open(f"{prompt_context_path}v0_var_definitions.json", encoding="utf-8")
+    )
 
     nodes = v2_processing.collect_nodes(identify_links, var_types, var_definitions)
     DPSIR_data = v2_processing.generate_DPSIR_data(
@@ -503,6 +506,7 @@ def compute_identify_vars_keywords_others():
     return json.dumps(res, default=vars)
 
 
+@app.route("/dr/", methods=["POST"])
 def get_dr():
     data_by_var_type = request.json["data"]
     res = {}
@@ -562,6 +566,31 @@ def process_interview(filepaths):
     for participant, interview in interview_dict.items():
         interviews.append({"file_name": participant, "data": interview})
     return interviews
+
+
+@app.route("/uncertainty_graph/save/", methods=["POST"])
+def save_uncertainty_graph():
+    data = request.json["data"]
+    key = request.json["key"]
+    version = request.json["version"]
+    local.save_json(
+        data,
+        f"{pipeline_result_path}{key}/{version}_{key}_uncertainty_graph.json",
+    )
+    return "success"
+
+
+@app.route("/uncertainty_graph/get/", methods=["POST"])
+def get_uncertainty_graph():
+    key = request.json["key"]
+    version = request.json["version"]
+    data = json.load(
+        open(
+            f"{pipeline_result_path}{key}/{version}_{key}_uncertainty_graph.json",
+            encoding="utf-8",
+        )
+    )
+    return json.dumps(data, default=vars)
 
 
 def collect_chunks(filepaths):
@@ -658,18 +687,28 @@ def processData(data_path, reload=False):
     report_embeddings = {}
 
     # chunk_graph
-    chunk_links = json.load(open(data_path + "chunk_similarities.json", encoding="utf-8"))
-    chunk_embeddings = json.load(open(data_path + "chunk_embeddings.json", encoding="utf-8"))
+    chunk_links = json.load(
+        open(data_path + "chunk_similarities.json", encoding="utf-8")
+    )
+    chunk_embeddings = json.load(
+        open(data_path + "chunk_embeddings.json", encoding="utf-8")
+    )
     chunk_nodes = {}
     for interview in interviews:
         for chunk in interview["data"]:
             # chunk['keywords'] = chunk['raw_keywords']
             chunk_nodes[chunk["id"]] = chunk
     # topic tsnes
-    topic_tsnes = json.load(open(data_path + "chunk_coordinates.json", encoding="utf-8"))
+    topic_tsnes = json.load(
+        open(data_path + "chunk_coordinates.json", encoding="utf-8")
+    )
     # keywords
-    keyword_coordinates = json.load(open(data_path + "keyword_coordinates.json", encoding="utf-8"))
-    keyword_statistics = json.load(open(data_path + "keyword_statistics.json", encoding="utf-8"))
+    keyword_coordinates = json.load(
+        open(data_path + "keyword_coordinates.json", encoding="utf-8")
+    )
+    keyword_statistics = json.load(
+        open(data_path + "keyword_statistics.json", encoding="utf-8")
+    )
     # keyword_statistics = {k['keyword']: k for k in keyword_statistics}
 
     if reload:
