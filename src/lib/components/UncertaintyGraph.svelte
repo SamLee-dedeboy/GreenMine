@@ -15,50 +15,33 @@
   let group = "driver"; // "driver" | "pressure" | "state" | "impact" | "response"
   const svgId = "uncertainty-graph-" + Math.floor(Math.random() * 1000);
   let uncertaintyGraph: UncertaintyGraph = new UncertaintyGraph(svgId);
+  let allow_switch_group = true;
+
   let dr_result = {};
+  $: fetchPlotData(version, key);
+  $: updatePlot(dr_result, group);
 
-  //   $: uncertaintyGraph.update(data, key);
-  $: updatePlotData(version, key);
-  //   $: updatePlot(dr_result["dr"] || {}, dr_result["noise_cluster"], group);
+  function updatePlot(_dr_result, group) {
+    if (!_dr_result[group]) return;
+    allow_switch_group = false;
+    uncertaintyGraph.update(_dr_result[group]);
+  }
 
-  async function updatePlotData(version, key) {
-    fetch(`${server_address}/uncertainty_graph/get/`, {
+  async function fetchPlotData(version, key) {
+    dr_result = await fetch(`${server_address}/uncertainty_graph/get/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ key, version }),
-    })
-      .then((res) => res.json())
-      .then((res) => {
-        updatePlot(res["dr"] || {}, res["noise_cluster"], group);
-      });
-    return;
+    }).then((res) => res.json());
   }
 
-  function updatePlot(dr_w_coordinates, noise_cluster_index, group) {
-    if (!dr_w_coordinates[group]) return;
-    uncertaintyGraph.update(dr_w_coordinates[group], noise_cluster_index);
-  }
-
-  //   function fetchDR(data) {
-  //     console.log("fetching DR data", data);
-  //     return fetch(`${server_address}/dr/`, {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify({ data }),
-  //     }).then((res) => res.json());
-  //   }
-
-  //   function evidenceToString(evidence: number[], conversation: string[]) {
-  //     return evidence.map((e) => `${conversation[e]}`).join("\n");
-  //   }
   onMount(() => {
     uncertaintyGraph.init();
-    // updatePlotData(data, key);
-    // uncertaintyGraph.update(data, key);
+    uncertaintyGraph.on("force_end", () => {
+      allow_switch_group = true;
+    });
   });
 </script>
 
@@ -68,12 +51,16 @@
       <div
         role="button"
         tabindex="0"
-        class="rounded-md px-1 py-0.5 text-sm capitalize italic opacity-40 outline outline-1 outline-gray-300 hover:bg-gray-400"
+        class="flex items-center rounded-md px-1 py-0.5 text-sm capitalize italic opacity-40 outline outline-1 outline-gray-300 hover:bg-gray-400"
         class:active={group === t}
+        class:disabled={!allow_switch_group}
         style={`background-color: ${$varTypeColorScale(t)}`}
         on:click={() => (group = t)}
         on:keyup={() => {}}
       >
+        {#if !allow_switch_group && group === t}
+          <img src="loader.svg" alt="loading" class="h-4 w-4 animate-spin" />
+        {/if}
         {t}
       </div>
     {/each}
@@ -160,5 +147,8 @@
 <style lang="postcss">
   .active {
     @apply opacity-100 shadow outline-2;
+  }
+  .disabled {
+    @apply pointer-events-none;
   }
 </style>

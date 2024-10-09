@@ -256,6 +256,9 @@ def curate_identify_var_types():
         #     all_chunks,
         #     pipeline_result_path + "identify_var_types/chunk_w_var_types.json",
         # )
+        # all_chunks = json.load(
+        #     open(pipeline_result_path + "identify_var_types/v0_chunk_w_var_types.json")
+        # )
         return json.dumps(all_chunks, default=vars)
 
 
@@ -516,7 +519,8 @@ def get_dr():
 
     texts = list(map(lambda x: x["text"], flatten_data))
     embeddings = query.multithread_embeddings(openai_client, texts)
-    clusters = cluster.optics(embeddings)
+    # clusters = cluster.optics(embeddings)
+    clusters = cluster.cluster(embeddings)
 
     all_angles = dr.circular_dr(embeddings)
     cluster_angles = defaultdict(list)
@@ -537,12 +541,13 @@ def get_dr():
         flatten_data[i]["cluster"] = cluster_orders[clusters[i]]
         flatten_data[i]["angle"] = all_angles[i]
 
-    noise_cluster_index = cluster_orders[-1]
-    res["noise_cluster"] = noise_cluster_index
-    res["dr"] = {}
+    # noise_cluster_index = cluster_orders[-1]
+    # res["noise_cluster"] = noise_cluster_index
+    # res["dr"] = {}
+    res = {}
     offset = 0
     for var_type, data in data_by_var_type.items():
-        res["dr"][var_type] = flatten_data[offset : offset + len(data)]
+        res[var_type] = flatten_data[offset : offset + len(data)]
         offset += len(data)
     return json.dumps(res, default=vars)
 

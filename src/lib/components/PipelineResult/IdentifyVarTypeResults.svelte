@@ -78,9 +78,10 @@
         on:keyup={() => {}}
         class="pointer-events-none relative ml-auto flex items-center rounded px-1 py-0.5 text-xs italic opacity-50 hover:bg-green-200"
       >
-        <img src="chart.svg" alt="chart" class="h-4 w-4" />
         {#if uncertainty_graph_loading}
           <img src="loader.svg" alt="loading" class="h-4 w-4 animate-spin" />
+        {:else}
+          <img src="chart.svg" alt="chart" class="h-4 w-4" />
         {/if}
         Uncertainty Chart
       </div>
