@@ -109,7 +109,7 @@ def request_gpt(
 # def get_embedding(client, text, model="text-embedding-ada-002"):
 def get_embedding(client, text, model="text-embedding-3-small"):
     enc = tiktoken.encoding_for_model(model)
-    print("tokens: ", len(enc.encode(text)), len(enc.encode(text)) > 8191)
+    # print("tokens: ", len(enc.encode(text)), len(enc.encode(text)) > 8191)
     while len(enc.encode(text)) > 8191:
         text = text[:-100]
         print("truncated: ", len(enc.encode(text)))

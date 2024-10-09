@@ -4,12 +4,16 @@ from flask_cors import CORS
 import json
 import os
 from openai import OpenAI
+import statistics
+
 
 # from . import GPTUtils
 # from . import DataUtils
 from GPTUtils import query, prompts
-from DataUtils import local, dr, v1_processing, uncertainty, v2_processing
+from DataUtils import local, dr, v1_processing, uncertainty, v2_processing, cluster
 from collections import defaultdict
+from sklearn.metrics.pairwise import pairwise_distances
+import numpy as np
 
 # init, do not read data
 app = Flask(__name__)
@@ -499,6 +503,46 @@ def compute_identify_vars_keywords_others():
             "keyword_coordinates": keyword_coordinates,
         }
 
+    return json.dumps(res, default=vars)
+
+
+def get_dr():
+    data_by_var_type = request.json["data"]
+    res = {}
+    flatten_data = []
+    for var_type, data in data_by_var_type.items():
+        flatten_data += data
+
+    texts = list(map(lambda x: x["text"], flatten_data))
+    embeddings = query.multithread_embeddings(openai_client, texts)
+    clusters = cluster.optics(embeddings)
+
+    all_angles = dr.circular_dr(embeddings)
+    cluster_angles = defaultdict(list)
+    for cluster_label, angle in zip(clusters, all_angles):
+        cluster_angles[cluster_label].append(angle)
+    cluster_mean_angles = [
+        (cluster_label, statistics.mean(angles))
+        for cluster_label, angles in cluster_angles.items()
+    ]
+    cluster_orders = sorted(cluster_mean_angles, key=lambda x: x[1])
+    # create a dict such that the key is the cluster label and the value is the index in the cluster_orders
+    cluster_orders = {
+        cluster_label: i for i, (cluster_label, _) in enumerate(cluster_orders)
+    }
+    for i, datum in enumerate(flatten_data):
+        # if isNoise[i] != -1:
+        #     flatten_data[i]["coordinates"] = coordinates[isNoise[i]].tolist()
+        flatten_data[i]["cluster"] = cluster_orders[clusters[i]]
+        flatten_data[i]["angle"] = all_angles[i]
+
+    noise_cluster_index = cluster_orders[-1]
+    res["noise_cluster"] = noise_cluster_index
+    res["dr"] = {}
+    offset = 0
+    for var_type, data in data_by_var_type.items():
+        res["dr"][var_type] = flatten_data[offset : offset + len(data)]
+        offset += len(data)
     return json.dumps(res, default=vars)
 
 

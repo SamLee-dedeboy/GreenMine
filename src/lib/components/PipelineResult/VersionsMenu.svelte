@@ -7,7 +7,7 @@
   <span class="mr-1 flex items-center font-serif"> Results: Version </span>
   {#each versions as version}
     <button
-      class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 font-semibold text-gray-600 opacity-80 outline outline-[1.5px] outline-gray-400 hover:bg-green-200 hover:opacity-100"
+      class="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-600 opacity-80 outline outline-[1.5px] outline-gray-400 hover:bg-green-200 hover:opacity-100"
       class:selected={version === current_version}
       on:click={() => (current_version = version)}
     >

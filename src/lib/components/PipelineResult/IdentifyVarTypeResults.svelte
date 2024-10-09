@@ -5,11 +5,17 @@
   import { compare_var_types, sort_by_id } from "lib/utils";
   import { createEventDispatcher, onMount } from "svelte";
   import VersionsMenu from "./VersionsMenu.svelte";
+  import UncertaintyChart from "lib/components/UncertaintyChart.svelte";
+  import UncertaintyGraph from "lib/components/UncertaintyGraph.svelte";
+  import DataLoading from "lib/components/DataLoading.svelte";
   export let data: tIdentifyVarTypes[];
   export let title: string;
   export let versions: string[] = [];
   export let data_loading: boolean;
+  export let estimated_time = 0;
   export let current_version: string;
+  let show_uncertainty_chart = true;
+  $: has_uncertainty = data.some((datum) => datum.uncertainty);
   const dispatch = createEventDispatcher();
   $: dispatch("version_changed", current_version);
 
@@ -21,7 +27,7 @@
 
   function sort_by_uncertainty(data: tIdentifyVarTypes[]) {
     if (data.length === 0) return data;
-    if (!data[0].uncertainty) {
+    if (!has_uncertainty) {
       return sort_by_id(data);
     }
     const sorted = data.sort(
@@ -35,6 +41,9 @@
   function generate_explanation_html(var_type: string, explanation: string) {
     return `<span style="background-color: ${$varTypeColorScale(var_type)}; text-transform: capitalize; padding-left: 0.125rem; padding-right: 0.125rem;">${var_type}</span>:${explanation}`;
   }
+  onMount(() => {
+    console.log({ data });
+  });
 </script>
 
 <div
@@ -53,14 +62,30 @@
       {title}
     </h2>
   {/if}
-  <div class="flex grow flex-col divide-y divide-black">
-    <div class="flex divide-x font-serif">
-      <div class="w-[4rem] shrink-0">Snippet</div>
-      <div class="flex pl-2">Indicators</div>
+  <div class="flex h-1 grow flex-col divide-y divide-black">
+    <div class="flex min-h-[1.5rem] divide-x font-serif">
+      {#if !show_uncertainty_chart}
+        <div class="w-[4rem] shrink-0">Snippet</div>
+        <div class="flex pl-2">Indicators</div>
+      {/if}
+      <div
+        tabindex="0"
+        role="button"
+        class:enabled={has_uncertainty}
+        class:active={show_uncertainty_chart}
+        on:click={() => (show_uncertainty_chart = !show_uncertainty_chart)}
+        on:keyup={() => {}}
+        class="pointer-events-none ml-auto flex items-center rounded px-1 py-0.5 text-xs italic opacity-50 hover:bg-green-200"
+      >
+        <img src="chart.svg" alt="chart" class="h-4 w-4" />
+        Uncertainty Chart
+      </div>
     </div>
     {#if data_loading}
-      <div class="flex h-full items-center justify-center">Data Loading...</div>
-    {:else}
+      <div class="flex h-full items-center justify-center">
+        <DataLoading {estimated_time} />
+      </div>
+    {:else if !show_uncertainty_chart}
       <div
         class="flex h-1 grow flex-col divide-y divide-black overflow-y-scroll"
       >
@@ -131,7 +156,8 @@
                           </div>
                           {#if var_type_wrapper.confidence}
                             <div class="mt-0.5 text-xs italic text-gray-600">
-                              {(1 - var_type_wrapper.confidence).toFixed(2)}
+                              <!-- {(1 - var_type_wrapper.confidence).toFixed(2)} -->
+                              {var_type_wrapper.confidence}
                             </div>
                           {/if}
                         </div>
@@ -143,6 +169,18 @@
             </div>
           {/if}
         {/each}
+      </div>
+    {:else}
+      <div class="flex h-1 grow flex-col p-2">
+        <div
+          class="flex flex-1 items-center justify-center overflow-hidden rounded-md shadow-md outline outline-1 outline-gray-300"
+        >
+          <UncertaintyGraph version={current_version} key="identify_var_types"
+          ></UncertaintyGraph>
+        </div>
+        <!-- <div class="flex flex-1 items-center justify-center overflow-hidden">
+          <UncertaintyChart {data} key="identify_var_types"></UncertaintyChart>
+        </div> -->
       </div>
     {/if}
   </div>
@@ -158,5 +196,11 @@
   }
   .editable-area {
     text-align: left;
+  }
+  .enabled {
+    @apply pointer-events-auto opacity-100;
+  }
+  .active {
+    @apply bg-green-200;
   }
 </style>

@@ -16,9 +16,12 @@
     LogRecord,
     LogEntry,
     tVersionInfo,
+    tIdentifyVarTypes,
+    tIdentifyVars,
+    tIdentifyLinks,
   } from "lib/types";
   import { updateTmpData } from "lib/utils/update_with_log";
-  import { server_address } from "lib/constants";
+  import { server_address, var_type_names } from "lib/constants";
   import { createEventDispatcher, tick, getContext, onMount } from "svelte";
   const stepMap = {
     1: "var_type",
@@ -42,6 +45,8 @@
   // console.log(pipeline_result)
 
   let data_loading: boolean = false;
+  let uncertainty_graph_loading: boolean = false;
+  let estimated_time: number = 0;
   let last_execute_prompt_step_number: number = 0;
 
   type VarTypeItem = {
@@ -130,8 +135,6 @@
           ...pipeline_result,
           [key]: res.pipeline_result,
         };
-        // console.log(prompt_data)
-        // console.log({pipeline_result})
         if (pipeline_result[key].length === 0) {
           interview_ids = ["none"];
         } else {
@@ -139,6 +142,7 @@
         }
         console.log(
           `Fetched pipeline data for step: ${step}, version: ${version}`,
+          pipeline_result,
         );
       })
       .catch((error) => {
@@ -210,12 +214,22 @@
     // removeVar = [];
     // addVar = [];
   }
-  function execute_prompt(data: tServerPromptData, key: string) {
+  async function execute_prompt(
+    data: tServerPromptData,
+    key: string,
+    version: string,
+  ) {
     if (!data) return;
     data_loading = true;
+    const estimated_times = {
+      identify_var_types: 30 * 1000, // ms
+      identify_vars: 100,
+      identify_links: 100,
+    };
+    estimated_time = estimated_times[key] * (measure_uncertainty ? 5 : 1);
     last_execute_prompt_step_number = step_to_numbers[key];
 
-    fetch(server_address + `/curation/${key}/`, {
+    await fetch(server_address + `/curation/${key}/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -242,7 +256,60 @@
         save_data(data, pipeline_result, key);
         data_loading = false;
       });
+    if (measure_uncertainty) {
+      uncertainty_graph_loading = true;
+      const uncertainty_graph_data = await fetchDR(pipeline_result[key], key);
+      uncertainty_graph_loading = false;
+      save_uncertainty_graph_data(uncertainty_graph_data, key, version);
+    }
   }
+
+  async function fetchDR(
+    data: (tIdentifyVarTypes | tIdentifyVars | tIdentifyLinks)[],
+    key: string,
+  ) {
+    function evidenceToString(evidence: number[], conversation: string[]) {
+      return evidence.map((e) => `${conversation[e]}`).join("\n");
+    }
+    let dr_data = {};
+    var_type_names.forEach((t) => {
+      const var_type_dr_data = data
+        .filter(
+          (d) => d[key + "_result"].filter((r) => r.var_type === t).length > 0,
+        )
+        .map((d) => {
+          const group_mention = d[key + "_result"].filter(
+            (r) => r.var_type === t,
+          )[0];
+          return {
+            id: d.id,
+            uncertainty: group_mention.uncertainty,
+            text:
+              evidenceToString(
+                group_mention.evidence,
+                d.conversation.map((c) => c.content),
+              ) +
+              "\n" +
+              group_mention.explanation,
+          };
+        });
+      dr_data[t] = var_type_dr_data;
+    });
+    const uncertainty_graph_data = await fetch(`${server_address}/dr/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ data }),
+    }).then((res) => res.json());
+    return uncertainty_graph_data;
+  }
+
+  function save_uncertainty_graph_data(
+    data: any,
+    key: string,
+    version: string,
+  ) {}
 
   function handle_version_selected(current_v: string) {
     current_versions[step] = current_v;
@@ -499,9 +566,10 @@
           current_version={current_versions["var_type"]}
           versions={[]}
           {data_loading}
+          {estimated_time}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
-        <IdentifyVarTypeResults
+        <!-- <IdentifyVarTypeResults
           data={right_panel_result?.identify_var_types || []}
           title={right_panel_version}
           current_version={right_panel_version}
@@ -509,7 +577,7 @@
           data_loading={false}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
           on:version_changed={(e) => handle_title_change(e.detail)}
-        />
+        /> -->
       </div>
     {:else if show_step === 2 && prompt_data.identify_vars}
       <div in:slide|global class="step-2 flex h-1 grow">
