@@ -39,6 +39,7 @@
   };
   const dispatch = createEventDispatcher();
   let prompt_data: tServerPromptData;
+  let right_prompt_data: tServerPromptData;
   let pipeline_result: tServerPipelineData;
   let right_panel_result: tServerPipelineData;
   let rule_prompt_data: tServerPromptData; //for selection of Rule menu
@@ -89,21 +90,24 @@
     return result;
   }
   function changeStep(newStep: number) {
-    show_step = newStep;
-    step = stepMap[show_step]; //string
-    right_panel_version = "v0";
-    if (step) {
-      fetchVersionsCount(step)
-        .then(() => fetchPipelineData(step, current_versions[step]))
-        .then(() => fetchMenuData(step, right_panel_version))
+    if (newStep) {
+      const newStepStr = stepMap[newStep];
+      fetchVersionsCount(newStepStr)
+        .then(() => fetchPipelineData(newStepStr, current_versions[step]))
+        .then(() => fetchMenuData(newStepStr, right_panel_version))
         .then(() => {
-          if (step === "var_type") {
-            fetchRuleMenu(step, current_versions[step]);
-          } else if (step === "var") {
-            fetchRuleMenu(step, current_versions[step]);
-          } else if (step === "link") {
+          if (newStepStr === "var_type") {
+            fetchRuleMenu(newStepStr, current_versions[newStepStr]);
+          } else if (newStepStr === "var") {
+            fetchRuleMenu(step, current_versions[newStepStr]);
+          } else if (newStepStr === "link") {
             fetchRuleMenu("var", current_versions["var"]);
           }
+        })
+        .then(() => {
+          show_step = newStep;
+          step = stepMap[show_step]; //string
+          right_panel_version = "v0";
         });
     }
   }
@@ -155,6 +159,7 @@
     return fetch(`${server_address}/pipeline/${step}/${version}/`)
       .then((res) => res.json())
       .then((res) => {
+        console.log("Fetched pipeline data", res);
         prompt_data = {
           ...prompt_data,
           [key]: res.prompts,
@@ -164,10 +169,6 @@
           [key]: res.pipeline_result,
         };
         pipeline_result = updatePanelData(pipeline_result, log, key);
-        console.log(
-          `Fetched pipeline data for step: ${step}, version: ${version}`,
-          pipeline_result,
-        );
       })
       .catch((error) => {
         console.error(
@@ -181,6 +182,11 @@
     return fetch(`${server_address}/pipeline/${step}/${version}/`)
       .then((res) => res.json())
       .then((res) => {
+        console.log("Fetched right panel data", res);
+        right_prompt_data = {
+          ...right_prompt_data,
+          [key]: res.prompts,
+        };
         right_panel_result = {
           ...right_panel_result,
           [key]: res.pipeline_result,
@@ -252,41 +258,45 @@
     data: (tIdentifyVarTypes | tIdentifyVars | tIdentifyLinks)[],
     key: string,
   ) {
-    function evidenceToString(evidence: number[], conversation: string[]) {
-      return evidence.map((e) => `${conversation[e]}`).join("\n");
+    const dr_data = prepare_dr_data(data, key);
+    if (key === "identify_var_types") {
+      const uncertainty_graph_data = await fetch(`${server_address}/dr/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ data: dr_data, key: key }),
+      }).then((res) => res.json());
+      // add grouping
+      const uncertainty_graph_grouped = group_by_var_type(
+        uncertainty_graph_data,
+      );
+
+      return uncertainty_graph_grouped;
+    } else if (key === "identify_vars") {
+      const uncertainty_graph_grouped_var_type = await fetch(
+        `${server_address}/uncertainty_graph/get/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            key: "identify_var_types",
+            version: prompt_data[key].based_on,
+          }),
+        },
+      ).then((res) => res.json());
+      console.log(
+        "fetching dr data for vars",
+        uncertainty_graph_grouped_var_type,
+      );
+      const uncertainty_graph_grouped = add_vars_to_var_type_uncertainty_graph(
+        uncertainty_graph_grouped_var_type,
+        dr_data as any,
+      );
+      return uncertainty_graph_grouped;
     }
-    let dr_data = {};
-    var_type_names.forEach((t) => {
-      const var_type_dr_data = data
-        .filter(
-          (d) => d[key + "_result"].filter((r) => r.var_type === t).length > 0,
-        )
-        .map((d) => {
-          const group_mention = d[key + "_result"].filter(
-            (r) => r.var_type === t,
-          )[0];
-          return {
-            id: d.id,
-            uncertainty: group_mention.uncertainty,
-            text:
-              evidenceToString(
-                group_mention.evidence,
-                d.conversation.map((c) => c.content),
-              ) +
-              "\n" +
-              group_mention.explanation,
-          };
-        });
-      dr_data[t] = var_type_dr_data;
-    });
-    const uncertainty_graph_data = await fetch(`${server_address}/dr/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ data: dr_data }),
-    }).then((res) => res.json());
-    return uncertainty_graph_data;
   }
 
   function save_uncertainty_graph_data(
@@ -357,8 +367,10 @@
     } else if (type === "prompt") {
       prompt_data[key].system_prompt_blocks = data.system_prompt_blocks;
       prompt_data[key].user_prompt_blocks = data.user_prompt_blocks;
+      const based_on =
+        show_step === 1 ? "init" : current_versions[stepMap[show_step - 1]];
+      prompt_data[key].based_on = based_on;
     }
-    console.log("save", prompt_data);
     save_data(prompt_data, pipeline_result, key);
   }
   function save_data(
@@ -437,6 +449,105 @@
 
     pipeline_result = updatePanelData(pipeline_result, log, key);
     right_panel_result = updatePanelData(right_panel_result, log, key);
+  }
+
+  function evidenceToString(evidence: number[], conversation: string[]) {
+    return evidence.map((e) => `${conversation[e]}`).join("\n");
+  }
+
+  function prepare_dr_data(
+    data: (tIdentifyVarTypes | tIdentifyVars | tIdentifyLinks)[],
+    key: string,
+  ) {
+    if (key === "identify_var_types") {
+      const target_chunks = data
+        .filter((chunk) => chunk["identify_var_types_result"].length > 0)
+        .map((chunk) => {
+          return chunk["identify_var_types_result"].map((mention) => {
+            return {
+              id: chunk.id,
+              var_type: mention.var_type,
+              uncertainty: mention.uncertainty,
+              text:
+                evidenceToString(
+                  mention.evidence,
+                  chunk.conversation.map((c) => c.content),
+                ) +
+                "\n" +
+                mention.explanation,
+            };
+          });
+        })
+        .flat();
+      return target_chunks;
+    } else if (key === "identify_vars") {
+      const target_chunks = data
+        .filter(
+          (chunk) => Object.keys(chunk["identify_vars_result"]).length > 0,
+        )
+        .map((chunk) => {
+          return Object.entries(chunk["identify_vars_result"]).map(
+            ([var_type, mentions]) => {
+              return (mentions as any[]).map((mention) => {
+                return {
+                  id: chunk.id,
+                  var_type: var_type,
+                  var: mention.var,
+                  uncertainty: mention.uncertainty,
+                  text:
+                    evidenceToString(
+                      mention.evidence,
+                      chunk.conversation.map((c) => c.content),
+                    ) +
+                    "\n" +
+                    mention.explanation,
+                };
+              });
+            },
+          );
+        })
+        .flat(Infinity);
+      console.log({ key, target_chunks });
+      return target_chunks;
+    }
+  }
+  function group_by_var_type(data: any[]) {
+    console.log("grouping by var type", data);
+    return Object.groupBy(data, (d) => d.var_type);
+  }
+
+  function add_vars_to_var_type_uncertainty_graph(
+    data: Record<string, any[]>,
+    var_dr_data: any[],
+  ) {
+    console.log("adding vars to var type uncertainty graph", data, var_dr_data);
+    var_dr_data.forEach((var_mention) => {
+      const var_type = var_mention.var_type;
+      const var_name = var_mention.var;
+      const chunk_id = var_mention.id;
+      const var_origin_index = data[var_type].findIndex(
+        (d) => d.id === chunk_id,
+      );
+      if (var_origin_index !== -1) {
+        if (!data[var_type][var_origin_index]["vars"]) {
+          data[var_type][var_origin_index]["vars"] = [];
+        }
+        data[var_type][var_origin_index]["vars"].push({
+          var_name: var_name,
+          uncertainty: var_mention.uncertainty,
+          text: var_mention.text,
+        });
+      }
+    });
+    return data;
+  }
+
+  function group_by_var(data: any[]) {
+    console.log("grouping by vars", data);
+    return data;
+  }
+  function group_by_link(data: tIdentifyLinks[]) {
+    return data;
   }
 
   onMount(async () => {
@@ -627,6 +738,7 @@
           versions={[]}
           current_version={right_panel_version}
           {data_loading}
+          variable_definitions={prompt_data.identify_vars.var_definitions}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
         <IdentifyVarResults
@@ -635,6 +747,7 @@
           versions={versionsCount["var"].versions}
           current_version={right_panel_version}
           data_loading={false}
+          variable_definitions={right_prompt_data.identify_vars.var_definitions}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
           on:version_changed={(e) => handle_version_change(e.detail)}
         />

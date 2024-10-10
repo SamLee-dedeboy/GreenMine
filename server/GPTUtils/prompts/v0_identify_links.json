@@ -1,10 +1,19 @@
 {
-  "system_prompt_blocks": [
-    ["persona", "You are a research assistant."],
-    [
-      "context",
-      "You are working on a project to analyze transcripts from an interview. The user has identified two concepts in the transcript: \nConcept 1:${variable1} \nConcept2: ${variable2}. The user wants to know if the transcript suggests any connection between the two concepts, and what the relationship is (try to reuse the words in the transcript). Also, it would be nice if you can point to the indices of the conversation indicating that connection (if any), and a brief explanation."
-    ]
-  ],
-  "user_prompt_blocks": [["user", "Transcript: ${conversation}"]]
+    "system_prompt_blocks": [
+        [
+            "persona",
+            "You are a research assistant."
+        ],
+        [
+            "context",
+            "You are working on a project to analyze transcripts from an interview. The user has identified two concepts in the transcript: \nConcept 1:${variable1} \nConcept2: ${variable2}. The user wants to know if the transcript suggests any connection between the two concepts, and what the relationship is (try to reuse the words in the transcript). Also, it would be nice if you can point to the indices of the conversation indicating that connection (if any), and a brief explanation."
+        ]
+    ],
+    "user_prompt_blocks": [
+        [
+            "user",
+            "Transcript: ${conversation}"
+        ]
+    ],
+    "based_on": "v0"
 }

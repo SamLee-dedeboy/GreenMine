@@ -5,7 +5,6 @@
   import { compare_var_types, sort_by_id } from "lib/utils";
   import { createEventDispatcher, onMount } from "svelte";
   import VersionsMenu from "./VersionsMenu.svelte";
-  import UncertaintyChart from "lib/components/UncertaintyChart.svelte";
   import UncertaintyGraph from "lib/components/UncertaintyGraph.svelte";
   import DataLoading from "lib/components/DataLoading.svelte";
   export let data: tIdentifyVarTypes[];
@@ -15,7 +14,7 @@
   export let uncertainty_graph_loading: boolean;
   export let estimated_time = 0;
   export let current_version: string;
-  let show_uncertainty_chart = true;
+  let show_uncertainty_graph = false;
   $: has_uncertainty = data.some((datum) => datum.uncertainty);
   const dispatch = createEventDispatcher();
   $: dispatch("version_changed", current_version);
@@ -65,7 +64,7 @@
   {/if}
   <div class="flex h-1 grow flex-col divide-y divide-black">
     <div class="flex min-h-[1.5rem] divide-x font-serif">
-      {#if !show_uncertainty_chart}
+      {#if !show_uncertainty_graph}
         <div class="w-[4rem] shrink-0">Snippet</div>
         <div class="flex pl-2">Indicators</div>
       {/if}
@@ -73,8 +72,8 @@
         tabindex="0"
         role="button"
         class:enabled={has_uncertainty && !uncertainty_graph_loading}
-        class:active={show_uncertainty_chart}
-        on:click={() => (show_uncertainty_chart = !show_uncertainty_chart)}
+        class:active={show_uncertainty_graph}
+        on:click={() => (show_uncertainty_graph = !show_uncertainty_graph)}
         on:keyup={() => {}}
         class="pointer-events-none relative ml-auto flex items-center rounded px-1 py-0.5 text-xs italic opacity-50 hover:bg-green-200"
       >
@@ -90,7 +89,7 @@
       <div class="flex h-full items-center justify-center">
         <DataLoading {estimated_time} />
       </div>
-    {:else if !show_uncertainty_chart}
+    {:else if !show_uncertainty_graph}
       <div
         class="flex h-1 grow flex-col divide-y divide-black overflow-y-scroll"
       >
@@ -185,9 +184,6 @@
             ></UncertaintyGraph>
           {/if}
         </div>
-        <!-- <div class="flex flex-1 items-center justify-center overflow-hidden">
-          <UncertaintyChart {data} key="identify_var_types"></UncertaintyChart>
-        </div> -->
       </div>
     {/if}
   </div>

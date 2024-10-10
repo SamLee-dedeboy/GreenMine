@@ -5,12 +5,11 @@ export type tServerData = {
   v1: tV1ServerData;
 };
 
-
 export type tServerDataDPSIR = {
   links: tLink[];
   pipeline_links: tLink[];
   DPSIR_data: tDPSIR;
-}
+};
 
 export type tV1ServerData = {
   interviews: tTranscript[];
@@ -42,6 +41,7 @@ export type tVarData = Record<
 export type tPrompt = {
   system_prompt_blocks: [string, string][];
   user_prompt_blocks: [string, string][];
+  based_on: string;
 };
 
 export type tServerPipelineData = {

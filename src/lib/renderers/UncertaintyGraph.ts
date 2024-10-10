@@ -101,7 +101,7 @@ export class UncertaintyGraph {
   on(event, handler) {
     this.dispatch.on(event, handler);
   }
-  update(data) {
+  update(data, highlight_ids: string[]) {
     const self = this;
     const svg = d3.select("#" + this.svgId);
     const clusters = data
@@ -133,52 +133,90 @@ export class UncertaintyGraph {
       .select("g.node-group")
       .selectAll("circle.node")
       .data(data_w_coordinates, (d) => d.id)
-      .join("circle")
-      .attr("class", "node")
-      .attr("cx", (d) => (d.x = d.coordinates_2d[0]))
-      .attr("cy", (d) => (d.y = d.coordinates_2d[1]))
-      .attr("r", (d) => (d.r = 2))
-      .attr("fill", (d) => this.colorScale(d.cluster))
-      .attr("stroke", "black")
-      .attr("stroke-width", 1)
-      .attr("cursor", "pointer")
-      .on("mouseover", function (e, d) {
-        d3.select(".uncertainty-tooltip").html(d.text);
-      });
-    const simulation = d3
-      .forceSimulation(data_w_coordinates)
-      .alphaMin(0.01)
-      .force(
-        "radial",
-        d3
-          .forceRadial(null, this.innerSize.center[0], this.innerSize.center[1])
-          .radius((d) => self.polarRadiusScale(d.uncertainty))
-          .strength(1),
-      )
-      .force(
-        "collide",
-        d3.forceCollide((d) => d.r * 1.3),
-      )
-      .on("tick", () => {
-        nodes.each(function (d) {
-          d.x = clip(d.x, [
-            self.innerSize.x + d.r,
-            self.innerSize.x + self.innerSize.width - d.r,
-          ]);
-          d.y = clip(d.y, [
-            self.innerSize.y + d.r,
-            self.innerSize.y + self.innerSize.height - d.r,
-          ]);
-          [d.x, d.y] = clipClusterRange(
-            d.x,
-            d.y,
-            self.innerSize,
-            cluster_angles[d.cluster],
-          );
-          d3.select(this).attr("cx", d.x).attr("cy", d.y);
-        });
-      })
-      .on("end", () => self.dispatch.call("force_end"));
+      .join(
+        (enter) => {
+          const enter_nodes = enter
+            .append("circle")
+            .attr("class", "node")
+            .classed("node-not-highlighted", false)
+            .classed("node-highlighted", false)
+            .attr("cx", (d) => (d.x = d.coordinates_2d[0]))
+            .attr("cy", (d) => (d.y = d.coordinates_2d[1]))
+            .attr("r", (d) => (d.r = 2))
+            .attr("fill", (d) => this.colorScale(d.cluster))
+            .attr("stroke", "black")
+            .attr("stroke-width", 1)
+            .attr("cursor", "pointer")
+            .on("mouseover", function (e, d) {
+              d3.select(".uncertainty-tooltip").html(d.text);
+            });
+          if (highlight_ids.length > 0) {
+            enter_nodes
+              .classed("node-not-highlighted", true)
+              .classed("node-highlighted", false)
+              .filter((d) => highlight_ids.includes(d.id))
+              .classed("node-not-highlighted", false)
+              .classed("node-highlighted", true);
+          }
+          const simulation = d3
+            .forceSimulation(data_w_coordinates)
+            .alphaMin(0.01)
+            .force(
+              "radial",
+              d3
+                .forceRadial(
+                  null,
+                  this.innerSize.center[0],
+                  this.innerSize.center[1],
+                )
+                .radius((d) => self.polarRadiusScale(d.uncertainty))
+                .strength(1),
+            )
+            .force(
+              "collide",
+              d3.forceCollide((d) => d.r * 1.3),
+            )
+            .on("tick", () => {
+              enter_nodes.each(function (d) {
+                d.x = clip(d.x, [
+                  self.innerSize.x + d.r,
+                  self.innerSize.x + self.innerSize.width - d.r,
+                ]);
+                d.y = clip(d.y, [
+                  self.innerSize.y + d.r,
+                  self.innerSize.y + self.innerSize.height - d.r,
+                ]);
+                [d.x, d.y] = clipClusterRange(
+                  d.x,
+                  d.y,
+                  self.innerSize,
+                  cluster_angles[d.cluster],
+                );
+                d3.select(this).attr("cx", d.x).attr("cy", d.y);
+              });
+            })
+            .on("end", () => self.dispatch.call("force_end"));
+        },
+        (update) => {
+          update
+            .classed("node-not-highlighted", false)
+            .classed("node-highlighted", false);
+          if (highlight_ids.length > 0) {
+            update
+              .classed("node-not-highlighted", true)
+              .classed("node-highlighted", false)
+              .filter((d) => highlight_ids.includes(d.id))
+              .classed("node-not-highlighted", false)
+              .classed("node-highlighted", true);
+          }
+          self.dispatch.call("force_end");
+        },
+        (exit) => exit.remove(),
+      );
+  }
+  clear() {
+    const svg = d3.select("#" + this.svgId);
+    svg.select("g.node-group").selectAll("circle.node").remove();
   }
   updateAxis(cluster_angles: Record<number, any>) {
     const svg = d3.select("#" + this.svgId);

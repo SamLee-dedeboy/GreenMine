@@ -128,6 +128,7 @@ def get_pipeline(step, version):
             f"{step}_definitions": definitions,
             "system_prompt_blocks": identify_prompts["system_prompt_blocks"],
             "user_prompt_blocks": identify_prompts["user_prompt_blocks"],
+            "based_on": identify_prompts["based_on"],
         },
         "pipeline_result": identify_data,
     }
@@ -252,12 +253,14 @@ def curate_identify_var_types():
             user_prompt_blocks,
             prompt_variables,
         )
+
+        # all_chunks = json.load(
+        #     open(pipeline_result_path + "identify_var_types/v0_chunk_w_var_types.json")
+        # )
+
         # local.save_json(
         #     all_chunks,
         #     pipeline_result_path + "identify_var_types/chunk_w_var_types.json",
-        # )
-        # all_chunks = json.load(
-        #     open(pipeline_result_path + "identify_var_types/v0_chunk_w_var_types.json")
         # )
         return json.dumps(all_chunks, default=vars)
 
@@ -268,10 +271,10 @@ def save_identify_var_types():
     context = request.json["context"]
     var_type_definitions = context["var_type_definitions"]
     version = request.json["version"]
-    print(version)
     prompts = {
         "system_prompt_blocks": context["system_prompt_blocks"],
         "user_prompt_blocks": context["user_prompt_blocks"],
+        "based_on": context["based_on"],
     }
     local.save_json(
         all_chunks,
@@ -346,12 +349,15 @@ def curate_identify_vars():
         #     f"{pipeline_result_path}identify_vars/{var_version}_chunk_w_vars_keywords.json",
         # )
     else:
-        all_chunks = uncertainty.identify_vars_uncertainty(
-            all_chunks,
-            openai_client,
-            system_prompt_blocks,
-            user_prompt_blocks,
-            prompt_variables,
+        # all_chunks = uncertainty.identify_vars_uncertainty(
+        #     all_chunks,
+        #     openai_client,
+        #     system_prompt_blocks,
+        #     user_prompt_blocks,
+        #     prompt_variables,
+        # )
+        all_chunks = json.load(
+            open(pipeline_result_path + "identify_vars/v0_chunk_w_vars.json")
         )
         # local.save_json(
         #     all_chunks, pipeline_result_path + "identify_vars/chunk_w_vars.json"
@@ -368,6 +374,7 @@ def save_identify_vars():
     prompts = {
         "system_prompt_blocks": context["system_prompt_blocks"],
         "user_prompt_blocks": context["user_prompt_blocks"],
+        "based_on": context["based_on"],
     }
     local.save_json(
         var_definitions,
@@ -459,6 +466,7 @@ def save_identify_links():
     prompts = {
         "system_prompt_blocks": context["system_prompt_blocks"],
         "user_prompt_blocks": context["user_prompt_blocks"],
+        "based_on": context["based_on"],
     }
     local.save_json(
         all_chunks, f"{pipeline_result_path}identify_links/{version}_chunk_w_links.json"
@@ -511,13 +519,9 @@ def compute_identify_vars_keywords_others():
 
 @app.route("/dr/", methods=["POST"])
 def get_dr():
-    data_by_var_type = request.json["data"]
-    res = {}
-    flatten_data = []
-    for var_type, data in data_by_var_type.items():
-        flatten_data += data
+    data = request.json["data"]
+    texts = list(map(lambda x: x["text"], data))
 
-    texts = list(map(lambda x: x["text"], flatten_data))
     embeddings = query.multithread_embeddings(openai_client, texts)
     # clusters = cluster.optics(embeddings)
     clusters = cluster.cluster(embeddings)
@@ -535,42 +539,11 @@ def get_dr():
     cluster_orders = {
         cluster_label: i for i, (cluster_label, _) in enumerate(cluster_orders)
     }
-    for i, datum in enumerate(flatten_data):
-        # if isNoise[i] != -1:
-        #     flatten_data[i]["coordinates"] = coordinates[isNoise[i]].tolist()
-        flatten_data[i]["cluster"] = cluster_orders[clusters[i]]
-        flatten_data[i]["angle"] = all_angles[i]
+    for i, datum in enumerate(data):
+        data[i]["cluster"] = cluster_orders[clusters[i]]
+        data[i]["angle"] = all_angles[i]
 
-    # noise_cluster_index = cluster_orders[-1]
-    # res["noise_cluster"] = noise_cluster_index
-    # res["dr"] = {}
-    res = {}
-    offset = 0
-    for var_type, data in data_by_var_type.items():
-        res[var_type] = flatten_data[offset : offset + len(data)]
-        offset += len(data)
-    return json.dumps(res, default=vars)
-
-
-def process_interview(filepaths):
-    interview_dict = {}
-    interviews = []
-    data_by_chunk = {}
-    for interview_file in filepaths:
-        interview_data = json.load(open(interview_file, encoding="utf-8"))
-        interview_file = interview_file.replace("\\", "/")
-        participant = interview_file.split("/")[-1].replace(".json", "")
-        interview_dict[participant] = interview_data
-        for chunk in interview_data:
-            if chunk["topic"] in ["商業", "汙染", "貿易", "農業"]:
-                chunk["topic"] = "其他"
-            data_by_chunk[chunk["id"]] = chunk
-    interview_dict = dict(
-        sorted(interview_dict.items(), key=lambda x: int(x[0].replace("N", "")))
-    )
-    for participant, interview in interview_dict.items():
-        interviews.append({"file_name": participant, "data": interview})
-    return interviews
+    return json.dumps(data, default=vars)
 
 
 @app.route("/uncertainty_graph/save/", methods=["POST"])
@@ -596,6 +569,27 @@ def get_uncertainty_graph():
         )
     )
     return json.dumps(data, default=vars)
+
+
+def process_interview(filepaths):
+    interview_dict = {}
+    interviews = []
+    data_by_chunk = {}
+    for interview_file in filepaths:
+        interview_data = json.load(open(interview_file, encoding="utf-8"))
+        interview_file = interview_file.replace("\\", "/")
+        participant = interview_file.split("/")[-1].replace(".json", "")
+        interview_dict[participant] = interview_data
+        for chunk in interview_data:
+            if chunk["topic"] in ["商業", "汙染", "貿易", "農業"]:
+                chunk["topic"] = "其他"
+            data_by_chunk[chunk["id"]] = chunk
+    interview_dict = dict(
+        sorted(interview_dict.items(), key=lambda x: int(x[0].replace("N", "")))
+    )
+    for participant, interview in interview_dict.items():
+        interviews.append({"file_name": participant, "data": interview})
+    return interviews
 
 
 def collect_chunks(filepaths):

@@ -1,11 +1,12 @@
 <script lang="ts">
-  import type { tIdentifyVars, tVarResult } from "lib/types";
+  import type { tIdentifyVars, tVarData, tVarResult } from "lib/types";
   import { onMount, createEventDispatcher } from "svelte";
   import { varTypeColorScale } from "lib/store";
   import { sort_by_id, setOpacity, sort_by_var_type } from "lib/utils";
   import { var_type_names } from "lib/constants";
   import { server_address } from "lib/constants";
   import KeywordSea from "lib/components/KeywordSea.svelte";
+  import UncertaintyGraph from "lib/components/UncertaintyGraph.svelte";
 
   let clicked_var_type_for_others: string = "driver";
 
@@ -20,9 +21,14 @@
   export let title: string;
   export let versions: string[] = [];
   export let data_loading: boolean;
+  export let uncertainty_graph_loading: boolean = false;
   export let current_version: string;
+  export let variable_definitions: tVarData;
   const dispatch = createEventDispatcher();
   $: dispatch("version_changed", current_version);
+  let show_uncertainty_graph = false;
+  $: has_uncertainty = data.some((datum) => datum.uncertainty.identify_vars);
+  // let has_uncertainty = true;
 
   onMount(() => {
     console.log({ data });
@@ -84,14 +90,32 @@
         <div class="w-[4rem] shrink-0">Snippet</div>
         <div class="flex pl-2">Variables</div>
       {/if}
-      <div
-        role="button"
-        tabindex="0"
-        class="ml-auto flex items-center gap-x-0.5 px-1 py-0.5 text-xs hover:bg-gray-300"
-        on:click={() => (show_others = !show_others)}
-        on:keyup={() => {}}
-      >
-        <img class="h-4 w-4" src="book_open.svg" alt="explore" />其他
+      <div class="ml-auto flex">
+        <div
+          tabindex="0"
+          role="button"
+          class:enabled={has_uncertainty && !uncertainty_graph_loading}
+          class:active={show_uncertainty_graph}
+          on:click={() => (show_uncertainty_graph = !show_uncertainty_graph)}
+          on:keyup={() => {}}
+          class="pointer-events-none relative flex items-center rounded px-1 py-0.5 text-xs italic opacity-50 hover:bg-green-200"
+        >
+          {#if uncertainty_graph_loading}
+            <img src="loader.svg" alt="loading" class="h-4 w-4 animate-spin" />
+          {:else}
+            <img src="chart.svg" alt="chart" class="h-4 w-4" />
+          {/if}
+          Uncertainty Chart
+        </div>
+        <div
+          role="button"
+          tabindex="0"
+          class="flex items-center gap-x-0.5 px-1 py-0.5 text-xs hover:bg-gray-300"
+          on:click={() => (show_others = !show_others)}
+          on:keyup={() => {}}
+        >
+          <img class="h-4 w-4" src="book_open.svg" alt="explore" />其他
+        </div>
       </div>
     </div>
     {#if data_loading}
@@ -108,7 +132,7 @@
                   tabindex="0"
                   role="button"
                   class="flex items-center rounded-sm px-1 py-0.5 capitalize italic text-gray-700 outline outline-0 outline-black hover:outline-2"
-                  class:active={clicked_var_type_for_others === var_type}
+                  class:others-active={clicked_var_type_for_others === var_type}
                   style={`background-color: ${setOpacity($varTypeColorScale(var_type), 0.7)};`}
                   on:click={() => (clicked_var_type_for_others = var_type)}
                   on:keyup={() => {}}
@@ -128,7 +152,7 @@
           </div>
         </div>
       {/await}
-    {:else}
+    {:else if !show_uncertainty_graph}
       <div
         class="flex h-1 grow flex-col divide-y divide-black overflow-y-auto pr-3"
       >
@@ -217,6 +241,20 @@
           </div>
         {/each}
       </div>
+    {:else}
+      <div class="flex h-1 grow flex-col p-2">
+        <div
+          class="flex flex-1 items-center justify-center overflow-hidden rounded-md shadow-md outline outline-1 outline-gray-300"
+        >
+          {#if !uncertainty_graph_loading && has_uncertainty}
+            <UncertaintyGraph
+              version={current_version}
+              key="identify_vars"
+              variables={variable_definitions}
+            ></UncertaintyGraph>
+          {/if}
+        </div>
+      </div>
     {/if}
   </div>
 </div>
@@ -234,7 +272,13 @@
       @apply line-through;
     }
   }
-  .active {
+  .others-active {
     @apply shadow-[0_0_4px_1px_black] outline-2;
+  }
+  .active {
+    @apply bg-green-200;
+  }
+  .enabled {
+    @apply pointer-events-auto opacity-100;
   }
 </style>
