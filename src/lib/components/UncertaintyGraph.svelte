@@ -28,7 +28,6 @@
     allow_switch_group = false;
     let highlight_ids = [];
     if (key === "identify_vars") {
-      console.log({ _dr_result, _group, _highlighted_vars });
       highlight_ids = _dr_result[_group]
         .filter(
           (d) =>
@@ -59,7 +58,8 @@
       allow_switch_group = true;
     });
     if (key === "identify_vars") {
-      highlighted_vars = variables[group].map((v) => v.var_name);
+      //   highlighted_vars = variables[group].map((v) => v.var_name);
+      highlighted_vars = [];
     }
   });
 </script>
@@ -77,8 +77,8 @@
         on:click={() => {
           uncertaintyGraph.clear();
           group = t;
-          if (key === "identify_vars")
-            highlighted_vars = variables[t].map((v) => v.var_name);
+          if (key === "identify_vars") highlighted_vars = [];
+          // highlighted_vars = variables[t].map((v) => v.var_name);
           updatePlot(dr_result, group, highlighted_vars);
         }}
         on:keyup={() => {}}
@@ -98,7 +98,7 @@
           tabindex="0"
           class="h-fit rounded-md px-1 py-0.5 text-xs text-gray-700 opacity-70 outline outline-1 outline-gray-300 hover:opacity-100 hover:outline-2 hover:outline-black"
           class:highlighted_vars={highlighted_vars.includes(var_data.var_name)}
-          style={`background-color: ${$varTypeColorScale(group)}`}
+          style={`background-color: ${highlighted_vars.includes(var_data.var_name) ? $varTypeColorScale(group) : "white"}`}
           on:click={() => {
             if (highlighted_vars.includes(var_data.var_name)) {
               highlighted_vars = highlighted_vars.filter(
