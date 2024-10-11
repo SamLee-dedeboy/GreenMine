@@ -101,7 +101,7 @@ export class UncertaintyGraph {
   on(event, handler) {
     this.dispatch.on(event, handler);
   }
-  update(data, highlight_ids: string[]) {
+  update(data, highlight_ids: string[], func_id = (d) => d.id) {
     const self = this;
     const svg = d3.select("#" + this.svgId);
     const clusters = data
@@ -128,13 +128,15 @@ export class UncertaintyGraph {
         ),
       };
     });
+    console.log({ data_w_coordinates });
 
     const nodes = svg
       .select("g.node-group")
       .selectAll("circle.node")
-      .data(data_w_coordinates, (d) => d.id)
+      .data(data_w_coordinates, func_id)
       .join(
         (enter) => {
+          console.log("enter", enter.nodes());
           const enter_nodes = enter
             .append("circle")
             .attr("class", "node")
@@ -198,6 +200,7 @@ export class UncertaintyGraph {
             .on("end", () => self.dispatch.call("force_end"));
         },
         (update) => {
+          console.log("update", update.nodes());
           update
             .classed("node-not-highlighted", false)
             .classed("node-highlighted", false);

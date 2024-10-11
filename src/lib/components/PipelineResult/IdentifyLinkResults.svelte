@@ -82,7 +82,7 @@
 </script>
 
 <div
-  class="flex h-full min-w-[25rem] flex-1 flex-col bg-gray-100 px-1 shadow-lg"
+  class="flex h-full min-w-[30rem] flex-1 flex-col bg-gray-100 px-1 shadow-lg"
 >
   {#if versions.length > 0}
     <VersionsMenu {versions} bind:current_version />

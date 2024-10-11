@@ -4,6 +4,8 @@ import numpy as np
 
 
 def cluster(X):
+    if len(X) == 1:
+        return [1]
     X = np.array(X)
     clustering = AgglomerativeClustering(
         n_clusters=None,

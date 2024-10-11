@@ -43,24 +43,25 @@
         .map((d) => d.id);
     }
     if (key === "identify_links") {
-      console.log({ _dr_result, _group, _highlighted_vars });
       const [_src_group, _dst_group] = _group;
       const [_src_vars, _dst_vars] = _highlighted_vars;
       _group = _src_group + "-" + _dst_group;
       highlight_ids = _dr_result[_group]
         .filter(
-          (d) =>
-            d.links &&
-            (d.links
-              .map((l) => l.var1)
-              .some((v_name) => src_highlighted_vars.includes(v_name)) ||
-              d.links
-                .map((l) => l.var2)
-                .some((v_name) => dst_highlighted_vars.includes(v_name))),
+          (l) =>
+            (src_highlighted_vars.length === 0 ||
+              src_highlighted_vars.includes(l.var1)) &&
+            (dst_highlighted_vars.length === 0 ||
+              dst_highlighted_vars.includes(l.var2)),
         )
         .map((d) => d.id);
     }
-    uncertaintyGraph.update(_dr_result[_group], highlight_ids);
+    console.log({ _dr_result, _group, _highlighted_vars, highlight_ids });
+    uncertaintyGraph.update(
+      _dr_result[_group],
+      highlight_ids,
+      (d) => d.id + "-" + d.var1 + "-" + d.var2,
+    );
   }
 
   async function fetchPlotData(version, key) {
@@ -130,6 +131,7 @@
           tabindex="0"
           class="h-fit rounded-md px-1 py-0.5 text-xs text-gray-700 opacity-70 outline outline-1 outline-gray-300 hover:opacity-100 hover:outline-2 hover:outline-black"
           class:highlighted_vars={highlighted_vars.includes(var_data.var_name)}
+          class:disabled={!allow_switch_group}
           style={`background-color: ${highlighted_vars.includes(var_data.var_name) ? $varTypeColorScale(group) : "white"}`}
           on:click={() => {
             if (highlighted_vars.includes(var_data.var_name)) {
@@ -160,7 +162,7 @@
                 <div
                   role="button"
                   tabindex="0"
-                  class="flex items-center justify-center rounded-md px-1 text-[0.65rem] capitalize italic opacity-40 outline outline-[0.5px] outline-gray-300 hover:bg-gray-400"
+                  class="flex items-center justify-center rounded-md px-1 text-xs capitalize italic opacity-40 outline outline-[0.5px] outline-gray-300 hover:bg-gray-400"
                   class:active={src_group === t}
                   class:disabled={!allow_switch_group}
                   style={`background-color: ${$varTypeColorScale(t)}`}
@@ -194,10 +196,11 @@
                 <div
                   role="button"
                   tabindex="0"
-                  class="h-fit rounded-md px-1 py-0.5 text-[0.6rem] text-gray-700 opacity-70 outline outline-1 outline-gray-300 hover:opacity-100 hover:outline-2 hover:outline-black"
+                  class="h-fit rounded-md px-1 py-0.5 text-xs text-gray-700 opacity-70 outline outline-1 outline-gray-300 hover:opacity-100 hover:outline-2 hover:outline-black"
                   class:highlighted_vars={src_highlighted_vars.includes(
                     var_data.var_name,
                   )}
+                  class:disabled={!allow_switch_group}
                   style={`background-color: ${src_highlighted_vars.includes(var_data.var_name) ? $varTypeColorScale(src_group) : "white"}`}
                   on:click={() => {
                     if (src_highlighted_vars.includes(var_data.var_name)) {
@@ -235,7 +238,7 @@
                 <div
                   role="button"
                   tabindex="0"
-                  class="flex items-center justify-center rounded-md px-1 text-[0.65rem] capitalize italic opacity-40 outline outline-[0.5px] outline-gray-300 hover:bg-gray-400"
+                  class="flex items-center justify-center rounded-md px-1 text-xs capitalize italic opacity-40 outline outline-[0.5px] outline-gray-300 hover:bg-gray-400"
                   class:active={dst_group === t}
                   class:disabled={!allow_switch_group}
                   style={`background-color: ${$varTypeColorScale(t)}`}
@@ -269,10 +272,11 @@
                 <div
                   role="button"
                   tabindex="0"
-                  class="h-fit rounded-md px-1 py-0.5 text-[0.6rem] text-gray-700 opacity-70 outline outline-1 outline-gray-300 hover:opacity-100 hover:outline-2 hover:outline-black"
+                  class="h-fit rounded-md px-1 py-0.5 text-xs text-gray-700 opacity-70 outline outline-1 outline-gray-300 hover:opacity-100 hover:outline-2 hover:outline-black"
                   class:highlighted_vars={dst_highlighted_vars.includes(
                     var_data.var_name,
                   )}
+                  class:disabled={!allow_switch_group}
                   style={`background-color: ${dst_highlighted_vars.includes(var_data.var_name) ? $varTypeColorScale(dst_group) : "white"}`}
                   on:click={() => {
                     if (dst_highlighted_vars.includes(var_data.var_name)) {

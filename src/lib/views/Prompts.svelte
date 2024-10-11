@@ -264,18 +264,27 @@
   ) {
     const dr_data = prepare_dr_data(data, key);
     if (key === "identify_var_types") {
-      const uncertainty_graph_data = await fetch(`${server_address}/dr/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const dr_data_grouped = group_by_var_type(dr_data!);
+      let uncertainty_graph_grouped = {};
+      const dr_promises = Object.entries(dr_data_grouped).map(
+        ([var_type, dr_data_by_var_type]) => {
+          return new Promise((resolve) => {
+            fetch(`${server_address}/dr/`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ data: dr_data_by_var_type }),
+            })
+              .then((res) => res.json())
+              .then((dr_result) => {
+                uncertainty_graph_grouped[var_type] = dr_result;
+                resolve("success");
+              });
+          });
         },
-        body: JSON.stringify({ data: dr_data, key: key }),
-      }).then((res) => res.json());
-      // add grouping
-      const uncertainty_graph_grouped = group_by_var_type(
-        uncertainty_graph_data,
       );
-
+      await Promise.all(dr_promises);
       return uncertainty_graph_grouped;
     } else if (key === "identify_vars") {
       const uncertainty_graph_grouped_var_type = await fetch(
@@ -297,34 +306,27 @@
       );
       return uncertainty_graph_grouped;
     } else if (key === "identify_links") {
-      console.log("fetching link dr", dr_data);
-      // const uncertainty_graph_grouped_var_type = await fetch(
-      //   `${server_address}/uncertainty_graph/get/`,
-      //   {
-      //     method: "POST",
-      //     headers: {
-      //       "Content-Type": "application/json",
-      //     },
-      //     body: JSON.stringify({
-      //       key: "identify_var_types",
-      //       version: prompt_data[key].based_on,
-      //     }),
-      //   },
-      // ).then((res) => res.json());
-      // const uncertainty_graph_grouped = add_links_to_var_type_uncertainty_graph(
-      //   uncertainty_graph_grouped_var_type,
-      //   dr_data as any,
-      // );
-      const uncertainty_graph_data = await fetch(`${server_address}/dr/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const dr_data_grouped = group_by_links(dr_data!);
+      let uncertainty_graph_grouped = {};
+      const dr_promises = Object.entries(dr_data_grouped).map(
+        ([var_type, dr_data_by_var_type]) => {
+          return new Promise((resolve) => {
+            fetch(`${server_address}/dr/`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ data: dr_data_by_var_type }),
+            })
+              .then((res) => res.json())
+              .then((dr_result) => {
+                uncertainty_graph_grouped[var_type] = dr_result;
+                resolve("success");
+              });
+          });
         },
-        body: JSON.stringify({ data: dr_data, key: key }),
-      }).then((res) => res.json());
-      // add grouping
-      const uncertainty_graph_grouped = group_by_links(uncertainty_graph_data);
-      console.log("grouped", uncertainty_graph_grouped);
+      );
+      await Promise.all(dr_promises);
       return uncertainty_graph_grouped;
     }
   }

@@ -246,17 +246,17 @@ def curate_identify_var_types():
         )
         return json.dumps(all_chunks, default=vars)
     else:
-        all_chunks = uncertainty.identify_var_types_uncertainty(
-            all_chunks,
-            openai_client,
-            system_prompt_blocks,
-            user_prompt_blocks,
-            prompt_variables,
-        )
-
-        # all_chunks = json.load(
-        #     open(pipeline_result_path + "identify_var_types/v0_chunk_w_var_types.json")
+        # all_chunks = uncertainty.identify_var_types_uncertainty(
+        #     all_chunks,
+        #     openai_client,
+        #     system_prompt_blocks,
+        #     user_prompt_blocks,
+        #     prompt_variables,
         # )
+
+        all_chunks = json.load(
+            open(pipeline_result_path + "identify_var_types/v0_chunk_w_var_types.json")
+        )
 
         # local.save_json(
         #     all_chunks,
