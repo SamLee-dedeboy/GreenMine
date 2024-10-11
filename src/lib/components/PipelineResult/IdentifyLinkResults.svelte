@@ -1,18 +1,23 @@
 <script lang="ts">
-  import type { tIdentifyLinks, tLink } from "lib/types";
+  import type { tIdentifyLinks, tLink, tVarData } from "lib/types";
   import { onMount, createEventDispatcher } from "svelte";
   import { varTypeColorScale } from "lib/store";
   import { sort_by_id, setOpacity, sort_by_var_type } from "lib/utils";
   import LinkResultGraph from "./LinkResultGraph.svelte";
   import VersionsMenu from "./VersionsMenu.svelte";
+  import UncertaintyGraph from "../UncertaintyGraph.svelte";
 
   const dispatch = createEventDispatcher();
   export let data: tIdentifyLinks[];
   export let title: string;
   export let versions: string[] = [];
   export let data_loading: boolean;
+  export let uncertainty_graph_loading: boolean;
   export let current_version: string;
+  export let variable_definitions: tVarData;
   let show_graph = Array(data.length).fill(false);
+  let show_uncertainty_graph = false;
+  $: has_uncertainty = data.some((datum) => datum.uncertainty.identify_links);
   $: max_degree = compute_max_degree(data);
   $: dispatch("version_changed", current_version);
 
@@ -88,12 +93,30 @@
   {/if}
   <div class="flex grow flex-col divide-y divide-black">
     <div class="flex divide-x font-serif">
-      <div class="w-[4rem] shrink-0">ID</div>
-      <div class="flex pl-2">Links</div>
+      {#if !show_uncertainty_graph}
+        <div class="w-[4rem] shrink-0">ID</div>
+        <div class="flex pl-2">Links</div>
+      {/if}
+      <div
+        tabindex="0"
+        role="button"
+        class:enabled={has_uncertainty && !uncertainty_graph_loading}
+        class:active={show_uncertainty_graph}
+        on:click={() => (show_uncertainty_graph = !show_uncertainty_graph)}
+        on:keyup={() => {}}
+        class="pointer-events-none relative ml-auto flex items-center rounded px-1 py-0.5 text-xs italic opacity-50 hover:bg-green-200"
+      >
+        {#if uncertainty_graph_loading}
+          <img src="loader.svg" alt="loading" class="h-4 w-4 animate-spin" />
+        {:else}
+          <img src="chart.svg" alt="chart" class="h-4 w-4" />
+        {/if}
+        Uncertainty Chart
+      </div>
     </div>
     {#if data_loading}
       <div class="flex h-full items-center justify-center">Data Loading...</div>
-    {:else}
+    {:else if !show_uncertainty_graph}
       <div
         class="flex h-1 grow flex-col divide-y divide-black overflow-y-auto pr-3"
       >
@@ -243,15 +266,6 @@
                           </div>
                         {/if}
                       </div>
-                      <!-- <div
-                        role="button"
-                        tabindex="0"
-                        class="ml-auto flex h-fit items-center rounded-sm px-1 py-0.5 text-[0.7rem] normal-case italic leading-3 text-gray-600 outline-double outline-1 outline-gray-300 hover:bg-gray-300"
-                        on:click={() => console.log(link.response.evidence)}
-                        on:keyup={() => {}}
-                      >
-                        evidence
-                      </div> -->
                     </div>
                   </div>
                 {/each}
@@ -260,6 +274,12 @@
           </div>
         {/each}
       </div>
+    {:else}
+      <UncertaintyGraph
+        version={current_version}
+        key="identify_links"
+        variables={variable_definitions}
+      ></UncertaintyGraph>
     {/if}
   </div>
 </div>
@@ -273,5 +293,11 @@
   }
   .isEmpty {
     @apply opacity-60;
+  }
+  .enabled {
+    @apply pointer-events-auto opacity-100;
+  }
+  .active {
+    @apply bg-green-200;
   }
 </style>

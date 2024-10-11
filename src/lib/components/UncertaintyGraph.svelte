@@ -11,11 +11,15 @@
   import { onMount } from "svelte";
   //   export let data: (tIdentifyVarTypes | tIdentifyVars | tIdentifyLinks)[];
   export let version: string;
-  export let variables: tVarData;
+  export let variables: tVarData = {};
   export let key: string; // "identify_var_types" | "identify_vars" | "identify_links"
 
   let group = "driver"; // "driver" | "pressure" | "state" | "impact" | "response"
   let highlighted_vars: string[] = [];
+  let src_group = "driver";
+  let dst_group = "driver";
+  let src_highlighted_vars: string[] = [];
+  let dst_highlighted_vars: string[] = [];
   const svgId = "uncertainty-graph-" + Math.floor(Math.random() * 1000);
   let uncertaintyGraph: UncertaintyGraph = new UncertaintyGraph(svgId);
   let allow_switch_group = true;
@@ -24,7 +28,7 @@
   $: fetchPlotData(version, key);
 
   function updatePlot(_dr_result, _group, _highlighted_vars) {
-    if (!_dr_result[_group]) return;
+    // if (!_dr_result[_group]) return;
     allow_switch_group = false;
     let highlight_ids = [];
     if (key === "identify_vars") {
@@ -35,6 +39,24 @@
             d.vars
               .map((v) => v.var_name)
               .some((v_name) => _highlighted_vars.includes(v_name)),
+        )
+        .map((d) => d.id);
+    }
+    if (key === "identify_links") {
+      console.log({ _dr_result, _group, _highlighted_vars });
+      const [_src_group, _dst_group] = _group;
+      const [_src_vars, _dst_vars] = _highlighted_vars;
+      _group = _src_group + "-" + _dst_group;
+      highlight_ids = _dr_result[_group]
+        .filter(
+          (d) =>
+            d.links &&
+            (d.links
+              .map((l) => l.var1)
+              .some((v_name) => src_highlighted_vars.includes(v_name)) ||
+              d.links
+                .map((l) => l.var2)
+                .some((v_name) => dst_highlighted_vars.includes(v_name))),
         )
         .map((d) => d.id);
     }
@@ -49,7 +71,15 @@
       },
       body: JSON.stringify({ key, version }),
     }).then((res) => res.json());
-    updatePlot(dr_result, group, highlighted_vars);
+    if (key === "identify_links") {
+      updatePlot(
+        dr_result,
+        [src_group, dst_group],
+        [src_highlighted_vars, dst_highlighted_vars],
+      );
+    } else {
+      updatePlot(dr_result, group, highlighted_vars);
+    }
   }
 
   onMount(() => {
@@ -65,31 +95,33 @@
 </script>
 
 <div class="relative flex h-full w-full flex-col">
-  <div class="flex justify-around">
-    {#each var_type_names as t}
-      <div
-        role="button"
-        tabindex="0"
-        class="flex items-center rounded-md px-1 py-0.5 text-sm capitalize italic opacity-40 outline outline-1 outline-gray-300 hover:bg-gray-400"
-        class:active={group === t}
-        class:disabled={!allow_switch_group}
-        style={`background-color: ${$varTypeColorScale(t)}`}
-        on:click={() => {
-          uncertaintyGraph.clear();
-          group = t;
-          if (key === "identify_vars") highlighted_vars = [];
-          // highlighted_vars = variables[t].map((v) => v.var_name);
-          updatePlot(dr_result, group, highlighted_vars);
-        }}
-        on:keyup={() => {}}
-      >
-        {#if !allow_switch_group && group === t}
-          <img src="loader.svg" alt="loading" class="h-4 w-4 animate-spin" />
-        {/if}
-        {t}
-      </div>
-    {/each}
-  </div>
+  {#if key !== "identify_links"}
+    <div class="flex justify-around">
+      {#each var_type_names as t}
+        <div
+          role="button"
+          tabindex="0"
+          class="flex items-center rounded-md px-1 py-0.5 text-sm capitalize italic opacity-40 outline outline-1 outline-gray-300 hover:bg-gray-400"
+          class:active={group === t}
+          class:disabled={!allow_switch_group}
+          style={`background-color: ${$varTypeColorScale(t)}`}
+          on:click={() => {
+            uncertaintyGraph.clear();
+            group = t;
+            if (key === "identify_vars") highlighted_vars = [];
+            // highlighted_vars = variables[t].map((v) => v.var_name);
+            updatePlot(dr_result, group, highlighted_vars);
+          }}
+          on:keyup={() => {}}
+        >
+          {#if !allow_switch_group && group === t}
+            <img src="loader.svg" alt="loading" class="h-4 w-4 animate-spin" />
+          {/if}
+          {t}
+        </div>
+      {/each}
+    </div>
+  {/if}
   {#if key === "identify_vars"}
     <div class="flex flex-wrap gap-x-1 gap-y-1 px-1 pt-1">
       {#each variables[group] as var_data}
@@ -114,6 +146,160 @@
           {var_data.var_name}
         </div>
       {/each}
+    </div>
+  {/if}
+  {#if key === "identify_links"}
+    <div class="mb-2 flex gap-x-1">
+      <!-- src -->
+      <div class="flex flex-1 border-r border-gray-200">
+        <div class="flex flex-col">
+          <div class="text-xs italic">From</div>
+          <div class="flex">
+            <div class="flex flex-col justify-between">
+              {#each var_type_names as t}
+                <div
+                  role="button"
+                  tabindex="0"
+                  class="flex items-center justify-center rounded-md px-1 text-[0.65rem] capitalize italic opacity-40 outline outline-[0.5px] outline-gray-300 hover:bg-gray-400"
+                  class:active={src_group === t}
+                  class:disabled={!allow_switch_group}
+                  style={`background-color: ${$varTypeColorScale(t)}`}
+                  on:click={() => {
+                    uncertaintyGraph.clear();
+                    src_group = t;
+                    src_highlighted_vars = [];
+                    updatePlot(
+                      dr_result,
+                      [src_group, dst_group],
+                      [src_highlighted_vars, dst_highlighted_vars],
+                    );
+                  }}
+                  on:keyup={() => {}}
+                >
+                  {#if !allow_switch_group && src_group === t}
+                    <img
+                      src="loader.svg"
+                      alt="loading"
+                      class="h-4 w-4 animate-spin"
+                    />
+                  {/if}
+                  {t}
+                </div>
+              {/each}
+            </div>
+            <div
+              class="flex h-[6rem] flex-1 flex-wrap gap-x-1 gap-y-1 overflow-y-auto px-1 pt-1"
+            >
+              {#each variables[src_group] as var_data}
+                <div
+                  role="button"
+                  tabindex="0"
+                  class="h-fit rounded-md px-1 py-0.5 text-[0.6rem] text-gray-700 opacity-70 outline outline-1 outline-gray-300 hover:opacity-100 hover:outline-2 hover:outline-black"
+                  class:highlighted_vars={src_highlighted_vars.includes(
+                    var_data.var_name,
+                  )}
+                  style={`background-color: ${src_highlighted_vars.includes(var_data.var_name) ? $varTypeColorScale(src_group) : "white"}`}
+                  on:click={() => {
+                    if (src_highlighted_vars.includes(var_data.var_name)) {
+                      src_highlighted_vars = src_highlighted_vars.filter(
+                        (v) => v !== var_data.var_name,
+                      );
+                    } else {
+                      src_highlighted_vars = [
+                        ...src_highlighted_vars,
+                        var_data.var_name,
+                      ];
+                    }
+                    updatePlot(
+                      dr_result,
+                      [src_group, dst_group],
+                      [src_highlighted_vars, dst_highlighted_vars],
+                    );
+                  }}
+                  on:keyup={() => {}}
+                >
+                  {var_data.var_name}
+                </div>
+              {/each}
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- dst -->
+      <div class="flex flex-1">
+        <div class="flex flex-col">
+          <div class="text-xs italic">To</div>
+          <div class="flex">
+            <div class="flex flex-col justify-between">
+              {#each var_type_names as t}
+                <div
+                  role="button"
+                  tabindex="0"
+                  class="flex items-center justify-center rounded-md px-1 text-[0.65rem] capitalize italic opacity-40 outline outline-[0.5px] outline-gray-300 hover:bg-gray-400"
+                  class:active={dst_group === t}
+                  class:disabled={!allow_switch_group}
+                  style={`background-color: ${$varTypeColorScale(t)}`}
+                  on:click={() => {
+                    uncertaintyGraph.clear();
+                    dst_group = t;
+                    dst_highlighted_vars = [];
+                    updatePlot(
+                      dr_result,
+                      [src_group, dst_group],
+                      [src_highlighted_vars, dst_highlighted_vars],
+                    );
+                  }}
+                  on:keyup={() => {}}
+                >
+                  {#if !allow_switch_group && dst_group === t}
+                    <img
+                      src="loader.svg"
+                      alt="loading"
+                      class="h-4 w-4 animate-spin"
+                    />
+                  {/if}
+                  {t}
+                </div>
+              {/each}
+            </div>
+            <div
+              class="flex h-[6rem] flex-1 flex-wrap gap-x-1 gap-y-1 overflow-y-auto px-1 pt-1"
+            >
+              {#each variables[dst_group] as var_data}
+                <div
+                  role="button"
+                  tabindex="0"
+                  class="h-fit rounded-md px-1 py-0.5 text-[0.6rem] text-gray-700 opacity-70 outline outline-1 outline-gray-300 hover:opacity-100 hover:outline-2 hover:outline-black"
+                  class:highlighted_vars={dst_highlighted_vars.includes(
+                    var_data.var_name,
+                  )}
+                  style={`background-color: ${dst_highlighted_vars.includes(var_data.var_name) ? $varTypeColorScale(dst_group) : "white"}`}
+                  on:click={() => {
+                    if (dst_highlighted_vars.includes(var_data.var_name)) {
+                      dst_highlighted_vars = dst_highlighted_vars.filter(
+                        (v) => v !== var_data.var_name,
+                      );
+                    } else {
+                      dst_highlighted_vars = [
+                        ...dst_highlighted_vars,
+                        var_data.var_name,
+                      ];
+                    }
+                    updatePlot(
+                      dr_result,
+                      [src_group, dst_group],
+                      [src_highlighted_vars, dst_highlighted_vars],
+                    );
+                  }}
+                  on:keyup={() => {}}
+                >
+                  {var_data.var_name}
+                </div>
+              {/each}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   {/if}
   <div class="relative">

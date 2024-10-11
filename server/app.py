@@ -349,16 +349,16 @@ def curate_identify_vars():
         #     f"{pipeline_result_path}identify_vars/{var_version}_chunk_w_vars_keywords.json",
         # )
     else:
-        # all_chunks = uncertainty.identify_vars_uncertainty(
-        #     all_chunks,
-        #     openai_client,
-        #     system_prompt_blocks,
-        #     user_prompt_blocks,
-        #     prompt_variables,
-        # )
-        all_chunks = json.load(
-            open(pipeline_result_path + "identify_vars/v0_chunk_w_vars.json")
+        all_chunks = uncertainty.identify_vars_uncertainty(
+            all_chunks,
+            openai_client,
+            system_prompt_blocks,
+            user_prompt_blocks,
+            prompt_variables,
         )
+        # all_chunks = json.load(
+        #     open(pipeline_result_path + "identify_vars/v0_chunk_w_vars.json")
+        # )
         # local.save_json(
         #     all_chunks, pipeline_result_path + "identify_vars/chunk_w_vars.json"
         # )
@@ -442,18 +442,24 @@ def curate_identify_links():
         #     pipeline_result_path + "identify_links/chunk_w_links_new_prompt_3.json",
         # )
     else:
-        all_chunks = uncertainty.identify_links_uncertainty(
-            all_chunks,
-            candidate_links,
-            openai_client,
-            system_prompt_blocks,
-            user_prompt_blocks,
-            prompt_variables,
+        # all_chunks = uncertainty.identify_links_uncertainty(
+        #     all_chunks,
+        #     candidate_links,
+        #     openai_client,
+        #     system_prompt_blocks,
+        #     user_prompt_blocks,
+        #     prompt_variables,
+        # )
+        all_chunks = json.load(
+            open(
+                f"{pipeline_result_path}identify_links/{link_version}_chunk_w_links.json",
+                encoding="utf-8",
+            )
         )
-        local.save_json(
-            all_chunks,
-            f"{pipeline_result_path}identify_links/{link_version}_chunk_w_links_uncertainty.json",
-        )
+        # local.save_json(
+        #     all_chunks,
+        #     f"{pipeline_result_path}identify_links/{link_version}_chunk_w_links.json",
+        # )
     return json.dumps(all_chunks, default=vars)
 
 

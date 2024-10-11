@@ -21,7 +21,7 @@
   export let title: string;
   export let versions: string[] = [];
   export let data_loading: boolean;
-  export let uncertainty_graph_loading: boolean = false;
+  export let uncertainty_graph_loading: boolean;
   export let current_version: string;
   export let variable_definitions: tVarData;
   const dispatch = createEventDispatcher();

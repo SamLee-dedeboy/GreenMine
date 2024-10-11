@@ -102,6 +102,10 @@
             fetchRuleMenu(step, current_versions[newStepStr]);
           } else if (newStepStr === "link") {
             fetchRuleMenu("var", current_versions["var"]);
+            if (!prompt_data.identify_vars) {
+              fetchPipelineData("var", current_versions["var"]);
+              fetchMenuData("var", right_panel_version);
+            }
           }
         })
         .then(() => {
@@ -287,14 +291,40 @@
           }),
         },
       ).then((res) => res.json());
-      console.log(
-        "fetching dr data for vars",
-        uncertainty_graph_grouped_var_type,
-      );
       const uncertainty_graph_grouped = add_vars_to_var_type_uncertainty_graph(
         uncertainty_graph_grouped_var_type,
         dr_data as any,
       );
+      return uncertainty_graph_grouped;
+    } else if (key === "identify_links") {
+      console.log("fetching link dr", dr_data);
+      // const uncertainty_graph_grouped_var_type = await fetch(
+      //   `${server_address}/uncertainty_graph/get/`,
+      //   {
+      //     method: "POST",
+      //     headers: {
+      //       "Content-Type": "application/json",
+      //     },
+      //     body: JSON.stringify({
+      //       key: "identify_var_types",
+      //       version: prompt_data[key].based_on,
+      //     }),
+      //   },
+      // ).then((res) => res.json());
+      // const uncertainty_graph_grouped = add_links_to_var_type_uncertainty_graph(
+      //   uncertainty_graph_grouped_var_type,
+      //   dr_data as any,
+      // );
+      const uncertainty_graph_data = await fetch(`${server_address}/dr/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ data: dr_data, key: key }),
+      }).then((res) => res.json());
+      // add grouping
+      const uncertainty_graph_grouped = group_by_links(uncertainty_graph_data);
+      console.log("grouped", uncertainty_graph_grouped);
       return uncertainty_graph_grouped;
     }
   }
@@ -507,13 +537,44 @@
           );
         })
         .flat(Infinity);
-      console.log({ key, target_chunks });
+      return target_chunks;
+    } else if (key === "identify_links") {
+      const target_chunks = data
+        .filter((chunk) => chunk["identify_links_result"].length > 0)
+        .map((chunk) => {
+          return chunk["identify_links_result"].map((link_mention) => {
+            return {
+              id: link_mention.chunk_id,
+              indicator1: link_mention.indicator1,
+              indicator2: link_mention.indicator2,
+              var1: link_mention.var1,
+              var2: link_mention.var2,
+              relationship: link_mention.response.relationship
+                .map((r) => r.label)
+                .join("/"),
+              uncertainty: link_mention.uncertainty,
+              text:
+                evidenceToString(
+                  link_mention.response.evidence,
+                  chunk.conversation.map((c) => c.content),
+                ) +
+                "\n" +
+                link_mention.response.explanation,
+            };
+          });
+        })
+        .flat(Infinity);
       return target_chunks;
     }
   }
   function group_by_var_type(data: any[]) {
     console.log("grouping by var type", data);
     return Object.groupBy(data, (d) => d.var_type);
+  }
+
+  function group_by_links(data: any[]) {
+    console.log("grouping by links", data);
+    return Object.groupBy(data, (d) => d.indicator1 + "-" + d.indicator2);
   }
 
   function add_vars_to_var_type_uncertainty_graph(
@@ -542,11 +603,57 @@
     return data;
   }
 
-  function group_by_var(data: any[]) {
-    console.log("grouping by vars", data);
-    return data;
-  }
-  function group_by_link(data: tIdentifyLinks[]) {
+  function add_links_to_var_type_uncertainty_graph(
+    data: Record<string, any[]>,
+    link_dr_data: any[],
+  ) {
+    console.log(
+      "adding vars to var type uncertainty graph",
+      data,
+      link_dr_data,
+    );
+    link_dr_data.forEach((link_mention) => {
+      const indicator1 = link_mention.indicator1;
+      const indicator2 = link_mention.indicator2;
+      const var1 = link_mention.var1;
+      const var2 = link_mention.var2;
+      const chunk_id = link_mention.id;
+      // src
+      const link_src_origin_index = data[indicator1].findIndex(
+        (d) => d.id === chunk_id,
+      );
+      if (link_src_origin_index !== -1) {
+        if (!data[indicator1][link_src_origin_index]["links"]) {
+          data[indicator1][link_src_origin_index]["links"] = [];
+        }
+        data[indicator1][link_src_origin_index]["links"].push({
+          indicator1: indicator1,
+          indicator2: indicator2,
+          var1: var1,
+          var2: var2,
+          uncertainty: link_mention.uncertainty,
+          text: link_mention.text,
+        });
+      }
+      if (indicator1 === indicator2) return;
+      // dst
+      const link_dst_origin_index = data[indicator2].findIndex(
+        (d) => d.id === chunk_id,
+      );
+      if (link_dst_origin_index !== -1) {
+        if (!data[indicator2][link_dst_origin_index]["links"]) {
+          data[indicator2][link_dst_origin_index]["links"] = [];
+        }
+        data[indicator2][link_dst_origin_index]["links"].push({
+          indicator1: indicator1,
+          indicator2: indicator2,
+          var1: var1,
+          var2: var2,
+          uncertainty: link_mention.uncertainty,
+          text: link_mention.text,
+        });
+      }
+    });
     return data;
   }
 
@@ -738,6 +845,7 @@
           versions={[]}
           current_version={right_panel_version}
           {data_loading}
+          {uncertainty_graph_loading}
           variable_definitions={prompt_data.identify_vars.var_definitions}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
@@ -747,6 +855,7 @@
           versions={versionsCount["var"].versions}
           current_version={right_panel_version}
           data_loading={false}
+          uncertainty_graph_loading={false}
           variable_definitions={right_prompt_data.identify_vars.var_definitions}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
           on:version_changed={(e) => handle_version_change(e.detail)}
@@ -795,6 +904,8 @@
           versions={[]}
           current_version={right_panel_version}
           {data_loading}
+          {uncertainty_graph_loading}
+          variable_definitions={prompt_data.identify_vars?.var_definitions}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
         />
         <IdentifyLinkResults
@@ -803,6 +914,9 @@
           versions={versionsCount["link"].versions}
           current_version={right_panel_version}
           data_loading={false}
+          uncertainty_graph_loading={false}
+          variable_definitions={right_prompt_data.identify_vars
+            ?.var_definitions}
           on:navigate_evidence={(e) => navigate_evidence(e.detail)}
           on:version_changed={(e) => handle_version_change(e.detail)}
         />
