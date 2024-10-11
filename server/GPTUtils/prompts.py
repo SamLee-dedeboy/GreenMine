@@ -156,7 +156,28 @@ def identify_link_prompt_factory(
     response_format = "json"
     return messages, response_format, extract_response_func
 
-    return
+
+def topic_assignment_prompt_factory(texts):
+    messages = [
+        {
+            "role": "system",
+            "content": """You are a topic assignment system. The user will provide you with a list of texts in Chinese. You need to assign one topic to summarize all of them. 
+            The topic should be a simple noun-phrase in Traditional Chinese. Only one topic should be generated.
+            Reply with the JSON format: 
+            {{
+                topic: string (Traditional Chinese)
+            }}
+            """,
+        },
+        {"role": "user", "content": "\n".join(texts)},
+    ]
+
+    def extract_response_func(response):
+        response = json.loads(response)["topic"]
+        return response
+
+    response_format = "json"
+    return messages, response_format, extract_response_func
 
 
 def node_extraction_prompt_factory(paragraph, var_name, definition):

@@ -44,6 +44,8 @@ kpca_reducer = dr.init_kpca_reducer(
     list(map(lambda x: x["embedding"], keyword_embeddings))
 )
 
+testing = True
+
 
 @app.route("/test/")
 def test():
@@ -246,17 +248,21 @@ def curate_identify_var_types():
         )
         return json.dumps(all_chunks, default=vars)
     else:
-        # all_chunks = uncertainty.identify_var_types_uncertainty(
-        #     all_chunks,
-        #     openai_client,
-        #     system_prompt_blocks,
-        #     user_prompt_blocks,
-        #     prompt_variables,
-        # )
-
-        all_chunks = json.load(
-            open(pipeline_result_path + "identify_var_types/v0_chunk_w_var_types.json")
-        )
+        if testing:
+            all_chunks = json.load(
+                open(
+                    pipeline_result_path
+                    + "identify_var_types/v0_chunk_w_var_types.json"
+                )
+            )
+        else:
+            all_chunks = uncertainty.identify_var_types_uncertainty(
+                all_chunks,
+                openai_client,
+                system_prompt_blocks,
+                user_prompt_blocks,
+                prompt_variables,
+            )
 
         # local.save_json(
         #     all_chunks,
@@ -349,16 +355,18 @@ def curate_identify_vars():
         #     f"{pipeline_result_path}identify_vars/{var_version}_chunk_w_vars_keywords.json",
         # )
     else:
-        all_chunks = uncertainty.identify_vars_uncertainty(
-            all_chunks,
-            openai_client,
-            system_prompt_blocks,
-            user_prompt_blocks,
-            prompt_variables,
-        )
-        # all_chunks = json.load(
-        #     open(pipeline_result_path + "identify_vars/v0_chunk_w_vars.json")
-        # )
+        if testing:
+            all_chunks = json.load(
+                open(pipeline_result_path + "identify_vars/v0_chunk_w_vars.json")
+            )
+        else:
+            all_chunks = uncertainty.identify_vars_uncertainty(
+                all_chunks,
+                openai_client,
+                system_prompt_blocks,
+                user_prompt_blocks,
+                prompt_variables,
+            )
         # local.save_json(
         #     all_chunks, pipeline_result_path + "identify_vars/chunk_w_vars.json"
         # )
@@ -442,20 +450,22 @@ def curate_identify_links():
         #     pipeline_result_path + "identify_links/chunk_w_links_new_prompt_3.json",
         # )
     else:
-        # all_chunks = uncertainty.identify_links_uncertainty(
-        #     all_chunks,
-        #     candidate_links,
-        #     openai_client,
-        #     system_prompt_blocks,
-        #     user_prompt_blocks,
-        #     prompt_variables,
-        # )
-        all_chunks = json.load(
-            open(
-                f"{pipeline_result_path}identify_links/{link_version}_chunk_w_links.json",
-                encoding="utf-8",
+        if testing:
+            all_chunks = json.load(
+                open(
+                    f"{pipeline_result_path}identify_links/{link_version}_chunk_w_links.json",
+                    encoding="utf-8",
+                )
             )
-        )
+        else:
+            all_chunks = uncertainty.identify_links_uncertainty(
+                all_chunks,
+                candidate_links,
+                openai_client,
+                system_prompt_blocks,
+                user_prompt_blocks,
+                prompt_variables,
+            )
         # local.save_json(
         #     all_chunks,
         #     f"{pipeline_result_path}identify_links/{link_version}_chunk_w_links.json",
@@ -531,6 +541,8 @@ def get_dr():
     embeddings = query.multithread_embeddings(openai_client, texts)
     # clusters = cluster.optics(embeddings)
     clusters = cluster.cluster(embeddings)
+    # topic labels, dict: cluster label -> topic
+    cluster_topics = query.cluster_topic_assignments(openai_client, clusters, texts)
 
     all_angles = dr.circular_dr(embeddings)
     cluster_angles = defaultdict(list)
@@ -547,6 +559,7 @@ def get_dr():
     }
     for i, datum in enumerate(data):
         data[i]["cluster"] = cluster_orders[clusters[i]]
+        data[i]["cluster_label"] = cluster_topics[clusters[i]]
         data[i]["angle"] = all_angles[i]
 
     return json.dumps(data, default=vars)

@@ -3,6 +3,7 @@ from tqdm import tqdm
 import tiktoken
 import json
 import requests
+from collections import defaultdict
 
 # from . import prompts
 from GPTUtils import prompts
@@ -400,7 +401,7 @@ def identify_links(
     )
     if response_format == "json":
         responses = [extract_response_func(i) for i in responses]
-    responses
+
     for response_index, extraction_result in enumerate(responses):
         if extraction_result is None:
             continue
@@ -483,21 +484,26 @@ def filter_candidate_links(chunk_w_vars):
     return links
 
 
-# def chunk_execute_extraction(all_chunks, openai_client, system_prompt_blocks, user_prompt_blocks, prompt_variables, prompt_factory, extraction_result_key):
-#     prompt_list = []
-#     response_format, extract_response_func = None, None
-#     for chunk in all_chunks:
-#         conversation = chunk['conversation']
-#         prompt_variables['conversation'] = conversation_to_string(conversation)
-#         prompt, response_format, extract_response_func = prompt_factory(system_prompt_blocks, user_prompt_blocks, prompt_variables)
-#         prompt_list.append(prompt)
-#     responses = multithread_prompts(openai_client, prompt_list, response_format=response_format, temperature=0.0)
-#     if response_format == 'json':
-#         responses = [extract_response_func(i) for i in responses]
-#     for (chunk_index, extraction_result) in enumerate(responses):
-#         chunk = all_chunks[chunk_index]
-#         chunk[extraction_result_key] = extraction_result
-#     return all_chunks
+def cluster_topic_assignments(client, clusters, texts):
+    cluster_texts = defaultdict(list)
+    for cluster, text in zip(clusters, texts):
+        cluster_texts[cluster].append(text)
+    prompt_list = []
+    cluster_list = []
+    for cluster, texts in cluster_texts.items():
+        prompt, response_format, extract_response_func = (
+            prompts.topic_assignment_prompt_factory(texts)
+        )
+        prompt_list.append(prompt)
+        cluster_list.append(cluster)
+    responses = multithread_prompts(client, prompt_list, response_format="json")
+    if response_format == "json":
+        responses = [extract_response_func(i) for i in responses]
+
+    cluster_topics = {
+        cluster: response for cluster, response in zip(cluster_list, responses)
+    }
+    return cluster_topics
 
 
 def filter_evidences(extraction_result, max_index):

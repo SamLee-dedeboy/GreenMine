@@ -34,7 +34,7 @@ export class UncertaintyGraph {
   yScale: any;
   //   angleScale: any;
   polarRadiusScale: any;
-  colorScale: any;
+  clusterColorScale: any;
   noiseColorScale: any;
   dispatch: any;
   constructor(svgId) {
@@ -63,13 +63,14 @@ export class UncertaintyGraph {
       .range([50, Math.min(this.innerSize.width, this.innerSize.height) / 2]);
     // this.noiseColorScale = d3.scaleSequential(d3.interpolateRainbow);
     this.noiseColorScale = () => "#c3c3c3";
-    this.colorScale = d3.scaleOrdinal(d3.schemeSet3);
+    this.clusterColorScale = d3.scaleOrdinal(d3.schemeSet3);
 
     svg.append("g").attr("class", "radius-axis-group");
     svg.append("g").attr("class", "participant-group");
     svg.append("g").attr("class", "node-group");
     svg.append("g").attr("class", "angle-axis-group");
     svg.append("g").attr("class", "legend-group");
+    svg.append("g").attr("class", "cluster-label-group");
 
     svg
       .select("g.radius-axis-group")
@@ -114,9 +115,16 @@ export class UncertaintyGraph {
         return acc;
       }, {});
     const cluster_angles = computeAngles(clusters);
+    const cluster_labels = data
+      .map((d) => [d.cluster, d.cluster_label])
+      .reduce((acc, cur) => {
+        acc[cur[0]] = cur[1];
+        return acc;
+      }, {});
 
     // update axis
     this.updateAxis(cluster_angles);
+    this.updateClusterLabels(cluster_angles, cluster_labels);
 
     const data_w_coordinates = data.map((datum) => {
       return {
@@ -145,7 +153,7 @@ export class UncertaintyGraph {
             .attr("cx", (d) => (d.x = d.coordinates_2d[0]))
             .attr("cy", (d) => (d.y = d.coordinates_2d[1]))
             .attr("r", (d) => (d.r = 2))
-            .attr("fill", (d) => this.colorScale(d.cluster))
+            .attr("fill", (d) => this.clusterColorScale("" + d.cluster))
             .attr("stroke", "black")
             .attr("stroke-width", 1)
             .attr("cursor", "pointer")
@@ -252,7 +260,44 @@ export class UncertaintyGraph {
       .attr("stroke-width", 1)
       .attr("stroke-dasharray", "5,5");
   }
+  updateClusterLabels(
+    cluster_angles: Record<number, any>,
+    cluster_labels: Record<number, string>,
+  ) {
+    const svg = d3.select("#" + this.svgId);
+    const label_group = svg.select("g.cluster-label-group");
+    label_group
+      .selectAll("text")
+      .data(Object.keys(cluster_angles))
+      .join("text")
+      .text((d) => cluster_labels[d])
+      .attr(
+        "x",
+        (d) =>
+          polarToCartesian(
+            this.innerSize.center,
+            // cluster_angles[d].mid,
+            cluster_angles[d].start + (cluster_angles[d].range * 1.1) / 2,
+            Math.min(this.innerSize.width, this.innerSize.height) / 2.5,
+          )[0],
+      )
+      .attr(
+        "y",
+        (d) =>
+          polarToCartesian(
+            this.innerSize.center,
+            // cluster_angles[d].mid,
+            cluster_angles[d].start + (cluster_angles[d].range * 1.1) / 2,
+            Math.min(this.innerSize.width, this.innerSize.height) / 2.5,
+          )[1],
+      )
+      .attr("text-anchor", "middle")
+      .attr("dominant-baseline", "middle")
+      .attr("font-size", 10)
+      .attr("fill", (d) => darkenColor(this.clusterColorScale("" + d), 30));
+  }
 }
+
 function clip(x, range) {
   return Math.max(Math.min(x, range[1]), range[0]);
 }
@@ -336,4 +381,23 @@ function computeAngles(clusters: Record<number, number>) {
     return acc;
   }, {});
   return angles;
+}
+
+function darkenColor(hex, percent) {
+  // Ensure the hex starts with #
+  hex = hex.replace(/^#/, "");
+
+  // Parse the red, green, and blue components
+  let r = parseInt(hex.substring(0, 2), 16);
+  let g = parseInt(hex.substring(2, 4), 16);
+  let b = parseInt(hex.substring(4, 6), 16);
+
+  // Calculate the new darker color
+  r = Math.max(0, Math.floor(r * (1 - percent / 100)));
+  g = Math.max(0, Math.floor(g * (1 - percent / 100)));
+  b = Math.max(0, Math.floor(b * (1 - percent / 100)));
+
+  // Convert back to hex and return
+  const toHex = (value) => value.toString(16).padStart(2, "0");
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
