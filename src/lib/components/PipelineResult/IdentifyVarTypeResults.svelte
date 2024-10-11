@@ -62,8 +62,11 @@
       {title}
     </h2>
   {/if}
-  <div class="flex h-1 grow flex-col divide-y divide-black">
-    <div class="flex min-h-[1.5rem] divide-x font-serif">
+  <div class="flex h-1 grow flex-col">
+    <div
+      class="flex min-h-[1.5rem] divide-x font-serif"
+      style={`border-bottom: ${show_uncertainty_graph ? "unset" : "1px solid black"}`}
+    >
       {#if !show_uncertainty_graph}
         <div class="w-[4rem] shrink-0">Snippet</div>
         <div class="flex pl-2">Indicators</div>
@@ -145,22 +148,9 @@
                             <span title="check evidence"
                               >{var_type_wrapper.var_type}</span
                             >
-                            <!-- <button
-                                class="font-bold hover:text-white focus:outline-none"
-                                on:click={(event) => {
-                                  event.stopPropagation();
-                                  dispatch("remove_var_type", {
-                                    id: datum.id,
-                                    variable: var_type_wrapper,
-                                  });
-                                }}
-                                on:keyup={() => {}}
-                              >
-                              </button> -->
                           </div>
                           {#if var_type_wrapper.confidence}
                             <div class="mt-0.5 text-xs italic text-gray-600">
-                              <!-- {(1 - var_type_wrapper.confidence).toFixed(2)} -->
                               {var_type_wrapper.confidence}
                             </div>
                           {/if}
