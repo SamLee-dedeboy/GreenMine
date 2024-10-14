@@ -26,6 +26,7 @@
     undefined;
 
   function handleActionSnippetChange(event: Event) {
+    console.log("Snippet selected:", (event.target as HTMLSelectElement).value);
     const value = (event.target as HTMLSelectElement).value;
     selectedSnippet = value;
   }
@@ -56,6 +57,13 @@
         ? selectedSourceValue === undefined || selectedTargetValue === undefined
         : selectedValue === undefined)
     ) {
+      console.log({
+        selectedAction,
+        selectedSnippet,
+        selectedValue,
+        selectedSourceValue,
+        selectedTargetValue,
+      });
       alert("Please make all selections before updating rules.");
     } else {
       console.log("All selections made:", {
@@ -118,12 +126,12 @@
                   for="snippet-select"
                   class="w-1/3 text-sm italic text-gray-600">Snippet</label
                 >
-                <select
-                  id="snippet-select"
-                  class="w-2/3 cursor-pointer rounded-md border border-gray-300 bg-white pl-1 text-gray-500 focus:border-blue-500 focus:outline-none"
+                <input
+                  list="snippet-select"
+                  class="w-2/3 rounded-md border border-gray-300 bg-white pl-1 text-gray-500 focus:border-blue-500 focus:outline-none"
                   on:change={(event) => handleActionSnippetChange(event)}
-                  bind:value={selectedSnippet}
-                >
+                />
+                <datalist id="snippet-select">
                   <option
                     value={undefined}
                     disabled
@@ -135,7 +143,7 @@
                   {#each interview_ids as id}
                     <option value={id}>{id}</option>
                   {/each}
-                </select>
+                </datalist>
               </div>
               <div class="flex flex-row">
                 <label
