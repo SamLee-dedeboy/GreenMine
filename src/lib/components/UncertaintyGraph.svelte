@@ -306,7 +306,7 @@
       </div>
     </div>
   {/if}
-  <div class="relative">
+  <div class="relative flex flex-col">
     <svg id={svgId} class="uncertainty-graph-container max-h-full max-w-full">
     </svg>
     <svg
@@ -390,8 +390,29 @@
     </svg>
   </div>
   <div
-    class="uncertainty-tooltip absolute bottom-0 left-0 right-0 max-h-[10rem] overflow-y-auto rounded px-3 text-xs outline outline-1 outline-gray-300"
-  ></div>
+    class="relative z-50 mt-2 flex h-1 grow flex-col text-xs outline outline-1 outline-gray-300"
+  >
+    <div class="flex h-1 grow divide-x">
+      <div class="flex flex-1 flex-col">
+        <div
+          class="mx-1 flex items-center justify-center rounded bg-yellow-200"
+        >
+          Conversation
+        </div>
+        <div
+          class="uncertainty-tooltip-conversation flex h-1 grow flex-col overflow-y-auto text-left"
+        ></div>
+      </div>
+      <div class="flex flex-1 flex-col">
+        <div class="mx-1 flex items-center justify-center rounded bg-gray-200">
+          Explanation
+        </div>
+        <div
+          class="uncertainty-tooltip-explanation h-1 grow overflow-y-auto pl-1 text-left"
+        ></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <style lang="postcss">
@@ -409,6 +430,11 @@
     }
     & .node-not-highlighted {
       @apply opacity-20;
+    }
+  }
+  .uncertainty-tooltip-conversation {
+    & p {
+      @apply border border-dashed border-black bg-yellow-100 pl-1 pr-3;
     }
   }
 </style>

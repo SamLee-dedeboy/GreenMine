@@ -61,40 +61,41 @@ def get_data():
     return {"interviews": interview_data, "v1": v1_data}
 
 
-@app.route("/pipeline/<step>/all_versions/")
-def get_pipeline_versions(step):
-    versions = set()
-
-    # Check prompts
-    prompt_files = os.listdir(prompt_path)
-    for file in prompt_files:
-        if file.endswith(f"_identify_{step}s.json"):
-            version = file.split("_")[0]
-            versions.add(version)
-
-    # Check pipeline results
-    result_files = os.listdir(os.path.join(pipeline_result_path, f"identify_{step}s"))
-    for file in result_files:
-        if file.startswith("v") and file.endswith(f"_chunk_w_{step}s.json"):
-            version = file.split("_")[0]
-            versions.add(version)
-
-    # Check definitions (only for var_type and var)
-    if step in ["var_type", "var"]:
-        definition_files = os.listdir(prompt_context_path)
-        for file in definition_files:
-            if file.endswith(f"_{step}_definitions.json"):
+@app.route("/pipeline/all_versions/")
+def get_pipeline_versions():
+    res = {}
+    for step in ["var_type", "var", "link"]:
+        versions = set()
+        # Check prompts
+        prompt_files = os.listdir(prompt_path)
+        for file in prompt_files:
+            if file.endswith(f"_identify_{step}s.json"):
                 version = file.split("_")[0]
                 versions.add(version)
 
-    # Convert versions to a sorted list of integers
-    version_numbers = sorted([int(v.replace("v", "")) for v in versions])
+        # Check pipeline results
+        result_files = os.listdir(
+            os.path.join(pipeline_result_path, f"identify_{step}s")
+        )
+        for file in result_files:
+            if file.startswith("v") and file.endswith(f"_chunk_w_{step}s.json"):
+                version = file.split("_")[0]
+                versions.add(version)
 
-    return {
-        "step": step,
-        "total_versions": len(version_numbers),
-        "versions": [f"v{v}" for v in version_numbers],
-    }
+        # Check definitions (only for var_type and var)
+        if step in ["var_type", "var"]:
+            definition_files = os.listdir(prompt_context_path)
+            for file in definition_files:
+                if file.endswith(f"_{step}_definitions.json"):
+                    version = file.split("_")[0]
+                    versions.add(version)
+
+        # Convert versions to a sorted list of integers
+        version_numbers = sorted([int(v.replace("v", "")) for v in versions])
+        res[step] = {
+            "versions": [f"v{v}" for v in version_numbers],
+        }
+    return json.dumps(res)
 
 
 @app.route("/pipeline/<step>/<version>/")

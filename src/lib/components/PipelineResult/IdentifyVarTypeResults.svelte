@@ -17,7 +17,7 @@
   let show_uncertainty_graph = false;
   $: has_uncertainty = data.some((datum) => datum.uncertainty);
   const dispatch = createEventDispatcher();
-  $: dispatch("version_changed", current_version);
+  $: handleVersionChanged(current_version);
 
   function varTypeConfidenceShadow(confidence: number | undefined) {
     if (!confidence) return `unset`;
@@ -40,6 +40,11 @@
 
   function generate_explanation_html(var_type: string, explanation: string) {
     return `<span style="background-color: ${$varTypeColorScale(var_type)}; text-transform: capitalize; padding-left: 0.125rem; padding-right: 0.125rem;">${var_type}</span>:${explanation}`;
+  }
+
+  function handleVersionChanged(current_version) {
+    dispatch("version_changed", current_version);
+    show_uncertainty_graph = false;
   }
   onMount(() => {
     console.log({ data });

@@ -7,8 +7,7 @@
   import VarDataEntry from "lib/components/DataEntry/VarDataEntry.svelte";
   import RuleEntry from "lib/components/DataEntry/RuleEntry.svelte";
   import PromptHeader from "../components/PromptHeader.svelte";
-  import { fade, slide, fly, blur, draw, crossfade } from "svelte/transition";
-  import { cubicOut } from "svelte/easing";
+  import { slide } from "svelte/transition";
 
   import type {
     tServerPipelineData,
@@ -22,9 +21,7 @@
   } from "lib/types";
   import { updatePanelData } from "lib/utils/update_with_log";
   import { server_address } from "lib/constants";
-  import { var_type_names } from "lib/constants";
   import { createEventDispatcher, tick, getContext, onMount } from "svelte";
-  import { sort_by_id } from "lib/utils";
   export let versionsCount: { [key: string]: tVersionInfo };
   export let interview_ids: string[] = [];
   const stepMap = {
@@ -89,18 +86,20 @@
     }
     return result;
   }
-  function changeStep(newStep: number) {
-    if (newStep) {
-      const newStepStr = stepMap[newStep];
-      fetchVersionsCount(newStepStr)
-        .then(() => fetchPipelineData(newStepStr, current_versions[step]))
-        .then(() => fetchMenuData(newStepStr, right_panel_version))
+  function changeStep(newStepNumber: number) {
+    console.log("change step", newStepNumber);
+    if (newStepNumber) {
+      const newStep = stepMap[newStepNumber];
+      current_versions[newStep] =
+        `v${versionsCount[newStep].versions.length - 1}`;
+      fetchPipelineData(newStep, current_versions[newStep])
+        .then(() => fetchMenuData(newStep, right_panel_version))
         .then(() => {
-          if (newStepStr === "var_type") {
-            fetchRuleMenu(newStepStr, current_versions[newStepStr]);
-          } else if (newStepStr === "var") {
-            fetchRuleMenu(step, current_versions[newStepStr]);
-          } else if (newStepStr === "link") {
+          if (newStep === "var_type") {
+            fetchRuleMenu(newStep, current_versions[newStep]);
+          } else if (newStep === "var") {
+            fetchRuleMenu(newStep, current_versions[newStep]);
+          } else if (newStep === "link") {
             fetchRuleMenu("var", current_versions["var"]);
             if (!prompt_data.identify_vars) {
               fetchPipelineData("var", current_versions["var"]);
@@ -109,25 +108,19 @@
           }
         })
         .then(() => {
-          show_step = newStep;
+          show_step = newStepNumber; //number
           step = stepMap[show_step]; //string
           right_panel_version = "v0";
         });
     }
   }
 
-  function fetchVersionsCount(step: string): Promise<void> {
+  function fetchVersionsCount(): Promise<void> {
     return new Promise((resolve, reject) => {
-      fetch(`${server_address}/pipeline/${step}/all_versions`)
+      fetch(`${server_address}/pipeline/all_versions`)
         .then((res) => res.json())
-        .then((data) => {
-          versionsCount = {
-            ...versionsCount,
-            [step]: {
-              total_versions: data.total_versions,
-              versions: data.versions,
-            },
-          };
+        .then((res) => {
+          versionsCount = res;
           const versions = versionsCount[step].versions;
           current_versions[step] = versions[versions.length - 1];
           resolve();
@@ -139,6 +132,7 @@
         });
     });
   }
+
   function fetchRuleMenu(step: string, version: string) {
     const key = `identify_${step}s`;
     return fetch(`${server_address}/pipeline/${step}/${version}/`)
@@ -377,7 +371,7 @@
         .then((response) => response.text()) // Change this line from response.json() to response.text()
         .then((data) => {
           if (data === "success") {
-            fetchVersionsCount(step);
+            fetchVersionsCount();
             fetchPipelineData(step, newVersion);
           } else {
             console.error("Unexpected response:", data);
@@ -388,6 +382,7 @@
         });
     }
   }
+
   function handleSave(event) {
     const { type, data } = event.detail;
     const key = `identify_${stepMap[show_step]}s`;
@@ -405,6 +400,7 @@
     }
     save_data(prompt_data, pipeline_result, key);
   }
+
   function save_data(
     data: tServerPromptData,
     pipeline_tmp_data: tServerPipelineData,
@@ -496,10 +492,16 @@
         .filter((chunk) => chunk["identify_var_types_result"].length > 0)
         .map((chunk) => {
           return chunk["identify_var_types_result"].map((mention) => {
+            const conversations = chunk.conversation.map((c) => c.content);
             return {
               id: chunk.id,
               var_type: mention.var_type,
               uncertainty: mention.uncertainty,
+              evidence: mention.evidence,
+              evidence_conversation: mention.evidence.map(
+                (e) => conversations[e],
+              ),
+              explanation: mention.explanation,
               text:
                 evidenceToString(
                   mention.evidence,
@@ -526,6 +528,7 @@
                   var_type: var_type,
                   var: mention.var,
                   uncertainty: mention.uncertainty,
+                  evidence: mention.evidence,
                   text:
                     evidenceToString(
                       mention.evidence,
@@ -555,6 +558,7 @@
                 .map((r) => r.label)
                 .join("/"),
               uncertainty: link_mention.uncertainty,
+              evidence: link_mention.response.evidence,
               text:
                 evidenceToString(
                   link_mention.response.evidence,
@@ -660,7 +664,8 @@
   }
 
   onMount(async () => {
-    await fetchVersionsCount(step);
+    console.log("on mount");
+    await fetchVersionsCount();
     await fetchPipelineData(step, current_versions[step]);
     await fetchMenuData(step, right_panel_version);
     await fetchRuleMenu(step, current_versions[step]);
@@ -736,195 +741,192 @@
     </div>
   </div>
 
-  {#key show_step}
-    {#if show_step === 1 && prompt_data?.identify_var_types}
-      <div in:slide|global class="step-1 flex h-1 grow">
-        <div
-          class="flex min-w-[25rem] max-w-[30rem] flex-col gap-y-1 overflow-y-auto bg-gray-100"
-        >
-          <PromptHeader
-            title="Identify Indicators"
-            versionCount={versionsCount["var_type"]}
-            current_version={current_versions["var_type"]}
-            on:run={() =>
-              execute_prompt(
-                prompt_data,
-                "identify_var_types",
-                current_versions["var_type"],
-              )}
-            bind:measure_uncertainty
-            on:toggle-measure-uncertainty={() =>
-              (measure_uncertainty = !measure_uncertainty)}
-            on:select-version={(e) => handle_version_selected(e.detail)}
-            on:add-version={() => handle_version_added("var_type")}
-          ></PromptHeader>
-          <VarTypeDataEntry
-            bind:data={prompt_data.identify_var_types.var_type_definitions}
-            on:save={handleSave}
-          ></VarTypeDataEntry>
-          <PromptEntry
-            data={{
-              system_prompt_blocks:
-                prompt_data.identify_var_types.system_prompt_blocks,
-              user_prompt_blocks:
-                prompt_data.identify_var_types.user_prompt_blocks,
-            }}
-            on:save={handleSave}
-          />
-          <RuleEntry
-            {interview_ids}
-            {menu_data}
-            {step}
-            logData={log["identify_var_types"]}
-            on:rule_change={(e) => update_rules(e)}
-          />
-        </div>
-        <IdentifyVarTypeResults
-          data={pipeline_result?.identify_var_types || []}
-          title={`Results: Version ${+current_versions[step].slice(1) + 1}`}
+  {#if show_step === 1 && prompt_data?.identify_var_types}
+    <div in:slide|global class="step-1 flex h-1 grow">
+      <div
+        class="flex min-w-[25rem] max-w-[30rem] flex-col gap-y-1 overflow-y-auto bg-gray-100"
+      >
+        <PromptHeader
+          title="Identify Indicators"
+          versionCount={versionsCount["var_type"]}
           current_version={current_versions["var_type"]}
-          versions={[]}
-          {data_loading}
-          {uncertainty_graph_loading}
-          {estimated_time}
-          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+          on:run={() =>
+            execute_prompt(
+              prompt_data,
+              "identify_var_types",
+              current_versions["var_type"],
+            )}
+          bind:measure_uncertainty
+          on:toggle-measure-uncertainty={() =>
+            (measure_uncertainty = !measure_uncertainty)}
+          on:select-version={(e) => handle_version_selected(e.detail)}
+          on:add-version={() => handle_version_added("var_type")}
+        ></PromptHeader>
+        <VarTypeDataEntry
+          bind:data={prompt_data.identify_var_types.var_type_definitions}
+          on:save={handleSave}
+        ></VarTypeDataEntry>
+        <PromptEntry
+          data={{
+            system_prompt_blocks:
+              prompt_data.identify_var_types.system_prompt_blocks,
+            user_prompt_blocks:
+              prompt_data.identify_var_types.user_prompt_blocks,
+          }}
+          on:save={handleSave}
         />
-        <IdentifyVarTypeResults
-          data={right_panel_result?.identify_var_types || []}
-          title={right_panel_version}
-          current_version={right_panel_version}
-          versions={versionsCount["var_type"].versions}
-          data_loading={false}
-          uncertainty_graph_loading={false}
-          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
-          on:version_changed={(e) => handle_version_change(e.detail)}
-        />
-      </div>
-    {:else if show_step === 2 && prompt_data.identify_vars}
-      <div in:slide|global class="step-2 flex h-1 grow">
-        <div
-          class="flex min-w-[25] max-w-[30rem] flex-col gap-y-1 overflow-y-auto bg-gray-100"
-        >
-          <PromptHeader
-            title="Identify Variables"
-            versionCount={versionsCount["var"]}
-            current_version={current_versions["var"]}
-            on:run={() =>
-              execute_prompt(
-                prompt_data,
-                "identify_vars",
-                current_versions["var"],
-              )}
-            bind:measure_uncertainty
-            on:toggle-measure-uncertainty={() =>
-              (measure_uncertainty = !measure_uncertainty)}
-            on:select-version={(e) => handle_version_selected(e.detail)}
-            on:add-version={() => handle_version_added("var")}
-          ></PromptHeader>
-          <VarDataEntry
-            bind:data={prompt_data.identify_vars.var_definitions}
-            on:save={handleSave}
-          ></VarDataEntry>
-          <PromptEntry
-            data={{
-              system_prompt_blocks:
-                prompt_data.identify_vars.system_prompt_blocks,
-              user_prompt_blocks: prompt_data.identify_vars.user_prompt_blocks,
-            }}
-            on:save={handleSave}
-          />
-          <RuleEntry
-            {interview_ids}
-            {menu_data}
-            {step}
-            logData={log["identify_vars"]}
-            on:rule_change={(e) => update_rules(e)}
-          />
-        </div>
-        <IdentifyVarResults
-          data={pipeline_result?.identify_vars || []}
-          title={`Results: Version ${+current_versions[step].slice(1) + 1}`}
-          versions={[]}
-          current_version={right_panel_version}
-          {data_loading}
-          {uncertainty_graph_loading}
-          variable_definitions={prompt_data.identify_vars.var_definitions}
-          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
-        />
-        <IdentifyVarResults
-          data={right_panel_result?.identify_vars || []}
-          title={right_panel_version}
-          versions={versionsCount["var"].versions}
-          current_version={right_panel_version}
-          data_loading={false}
-          uncertainty_graph_loading={false}
-          variable_definitions={right_prompt_data.identify_vars.var_definitions}
-          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
-          on:version_changed={(e) => handle_version_change(e.detail)}
+        <RuleEntry
+          {interview_ids}
+          {menu_data}
+          {step}
+          logData={log["identify_var_types"]}
+          on:rule_change={(e) => update_rules(e)}
         />
       </div>
-    {:else if show_step === 3 && prompt_data.identify_links}
-      <div in:slide|global class="step-2 flex h-1 grow">
-        <div
-          class="flex min-w-[25rem] max-w-[30rem] flex-col gap-y-1 overflow-y-auto bg-gray-100"
-        >
-          <PromptHeader
-            title="Identify Links"
-            versionCount={versionsCount["link"]}
-            current_version={current_versions["link"]}
-            on:run={() =>
-              execute_prompt(
-                prompt_data,
-                "identify_links",
-                current_versions["link"],
-              )}
-            bind:measure_uncertainty
-            on:toggle-measure-uncertainty={() =>
-              (measure_uncertainty = !measure_uncertainty)}
-            on:select-version={(e) => handle_version_selected(e.detail)}
-            on:add-version={() => handle_version_added("link")}
-          ></PromptHeader>
-          <PromptEntry
-            data={{
-              system_prompt_blocks:
-                prompt_data.identify_links.system_prompt_blocks,
-              user_prompt_blocks: prompt_data.identify_links.user_prompt_blocks,
-            }}
-            on:save={handleSave}
-          />
-          <RuleEntry
-            {interview_ids}
-            {menu_data}
-            {step}
-            logData={log["identify_links"]}
-            on:rule_change={(e) => update_rules(e)}
-          />
-        </div>
-        <IdentifyLinkResults
-          data={pipeline_result?.identify_links || []}
-          title={`Results: Version ${+current_versions[step].slice(1) + 1}`}
-          versions={[]}
-          current_version={right_panel_version}
-          {data_loading}
-          {uncertainty_graph_loading}
-          variable_definitions={prompt_data.identify_vars?.var_definitions}
-          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+      <IdentifyVarTypeResults
+        data={pipeline_result?.identify_var_types || []}
+        title={`Results: Version ${+current_versions[step].slice(1) + 1}`}
+        current_version={current_versions["var_type"]}
+        versions={[]}
+        {data_loading}
+        {uncertainty_graph_loading}
+        {estimated_time}
+        on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+      />
+      <IdentifyVarTypeResults
+        data={right_panel_result?.identify_var_types || []}
+        title={right_panel_version}
+        current_version={right_panel_version}
+        versions={versionsCount["var_type"].versions}
+        data_loading={false}
+        uncertainty_graph_loading={false}
+        on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+        on:version_changed={(e) => handle_version_change(e.detail)}
+      />
+    </div>
+  {:else if show_step === 2 && prompt_data.identify_vars}
+    <div in:slide|global class="step-2 flex h-1 grow">
+      <div
+        class="flex min-w-[25] max-w-[30rem] flex-col gap-y-1 overflow-y-auto bg-gray-100"
+      >
+        <PromptHeader
+          title="Identify Variables"
+          versionCount={versionsCount["var"]}
+          current_version={current_versions["var"]}
+          on:run={() =>
+            execute_prompt(
+              prompt_data,
+              "identify_vars",
+              current_versions["var"],
+            )}
+          bind:measure_uncertainty
+          on:toggle-measure-uncertainty={() =>
+            (measure_uncertainty = !measure_uncertainty)}
+          on:select-version={(e) => handle_version_selected(e.detail)}
+          on:add-version={() => handle_version_added("var")}
+        ></PromptHeader>
+        <VarDataEntry
+          bind:data={prompt_data.identify_vars.var_definitions}
+          on:save={handleSave}
+        ></VarDataEntry>
+        <PromptEntry
+          data={{
+            system_prompt_blocks:
+              prompt_data.identify_vars.system_prompt_blocks,
+            user_prompt_blocks: prompt_data.identify_vars.user_prompt_blocks,
+          }}
+          on:save={handleSave}
         />
-        <IdentifyLinkResults
-          data={right_panel_result?.identify_links || []}
-          title={right_panel_version}
-          versions={versionsCount["link"].versions}
-          current_version={right_panel_version}
-          data_loading={false}
-          uncertainty_graph_loading={false}
-          variable_definitions={right_prompt_data.identify_vars
-            ?.var_definitions}
-          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
-          on:version_changed={(e) => handle_version_change(e.detail)}
+        <RuleEntry
+          {interview_ids}
+          {menu_data}
+          {step}
+          logData={log["identify_vars"]}
+          on:rule_change={(e) => update_rules(e)}
         />
       </div>
-    {/if}
-  {/key}
+      <IdentifyVarResults
+        data={pipeline_result?.identify_vars || []}
+        title={`Results: Version ${+current_versions[step].slice(1) + 1}`}
+        versions={[]}
+        current_version={right_panel_version}
+        {data_loading}
+        {uncertainty_graph_loading}
+        variable_definitions={prompt_data.identify_vars.var_definitions}
+        on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+      />
+      <IdentifyVarResults
+        data={right_panel_result?.identify_vars || []}
+        title={right_panel_version}
+        versions={versionsCount["var"].versions}
+        current_version={right_panel_version}
+        data_loading={false}
+        uncertainty_graph_loading={false}
+        variable_definitions={right_prompt_data.identify_vars.var_definitions}
+        on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+        on:version_changed={(e) => handle_version_change(e.detail)}
+      />
+    </div>
+  {:else if show_step === 3 && prompt_data.identify_links}
+    <div in:slide|global class="step-2 flex h-1 grow">
+      <div
+        class="flex min-w-[25rem] max-w-[30rem] flex-col gap-y-1 overflow-y-auto bg-gray-100"
+      >
+        <PromptHeader
+          title="Identify Links"
+          versionCount={versionsCount["link"]}
+          current_version={current_versions["link"]}
+          on:run={() =>
+            execute_prompt(
+              prompt_data,
+              "identify_links",
+              current_versions["link"],
+            )}
+          bind:measure_uncertainty
+          on:toggle-measure-uncertainty={() =>
+            (measure_uncertainty = !measure_uncertainty)}
+          on:select-version={(e) => handle_version_selected(e.detail)}
+          on:add-version={() => handle_version_added("link")}
+        ></PromptHeader>
+        <PromptEntry
+          data={{
+            system_prompt_blocks:
+              prompt_data.identify_links.system_prompt_blocks,
+            user_prompt_blocks: prompt_data.identify_links.user_prompt_blocks,
+          }}
+          on:save={handleSave}
+        />
+        <RuleEntry
+          {interview_ids}
+          {menu_data}
+          {step}
+          logData={log["identify_links"]}
+          on:rule_change={(e) => update_rules(e)}
+        />
+      </div>
+      <IdentifyLinkResults
+        data={pipeline_result?.identify_links || []}
+        title={`Results: Version ${+current_versions[step].slice(1) + 1}`}
+        versions={[]}
+        current_version={right_panel_version}
+        {data_loading}
+        {uncertainty_graph_loading}
+        variable_definitions={prompt_data.identify_vars?.var_definitions}
+        on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+      />
+      <IdentifyLinkResults
+        data={right_panel_result?.identify_links || []}
+        title={right_panel_version}
+        versions={versionsCount["link"].versions}
+        current_version={right_panel_version}
+        data_loading={false}
+        uncertainty_graph_loading={false}
+        variable_definitions={right_prompt_data.identify_vars?.var_definitions}
+        on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+        on:version_changed={(e) => handle_version_change(e.detail)}
+      />
+    </div>
+  {/if}
 
   <button
     aria-label="close"

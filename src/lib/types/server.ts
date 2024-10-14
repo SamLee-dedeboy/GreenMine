@@ -41,7 +41,7 @@ export type tVarData = Record<
 export type tPrompt = {
   system_prompt_blocks: [string, string][];
   user_prompt_blocks: [string, string][];
-  based_on: string;
+  based_on?: string;
 };
 
 export type tServerPipelineData = {

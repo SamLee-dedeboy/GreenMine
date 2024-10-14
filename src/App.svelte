@@ -58,15 +58,17 @@
       .then((res: tServerData) => {
         // console.log({ res });
         interview_data = res.interviews;
-        interview_ids = interview_data.flatMap(file => 
-          file.data.map(interview => interview.id)
+        interview_ids = interview_data.flatMap((file) =>
+          file.data.map((interview) => interview.id),
         );
         interview_ids.sort((a, b) => {
-          const [fileA, numA] = a.split('_');
-          const [fileB, numB] = b.split('_');
-          
+          const [fileA, numA] = a.split("_");
+          const [fileB, numB] = b.split("_");
+
           // First, compare the file names (N1, N2, etc.)
-          const fileComparison = fileA.localeCompare(fileB, undefined, {numeric: true});
+          const fileComparison = fileA.localeCompare(fileB, undefined, {
+            numeric: true,
+          });
           if (fileComparison !== 0) {
             return fileComparison;
           }
@@ -157,7 +159,7 @@
       {/if}
       {#if show_keywordsea}
         <div
-          class="absolute left-1/4 top-1/2 z-10 flex h-[80vh] w-[70vw] min-w-[85rem] -translate-x-1/4 -translate-y-1/2 items-stretch overflow-hidden rounded-md bg-gray-200 pt-[1.4rem] shadow-md outline outline-1 outline-gray-300"
+          class="absolute left-1/4 top-1/2 z-10 flex h-[80vh] w-[70vw] min-w-[85rem] -translate-x-1/4 -translate-y-1/2 items-stretch overflow-hidden rounded-md bg-gray-200 pt-[2rem] shadow-md outline outline-1 outline-gray-300"
           use:draggable
         >
           <KeywordSeaViewer
