@@ -158,7 +158,14 @@ export class UncertaintyGraph {
             .attr("stroke-width", 1)
             .attr("cursor", "pointer")
             .on("mouseover", function (e, d) {
-              d3.select(".uncertainty-tooltip").html(d.text);
+              const conversation = conversationToHtml(
+                d.evidence,
+                d.evidence_conversation,
+                d.id.split("_")[0],
+              );
+              const explanation = d.explanation;
+              d3.select(".uncertainty-tooltip-conversation").html(conversation);
+              d3.select(".uncertainty-tooltip-explanation").html(explanation);
             });
           if (highlight_ids.length > 0) {
             enter_nodes
@@ -256,7 +263,7 @@ export class UncertaintyGraph {
             Math.min(this.innerSize.width, this.innerSize.height) / 2,
           )[1],
       )
-      .attr("stroke", "black")
+      .attr("stroke", "lightgray")
       .attr("stroke-width", 1)
       .attr("stroke-dasharray", "5,5");
   }
@@ -294,7 +301,8 @@ export class UncertaintyGraph {
       .attr("text-anchor", "middle")
       .attr("dominant-baseline", "middle")
       .attr("font-size", 10)
-      .attr("fill", (d) => darkenColor(this.clusterColorScale("" + d), 30));
+      .attr("fill", (d) => darkenColor(this.clusterColorScale("" + d), 30))
+      .attr("pointer-events", "none");
   }
 }
 
@@ -400,4 +408,19 @@ function darkenColor(hex, percent) {
   // Convert back to hex and return
   const toHex = (value) => value.toString(16).padStart(2, "0");
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function conversationToHtml(
+  evidence: number[],
+  conversation: string[],
+  pid: string,
+) {
+  let conversation_html = "";
+  conversation.forEach((c, i) => {
+    if (i > 0 && evidence[i] - evidence[i - 1] > 1) {
+      conversation_html += `<p>...</p>`;
+    }
+    conversation_html += `<p>${pid}: ${c}</p>`;
+  });
+  return conversation_html;
 }

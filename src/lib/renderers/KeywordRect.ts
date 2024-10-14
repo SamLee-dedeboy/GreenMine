@@ -61,18 +61,15 @@ export class KeyWordRect {
     color = "#0d6db1";
     const xScale = this.xScale_keywords;
     const yScale = this.yScale_keywords;
-    console.log("update_keywords", keyword_data, stat_key, color);
     const nodes_dict = collect_nodes(keyword_data, stat_key, xScale, yScale);
     const maxStat = Math.max(...Object.values(nodes_dict).map((d) => d.degree));
+    console.log("update_keywords", keyword_data, stat_key, color, maxStat);
     // scales
     const scaleColor = d3
       .scaleLinear()
-      .domain([0, Math.sqrt(maxStat)])
+      .domain([0, maxStat])
       .range(["#eeeeee", color]);
-    const scaleFontSize = d3
-      .scaleLinear()
-      .domain([0, Math.sqrt(maxStat)])
-      .range([0.7, 1.5]); // rem
+    const scaleFontSize = d3.scaleLinear().domain([0, maxStat]).range([0.7, 4]); // rem
 
     // update keywords
     console.log("update_keywords", nodes_dict);

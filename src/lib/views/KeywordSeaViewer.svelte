@@ -22,7 +22,7 @@
   <div class="mt-[-3rem] flex h-[3rem] w-fit shrink-0 items-end text-sm">
     {#each var_type_options as var_type}
       <button
-        class="h-[2rem] rounded border p-1 capitalize outline-double outline-1 outline-gray-300"
+        class=" h-[1.5rem] rounded border p-1 capitalize outline-double outline-1 outline-gray-300"
         style={`background-color: ${setOpacity($varTypeColorScale(var_type), 0.7, "rgbHex")}`}
         class:active={keywordsea_var_type === var_type}
         on:click={() => {
@@ -73,7 +73,7 @@
   </div>
   <button
     aria-label="close"
-    class="text-magnum-800 focus:shadow-magnum-400 absolute right-1 top-[-2.5rem] inline-flex h-5
+    class="text-magnum-800 focus:shadow-magnum-400 absolute right-1 top-[-1.6rem] inline-flex h-5
               w-5 appearance-none items-center justify-center
               rounded-full hover:bg-zinc-300"
     style="cursor: pointer"
@@ -85,7 +85,7 @@
 
 <style lang="postcss">
   .active {
-    @apply pointer-events-none h-[3rem];
+    @apply pointer-events-none  h-[2.2rem];
     transition: all 0.3s;
   }
   .stat-key-button {
