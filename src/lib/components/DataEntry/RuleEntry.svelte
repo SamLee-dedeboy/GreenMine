@@ -6,6 +6,7 @@
   import { varTypeColorScale } from "lib/store";
   import VarsDropDown from "lib/components/VarsDropDown.svelte";
   import { sort_by_id, setOpacity, sort_by_var_type } from "lib/utils";
+  import { Rule } from "postcss";
   const dispatch = createEventDispatcher();
 
   export let interview_ids: any = [];
@@ -49,7 +50,7 @@
     }
   }
 
-  function handleRuleChange() {
+  function handleAddRule() {
     if (
       selectedAction === undefined ||
       selectedSnippet === undefined ||
@@ -57,13 +58,6 @@
         ? selectedSourceValue === undefined || selectedTargetValue === undefined
         : selectedValue === undefined)
     ) {
-      console.log({
-        selectedAction,
-        selectedSnippet,
-        selectedValue,
-        selectedSourceValue,
-        selectedTargetValue,
-      });
       alert("Please make all selections before updating rules.");
     } else {
       console.log("All selections made:", {
@@ -83,7 +77,7 @@
             : [selectedValue!],
       };
 
-      dispatch("rule_change", logEntry);
+      dispatch("rule_change", [logEntry, "add"]);
 
       // Reset all selections
       selectedAction = "add";
@@ -92,6 +86,10 @@
       selectedSourceValue = undefined;
       selectedTargetValue = undefined;
     }
+  }
+
+  function handleRemoveRule(index: number) {
+    dispatch("rule_change", [index, "remove"]);
   }
 
   const VarSpan = ({ value, action, type }) => `
@@ -211,7 +209,7 @@
             <div class="mb-3 flex justify-center font-mono">
               <button
                 class="mx-1 inline-flex w-full items-center justify-center rounded-sm bg-green-200 px-8 text-base capitalize outline outline-1 outline-gray-300 hover:bg-green-300"
-                on:click={() => handleRuleChange()}
+                on:click={() => handleAddRule()}
               >
                 Add rule
               </button>
@@ -235,7 +233,7 @@
             </div>
             <div class="flex h-1 w-full grow flex-col">
               {#if logData.length > 0}
-                {#each logData as entry}
+                {#each logData as entry, index}
                   <div class="mt-2 flex items-center">
                     <span class="mr-1 flex-shrink-0 text-gray-600"
                       >{entry.id}</span
@@ -278,6 +276,19 @@
                         </div>
                       </div>
                     {/if}
+                    <div
+                      role="button"
+                      tabindex="0"
+                      class="ml-auto flex h-6 w-6 cursor-pointer items-center justify-center rounded text-xs text-gray-500 hover:bg-gray-400"
+                      on:click={() => handleRemoveRule(index)}
+                      on:keyup={() => {}}
+                    >
+                      <img
+                        src="remove.svg"
+                        alt="remove"
+                        class="h-3 w-3 object-contain"
+                      />
+                    </div>
                   </div>
                 {/each}
               {:else}

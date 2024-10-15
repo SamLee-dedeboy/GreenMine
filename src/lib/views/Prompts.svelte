@@ -434,46 +434,56 @@
     return JSON.stringify(arr1) === JSON.stringify(arr2);
   }
   function update_rules(e) {
-    let record: LogEntry = e.detail;
+    const [event_data, action]: [LogEntry | number, string] = e.detail;
     const key = `identify_${stepMap[show_step]}s`;
-    // TODO: check if doing dif action on the same snippet and value record
-    if (key in log) {
-      const exactMatch = log[key].find(
-        (entry) =>
-          entry.id === record.id &&
-          entry.action === record.action &&
-          isEqual(entry.value, record.value),
-      );
+    if (action === "add") {
+      const record = event_data as LogEntry;
 
-      if (exactMatch) {
-        alert(
-          "A rule with the same snippet, value, and action already exists.",
+      // TODO: check if doing dif action on the same snippet and value record
+      if (key in log) {
+        const exactMatch = log[key].find(
+          (entry) =>
+            entry.id === record.id &&
+            entry.action === record.action &&
+            isEqual(entry.value, record.value),
         );
-        return; // Exit the function without adding the duplicate
-      }
 
-      const similarRecord = log[key].find(
-        (entry) => entry.id === record.id && isEqual(entry.value, record.value),
-      );
-
-      if (similarRecord) {
-        const actionVerb = similarRecord.action === "add" ? "added" : "removed";
-        const userChoice = confirm(
-          `There is a rule ${actionVerb} with the same content. Do you want to update it?`,
-        );
-        if (userChoice) {
-          log[key].splice(similarRecord, 1);
-          log[key].push(record);
-          log = log;
-          return;
-        } else {
-          return;
+        if (exactMatch) {
+          alert(
+            "A rule with the same snippet, value, and action already exists.",
+          );
+          return; // Exit the function without adding the duplicate
         }
+
+        const similarRecord = log[key].find(
+          (entry) =>
+            entry.id === record.id && isEqual(entry.value, record.value),
+        );
+
+        if (similarRecord) {
+          const actionVerb =
+            similarRecord.action === "add" ? "added" : "removed";
+          const userChoice = confirm(
+            `There is a rule ${actionVerb} with the same content. Do you want to update it?`,
+          );
+          if (userChoice) {
+            log[key].splice(similarRecord, 1);
+            log[key].push(record);
+            log = log;
+            return;
+          } else {
+            return;
+          }
+        }
+        log[key].push(record);
+        log = log; // Trigger reactivity
       }
-      log[key].push(record);
-      log = log; // Trigger reactivity
+    } else if (action === "remove") {
+      const index = event_data as number;
+      log[key] = log[key].filter((_, i) => i !== index);
     }
     console.log("update log", log);
+    save_log(log);
 
     pipeline_result = updatePanelData(pipeline_result, log, key);
     right_panel_result = updatePanelData(right_panel_result, log, key);
@@ -573,6 +583,7 @@
       return target_chunks;
     }
   }
+
   function group_by_var_type(data: any[]) {
     console.log("grouping by var type", data);
     return Object.groupBy(data, (d) => d.var_type);
@@ -663,12 +674,34 @@
     return data;
   }
 
+  function fetchLog() {
+    fetch(`${server_address}/log/get/`)
+      .then((res) => res.json())
+      .then((res) => {
+        log = res;
+        console.log("fetched log", log);
+      });
+  }
+  function save_log(log) {
+    fetch(`${server_address}/log/save/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        log,
+      }),
+    }).then((res) => {
+      console.log("saved log", res);
+    });
+  }
   onMount(async () => {
     console.log("on mount");
     await fetchVersionsCount();
     await fetchPipelineData(step, current_versions[step]);
     await fetchMenuData(step, right_panel_version);
     await fetchRuleMenu(step, current_versions[step]);
+    await fetchLog();
   });
 </script>
 

@@ -30,6 +30,8 @@ pipeline_result_path = relative_path(dirname, "data/v2/user/pipeline/")
 prompt_path = relative_path(dirname, "GPTUtils/prompts/")
 # prompt context data path
 prompt_context_path = relative_path(dirname, "GPTUtils/contexts/")
+# log path
+log_path = relative_path(dirname, "data/v2/user/log/")
 # openai
 openai_api_key = open(relative_path(dirname, "openai_api_key")).read()
 openai_client = OpenAI(api_key=openai_api_key, timeout=10)
@@ -589,6 +591,19 @@ def get_uncertainty_graph():
         )
     )
     return json.dumps(data, default=vars)
+
+
+@app.route("/log/save/", methods=["POST"])
+def save_log():
+    log = request.json["log"]
+    local.save_json(log, f"{log_path}log.json")
+    return "success"
+
+
+@app.route("/log/get/", methods=["GET"])
+def get_log():
+    log = json.load(open(f"{log_path}log.json", encoding="utf-8"))
+    return log
 
 
 def process_interview(filepaths):
