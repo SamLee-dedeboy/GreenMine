@@ -64,16 +64,17 @@ def get_data():
 
 
 @app.route("/pipeline/all_versions/")
-def get_pipeline_versions():
+@app.route("/pipeline/all_versions/<empty_flag>/")
+def get_pipeline_versions(empty_flag="allow_empty"):
     res = {}
     for step in ["var_type", "var", "link"]:
-        versions = set()
+        versions = []
         # Check prompts
-        prompt_files = os.listdir(prompt_path)
-        for file in prompt_files:
-            if file.endswith(f"_identify_{step}s.json"):
-                version = file.split("_")[0]
-                versions.add(version)
+        # prompt_files = os.listdir(prompt_path)
+        # for file in prompt_files:
+        #     if file.endswith(f"_identify_{step}s.json"):
+        #         version = file.split("_")[0]
+        #         versions.add(version)
 
         # Check pipeline results
         result_files = os.listdir(
@@ -82,15 +83,23 @@ def get_pipeline_versions():
         for file in result_files:
             if file.startswith("v") and file.endswith(f"_chunk_w_{step}s.json"):
                 version = file.split("_")[0]
-                versions.add(version)
+                data = json.load(
+                    open(
+                        os.path.join(pipeline_result_path, f"identify_{step}s", file),
+                        encoding="utf-8",
+                    )
+                )
+                if empty_flag == "not_allow_empty" and len(data) == 0:
+                    continue
+                versions.append(version)
 
-        # Check definitions (only for var_type and var)
-        if step in ["var_type", "var"]:
-            definition_files = os.listdir(prompt_context_path)
-            for file in definition_files:
-                if file.endswith(f"_{step}_definitions.json"):
-                    version = file.split("_")[0]
-                    versions.add(version)
+        # # Check definitions (only for var_type and var)
+        # if step in ["var_type", "var"]:
+        #     definition_files = os.listdir(prompt_context_path)
+        #     for file in definition_files:
+        #         if file.endswith(f"_{step}_definitions.json"):
+        #             version = file.split("_")[0]
+        #             versions.add(version)
 
         # Convert versions to a sorted list of integers
         version_numbers = sorted([int(v.replace("v", "")) for v in versions])
@@ -184,6 +193,8 @@ def getDPSIR(link_version):
             encoding="utf-8",
         )
     )
+    if identify_links == []:
+        return {"DPSIR_data": {}, "pipeline_links": []}
     pipeline_links = [
         link for chunk in identify_links for link in chunk["identify_links_result"]
     ]

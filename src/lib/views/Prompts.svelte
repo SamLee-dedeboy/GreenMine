@@ -355,7 +355,7 @@
     fetchMenuData(step, version);
   }
   function handle_version_added(key: string) {
-    const nextVersionNumber = versionsCount[key].total_versions; // start from 0
+    const nextVersionNumber = versionsCount[key].versions.length; // start from 0
     const newVersion = `v${nextVersionNumber}`;
     current_versions[step] = newVersion;
     if (!versionsCount[key].versions.includes(newVersion)) {

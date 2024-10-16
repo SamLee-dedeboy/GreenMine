@@ -132,6 +132,7 @@ export class UncertaintyGraph {
         coordinates_2d: polarToCartesian(
           self.innerSize.center,
           cluster_angles[datum.cluster].mid,
+          // datum.angle,
           self.polarRadiusScale(datum.uncertainty),
         ),
       };
@@ -144,7 +145,6 @@ export class UncertaintyGraph {
       .data(data_w_coordinates, func_id)
       .join(
         (enter) => {
-          console.log("enter", enter.nodes());
           const enter_nodes = enter
             .append("circle")
             .attr("class", "node")
@@ -266,7 +266,33 @@ export class UncertaintyGraph {
       .attr("stroke", "lightgray")
       .attr("stroke-width", 1)
       .attr("stroke-dasharray", "5,5");
+    // axis_group
+    //   .append("line")
+    //   .attr("x1", this.innerSize.center[0])
+    //   .attr("y1", this.innerSize.center[1])
+    //   .attr(
+    //     "x2",
+    //     (d) =>
+    //       polarToCartesian(
+    //         this.innerSize.center,
+    //         0,
+    //         Math.min(this.innerSize.width, this.innerSize.height) / 2,
+    //       )[0],
+    //   )
+    //   .attr(
+    //     "y2",
+    //     (d) =>
+    //       polarToCartesian(
+    //         this.innerSize.center,
+    //         0,
+    //         Math.min(this.innerSize.width, this.innerSize.height) / 2,
+    //       )[1],
+    //   )
+    //   .attr("stroke", "black")
+    //   .attr("stroke-width", 1)
+    //   .attr("stroke-dasharray", "5,5");
   }
+
   updateClusterLabels(
     cluster_angles: Record<number, any>,
     cluster_labels: Record<number, string>,

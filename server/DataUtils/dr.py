@@ -119,14 +119,16 @@ def objective(theta, D):
     """
     n = len(theta)
     # Compute pairwise circular distances
-    d = np.minimum(
-        np.abs(theta[:, np.newaxis] - theta[np.newaxis, :]),
-        2 * np.pi - np.abs(theta[:, np.newaxis] - theta[np.newaxis, :]),
+    d = 1 - np.cos(
+        np.minimum(
+            np.abs(theta[:, np.newaxis] - theta[np.newaxis, :]),
+            2 * np.pi - np.abs(theta[:, np.newaxis] - theta[np.newaxis, :]),
+        )
     )
 
     # Compute the difference only for i < j to avoid double counting and zero diagonals
     mask = np.triu(np.ones((n, n)), k=1).astype(bool)
-    diff = d[mask] - D[mask]
+    diff = d[mask] - 2 * D[mask]
 
     return np.sum(diff**2)
 
@@ -145,6 +147,9 @@ def optimize_positions(D, initial_theta=None, verbose=False):
     """
     n = D.shape[0]
 
+    d_min = np.min(D)
+    d_max = np.max(D)
+    D = (D - d_min) / (d_max - d_min)
     if initial_theta is None:
         # Initialize theta randomly between 0 and 2pi
         initial_theta = np.random.uniform(0, 2 * np.pi, n)

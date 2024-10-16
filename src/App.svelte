@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount, setContext } from "svelte";
   import InterviewViewer from "lib/views/InterviewViewer_v2.svelte";
-  import SummaryView from "lib/components/ScatterSummary.svelte";
   import SimGraph from "lib/v1/SimGraph.svelte";
   import ControlPanel from "lib/components/ControlPanel.svelte";
   import { draggable } from "lib/utils/draggable";
@@ -22,6 +21,7 @@
   import { varTypeColorScale } from "lib/store";
   import Prompts from "lib/views/Prompts.svelte";
   import KeywordSeaViewer from "lib/views/KeywordSeaViewer.svelte";
+  import VersionsMenu from "lib/components/PipelineResult/VersionsMenu.svelte";
 
   let interview_data: tTranscript[];
   let interview_ids: string[];
@@ -42,9 +42,12 @@
   let chunk_graph: any;
   let chunk_coordinates: any;
   // let timeline_data: any;
+  let vis_link_versions = [];
+  let current_vis_link_version;
 
   let fetch_success = false;
 
+  $: fetchDPSIRData(current_vis_link_version);
   function fetchTest() {
     // fetch data from backend
     fetch(server_address + "/test/").then((res) => {
@@ -52,6 +55,7 @@
       fetch_success = res.ok;
     });
   }
+
   function fetchData() {
     fetch(`${server_address}/v1_data/`)
       .then((res) => res.json())
@@ -93,7 +97,9 @@
       });
   }
 
-  function fetchDPSIRData(link_version: string = "v0") {
+  function fetchDPSIRData(link_version: string | undefined = "v0") {
+    if (!link_version) return;
+    console.log("fetching DPSIR data", link_version);
     data_loading = true;
     fetch(`${server_address}/dpsir/${link_version}/`)
       .then((res) => res.json())
@@ -106,6 +112,19 @@
           .domain(var_types)
           .range(d3.schemeSet2);
         data_loading = false;
+      });
+  }
+
+  function fetchLinkVersion() {
+    fetch(`${server_address}/pipeline/all_versions/not_allow_empty/`)
+      .then((res) => res.json())
+      .then((res) => {
+        vis_link_versions = res["link"].versions;
+        current_vis_link_version =
+          vis_link_versions[vis_link_versions.length - 1];
+      })
+      .catch((error) => {
+        console.error(`Error fetching versions count for links:`, error);
       });
   }
 
@@ -132,7 +151,8 @@
   onMount(async () => {
     await fetchTest();
     await fetchData();
-    await fetchDPSIRData();
+    await fetchLinkVersion();
+    // await fetchDPSIRData(current_vis_link_version);
   });
 
   setContext("fetchData", fetchData);
@@ -198,6 +218,12 @@
             <div>Data Loading...</div>
           {/if}
           {#if !data_loading && show_dpsir}
+            <div class="absolute left-[10rem] top-4 w-fit">
+              <VersionsMenu
+                versions={vis_link_versions}
+                bind:current_version={current_vis_link_version}
+              ></VersionsMenu>
+            </div>
             <DPSIR data={var_data} links={vis_links}></DPSIR>
           {/if}
           {#if !data_loading && !show_dpsir}
