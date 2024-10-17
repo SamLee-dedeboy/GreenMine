@@ -28,10 +28,9 @@
   $: fetchPlotData(version, key);
 
   function updatePlot(_dr_result, _group, _highlighted_vars) {
-    // if (!_dr_result[_group]) return;
     allow_switch_group = false;
-    let highlight_ids = [];
-    if (key === "identify_vars") {
+    let highlight_ids: string[] | undefined = undefined;
+    if (key === "identify_vars" && _highlighted_vars.length > 0) {
       highlight_ids = _dr_result[_group]
         .filter(
           (d) =>
@@ -46,15 +45,17 @@
       const [_src_group, _dst_group] = _group;
       const [_src_vars, _dst_vars] = _highlighted_vars;
       _group = _src_group + "-" + _dst_group;
-      highlight_ids = _dr_result[_group]
-        .filter(
-          (l) =>
-            (src_highlighted_vars.length === 0 ||
-              src_highlighted_vars.includes(l.var1)) &&
-            (dst_highlighted_vars.length === 0 ||
-              dst_highlighted_vars.includes(l.var2)),
-        )
-        .map((d) => d.id);
+      if (src_highlighted_vars.length > 0 || dst_highlighted_vars.length > 0) {
+        highlight_ids = _dr_result[_group]
+          .filter(
+            (l) =>
+              (src_highlighted_vars.length === 0 ||
+                src_highlighted_vars.includes(l.var1)) &&
+              (dst_highlighted_vars.length === 0 ||
+                dst_highlighted_vars.includes(l.var2)),
+          )
+          .map((d) => d.id);
+      }
     }
     console.log({ _dr_result, _group, _highlighted_vars, highlight_ids });
     uncertaintyGraph.update(
@@ -86,11 +87,15 @@
   onMount(() => {
     uncertaintyGraph.init();
     uncertaintyGraph.on("force_end", () => {
+      console.log("force end", allow_switch_group);
       allow_switch_group = true;
     });
     if (key === "identify_vars") {
-      //   highlighted_vars = variables[group].map((v) => v.var_name);
       highlighted_vars = [];
+    }
+    if (key === "identify_links") {
+      src_highlighted_vars = [];
+      dst_highlighted_vars = [];
     }
   });
 </script>
