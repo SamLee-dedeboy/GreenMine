@@ -95,7 +95,7 @@
   });
 </script>
 
-<div class="relative flex h-full w-full flex-col">
+<div class="relative flex w-full grow flex-col overflow-y-auto">
   {#if key !== "identify_links"}
     <div class="flex justify-around">
       {#each var_type_names as t}
@@ -390,9 +390,9 @@
     </svg>
   </div>
   <div
-    class="relative z-50 mt-2 flex h-1 grow flex-col text-xs outline outline-1 outline-gray-300"
+    class="relative z-50 mt-2 flex grow flex-col text-xs outline outline-1 outline-gray-300"
   >
-    <div class="flex h-1 grow divide-x">
+    <div class="flex divide-x">
       <div class="flex flex-1 flex-col">
         <div
           class="mx-1 flex items-center justify-center rounded bg-yellow-200"
@@ -400,7 +400,7 @@
           Conversation
         </div>
         <div
-          class="uncertainty-tooltip-conversation flex h-1 grow flex-col overflow-y-auto text-left"
+          class="uncertainty-tooltip-conversation flex max-h-[12rem] grow flex-col overflow-y-auto text-left"
         ></div>
       </div>
       <div class="flex flex-1 flex-col">

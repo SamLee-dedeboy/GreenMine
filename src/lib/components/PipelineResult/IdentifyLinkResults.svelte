@@ -19,7 +19,7 @@
   let show_uncertainty_graph = false;
   $: has_uncertainty = data.some((datum) => datum.uncertainty.identify_links);
   $: max_degree = compute_max_degree(data);
-  $: dispatch("version_changed", current_version);
+  $: handleVersionChanged(current_version);
 
   function compute_max_degree(data: tIdentifyLinks[]) {
     let chunk_max_degree = 0;
@@ -44,6 +44,10 @@
       );
     });
     return chunk_max_degree;
+  }
+  function handleVersionChanged(current_version) {
+    dispatch("version_changed", current_version);
+    show_uncertainty_graph = false;
   }
   onMount(() => {
     console.log("links:", { data });
@@ -275,11 +279,17 @@
         {/each}
       </div>
     {:else}
-      <UncertaintyGraph
-        version={current_version}
-        key="identify_links"
-        variables={variable_definitions}
-      ></UncertaintyGraph>
+      <div
+        class="flex h-1 grow flex-col rounded-md p-2 shadow-md outline outline-1 outline-gray-300"
+      >
+        {#if !uncertainty_graph_loading && has_uncertainty}
+          <UncertaintyGraph
+            version={current_version}
+            key="identify_links"
+            variables={variable_definitions}
+          ></UncertaintyGraph>
+        {/if}
+      </div>
     {/if}
   </div>
 </div>

@@ -25,10 +25,14 @@
   export let current_version: string;
   export let variable_definitions: tVarData;
   const dispatch = createEventDispatcher();
-  $: dispatch("version_changed", current_version);
+  $: handleVersionChanged(current_version);
   let show_uncertainty_graph = false;
   $: has_uncertainty = data.some((datum) => datum.uncertainty.identify_vars);
   // let has_uncertainty = true;
+  function handleVersionChanged(current_version) {
+    dispatch("version_changed", current_version);
+    show_uncertainty_graph = false;
+  }
 
   onMount(() => {
     console.log({ data });
@@ -72,9 +76,7 @@
   });
 </script>
 
-<div
-  class="flex h-full min-w-[25rem] flex-1 flex-col bg-gray-100 px-1 shadow-lg"
->
+<div class="flex min-w-[25rem] flex-1 flex-col bg-gray-100 px-1 shadow-lg">
   {#if versions.length > 0}
     <VersionsMenu {versions} bind:current_version />
   {:else}
@@ -82,11 +84,11 @@
       {title}
     </h2>
   {/if}
-  <div class="flex grow flex-col divide-y divide-black">
+  <div class="flex h-1 grow flex-col divide-y divide-black">
     <div class="flex divide-x py-0.5 font-serif">
       {#if show_others}
         <div class="ml-1">Keywords around "其他"</div>
-      {:else}
+      {:else if !show_uncertainty_graph}
         <div class="w-[4rem] shrink-0">Snippet</div>
         <div class="flex pl-2">Variables</div>
       {/if}
@@ -96,7 +98,10 @@
           role="button"
           class:enabled={has_uncertainty && !uncertainty_graph_loading}
           class:active={show_uncertainty_graph}
-          on:click={() => (show_uncertainty_graph = !show_uncertainty_graph)}
+          on:click={() => {
+            show_uncertainty_graph = !show_uncertainty_graph;
+            if (show_uncertainty_graph) show_others = false;
+          }}
           on:keyup={() => {}}
           class="pointer-events-none relative flex items-center rounded px-1 py-0.5 text-xs italic opacity-50 hover:bg-green-200"
         >
@@ -110,8 +115,12 @@
         <div
           role="button"
           tabindex="0"
-          class="flex items-center gap-x-0.5 px-1 py-0.5 text-xs hover:bg-gray-300"
-          on:click={() => (show_others = !show_others)}
+          class="flex items-center gap-x-0.5 px-1 py-0.5 text-xs hover:bg-green-200"
+          class:active={show_others}
+          on:click={() => {
+            show_others = !show_others;
+            if (show_others) show_uncertainty_graph = false;
+          }}
           on:keyup={() => {}}
         >
           <img class="h-4 w-4" src="book_open.svg" alt="explore" />其他
@@ -242,18 +251,16 @@
         {/each}
       </div>
     {:else}
-      <div class="flex h-1 grow flex-col p-2">
-        <div
-          class="flex flex-1 items-center justify-center overflow-hidden rounded-md shadow-md outline outline-1 outline-gray-300"
-        >
-          {#if !uncertainty_graph_loading && has_uncertainty}
-            <UncertaintyGraph
-              version={current_version}
-              key="identify_vars"
-              variables={variable_definitions}
-            ></UncertaintyGraph>
-          {/if}
-        </div>
+      <div
+        class="flex h-1 grow flex-col rounded-md p-2 shadow-md outline outline-1 outline-gray-300"
+      >
+        {#if !uncertainty_graph_loading && has_uncertainty}
+          <UncertaintyGraph
+            version={current_version}
+            key="identify_vars"
+            variables={variable_definitions}
+          ></UncertaintyGraph>
+        {/if}
       </div>
     {/if}
   </div>

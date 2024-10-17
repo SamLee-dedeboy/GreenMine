@@ -533,12 +533,17 @@
           return Object.entries(chunk["identify_vars_result"]).map(
             ([var_type, mentions]) => {
               return (mentions as any[]).map((mention) => {
+                const conversations = chunk.conversation.map((c) => c.content);
                 return {
                   id: chunk.id,
                   var_type: var_type,
                   var: mention.var,
                   uncertainty: mention.uncertainty,
                   evidence: mention.evidence,
+                  evidence_conversation: mention.evidence.map(
+                    (e) => conversations[e],
+                  ),
+                  explanation: mention.explanation,
                   text:
                     evidenceToString(
                       mention.evidence,
@@ -558,6 +563,7 @@
         .filter((chunk) => chunk["identify_links_result"].length > 0)
         .map((chunk) => {
           return chunk["identify_links_result"].map((link_mention) => {
+            const conversations = chunk.conversation.map((c) => c.content);
             return {
               id: link_mention.chunk_id,
               indicator1: link_mention.indicator1,
@@ -569,6 +575,10 @@
                 .join("/"),
               uncertainty: link_mention.uncertainty,
               evidence: link_mention.response.evidence,
+              evidence_conversation: link_mention.response.evidence.map(
+                (e) => conversations[e],
+              ),
+              explanation: link_mention.response.explanation,
               text:
                 evidenceToString(
                   link_mention.response.evidence,
@@ -941,7 +951,7 @@
         data={pipeline_result?.identify_links || []}
         title={`Results: Version ${+current_versions[step].slice(1) + 1}`}
         versions={[]}
-        current_version={right_panel_version}
+        current_version={current_versions["link"]}
         {data_loading}
         {uncertainty_graph_loading}
         variable_definitions={prompt_data.identify_vars?.var_definitions}

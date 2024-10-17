@@ -170,15 +170,13 @@
         {/each}
       </div>
     {:else}
-      <div class="flex h-1 grow flex-col p-2">
-        <div
-          class="flex flex-1 items-center justify-center overflow-hidden rounded-md shadow-md outline outline-1 outline-gray-300"
-        >
-          {#if !uncertainty_graph_loading && has_uncertainty}
-            <UncertaintyGraph version={current_version} key="identify_var_types"
-            ></UncertaintyGraph>
-          {/if}
-        </div>
+      <div
+        class="flex h-1 grow flex-col rounded-md p-2 shadow-md outline outline-1 outline-gray-300"
+      >
+        {#if !uncertainty_graph_loading && has_uncertainty}
+          <UncertaintyGraph version={current_version} key="identify_var_types"
+          ></UncertaintyGraph>
+        {/if}
       </div>
     {/if}
   </div>

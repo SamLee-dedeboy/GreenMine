@@ -157,15 +157,24 @@ export class UncertaintyGraph {
             .attr("stroke", "black")
             .attr("stroke-width", 1)
             .attr("cursor", "pointer")
-            .on("mouseover", function (e, d) {
+            .on("click", function (e, d) {
+              console.log("click", d);
               const conversation = conversationToHtml(
                 d.evidence,
                 d.evidence_conversation,
                 d.id.split("_")[0],
               );
               const explanation = d.explanation;
-              d3.select(".uncertainty-tooltip-conversation").html(conversation);
-              d3.select(".uncertainty-tooltip-explanation").html(explanation);
+              const tooltip_conversation = d3
+                .select(svg.node().parentNode.parentNode)
+                .select(".uncertainty-tooltip-conversation")
+                .html(conversation);
+              d3.select(svg.node().parentNode.parentNode)
+                .select(".uncertainty-tooltip-explanation")
+                .html(explanation);
+              tooltip_conversation
+                .node()
+                .scrollIntoView({ behavior: "smooth" });
             });
           if (highlight_ids.length > 0) {
             enter_nodes
@@ -193,7 +202,7 @@ export class UncertaintyGraph {
               "collide",
               d3.forceCollide((d) => d.r * 1.3),
             )
-            .on("tick", () => {
+            .on("tick", function () {
               enter_nodes.each(function (d) {
                 d.x = clip(d.x, [
                   self.innerSize.x + d.r,
