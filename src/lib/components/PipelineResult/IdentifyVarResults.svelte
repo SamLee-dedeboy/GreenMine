@@ -40,7 +40,7 @@
 
   function sort_by_uncertainty(data: tIdentifyVars[]) {
     if (data.length === 0) return data;
-    if (!data[0].uncertainty) {
+    if (!has_uncertainty) {
       return sort_by_id(data);
     }
     return data.sort(

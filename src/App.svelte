@@ -218,7 +218,7 @@
             <div>Data Loading...</div>
           {/if}
           {#if !data_loading && show_dpsir}
-            <div class="absolute left-[10rem] top-4 w-fit">
+            <div class="absolute left-[10rem] top-4 z-10 w-fit">
               <VersionsMenu
                 versions={vis_link_versions}
                 bind:current_version={current_vis_link_version}

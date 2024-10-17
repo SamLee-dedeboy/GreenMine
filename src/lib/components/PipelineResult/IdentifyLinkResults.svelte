@@ -55,7 +55,7 @@
   function sort_by_uncertainty(data: tIdentifyLinks[]) {
     console.log("sort_by_uncertainty", data);
     if (data.length === 0) return data;
-    if (!data[0].uncertainty) {
+    if (!has_uncertainty) {
       return sort_by_id(data);
     }
     console.log("sorting_by_uncertainty", data);
