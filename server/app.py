@@ -46,7 +46,7 @@ kpca_reducer = dr.init_kpca_reducer(
     list(map(lambda x: x["embedding"], keyword_embeddings))
 )
 
-testing = True
+testing = False
 
 
 @app.route("/test/")
@@ -182,6 +182,16 @@ def create_and_save_new_pipeline(step):
     return "success"
 
 
+@app.route("/pipeline/<step>/delete/", methods=["POST"])
+def delete_pipeline(step):
+    version = request.json["version"]
+    if step in ["var_type", "var"]:
+        os.remove(f"{prompt_context_path}{version}_{step}_definitions.json")
+    os.remove(f"{prompt_path}{version}_identify_{step}s.json")
+    os.remove(f"{pipeline_result_path}identify_{step}s/{version}_chunk_w_{step}s.json")
+    return "success"
+
+
 @app.route("/dpsir/<link_version>/")
 def getDPSIR(link_version):
     link_version_number = link_version.replace("v", "")
@@ -313,9 +323,9 @@ def curate_identify_vars():
     var_definitions = request.json["var_definitions"]
     system_prompt_blocks = request.json["system_prompt_blocks"]
     user_prompt_blocks = request.json["user_prompt_blocks"]
-    current_versions = request.json["current_versions"]
+    var_version = request.json["version"]
     # get var type version
-    var_type_version = current_versions["var_type"]
+    var_type_version = request.json["based_on"]
     var_type_definitions = json.load(
         open(
             f"{prompt_context_path}{var_type_version}_var_type_definitions.json",
@@ -323,7 +333,6 @@ def curate_identify_vars():
         )
     )
     # get var version
-    var_version = current_versions["var"]
     var_definitions = json.load(
         open(
             f"{prompt_context_path}{var_version}_var_definitions.json", encoding="utf-8"
@@ -414,9 +423,9 @@ def curate_identify_links():
     # raw_variable_definitions = request.json["var_def"]
     system_prompt_blocks = request.json["system_prompt_blocks"]
     user_prompt_blocks = request.json["user_prompt_blocks"]
-    current_versions = request.json["current_versions"]
+    var_version = request.json["based_on"]
+    link_version = request.json["version"]
     # get var version
-    var_version = current_versions["var"]
     all_chunks = json.load(
         open(
             f"{pipeline_result_path}identify_vars/{var_version}_chunk_w_vars.json",
@@ -429,7 +438,6 @@ def curate_identify_links():
         )
     )
     # get link version
-    link_version = current_versions["link"]
     candidate_links = query.filter_candidate_links(all_chunks)
 
     variable_definitions = {

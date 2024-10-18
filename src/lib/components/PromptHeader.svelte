@@ -6,11 +6,11 @@
   export let title: string = "Prompt Viewer";
   export let measure_uncertainty: boolean = false;
   export let versionCount: tVersionInfo = {
-    total_versions: 0,
     versions: [],
   };
+  export let based_on_options: tVersionInfo;
   export let current_version: string;
-  let show_versions = true;
+  export let based_on: string;
 </script>
 
 <div
@@ -49,16 +49,39 @@
       </div>
     </div>
   </div>
+  {#if based_on_options.versions.length > 0}
+    <div class="flex gap-x-2">
+      <div class="w-[6rem] rounded px-2 font-serif">Based on:</div>
+      <div class="flex gap-x-2">
+        {#each based_on_options.versions as option}
+          <button
+            class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 font-semibold text-gray-600 opacity-80 outline outline-[1.5px] outline-gray-400 hover:bg-green-200 hover:opacity-100"
+            class:selected={based_on === option}
+            on:click={() => (based_on = option)}
+          >
+            {+option.slice(1) + 1}
+          </button>
+        {/each}
+      </div>
+    </div>
+  {/if}
   <div class="flex items-center gap-x-2">
-    <div class="rounded px-2 font-serif">Versions:</div>
+    <div class="w-[6rem] rounded px-2 font-serif">Versions:</div>
     <div class="flex justify-center divide-x pt-1">
       <div class="flex flex-wrap justify-center gap-2">
         {#each versionCount.versions as version}
           <button
-            class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 font-semibold text-gray-600 opacity-80 outline outline-[1.5px] outline-gray-400 hover:bg-green-200 hover:opacity-100"
+            class="relative flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 font-semibold text-gray-600 opacity-80 outline outline-[1.5px] outline-gray-400 hover:bg-green-200 hover:opacity-100"
             class:selected={version === current_version}
-            on:click={() => dispatch("select-version", version)}
+            on:click={() => dispatch("delete-version", version)}
           >
+            {#if version === current_version}
+              <div
+                class="absolute bottom-0 left-0 right-0 top-0 hidden items-center justify-center rounded-full bg-red-200"
+              >
+                <img src="X.svg" alt="X" />
+              </div>
+            {/if}
             {+version.slice(1) + 1}
           </button>
         {/each}
@@ -81,6 +104,9 @@
   }
   .selected {
     @apply bg-green-200 text-black opacity-100 shadow-md outline-2 outline-black;
+  }
+  .selected:hover > div {
+    @apply flex;
   }
   .entry-trigger {
     @apply rounded-sm bg-gray-200 text-gray-700 outline-double outline-1 outline-gray-600 hover:bg-gray-300;

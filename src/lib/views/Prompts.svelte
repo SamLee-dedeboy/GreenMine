@@ -208,6 +208,7 @@
     key: string,
     version: string,
   ) {
+    console.log("executing prompt", data, key, version);
     if (!data) return;
     data_loading = true;
     const estimated_times = {
@@ -226,11 +227,12 @@
       body: JSON.stringify({
         ...data[key],
         compute_uncertainty: measure_uncertainty,
-        current_versions: current_versions,
+        version: version,
       }),
     })
       .then((res) => res.json())
       .then((res) => {
+        console.log("executed prompt", res);
         pipeline_result = {
           ...pipeline_result,
           [key]: res,
@@ -381,6 +383,30 @@
           console.error("Error saving data:", error);
         });
     }
+  }
+
+  function handle_version_deleted(key: string, version: string) {
+    fetch(server_address + `/pipeline/${step}/delete/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        version: version,
+      }),
+    })
+      .then((response) => response.text()) // Change this line from response.json() to response.text()
+      .then(async (data) => {
+        if (data === "success") {
+          await fetchVersionsCount();
+          fetchPipelineData(step, current_versions[step]);
+        } else {
+          console.error("Unexpected response:", data);
+        }
+      })
+      .catch((error) => {
+        console.error("Error saving data:", error);
+      });
   }
 
   function handleSave(event) {
@@ -729,11 +755,11 @@
       on:keyup={() => {}}
     >
       <span>Indicators</span>
-      <span
+      <!-- <span
         class="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-gray-300 text-xs"
       >
         {`v${+current_versions["var_type"].slice(1) + 1}`}
-      </span>
+      </span> -->
     </div>
     <div class="flex h-full items-center p-0.5">
       <img
@@ -753,11 +779,11 @@
       on:keyup={() => {}}
     >
       <span>Variables</span>
-      <span
+      <!-- <span
         class="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-gray-300 text-xs"
       >
         {`v${+current_versions["var"].slice(1) + 1}`}
-      </span>
+      </span> -->
     </div>
     <div class="flex h-full items-center p-0.5">
       <img
@@ -776,11 +802,11 @@
       on:keyup={() => {}}
     >
       <span>Links</span>
-      <span
+      <!-- <span
         class="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-gray-300 text-xs"
       >
         {`v${+current_versions["link"].slice(1) + 1}`}
-      </span>
+      </span> -->
     </div>
   </div>
 
@@ -792,6 +818,7 @@
         <PromptHeader
           title="Identify Indicators"
           versionCount={versionsCount["var_type"]}
+          based_on_options={{ versions: [] }}
           current_version={current_versions["var_type"]}
           on:run={() =>
             execute_prompt(
@@ -804,6 +831,8 @@
             (measure_uncertainty = !measure_uncertainty)}
           on:select-version={(e) => handle_version_selected(e.detail)}
           on:add-version={() => handle_version_added("var_type")}
+          on:delete-version={(e) =>
+            handle_version_deleted("var_type", e.detail)}
         ></PromptHeader>
         <VarTypeDataEntry
           bind:data={prompt_data.identify_var_types.var_type_definitions}
@@ -856,6 +885,8 @@
           title="Identify Variables"
           versionCount={versionsCount["var"]}
           current_version={current_versions["var"]}
+          based_on_options={versionsCount["var_type"]}
+          bind:based_on={prompt_data.identify_vars.based_on}
           on:run={() =>
             execute_prompt(
               prompt_data,
@@ -867,6 +898,7 @@
             (measure_uncertainty = !measure_uncertainty)}
           on:select-version={(e) => handle_version_selected(e.detail)}
           on:add-version={() => handle_version_added("var")}
+          on:delete-version={(e) => handle_version_deleted("var", e.detail)}
         ></PromptHeader>
         <VarDataEntry
           bind:data={prompt_data.identify_vars.var_definitions}
@@ -919,6 +951,8 @@
           title="Identify Links"
           versionCount={versionsCount["link"]}
           current_version={current_versions["link"]}
+          based_on_options={versionsCount["var"]}
+          bind:based_on={prompt_data.identify_links.based_on}
           on:run={() =>
             execute_prompt(
               prompt_data,
@@ -930,6 +964,7 @@
             (measure_uncertainty = !measure_uncertainty)}
           on:select-version={(e) => handle_version_selected(e.detail)}
           on:add-version={() => handle_version_added("link")}
+          on:delete-version={(e) => handle_version_deleted("link", e.detail)}
         ></PromptHeader>
         <PromptEntry
           data={{

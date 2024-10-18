@@ -102,6 +102,6 @@ export type LogRecord = {
 };
 
 export type tVersionInfo = {
-  total_versions: number;
+  // total_versions: number;
   versions: string[];
 };
