@@ -6,6 +6,7 @@
   import LinkResultGraph from "./LinkResultGraph.svelte";
   import VersionsMenu from "./VersionsMenu.svelte";
   import UncertaintyGraph from "../UncertaintyGraph.svelte";
+  import DataLoading from "lib/components/DataLoading.svelte";
 
   const dispatch = createEventDispatcher();
   export let data: tIdentifyLinks[];
@@ -15,6 +16,7 @@
   export let uncertainty_graph_loading: boolean;
   export let current_version: string;
   export let variable_definitions: tVarData;
+  export let estimated_time = 0;
   let show_graph = Array(data.length).fill(false);
   let show_uncertainty_graph = false;
   $: has_uncertainty = data.some((datum) => datum.uncertainty.identify_links);
@@ -119,7 +121,9 @@
       </div>
     </div>
     {#if data_loading}
-      <div class="flex h-full items-center justify-center">Data Loading...</div>
+      <div class="flex h-full items-center justify-center">
+        <DataLoading {estimated_time} />
+      </div>
     {:else if !show_uncertainty_graph}
       <div
         class="flex h-1 grow flex-col divide-y divide-black overflow-y-auto pr-3"

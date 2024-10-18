@@ -20,7 +20,7 @@
     tIdentifyLinks,
   } from "lib/types";
   import { updatePanelData } from "lib/utils/update_with_log";
-  import { server_address } from "lib/constants";
+  import { server_address, estimated_times } from "lib/constants";
   import { createEventDispatcher, tick, getContext, onMount } from "svelte";
   export let versionsCount: { [key: string]: tVersionInfo };
   export let interview_ids: string[] = [];
@@ -211,12 +211,6 @@
     console.log("executing prompt", data, key, version);
     if (!data) return;
     data_loading = true;
-    const estimated_times = {
-      identify_var_types: 30 * 1000, // ms
-      identify_vars: 100,
-      identify_links: 100,
-    };
-    estimated_time = estimated_times[key] * (measure_uncertainty ? 5 : 1);
     last_execute_prompt_step_number = step_to_numbers[key];
 
     await fetch(server_address + `/curation/${key}/`, {
@@ -862,7 +856,8 @@
         versions={[]}
         {data_loading}
         {uncertainty_graph_loading}
-        {estimated_time}
+        estimated_time={estimated_times["identify_var_types"] *
+          (measure_uncertainty ? 5 : 1)}
         on:navigate_evidence={(e) => navigate_evidence(e.detail)}
       />
       <IdentifyVarTypeResults
@@ -928,6 +923,8 @@
         {data_loading}
         {uncertainty_graph_loading}
         variable_definitions={prompt_data.identify_vars.var_definitions}
+        estimated_time={estimated_times["identify_vars"] *
+          (measure_uncertainty ? 5 : 1)}
         on:navigate_evidence={(e) => navigate_evidence(e.detail)}
       />
       <IdentifyVarResults
@@ -988,6 +985,8 @@
         versions={[]}
         current_version={current_versions["link"]}
         {data_loading}
+        estimated_time={estimated_times["identify_links"] *
+          (measure_uncertainty ? 5 : 1)}
         {uncertainty_graph_loading}
         variable_definitions={prompt_data.identify_vars?.var_definitions}
         on:navigate_evidence={(e) => navigate_evidence(e.detail)}

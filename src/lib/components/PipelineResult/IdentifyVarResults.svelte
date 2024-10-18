@@ -7,6 +7,7 @@
   import { server_address } from "lib/constants";
   import KeywordSea from "lib/components/KeywordSea.svelte";
   import UncertaintyGraph from "lib/components/UncertaintyGraph.svelte";
+  import DataLoading from "lib/components/DataLoading.svelte";
 
   let clicked_var_type_for_others: string = "driver";
 
@@ -24,6 +25,7 @@
   export let uncertainty_graph_loading: boolean;
   export let current_version: string;
   export let variable_definitions: tVarData;
+  export let estimated_time = 0;
   const dispatch = createEventDispatcher();
   $: handleVersionChanged(current_version);
   let show_uncertainty_graph = false;
@@ -128,7 +130,9 @@
       </div>
     </div>
     {#if data_loading}
-      <div class="flex h-full items-center justify-center">Data Loading...</div>
+      <div class="flex h-full items-center justify-center">
+        <DataLoading {estimated_time} />
+      </div>
     {:else if show_others}
       {#await fetch_data_for_others(data)}
         <div>Loading...</div>

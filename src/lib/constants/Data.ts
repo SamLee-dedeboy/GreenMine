@@ -23,3 +23,9 @@ export const topicname = [
   "陸地生態環境",
 ];
 export const emotionname = ["resigned", "neutral", "worried", "angry", "proud"];
+
+export const estimated_times = {
+  identify_var_types: 30 * 1000, // ms
+  identify_vars: 30 * 1000,
+  identify_links: 120 * 1000,
+};
