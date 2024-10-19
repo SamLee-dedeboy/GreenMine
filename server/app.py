@@ -189,6 +189,12 @@ def delete_pipeline(step):
         os.remove(f"{prompt_context_path}{version}_{step}_definitions.json")
     os.remove(f"{prompt_path}{version}_identify_{step}s.json")
     os.remove(f"{pipeline_result_path}identify_{step}s/{version}_chunk_w_{step}s.json")
+    try:
+        os.remove(
+            f"{pipeline_result_path}identify_{step}s/{version}_identify_{step}s_uncertainty_graph.json"
+        )
+    except OSError:
+        pass
     return "success"
 
 

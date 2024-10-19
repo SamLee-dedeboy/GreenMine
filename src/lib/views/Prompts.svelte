@@ -351,8 +351,12 @@
     fetchMenuData(step, version);
   }
   function handle_version_added(key: string) {
-    const nextVersionNumber = versionsCount[key].versions.length; // start from 0
+    const nextVersionNumber =
+      (+versionsCount[key].versions[
+        versionsCount[key].versions.length - 1
+      ].replace("v", "") || 0) + 1; // start from 0
     const newVersion = `v${nextVersionNumber}`;
+    console.log("new version", newVersion, versionsCount[key].versions);
     current_versions[step] = newVersion;
     if (!versionsCount[key].versions.includes(newVersion)) {
       fetch(server_address + `/pipeline/${step}/create_and_save_new/`, {

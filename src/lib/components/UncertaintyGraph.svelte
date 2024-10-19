@@ -87,7 +87,6 @@
   onMount(() => {
     uncertaintyGraph.init();
     uncertaintyGraph.on("force_end", () => {
-      console.log("force end", allow_switch_group);
       allow_switch_group = true;
     });
     if (key === "identify_vars") {
