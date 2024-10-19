@@ -46,6 +46,7 @@
   let right_panel_version: string = "v0";
   let step: string = stepMap[show_step];
   let data_loading: boolean = false;
+  let ui_loading: boolean = false;
   let uncertainty_graph_loading: boolean = false;
   let estimated_time: number = 0;
   let last_execute_prompt_step_number: number = 0;
@@ -89,6 +90,7 @@
   function changeStep(newStepNumber: number) {
     console.log("change step", newStepNumber);
     if (newStepNumber) {
+      ui_loading = true;
       const newStep = stepMap[newStepNumber];
       current_versions[newStep] =
         `v${versionsCount[newStep].versions.length - 1}`;
@@ -111,13 +113,14 @@
           show_step = newStepNumber; //number
           step = stepMap[show_step]; //string
           right_panel_version = "v0";
+          ui_loading = false;
         });
     }
   }
 
   function fetchVersionsCount(): Promise<void> {
     return new Promise((resolve, reject) => {
-      fetch(`${server_address}/pipeline/all_versions`)
+      fetch(`${server_address}/pipeline/all_versions/`)
         .then((res) => res.json())
         .then((res) => {
           versionsCount = res;
@@ -807,6 +810,13 @@
       </span> -->
     </div>
   </div>
+  {#if ui_loading}
+    <div class="flex h-full items-center justify-center">
+      <div class="loader">
+        <img src="loader.svg" class="animate-spin" alt="Loading..." />
+      </div>
+    </div>
+  {/if}
 
   {#if show_step === 1 && prompt_data?.identify_var_types}
     <div in:slide|global class="step-1 flex h-1 grow">

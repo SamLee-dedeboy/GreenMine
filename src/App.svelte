@@ -30,6 +30,7 @@
   let var_data: tDPSIR;
   let vis_links: tVisLink[];
   let data_loading: boolean = true;
+  let interview_data_loading: boolean = true;
   let show_dpsir: boolean = true;
   let show_prompts: boolean = false;
   let show_keywordsea: boolean = false;
@@ -57,6 +58,7 @@
   }
 
   function fetchData() {
+    interview_data_loading = true;
     fetch(`${server_address}/v1_data/`)
       .then((res) => res.json())
       .then((res: tServerData) => {
@@ -79,7 +81,7 @@
           // If file names are the same, compare the numbers after the underscore
           return Number(numA) - Number(numB);
         });
-        // data_loading = false;
+        interview_data_loading = false;
         // v1
         // report_data = res.reports
         chunk_coordinates = res.v1.topic_tsnes;
@@ -94,6 +96,7 @@
           keyword_coordinates: res.v1.keyword_coordinates,
           keyword_statistics: res.v1.keyword_statistics,
         };
+        interview_data_loading = false;
       });
   }
 
@@ -235,7 +238,7 @@
         <div
           class="interview-viewer-container relative w-full grow bg-[#fefbf1]"
         >
-          {#if data_loading}
+          {#if interview_data_loading}
             <div>Data Loading...</div>
           {:else}
             <InterviewViewer
