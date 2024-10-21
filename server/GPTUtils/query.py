@@ -3,6 +3,7 @@ from tqdm import tqdm
 import tiktoken
 import json
 import requests
+from collections import defaultdict
 
 # from . import prompts
 from GPTUtils import prompts
@@ -109,7 +110,7 @@ def request_gpt(
 # def get_embedding(client, text, model="text-embedding-ada-002"):
 def get_embedding(client, text, model="text-embedding-3-small"):
     enc = tiktoken.encoding_for_model(model)
-    print("tokens: ", len(enc.encode(text)), len(enc.encode(text)) > 8191)
+    # print("tokens: ", len(enc.encode(text)), len(enc.encode(text)) > 8191)
     while len(enc.encode(text)) > 8191:
         text = text[:-100]
         print("truncated: ", len(enc.encode(text)))
@@ -325,12 +326,14 @@ def identify_vars(
         conversation = chunk["conversation"]
         prompt_variables["conversation"] = conversation_to_string(conversation)
         for var_type in var_types:
-            prompt_variables["var_type"] = (
+            prompt_variables["indicator"] = (
                 var_type["var_type"]
                 + prompt_variables[var_type["var_type"]]["definition"]
             )
             prompt_variables["explanation"] = var_type["explanation"]
-            prompt_variables["vars"] = prompt_variables[var_type["var_type"]]["vars"]
+            prompt_variables["variables"] = prompt_variables[var_type["var_type"]][
+                "vars"
+            ]
             prompt, response_format, extract_response_func = (
                 prompts.identify_var_prompt_factory(
                     system_prompt_blocks, user_prompt_blocks, prompt_variables
@@ -379,10 +382,10 @@ def identify_links(
             continue
         conversation = chunk_dict[link["chunk_id"]]["conversation"]
         prompt_variables["conversation"] = conversation_to_string(conversation)
-        prompt_variables["var1"] = (
+        prompt_variables["variable1"] = (
             f"{link['var1']}, {variable_definitions[link['var1']]}"
         )
-        prompt_variables["var2"] = (
+        prompt_variables["variable2"] = (
             f"{link['var2']}, {variable_definitions[link['var2']]}"
         )
         prompt, response_format, extract_response_func = (
@@ -398,7 +401,7 @@ def identify_links(
     )
     if response_format == "json":
         responses = [extract_response_func(i) for i in responses]
-    responses
+
     for response_index, extraction_result in enumerate(responses):
         if extraction_result is None:
             continue
@@ -408,13 +411,44 @@ def identify_links(
             [extraction_result], len(chunk["conversation"])
         )[0]
         link_metadata = link_metadata_list[response_index]
+        # check if the source and target variables are valid
+        if (
+            extraction_result["source"] != link_metadata["var1"]
+            and extraction_result["source"] != link_metadata["var2"]
+        ):
+            continue
+        if (
+            extraction_result["target"] != link_metadata["var1"]
+            and extraction_result["target"] != link_metadata["var2"]
+        ):
+            continue
+        if extraction_result["source"] == link_metadata["var1"]:
+            source_var, source_indicator = (
+                link_metadata["var1"],
+                link_metadata["indicator1"],
+            )
+            target_var, target_indicator = (
+                link_metadata["var2"],
+                link_metadata["indicator2"],
+            )
+        else:
+            source_var, source_indicator = (
+                link_metadata["var2"],
+                link_metadata["indicator2"],
+            )
+            target_var, target_indicator = (
+                link_metadata["var1"],
+                link_metadata["indicator1"],
+            )
         chunk["identify_links_result"].append(
             {
                 "chunk_id": link_metadata["chunk_id"],
-                "var1": link_metadata["var1"],
-                "var2": link_metadata["var2"],
-                "indicator1": link_metadata["indicator1"],
-                "indicator2": link_metadata["indicator2"],
+                # "var1": link_metadata["var1"],
+                # "var2": link_metadata["var2"],
+                "var1": source_var,
+                "var2": target_var,
+                "indicator1": source_indicator,
+                "indicator2": target_indicator,
                 "response": extraction_result,
             }
         )
@@ -450,21 +484,26 @@ def filter_candidate_links(chunk_w_vars):
     return links
 
 
-# def chunk_execute_extraction(all_chunks, openai_client, system_prompt_blocks, user_prompt_blocks, prompt_variables, prompt_factory, extraction_result_key):
-#     prompt_list = []
-#     response_format, extract_response_func = None, None
-#     for chunk in all_chunks:
-#         conversation = chunk['conversation']
-#         prompt_variables['conversation'] = conversation_to_string(conversation)
-#         prompt, response_format, extract_response_func = prompt_factory(system_prompt_blocks, user_prompt_blocks, prompt_variables)
-#         prompt_list.append(prompt)
-#     responses = multithread_prompts(openai_client, prompt_list, response_format=response_format, temperature=0.0)
-#     if response_format == 'json':
-#         responses = [extract_response_func(i) for i in responses]
-#     for (chunk_index, extraction_result) in enumerate(responses):
-#         chunk = all_chunks[chunk_index]
-#         chunk[extraction_result_key] = extraction_result
-#     return all_chunks
+def cluster_topic_assignments(client, clusters, texts):
+    cluster_texts = defaultdict(list)
+    for cluster, text in zip(clusters, texts):
+        cluster_texts[cluster].append(text)
+    prompt_list = []
+    cluster_list = []
+    for cluster, texts in cluster_texts.items():
+        prompt, response_format, extract_response_func = (
+            prompts.topic_assignment_prompt_factory(texts)
+        )
+        prompt_list.append(prompt)
+        cluster_list.append(cluster)
+    responses = multithread_prompts(client, prompt_list, response_format="json")
+    if response_format == "json":
+        responses = [extract_response_func(i) for i in responses]
+
+    cluster_topics = {
+        cluster: response for cluster, response in zip(cluster_list, responses)
+    }
+    return cluster_topics
 
 
 def filter_evidences(extraction_result, max_index):

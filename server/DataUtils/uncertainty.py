@@ -61,7 +61,8 @@ def identify_var_types_uncertainty(
                     )
                 )
             )
-            confidence = var_type_occurrence / k
+            # confidence = var_type_occurrence / k
+            confidence = f"{var_type_occurrence}/{k}"
             var_type_result["uncertainty"] = uncertainty
             var_type_result["confidence"] = confidence
         chunk["identify_var_types_result"] = ensemble_var_types
@@ -87,6 +88,9 @@ def identify_vars_uncertainty(
                 else:
                     merged_vars[var["var"]]["evidence"] = list(
                         set(merged_vars[var["var"]]["evidence"] + var["evidence"])
+                    )
+                    merged_vars[var["var"]]["keywords"] = list(
+                        set(merged_vars[var["var"]]["keywords"] + var["keywords"])
                     )
         return list(merged_vars.values())
 
@@ -118,7 +122,8 @@ def identify_vars_uncertainty(
                 var_occurrence = len(
                     list(filter(lambda candidate: var in candidate, candidate_vars))
                 )
-                confidence = var_occurrence / k
+                # confidence = var_occurrence / k
+                confidence = f"{var_occurrence}/{k}"
                 var_index = list(map(lambda x: x["var"], ensemble_vars)).index(var)
                 ensemble_vars[var_index]["confidence"] = confidence
                 ensemble_vars[var_index]["uncertainty"] = uncertainty
@@ -178,6 +183,7 @@ def identify_links_uncertainty(
             iteration_results[chunk_index].append(chunk["identify_links_result"])
     for chunk_index, chunk in enumerate(all_chunks):
         if chunk["identify_links_result"] == []:
+            chunk["uncertainty"]["identify_links"] = 0
             continue
         ensemble_links = merge_links(iteration_results[chunk_index])
         candidate_links = list(
@@ -196,7 +202,8 @@ def identify_links_uncertainty(
                     )
                 )
             )
-            confidence = link_occurrence / k
+            # confidence = link_occurrence / k
+            confidence = f"{link_occurrence}/{k}"
             link["uncertainty"] = uncertainty
             link["confidence"] = confidence
             # relationship confidence

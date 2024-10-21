@@ -2,30 +2,57 @@
   import { createEventDispatcher, onMount } from "svelte";
   import { fade, slide } from "svelte/transition";
   import type { tPrompt } from "lib/types";
-  export let data: tPrompt | undefined = undefined;
+  export let data: tPrompt;
+  const dispatch = createEventDispatcher();
   let show_prompts = true;
 
   function highlight_variables(text: string) {
     // replace ${var} with <span class="bg-yellow-200">${var}</span>
     return text.replace(
       /\${(.*?)}/g,
-      '<span class="text-yellow-600">${$1}</span>',
+      '<span class="text-yellow-600" contenteditable=false>${$1}</span>',
     );
   }
-
+  function updateBlockContent(index: number, newContent: string) {
+    const plainText = newContent.replace(/<[^>]*>/g, "").trim();
+    data.system_prompt_blocks[index][1] = plainText;
+    data = { ...data }; // Trigger reactivity
+  }
+  function handleSavePrompt(updatedData: tPrompt) {
+    console.log(updatedData);
+    dispatch("save", { type: "prompt", data: updatedData });
+  }
   onMount(() => {});
 </script>
 
 <div class="">
-  <div class="flex flex-col px-1">
+  <div class="relative flex flex-col px-1">
     <div
       tabindex="0"
       role="button"
-      class="entry-trigger"
       on:click={() => (show_prompts = !show_prompts)}
       on:keyup={() => {}}
+      class="entry-trigger font-serif"
     >
-      Prompts
+      <span> Prompts </span>
+    </div>
+    <div
+      role="button"
+      tabindex="0"
+      class="absolute right-2 top-0.5 flex items-center justify-center rounded-sm normal-case italic leading-3 text-gray-600 outline-double outline-1 outline-gray-300 hover:bg-gray-400"
+      on:mouseover={(e) => {
+        e.preventDefault();
+      }}
+      on:focus={(e) => {
+        e.preventDefault();
+      }}
+      on:click={(e) => {
+        e.preventDefault();
+        handleSavePrompt(data);
+      }}
+      on:keyup={() => {}}
+    >
+      <img src="save.svg" alt="" class="h-5 w-5" />
     </div>
   </div>
   {#if show_prompts}
@@ -38,6 +65,7 @@
           <div
             class="grow pl-2 text-left text-sm italic text-gray-500"
             contenteditable
+            on:input={(e) => updateBlockContent(index, e.target.innerHTML)}
             on:blur={function () {
               this.innerHTML = highlight_variables(this.innerHTML);
             }}

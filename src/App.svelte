@@ -1,22 +1,17 @@
 <script lang="ts">
   import { onMount, setContext } from "svelte";
   import InterviewViewer from "lib/views/InterviewViewer_v2.svelte";
-  import SummaryView from "lib/components/ScatterSummary.svelte";
   import SimGraph from "lib/v1/SimGraph.svelte";
   import ControlPanel from "lib/components/ControlPanel.svelte";
   import { draggable } from "lib/utils/draggable";
   import type {
     tMention,
-    tVariableType,
     tTranscript,
-    tLink,
     tVisLink,
     tServerData,
-    tVariable,
-    tChunk,
+    tServerDataDPSIR,
     tDPSIR,
-    tServerPromptData,
-    tServerPipelineData,
+    tVersionInfo,
   } from "lib/types";
   import DPSIR from "lib/views/DPSIR.svelte";
   import BrowserBlockingPage from "lib/views/BrowserBlockingPage.svelte";
@@ -26,62 +21,67 @@
   import { varTypeColorScale } from "lib/store";
   import Prompts from "lib/views/Prompts.svelte";
   import KeywordSeaViewer from "lib/views/KeywordSeaViewer.svelte";
-  // import { version } from "os";
+  import VersionsMenu from "lib/components/PipelineResult/VersionsMenu.svelte";
 
   let interview_data: tTranscript[];
+  let interview_ids: string[];
   let interview_viewer_component;
-  let prompt_data: tServerPromptData;
-  let pipeline_result: tServerPipelineData;
-  let versionedPipelineResults: { [key: string]: tServerPipelineData } = {};
+
   let var_data: tDPSIR;
   let vis_links: tVisLink[];
-  let summary_interviews: tChunk[];
   let data_loading: boolean = true;
+  let interview_data_loading: boolean = true;
   let show_dpsir: boolean = true;
   let show_prompts: boolean = false;
   let show_keywordsea: boolean = false;
-  // let versions: string[] = [];
-  let log_record: any;
-  let selectedTitle = "baseline";
-  let titleOptions = ["baseline"];
+  // let selectedTitle: string;
+  let versionsCount: { [key: string]: tVersionInfo } = {};
+
   // pipeline
   // v1
   let keyword_data: any;
   let chunk_graph: any;
   let chunk_coordinates: any;
   // let timeline_data: any;
+  let vis_link_versions = [];
+  let current_vis_link_version;
 
   let fetch_success = false;
+
+  $: fetchDPSIRData(current_vis_link_version);
   function fetchTest() {
     // fetch data from backend
     fetch(server_address + "/test/").then((res) => {
-      console.log({ res });
+      // console.log({ res });
       fetch_success = res.ok;
     });
   }
 
   function fetchData() {
-    fetch(`${server_address}/data/`)
+    interview_data_loading = true;
+    fetch(`${server_address}/v1_data/`)
       .then((res) => res.json())
       .then((res: tServerData) => {
-        console.log({ res });
+        // console.log({ res });
         interview_data = res.interviews;
-        prompt_data = res.prompts;
-        versionedPipelineResults["baseline"] = res.pipeline_result;
-        pipeline_result = res.pipeline_result; //set the initial pipeline result
-        // console.log({pipeline_result})
-        data_loading = false;
-        var_data = res.DPSIR_data;
-        // vis_links = utils.link_to_vis_link(res.links);
-        vis_links = utils.link_to_vis_link(res.pipeline_links);
-        // console.log(vis_links)
-        // console.log(res.pipeline_links)
-        const var_types = Object.keys(var_data);
-        $varTypeColorScale = d3
-          .scaleOrdinal()
-          .domain(var_types)
-          .range(d3.schemeSet2);
+        interview_ids = interview_data.flatMap((file) =>
+          file.data.map((interview) => interview.id),
+        );
+        interview_ids.sort((a, b) => {
+          const [fileA, numA] = a.split("_");
+          const [fileB, numB] = b.split("_");
 
+          // First, compare the file names (N1, N2, etc.)
+          const fileComparison = fileA.localeCompare(fileB, undefined, {
+            numeric: true,
+          });
+          if (fileComparison !== 0) {
+            return fileComparison;
+          }
+          // If file names are the same, compare the numbers after the underscore
+          return Number(numA) - Number(numB);
+        });
+        interview_data_loading = false;
         // v1
         // report_data = res.reports
         chunk_coordinates = res.v1.topic_tsnes;
@@ -96,43 +96,42 @@
           keyword_coordinates: res.v1.keyword_coordinates,
           keyword_statistics: res.v1.keyword_statistics,
         };
+        interview_data_loading = false;
       });
   }
 
-  function fetchVersionData(version: string) {
+  function fetchDPSIRData(link_version: string | undefined = "v0") {
+    if (!link_version) return;
+    console.log("fetching DPSIR data", link_version);
     data_loading = true;
-    fetch(`${server_address}/data/${version}/`)
+    fetch(`${server_address}/dpsir/${link_version}/`)
       .then((res) => res.json())
-      .then((versionData: tServerData) => {
-        versionedPipelineResults[version] = versionData.pipeline_result;
-        pipeline_result = versionData.pipeline_result;
-        // console.log(`Data fetched for version: ${version}`);
+      .then((res: tServerDataDPSIR) => {
+        var_data = res.DPSIR_data;
+        vis_links = utils.link_to_vis_link(res.pipeline_links);
+        const var_types = Object.keys(var_data);
+        $varTypeColorScale = d3
+          .scaleOrdinal()
+          .domain(var_types)
+          .range(d3.schemeSet2);
         data_loading = false;
+      });
+  }
+
+  function fetchLinkVersion() {
+    fetch(`${server_address}/pipeline/all_versions/not_allow_empty/`)
+      .then((res) => res.json())
+      .then((res) => {
+        vis_link_versions = res["link"].versions;
+        current_vis_link_version =
+          vis_link_versions[vis_link_versions.length - 1];
       })
       .catch((error) => {
-        console.error(`Error fetching data for version ${version}:`, error);
-        data_loading = false;
+        console.error(`Error fetching versions count for links:`, error);
       });
   }
 
-  function updateVersion(e, key: string) {
-    if (key === "version_changed") {
-      selectedTitle = e.detail;
-      if (versionedPipelineResults[selectedTitle]) {
-        pipeline_result = versionedPipelineResults[selectedTitle];
-      } else {
-        console.warn("no data for this version");
-      }
-    } else if (key === "new_verison_added") {
-      let new_version = e.detail;
-      titleOptions = [...titleOptions, new_version];
-      // console.log("updated titleOptions is", titleOptions);
-      // console.warn(`fetching data for version: ${new_version}`);
-      fetchVersionData(new_version);
-    }
-  }
   function handleEvidenceSelected(e) {
-    // console.log("evidence selected", e.detail);
     // interview_viewer_component.handleEvidenceSelected(e.detail);
     const { chunk_id, evidence, explanation } = e.detail;
     interview_viewer_component.handleEvidenceSelected(
@@ -141,89 +140,26 @@
       explanation,
     );
   }
-  function handleVarOrLinkSelected(e) {
+  function handleHighlightChunks(mentions: tMention | null) {
+    console.log("handle highlight chunks", mentions);
     if (!interview_data) return;
-    //deselect var/link
-    if (e.detail === null) {
-      interview_viewer_component.highlight_chunks(null); //dehighlight chunks
-      summary_interviews = []; //clear summary view
-    } else {
-      const chunks: tMention[] = e.detail.mentions;
-      // console.log({ chunks });
-      interview_viewer_component.highlight_chunks(chunks);
-      // console.log(interview_data);
-      const flattenedInterviewData = interview_data.flatMap(
-        (item) => item.data,
-      );
-      // console.log(chunks);
-      const enhanceChunks = (chunks: any[]): any[] => {
-        return chunks
-          .map((chunk) => {
-            const match = flattenedInterviewData.find(
-              (item) => item.id === chunk.chunk_id,
-            );
-
-            if (match) {
-              return {
-                id: chunk.chunk_id,
-                conversation: chunk.conversation,
-                emotion: match.emotion,
-                title: match.title,
-                topic: match.topic,
-                raw_keywords: match.raw_keywords,
-              };
-            } else {
-              console.error(`No match found for chunk_id: ${chunk.chunk_id}`);
-              return null;
-            }
-          })
-          .filter((chunk) => chunk !== null);
-      };
-
-      summary_interviews = enhanceChunks(chunks);
-    }
-  }
-  function handleRemoveVarType(e) {
-    // console.log("e.detail", e.detail)
-    const { id, variable } = e.detail;
-    if (pipeline_result === undefined) return;
-
-    pipeline_result.identify_var_types = pipeline_result.identify_var_types.map(
-      (item) => {
-        if (item.id === id) {
-          return {
-            ...item,
-            identify_var_types_result: item.identify_var_types_result.filter(
-              (result) => result.var_type !== variable.var_type,
-            ),
-          };
-        }
-        return item;
-      },
-    );
-  }
-  function handleAddVarType(e) {
-    // console.log("e.detail", e.detail);
-    const { id, variable } = e.detail;
-    if (pipeline_result === undefined) return;
-    pipeline_result.identify_var_types = pipeline_result.identify_var_types.map(
-      (item) => {
-        if (item.id === id) {
-          // console.log(newdata.var_type);
-          const updatedNewData = { ...variable, var_type: variable.var_type };
-          item.identify_var_types_result.push(updatedNewData);
-        }
-        return item;
-      },
-    );
+    interview_viewer_component.highlight_chunks(mentions); //dehighlight chunks
+    // if (mentions === null) {
+    //   interview_viewer_component.highlight_chunks(null); //dehighlight chunks
+    // } else {
+    //   interview_viewer_component.highlight_chunks(e.detail as tMention[]);
+    // }
   }
 
   onMount(async () => {
     await fetchTest();
     await fetchData();
+    await fetchLinkVersion();
+    // await fetchDPSIRData(current_vis_link_version);
   });
 
   setContext("fetchData", fetchData);
+  setContext("handleHighlightChunks", handleHighlightChunks);
 </script>
 
 <main class="h-full w-full px-1">
@@ -237,22 +173,16 @@
           use:draggable
         >
           <Prompts
-            data={prompt_data}
-            {pipeline_result}
-            {selectedTitle}
-            {titleOptions}
+            {interview_ids}
+            {versionsCount}
             on:close={() => (show_prompts = false)}
             on:navigate_evidence={handleEvidenceSelected}
-            on:remove_var_type={handleRemoveVarType}
-            on:add_var_type={handleAddVarType}
-            on:versions_changed={(e) => updateVersion(e, "versions_changed")}
-            on:new_verison_added={(e) => updateVersion(e, "new_verison_added")}
           ></Prompts>
         </div>
       {/if}
       {#if show_keywordsea}
         <div
-          class="absolute left-1/4 top-1/2 z-10 flex h-[80vh] w-[70vw] min-w-[85rem] -translate-x-1/4 -translate-y-1/2 items-stretch overflow-hidden rounded-md bg-gray-200 pt-[3rem] shadow-md outline outline-1 outline-gray-300"
+          class="absolute left-1/4 top-1/2 z-10 flex h-[80vh] w-[70vw] min-w-[85rem] -translate-x-1/4 -translate-y-1/2 items-stretch overflow-hidden rounded-md bg-gray-200 pt-[2rem] shadow-md outline outline-1 outline-gray-300"
           use:draggable
         >
           <KeywordSeaViewer
@@ -285,32 +215,30 @@
             <span>Sea of</span> <br />
             <span class="title-hidden absolute mt-[-25px] h-fit">Voices</span>
           </div> -->
+
+          <!-- these cases are mutual, but writing it this way has less nesting -->
           {#if data_loading}
             <div>Data Loading...</div>
           {/if}
-          {#if show_dpsir}
-            {#if data_loading}
-              <div></div>
-            {:else}
-              <DPSIR
-                data={var_data}
-                links={vis_links}
-                on:var-selected={handleVarOrLinkSelected}
-              ></DPSIR>
-            {/if}
-          {:else}
+          {#if !data_loading && show_dpsir}
+            <div class="absolute left-[10rem] top-4 z-10 w-fit">
+              <VersionsMenu
+                versions={vis_link_versions}
+                bind:current_version={current_vis_link_version}
+              ></VersionsMenu>
+            </div>
+            <DPSIR data={var_data} links={vis_links}></DPSIR>
+          {/if}
+          {#if !data_loading && !show_dpsir}
             <SimGraph topic_data={chunk_graph} {keyword_data}></SimGraph>
           {/if}
         </div>
       </div>
       <div class="flex h-full grow flex-col">
-        <!-- <div class="gap-y-1">
-          <SummaryView {summary_interviews} id="statistics" />
-        </div> -->
         <div
           class="interview-viewer-container relative w-full grow bg-[#fefbf1]"
         >
-          {#if data_loading}
+          {#if interview_data_loading}
             <div>Data Loading...</div>
           {:else}
             <InterviewViewer

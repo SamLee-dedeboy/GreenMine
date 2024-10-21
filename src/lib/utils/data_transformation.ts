@@ -10,38 +10,27 @@ export function link_to_vis_link(data: tLink[]): tVisLink[] {
       var_type: item.indicator2.toLowerCase(),
       variable_name: item.var2,
     };
-    const key = JSON.stringify({ source, target });
-    if (linksMap.has(key)) {
-      // Check if the chunk_id is already in the mentions for this key
-      const mapEntry = linksMap.get(key);
-      const chunkIdExists = mapEntry.mentions.some(
-        (mention) => mention.chunk_id === item.chunk_id,
-      );
-      if (!chunkIdExists) {
-        // If the chunk_id is not already included, add it to the mentions
-        mapEntry.mentions.push({
-          chunk_id: item.chunk_id,
-          evidence: item.response.evidence,
-        });
-      }
-    } else {
-      // If the key doesn't exist, initialize it with the current chunk_id in mentions
+    const key = `${source.var_type}_${source.variable_name}_${target.var_type}_${target.variable_name}`;
+    if (!linksMap.has(key)) {
       linksMap.set(key, {
         source,
         target,
-        mentions: [
-          { chunk_id: item.chunk_id, evidence: item.response.evidence },
-        ],
+        mentions: [],
       });
     }
+    linksMap.get(key).mentions.push({
+      chunk_id: item.chunk_id,
+      evidence: item.response.evidence,
+      explanation: item.response.explanation,
+    });
   });
-  console.log("translation done");
   // Convert the map values to an array and adjust structure to include frequency
   const result: tVisLink[] = Array.from(linksMap.values()).map((entry) => ({
     ...entry,
     frequency: entry.mentions.length,
     mentions: entry.mentions,
   }));
+  console.log("translation done", data, result);
   return result;
 }
 
@@ -86,7 +75,7 @@ export function link_to_graph(links, nodes, link_threshold, chunk_coordinates) {
   // filter links and build weights
   links = links.filter((link) => link[2] > link_threshold);
   let group_links: any = {};
-  console.log({ nodes_dict, links });
+  // console.log({ nodes_dict, links });
   links.forEach((link) => {
     const source = link[0];
     const target = link[1];

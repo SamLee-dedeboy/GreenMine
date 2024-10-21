@@ -6,7 +6,10 @@ export type tVariableType = {
 };
 export type tKeywordData = {
   keyword_list: string[];
-  keyword_statistics: Record<string, { frequency: number; tf_idf: number }>;
+  keyword_statistics: Record<
+    string,
+    { frequency: number; tf_idf: number; mentions: tMention[] }
+  >;
   keyword_coordinates: Record<string, [number, number]>;
 };
 
@@ -19,8 +22,9 @@ export type tVariable = {
 
 export type tMention = {
   chunk_id: string;
-  conversation_ids?: number[];
+  conversation_ids?: string[];
   evidence?: string[];
+  explanation?: string;
 };
 
 export type tLink = {
@@ -54,6 +58,8 @@ export type Mention = {
 export type VariableInfo = {
   var_type: string;
   variable_name: string;
+  x: number;
+  y: number;
 };
 
 //for layout each rect for variables
@@ -129,9 +135,12 @@ export type tLinkObjectOverview = {
   source_center: number[];
   target_center: number[];
   count: number;
-}
+};
 export type tUtilityHandlers = {
   [key: string]: Function;
 };
 
-export type SelectedType = { source: string; target: string };
+export type tBbox = {
+  center: [number, number];
+  size: [number, number];
+};

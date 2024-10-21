@@ -1,19 +1,48 @@
 <script lang="ts">
-  import type { tIdentifyVars, tVarResult } from "lib/types";
+  import type { tIdentifyVars, tVarData, tVarResult } from "lib/types";
   import { onMount, createEventDispatcher } from "svelte";
   import { varTypeColorScale } from "lib/store";
   import { sort_by_id, setOpacity, sort_by_var_type } from "lib/utils";
+  import { var_type_names } from "lib/constants";
+  import { server_address } from "lib/constants";
+  import KeywordSea from "lib/components/KeywordSea.svelte";
+  import UncertaintyGraph from "lib/components/UncertaintyGraph.svelte";
+  import DataLoading from "lib/components/DataLoading.svelte";
 
-  const dispatch = createEventDispatcher();
+  let clicked_var_type_for_others: string = "driver";
+
+  // let data_for_others;
+  /**
+   * the flag is used to switch between showing all variables or only '其他'
+   * @type {boolean}
+   */
+  let show_others = false;
+  import VersionsMenu from "./VersionsMenu.svelte";
   export let data: tIdentifyVars[];
+  export let title: string;
+  export let versions: string[] = [];
   export let data_loading: boolean;
-  export let title: string = "baseline";
+  export let uncertainty_graph_loading: boolean;
+  export let current_version: string;
+  export let variable_definitions: tVarData;
+  export let estimated_time = 0;
+  const dispatch = createEventDispatcher();
+  $: handleVersionChanged(current_version);
+  let show_uncertainty_graph = false;
+  $: has_uncertainty = data.some((datum) => datum.uncertainty.identify_vars);
+  // let has_uncertainty = true;
+  function handleVersionChanged(current_version) {
+    dispatch("version_changed", current_version);
+    show_uncertainty_graph = false;
+  }
+
   onMount(() => {
     console.log({ data });
   });
+
   function sort_by_uncertainty(data: tIdentifyVars[]) {
     if (data.length === 0) return data;
-    if (!data[0].uncertainty) {
+    if (!has_uncertainty) {
       return sort_by_id(data);
     }
     return data.sort(
@@ -28,20 +57,115 @@
   ) {
     return `<span style="background-color: ${$varTypeColorScale(var_type)}; text-transform: capitalize; padding-left: 0.125rem; padding-right: 0.125rem;">${var_name}</span>:${explanation}`;
   }
+
+  async function fetch_data_for_others(data: tIdentifyVars[]) {
+    const res = await fetch(
+      `${server_address}/compute/identify_vars_keywords/others/`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ data }),
+      },
+    ).then((response) => response.json());
+    console.log({ res });
+    return res;
+  }
+  onMount(() => {
+    console.log({ data });
+    // fetch_data_for_others(data);
+  });
 </script>
 
-<div
-  class="flex h-full min-w-[25rem] flex-1 flex-col bg-gray-100 px-1 shadow-lg"
->
-  <h2 class="text-lg font-medium capitalize text-black">{title}</h2>
-  <div class="flex grow flex-col divide-y divide-black">
-    <div class="flex divide-x">
-      <div class="w-[4rem] shrink-0">Snippet</div>
-      <div class="flex pl-2">Variables</div>
+<div class="flex min-w-[25rem] flex-1 flex-col bg-gray-100 px-1 shadow-lg">
+  {#if versions.length > 0}
+    <VersionsMenu {versions} bind:current_version />
+  {:else}
+    <h2 class="text-center font-serif text-lg font-medium text-black">
+      {title}
+    </h2>
+  {/if}
+  <div class="flex h-1 grow flex-col divide-y divide-black">
+    <div class="flex divide-x py-0.5 font-serif">
+      {#if show_others}
+        <div class="ml-1">Keywords around "其他"</div>
+      {:else if !show_uncertainty_graph}
+        <div class="w-[4rem] shrink-0">Snippet</div>
+        <div class="flex pl-2">Variables</div>
+      {/if}
+      <div class="ml-auto flex">
+        <div
+          tabindex="0"
+          role="button"
+          class:enabled={has_uncertainty && !uncertainty_graph_loading}
+          class:active={show_uncertainty_graph}
+          on:click={() => {
+            show_uncertainty_graph = !show_uncertainty_graph;
+            if (show_uncertainty_graph) show_others = false;
+          }}
+          on:keyup={() => {}}
+          class="pointer-events-none relative flex items-center rounded px-1 py-0.5 text-xs italic opacity-50 hover:bg-green-200"
+        >
+          {#if uncertainty_graph_loading}
+            <img src="loader.svg" alt="loading" class="h-4 w-4 animate-spin" />
+          {:else}
+            <img src="chart.svg" alt="chart" class="h-4 w-4" />
+          {/if}
+          Uncertainty Chart
+        </div>
+        <div
+          role="button"
+          tabindex="0"
+          class="flex items-center gap-x-0.5 px-1 py-0.5 text-xs hover:bg-green-200"
+          class:active={show_others}
+          on:click={() => {
+            show_others = !show_others;
+            if (show_others) show_uncertainty_graph = false;
+          }}
+          on:keyup={() => {}}
+        >
+          <img class="h-4 w-4" src="book_open.svg" alt="explore" />其他
+        </div>
+      </div>
     </div>
     {#if data_loading}
-      <div class="flex h-full items-center justify-center">Data Loading...</div>
-    {:else}
+      <div class="flex h-full items-center justify-center">
+        <DataLoading {estimated_time} />
+      </div>
+    {:else if show_others}
+      {#await fetch_data_for_others(data)}
+        <div>Loading...</div>
+      {:then data_for_others}
+        <div class="flex grow flex-col">
+          <div class="flex justify-between px-1 py-1">
+            {#each var_type_names as var_type}
+              <div class="flex flex-col">
+                <div
+                  tabindex="0"
+                  role="button"
+                  class="flex items-center rounded-sm px-1 py-0.5 capitalize italic text-gray-700 outline outline-0 outline-black hover:outline-2"
+                  class:others-active={clicked_var_type_for_others === var_type}
+                  style={`background-color: ${setOpacity($varTypeColorScale(var_type), 0.7)};`}
+                  on:click={() => (clicked_var_type_for_others = var_type)}
+                  on:keyup={() => {}}
+                >
+                  {var_type}
+                </div>
+              </div>
+            {/each}
+          </div>
+          <div class="grow">
+            <KeywordSea
+              data={data_for_others[clicked_var_type_for_others]}
+              key={clicked_var_type_for_others}
+              show_key={false}
+              degree_key="frequency"
+            ></KeywordSea>
+          </div>
+        </div>
+      {/await}
+    {:else if !show_uncertainty_graph}
       <div
         class="flex h-1 grow flex-col divide-y divide-black overflow-y-auto pr-3"
       >
@@ -55,7 +179,7 @@
               <div class="pl-1 text-sm">None</div>
             {:else}
               <div class="result flex w-full flex-col divide-gray-300">
-                {#if datum.uncertainty.identify_vars}
+                {#if datum.uncertainty?.identify_vars}
                   <div
                     class=" flex w-full items-center justify-end bg-gray-200 pl-1 text-xs italic text-gray-600"
                   >
@@ -130,6 +254,18 @@
           </div>
         {/each}
       </div>
+    {:else}
+      <div
+        class="flex h-1 grow flex-col rounded-md p-2 shadow-md outline outline-1 outline-gray-300"
+      >
+        {#if !uncertainty_graph_loading && has_uncertainty}
+          <UncertaintyGraph
+            version={current_version}
+            key="identify_vars"
+            variables={variable_definitions}
+          ></UncertaintyGraph>
+        {/if}
+      </div>
     {/if}
   </div>
 </div>
@@ -146,5 +282,14 @@
     & .var-type-tag {
       @apply line-through;
     }
+  }
+  .others-active {
+    @apply shadow-[0_0_4px_1px_black] outline-2;
+  }
+  .active {
+    @apply bg-green-200;
+  }
+  .enabled {
+    @apply pointer-events-auto opacity-100;
   }
 </style>

@@ -2,11 +2,13 @@
   import type { tLink } from "lib/types";
   import { onMount } from "svelte";
   import { varTypeColorScale } from "lib/store";
+  import { createEventDispatcher } from "svelte";
   import * as d3 from "d3";
   export let svgId: string = "link-graph";
   export let data: tLink[] = [];
   export let max_degree: number = 0;
   const var_types = ["driver", "pressure", "state", "impact", "response"];
+  const dispatch = createEventDispatcher();
   let simulation;
   const graph_renderer = {
     init() {
@@ -26,6 +28,10 @@
       d3.select(`#${svgId}`).append("g").attr("class", "node-group");
       d3.select(`#${svgId}`).append("g").attr("class", "link-group");
       d3.select(`#${svgId}`).append("g").attr("class", "link-label-group");
+      this.dispatch = d3.dispatch("link-clicked");
+    },
+    on(event, callback) {
+      this.dispatch.on(event, callback);
     },
     update(link_data: tLink[]) {
       const svg = d3.select(`#${svgId}`);
@@ -37,6 +43,7 @@
           target: nodes_dict[link.var2],
         };
       });
+      const self = this;
       // update nodes
       const nodes = svg
         .select("g.node-group")
@@ -89,18 +96,44 @@
         .selectAll(".link")
         .data(force_links, (d) => `${d.var1}-${d.var2}`)
         .join("path")
+        .attr("id", (d) => `${d.var1}-${d.var2}`)
         .attr("class", "link")
         .attr("stroke", "gray")
         .attr("stroke-width", (d) =>
           this.confidenceStrokeWidthScale(d.confidence),
         )
-        .attr("opacity", (d) => this.confidenceOpacityScale(d.confidence));
+        .attr("opacity", (d) => this.confidenceOpacityScale(d.confidence))
+        .attr("cursor", "pointer")
+        .on("mouseover", function (e, d) {
+          console.log("link hover", d);
+          d3.select(`#label-${d.var1}-${d.var2}`)
+            .select("rect")
+            .classed("link-label-hover", true);
+          d3.select(`#${d.var1}-${d.var2}`).classed("link-hover", true);
+          d3.select(`#arrow-${d.var1}-${d.var2}`)
+            .select("path")
+            .classed("link-arrow-hover", true);
+        })
+        .on("mouseout", function (e, d) {
+          d3.select(`#label-${d.var1}-${d.var2}`)
+            .select("rect")
+            .classed("link-label-hover", false);
+          d3.select(`#${d.var1}-${d.var2}`).classed("link-hover", false);
+          d3.select(`#arrow-${d.var1}-${d.var2}`)
+            .select("path")
+            .classed("link-arrow-hover", false);
+        })
+        .on("click", (e, d) => {
+          self.dispatch.call("link-clicked", null, d);
+        });
+
       const link_labels = svg
         .select("g.link-label-group")
         .selectAll("g.link-label")
         .data(force_links, (d) => `${d.var1}-${d.var2}`)
         .join("g")
         .attr("class", "link-label")
+        .attr("id", (d) => `label-${d.var1}-${d.var2}`)
         .attr("opacity", 0.8)
         .each(function (d) {
           d3.select(this).selectAll("*").remove();
@@ -119,6 +152,7 @@
             .attr("font-size", "0.2rem")
             .attr("text-anchor", "middle")
             .attr("dominant-baseline", "hanging")
+            .attr("pointer-events", "none")
             .attr("fill", "#555555");
           const border = d3
             .select(this)
@@ -131,6 +165,24 @@
             .attr("rx", 1)
             .attr("x", -label.node().getBBox().width / 2 - 0.1)
             .attr("y", -1)
+            .attr("cursor", "pointer")
+            .on("mouseover", function () {
+              d3.select(this).classed("link-label-hover", true);
+              d3.select(`#${d.var1}-${d.var2}`).classed("link-hover", true);
+              d3.select(`#arrow-${d.var1}-${d.var2}`)
+                .select("path")
+                .classed("link-arrow-hover", true);
+            })
+            .on("mouseout", function () {
+              d3.select(this).classed("link-label-hover", false);
+              d3.select(`#${d.var1}-${d.var2}`).classed("link-hover", false);
+              d3.select(`#arrow-${d.var1}-${d.var2}`)
+                .select("path")
+                .classed("link-arrow-hover", false);
+            })
+            .on("click", (e, d) => {
+              self.dispatch.call("link-clicked", null, d);
+            })
             .lower();
         });
 
@@ -286,9 +338,14 @@
     event.subject.fx = null;
     event.subject.fy = null;
   }
+
+  function handleLinkClicked(link) {
+    dispatch("link-clicked", link);
+  }
   onMount(() => {
     graph_renderer.init();
     graph_renderer.update(data);
+    graph_renderer.on("link-clicked", handleLinkClicked);
   });
 </script>
 
@@ -321,6 +378,15 @@
     }
     & .link-not-highlighted {
       opacity: 0.05;
+    }
+    & .link-hover {
+      stroke: black;
+    }
+    & .link-arrow-hover {
+      fill: black;
+    }
+    & .link-label-hover {
+      fill: lightgray;
     }
   }
 </style>

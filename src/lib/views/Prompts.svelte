@@ -5,188 +5,402 @@
   import IdentifyLinkResults from "lib/components/PipelineResult/IdentifyLinkResults.svelte";
   import VarTypeDataEntry from "lib/components/DataEntry/VarTypeDataEntry.svelte";
   import VarDataEntry from "lib/components/DataEntry/VarDataEntry.svelte";
+  import RuleEntry from "lib/components/DataEntry/RuleEntry.svelte";
   import PromptHeader from "../components/PromptHeader.svelte";
-  import { fade, slide, fly, blur, draw, crossfade } from "svelte/transition";
-  import { cubicOut } from "svelte/easing";
+  import { slide } from "svelte/transition";
 
   import type {
     tServerPipelineData,
     tServerPromptData,
-    tVarTypeResult,
     LogRecord,
+    LogEntry,
+    tVersionInfo,
+    tIdentifyVarTypes,
+    tIdentifyVars,
+    tIdentifyLinks,
   } from "lib/types";
-  import { updateTmpData } from "lib/utils/update_with_log";
-  import { server_address } from "lib/constants";
-  import { createEventDispatcher, tick } from "svelte";
+  import { updatePanelData } from "lib/utils/update_with_log";
+  import { server_address, estimated_times } from "lib/constants";
+  import { createEventDispatcher, tick, getContext, onMount } from "svelte";
+  export let versionsCount: { [key: string]: tVersionInfo };
+  export let interview_ids: string[] = [];
+  const stepMap = {
+    1: "var_type",
+    2: "var",
+    3: "link",
+  };
+  const step_to_numbers = {
+    identify_var_types: 1,
+    identify_vars: 2,
+    identify_links: 3,
+  };
   const dispatch = createEventDispatcher();
+  let prompt_data: tServerPromptData;
+  let right_prompt_data: tServerPromptData;
+  let pipeline_result: tServerPipelineData;
+  let right_panel_result: tServerPipelineData;
+  let rule_prompt_data: tServerPromptData; //for selection of Rule menu
 
-  export let data: tServerPromptData;
-  export let pipeline_result: tServerPipelineData | undefined = undefined;
-  export let selectedTitle: string;
-  export let titleOptions: string[];
-
+  let menu_data: any;
+  let show_step: number = 1;
+  let right_panel_version: string = "v0";
+  let step: string = stepMap[show_step];
   let data_loading: boolean = false;
-  let tmp_data: tServerPipelineData = {
+  let ui_loading: boolean = false;
+  let uncertainty_graph_loading: boolean = false;
+  let estimated_time: number = 0;
+  let last_execute_prompt_step_number: number = 0;
+  let log: LogRecord = {
     identify_var_types: [],
     identify_vars: [],
     identify_links: [],
   };
-  let show_step = 1;
-
-  let log_record: LogRecord = {
-    identify_type_results:
-      pipeline_result?.identify_var_types.map((item: any) => ({
-        id: item.id,
-        add_element: [],
-        remove_element: [],
-      })) || [],
-  };
-
-  type VarTypeItem = {
-    id: string;
-    variable: {
-      evidence: number[];
-      explanation: string;
-      var_type: string;
-      confidence: number;
-      uncertainty: number;
-    };
-  };
-  let removeVar: VarTypeItem[] = [];
-  let addVar: VarTypeItem[] = [];
   let measure_uncertainty = false;
+  let current_versions = {
+    var_type: "v0",
+    var: "v0",
+    link: "v0",
+  };
 
+  function extractValuesOfMenu(prompt_data, step) {
+    let result = {};
+    if (step === "var_type") {
+      const categories = Object.keys(
+        prompt_data.identify_var_types.var_type_definitions,
+      );
+      categories.forEach((category) => {
+        result[category] = [];
+      });
+    } else {
+      // step: var/link
+      const categories = Object.keys(prompt_data.identify_vars.var_definitions);
+
+      categories.forEach((category) => {
+        if (prompt_data.identify_vars.var_definitions[category]) {
+          result[category] = prompt_data.identify_vars.var_definitions[
+            category
+          ].map((item) => item.var_name);
+        } else {
+          result[category] = [];
+        }
+      });
+    }
+    return result;
+  }
+  function changeStep(newStepNumber: number) {
+    console.log("change step", newStepNumber);
+    if (newStepNumber) {
+      ui_loading = true;
+      const newStep = stepMap[newStepNumber];
+      current_versions[newStep] =
+        `v${versionsCount[newStep].versions.length - 1}`;
+      fetchPipelineData(newStep, current_versions[newStep])
+        .then(() => fetchMenuData(newStep, right_panel_version))
+        .then(() => {
+          if (newStep === "var_type") {
+            fetchRuleMenu(newStep, current_versions[newStep]);
+          } else if (newStep === "var") {
+            fetchRuleMenu(newStep, current_versions[newStep]);
+          } else if (newStep === "link") {
+            fetchRuleMenu("var", current_versions["var"]);
+            if (!prompt_data.identify_vars) {
+              fetchPipelineData("var", current_versions["var"]);
+              fetchMenuData("var", right_panel_version);
+            }
+          }
+        })
+        .then(() => {
+          show_step = newStepNumber; //number
+          step = stepMap[show_step]; //string
+          right_panel_version = "v0";
+          ui_loading = false;
+        });
+    }
+  }
+
+  function fetchVersionsCount(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      fetch(`${server_address}/pipeline/all_versions/`)
+        .then((res) => res.json())
+        .then((res) => {
+          versionsCount = res;
+          const versions = versionsCount[step].versions;
+          current_versions[step] = versions[versions.length - 1];
+          resolve();
+          console.log(current_versions);
+        })
+        .catch((error) => {
+          console.error(`Error fetching versions count for ${step}:`, error);
+          reject(error);
+        });
+    });
+  }
+
+  function fetchRuleMenu(step: string, version: string) {
+    const key = `identify_${step}s`;
+    return fetch(`${server_address}/pipeline/${step}/${version}/`)
+      .then((res) => res.json())
+      .then((res) => {
+        rule_prompt_data = {
+          ...rule_prompt_data,
+          [key]: res.prompts,
+        };
+        menu_data = extractValuesOfMenu(rule_prompt_data, step);
+        console.log({ menu_data });
+      })
+      .catch((error) => {
+        console.error(
+          `Error fetching pipeline data for step ${step}, version ${version}:`,
+          error,
+        );
+      });
+  }
+  function fetchPipelineData(step: string, version: string) {
+    const key = `identify_${step}s`;
+    return fetch(`${server_address}/pipeline/${step}/${version}/`)
+      .then((res) => res.json())
+      .then((res) => {
+        console.log("Fetched pipeline data", res);
+        prompt_data = {
+          ...prompt_data,
+          [key]: res.prompts,
+        };
+        pipeline_result = {
+          ...pipeline_result,
+          [key]: res.pipeline_result,
+        };
+        pipeline_result = updatePanelData(pipeline_result, log, key);
+      })
+      .catch((error) => {
+        console.error(
+          `Error fetching pipeline data for step ${step}, version ${version}:`,
+          error,
+        );
+      });
+  }
+  function fetchMenuData(step: string, version: string) {
+    const key = `identify_${step}s`;
+    return fetch(`${server_address}/pipeline/${step}/${version}/`)
+      .then((res) => res.json())
+      .then((res) => {
+        console.log("Fetched right panel data", res);
+        right_prompt_data = {
+          ...right_prompt_data,
+          [key]: res.prompts,
+        };
+        right_panel_result = {
+          ...right_panel_result,
+          [key]: res.pipeline_result,
+        };
+        right_panel_result = updatePanelData(right_panel_result, log, key);
+      })
+      .catch((error) => {
+        console.error(
+          `Error fetching right panel data for step ${step}, version ${version}:`,
+          error,
+        );
+      });
+  }
   function navigate_evidence(e) {
     if (!e) return;
     dispatch("navigate_evidence", e); //To App.sevelte
   }
-  function update_rules() {
-    alert("Rules updating is in progress");
-    return;
-    if (log_record) {
-      // Update remove_element
-      for (const item of removeVar) {
-        const logItem = log_record.identify_type_results.find(
-          (result: any) => result.id === item.id,
-        );
-        if (logItem) {
-          logItem.remove_element.push(item.variable);
-        }
-      }
 
-      // Update add_element
-      for (const item of addVar) {
-        const logItem = log_record.identify_type_results.find(
-          (result: any) => result.id === item.id,
-        );
-        if (logItem) {
-          logItem.add_element.push(item.variable);
-        }
-      }
-    }
-    console.log({ log_record });
-    alert("Rules updated");
-    removeVar = [];
-    addVar = [];
-  }
-  function execute_prompt(data: tServerPromptData, key: string) {
+  async function execute_prompt(
+    data: tServerPromptData,
+    key: string,
+    version: string,
+  ) {
+    console.log("executing prompt", data, key, version);
     if (!data) return;
     data_loading = true;
-    fetch(server_address + `/curation/${key}/`, {
+    last_execute_prompt_step_number = step_to_numbers[key];
+
+    await fetch(server_address + `/curation/${key}/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      // body: JSON.stringify(data[key]),
       body: JSON.stringify({
         ...data[key],
         compute_uncertainty: measure_uncertainty,
+        version: version,
       }),
     })
       .then((res) => res.json())
       .then((res) => {
-        tmp_data[key] = res;
-        console.log({ res });
-        //apply rules (prompt from App) to tmp_data which get back from server with new prompt
-        tmp_data = updateTmpData(tmp_data, log_record);
+        console.log("executed prompt", res);
+        pipeline_result = {
+          ...pipeline_result,
+          [key]: res,
+        };
+        if (right_panel_version === current_versions[step]) {
+          right_panel_result = {
+            ...right_panel_result,
+            [key]: res,
+          };
+        }
+        save_data(data, pipeline_result, key);
         data_loading = false;
-        // compute_uncertainty(data, key);
       });
-  }
-
-  function compute_uncertainty(data: tServerPromptData, key: string) {
-    if (!data) return;
-    fetch(server_address + `/curation/${key}/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ ...data[key], compute_uncertainty: true }),
-    })
-      .then((res) => res.json())
-      .then((res) => {
-        console.log("uncertainty: ", { res });
-      });
-  }
-
-  function getNextVersion(): string {
-    if (titleOptions.length === 1 && titleOptions[0] === "baseline") {
-      return "version1";
-    } else {
-      const lastVersion = titleOptions[titleOptions.length - 1];
-      if (lastVersion === "baseline") {
-        return "version1";
-      }
-      const versionNumber = parseInt(lastVersion.replace("version", "")) + 1;
-      return `version${versionNumber}`;
+    if (measure_uncertainty) {
+      uncertainty_graph_loading = true;
+      const uncertainty_graph_data = await fetchDR(pipeline_result[key], key);
+      uncertainty_graph_loading = false;
+      save_uncertainty_graph_data(uncertainty_graph_data, key, version);
     }
   }
-  function handle_save() {
-    const nextVersion = getNextVersion();
-    save_data(data, tmp_data, "identify_var_types", nextVersion);
+
+  async function fetchDR(
+    data: (tIdentifyVarTypes | tIdentifyVars | tIdentifyLinks)[],
+    key: string,
+  ) {
+    const dr_data = prepare_dr_data(data, key);
+    if (key === "identify_var_types") {
+      const dr_data_grouped = group_by_var_type(dr_data!);
+      let uncertainty_graph_grouped = {};
+      const dr_promises = Object.entries(dr_data_grouped).map(
+        ([var_type, dr_data_by_var_type]) => {
+          return new Promise((resolve) => {
+            fetch(`${server_address}/dr/`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ data: dr_data_by_var_type }),
+            })
+              .then((res) => res.json())
+              .then((dr_result) => {
+                uncertainty_graph_grouped[var_type] = dr_result;
+                resolve("success");
+              });
+          });
+        },
+      );
+      await Promise.all(dr_promises);
+      return uncertainty_graph_grouped;
+    } else if (key === "identify_vars") {
+      const uncertainty_graph_grouped_var_type = await fetch(
+        `${server_address}/uncertainty_graph/get/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            key: "identify_var_types",
+            version: prompt_data[key].based_on,
+          }),
+        },
+      ).then((res) => res.json());
+      const uncertainty_graph_grouped = add_vars_to_var_type_uncertainty_graph(
+        uncertainty_graph_grouped_var_type,
+        dr_data as any,
+      );
+      return uncertainty_graph_grouped;
+    } else if (key === "identify_links") {
+      const dr_data_grouped = group_by_links(dr_data!);
+      let uncertainty_graph_grouped = {};
+      const dr_promises = Object.entries(dr_data_grouped).map(
+        ([var_type, dr_data_by_var_type]) => {
+          return new Promise((resolve) => {
+            fetch(`${server_address}/dr/`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ data: dr_data_by_var_type }),
+            })
+              .then((res) => res.json())
+              .then((dr_result) => {
+                uncertainty_graph_grouped[var_type] = dr_result;
+                resolve("success");
+              });
+          });
+        },
+      );
+      await Promise.all(dr_promises);
+      return uncertainty_graph_grouped;
+    }
   }
 
-  function handle_title_change(newTitle: string) {
-    // console.log("title changed",newTitle);
-    selectedTitle = newTitle;
-    //reset tmp_data
-    tmp_data = {
-      identify_var_types: [],
-      identify_vars: [],
-      identify_links: [],
-    };
-    dispatch("versions_changed", selectedTitle);
-  }
-
-  function save_data(
-    data: tServerPromptData,
-    pipeline_tmp_data: tServerPipelineData,
+  function save_uncertainty_graph_data(
+    data: any,
     key: string,
     version: string,
   ) {
-    // console.log(version);
-    if (!pipeline_tmp_data) return;
-    alert("Data saving is in progress");
-    return;
-    console.log("saving", pipeline_tmp_data[key], data[key]);
-    fetch(server_address + `/curation/${key}/save/`, {
+    fetch(`${server_address}/uncertainty_graph/save/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        result: pipeline_tmp_data[key],
-        context: data[key],
+        data,
+        key,
+        version,
+      }),
+    }).then((res) => {
+      console.log("saved uncertainty graph data", res);
+    });
+  }
+
+  function handle_version_selected(current_v: string) {
+    current_versions[step] = current_v;
+    fetchPipelineData(step, current_v);
+  }
+  function handle_version_change(new_v: string) {
+    right_panel_version = new_v;
+    let version = new_v;
+    fetchMenuData(step, version);
+  }
+  function handle_version_added(key: string) {
+    const nextVersionNumber =
+      (+versionsCount[key].versions[
+        versionsCount[key].versions.length - 1
+      ].replace("v", "") || 0) + 1; // start from 0
+    const newVersion = `v${nextVersionNumber}`;
+    console.log("new version", newVersion, versionsCount[key].versions);
+    current_versions[step] = newVersion;
+    if (!versionsCount[key].versions.includes(newVersion)) {
+      fetch(server_address + `/pipeline/${step}/create_and_save_new/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          version: newVersion,
+        }),
+      })
+        .then((response) => response.text()) // Change this line from response.json() to response.text()
+        .then((data) => {
+          if (data === "success") {
+            fetchVersionsCount();
+            fetchPipelineData(step, newVersion);
+          } else {
+            console.error("Unexpected response:", data);
+          }
+        })
+        .catch((error) => {
+          console.error("Error saving data:", error);
+        });
+    }
+  }
+
+  function handle_version_deleted(key: string, version: string) {
+    fetch(server_address + `/pipeline/${step}/delete/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
         version: version,
       }),
     })
       .then((response) => response.text()) // Change this line from response.json() to response.text()
-      .then((data) => {
+      .then(async (data) => {
         if (data === "success") {
-          // Add the new version to titleOptions if it's not already there
-          if (!titleOptions.includes(version)) {
-            dispatch("new_verison_added", version); //To App.svelte
-          }
+          await fetchVersionsCount();
+          fetchPipelineData(step, current_versions[step]);
         } else {
           console.error("Unexpected response:", data);
         }
@@ -195,214 +409,615 @@
         console.error("Error saving data:", error);
       });
   }
-  function remove_var_type(data: VarTypeItem, key: string) {
-    if (!data) return;
-    // add to log
-    removeVar.push(data);
-    if (key == "base") {
-      //left side
-      dispatch("remove_var_type", data);
-    } else {
-      console.log("modify tmp_data");
-      if (tmp_data === undefined) return;
-      tmp_data.identify_var_types = tmp_data.identify_var_types.map((item) => {
-        if (item.id === data.id) {
-          return {
-            ...item,
-            identify_var_types_result: item.identify_var_types_result.filter(
-              (result) => result.var_type !== data.variable.var_type,
-            ),
-          };
-        }
-        return item;
-      });
+
+  function handleSave(event) {
+    const { type, data } = event.detail;
+    const key = `identify_${stepMap[show_step]}s`;
+
+    if (type === "var_definitions") {
+      prompt_data[key].var_definitions = data;
+    } else if (type === "var_type_definitions") {
+      prompt_data[key].var_type_definitions = data;
+    } else if (type === "prompt") {
+      prompt_data[key].system_prompt_blocks = data.system_prompt_blocks;
+      prompt_data[key].user_prompt_blocks = data.user_prompt_blocks;
+      const based_on =
+        show_step === 1 ? "init" : current_versions[stepMap[show_step - 1]];
+      prompt_data[key].based_on = based_on;
     }
+    save_data(prompt_data, pipeline_result, key);
   }
-  function add_var_type(
-    data: { id: string; var_type: string },
+
+  function save_data(
+    data: tServerPromptData,
+    pipeline_tmp_data: tServerPipelineData,
     key: string,
-  ): void {
-    if (!data) return;
-
-    const newVarTypeResult: VarTypeItem = {
-      id: data.id,
-      variable: {
-        var_type: data.var_type.toLowerCase(), // Convert to lowercase
-        evidence: [],
-        explanation: "add manually",
-        confidence: 1,
-        uncertainty: 0,
+  ) {
+    if (!pipeline_tmp_data) return;
+    fetch(server_address + `/curation/${key}/save/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    };
-    // add to log
-    addVar.push(newVarTypeResult);
-
-    if (key === "base") {
-      //left side
-      dispatch("add_var_type", newVarTypeResult);
-    } else {
-      // console.log("modify tmp_data");
-      if (tmp_data === undefined) return;
-      tmp_data.identify_var_types = tmp_data.identify_var_types.map((item) => {
-        if (item.id === data.id) {
-          const updatedNewData = { ...newVarTypeResult.variable };
-          item.identify_var_types_result.push(updatedNewData);
+      body: JSON.stringify({
+        result: pipeline_tmp_data[key],
+        context: data[key],
+        version: current_versions[step],
+      }),
+    })
+      .then((response) => response.text()) // Change this line from response.json() to response.text()
+      .then((data) => {
+        if (data === "success") {
+          console.log("saved");
+        } else {
+          console.error("Unexpected response:", data);
         }
-        return item;
+      })
+      .catch((error) => {
+        console.error("Error saving data:", error);
       });
+  }
+  function isEqual(arr1, arr2) {
+    return JSON.stringify(arr1) === JSON.stringify(arr2);
+  }
+  function update_rules(e) {
+    const [event_data, action]: [LogEntry | number, string] = e.detail;
+    const key = `identify_${stepMap[show_step]}s`;
+    if (action === "add") {
+      const record = event_data as LogEntry;
+
+      // TODO: check if doing dif action on the same snippet and value record
+      if (key in log) {
+        const exactMatch = log[key].find(
+          (entry) =>
+            entry.id === record.id &&
+            entry.action === record.action &&
+            isEqual(entry.value, record.value),
+        );
+
+        if (exactMatch) {
+          alert(
+            "A rule with the same snippet, value, and action already exists.",
+          );
+          return; // Exit the function without adding the duplicate
+        }
+
+        const similarRecord = log[key].find(
+          (entry) =>
+            entry.id === record.id && isEqual(entry.value, record.value),
+        );
+
+        if (similarRecord) {
+          const actionVerb =
+            similarRecord.action === "add" ? "added" : "removed";
+          const userChoice = confirm(
+            `There is a rule ${actionVerb} with the same content. Do you want to update it?`,
+          );
+          if (userChoice) {
+            log[key].splice(similarRecord, 1);
+            log[key].push(record);
+            log = log;
+            return;
+          } else {
+            return;
+          }
+        }
+        log[key].push(record);
+        log = log; // Trigger reactivity
+      }
+    } else if (action === "remove") {
+      const index = event_data as number;
+      log[key] = log[key].filter((_, i) => i !== index);
+    }
+    console.log("update log", log);
+    save_log(log);
+
+    pipeline_result = updatePanelData(pipeline_result, log, key);
+    right_panel_result = updatePanelData(right_panel_result, log, key);
+  }
+
+  function evidenceToString(evidence: number[], conversation: string[]) {
+    return evidence.map((e) => `${conversation[e]}`).join("\n");
+  }
+
+  function prepare_dr_data(
+    data: (tIdentifyVarTypes | tIdentifyVars | tIdentifyLinks)[],
+    key: string,
+  ) {
+    if (key === "identify_var_types") {
+      const target_chunks = data
+        .filter((chunk) => chunk["identify_var_types_result"].length > 0)
+        .map((chunk) => {
+          return chunk["identify_var_types_result"].map((mention) => {
+            const conversations = chunk.conversation.map((c) => c.content);
+            return {
+              id: chunk.id,
+              var_type: mention.var_type,
+              uncertainty: mention.uncertainty,
+              evidence: mention.evidence,
+              evidence_conversation: mention.evidence.map(
+                (e) => conversations[e],
+              ),
+              explanation: mention.explanation,
+              text:
+                evidenceToString(
+                  mention.evidence,
+                  chunk.conversation.map((c) => c.content),
+                ) +
+                "\n" +
+                mention.explanation,
+            };
+          });
+        })
+        .flat();
+      return target_chunks;
+    } else if (key === "identify_vars") {
+      const target_chunks = data
+        .filter(
+          (chunk) => Object.keys(chunk["identify_vars_result"]).length > 0,
+        )
+        .map((chunk) => {
+          return Object.entries(chunk["identify_vars_result"]).map(
+            ([var_type, mentions]) => {
+              return (mentions as any[]).map((mention) => {
+                const conversations = chunk.conversation.map((c) => c.content);
+                return {
+                  id: chunk.id,
+                  var_type: var_type,
+                  var: mention.var,
+                  uncertainty: mention.uncertainty,
+                  evidence: mention.evidence,
+                  evidence_conversation: mention.evidence.map(
+                    (e) => conversations[e],
+                  ),
+                  explanation: mention.explanation,
+                  text:
+                    evidenceToString(
+                      mention.evidence,
+                      chunk.conversation.map((c) => c.content),
+                    ) +
+                    "\n" +
+                    mention.explanation,
+                };
+              });
+            },
+          );
+        })
+        .flat(Infinity);
+      return target_chunks;
+    } else if (key === "identify_links") {
+      const target_chunks = data
+        .filter((chunk) => chunk["identify_links_result"].length > 0)
+        .map((chunk) => {
+          return chunk["identify_links_result"].map((link_mention) => {
+            const conversations = chunk.conversation.map((c) => c.content);
+            return {
+              id: link_mention.chunk_id,
+              indicator1: link_mention.indicator1,
+              indicator2: link_mention.indicator2,
+              var1: link_mention.var1,
+              var2: link_mention.var2,
+              relationship: link_mention.response.relationship
+                .map((r) => r.label)
+                .join("/"),
+              uncertainty: link_mention.uncertainty,
+              evidence: link_mention.response.evidence,
+              evidence_conversation: link_mention.response.evidence.map(
+                (e) => conversations[e],
+              ),
+              explanation: link_mention.response.explanation,
+              text:
+                evidenceToString(
+                  link_mention.response.evidence,
+                  chunk.conversation.map((c) => c.content),
+                ) +
+                "\n" +
+                link_mention.response.explanation,
+            };
+          });
+        })
+        .flat(Infinity);
+      return target_chunks;
     }
   }
+
+  function group_by_var_type(data: any[]) {
+    console.log("grouping by var type", data);
+    return Object.groupBy(data, (d) => d.var_type);
+  }
+
+  function group_by_links(data: any[]) {
+    console.log("grouping by links", data);
+    return Object.groupBy(data, (d) => d.indicator1 + "-" + d.indicator2);
+  }
+
+  function add_vars_to_var_type_uncertainty_graph(
+    data: Record<string, any[]>,
+    var_dr_data: any[],
+  ) {
+    console.log("adding vars to var type uncertainty graph", data, var_dr_data);
+    var_dr_data.forEach((var_mention) => {
+      const var_type = var_mention.var_type;
+      const var_name = var_mention.var;
+      const chunk_id = var_mention.id;
+      const var_origin_index = data[var_type].findIndex(
+        (d) => d.id === chunk_id,
+      );
+      if (var_origin_index !== -1) {
+        if (!data[var_type][var_origin_index]["vars"]) {
+          data[var_type][var_origin_index]["vars"] = [];
+        }
+        data[var_type][var_origin_index]["vars"].push({
+          var_name: var_name,
+          uncertainty: var_mention.uncertainty,
+          text: var_mention.text,
+        });
+      }
+    });
+    return data;
+  }
+
+  function add_links_to_var_type_uncertainty_graph(
+    data: Record<string, any[]>,
+    link_dr_data: any[],
+  ) {
+    console.log(
+      "adding vars to var type uncertainty graph",
+      data,
+      link_dr_data,
+    );
+    link_dr_data.forEach((link_mention) => {
+      const indicator1 = link_mention.indicator1;
+      const indicator2 = link_mention.indicator2;
+      const var1 = link_mention.var1;
+      const var2 = link_mention.var2;
+      const chunk_id = link_mention.id;
+      // src
+      const link_src_origin_index = data[indicator1].findIndex(
+        (d) => d.id === chunk_id,
+      );
+      if (link_src_origin_index !== -1) {
+        if (!data[indicator1][link_src_origin_index]["links"]) {
+          data[indicator1][link_src_origin_index]["links"] = [];
+        }
+        data[indicator1][link_src_origin_index]["links"].push({
+          indicator1: indicator1,
+          indicator2: indicator2,
+          var1: var1,
+          var2: var2,
+          uncertainty: link_mention.uncertainty,
+          text: link_mention.text,
+        });
+      }
+      if (indicator1 === indicator2) return;
+      // dst
+      const link_dst_origin_index = data[indicator2].findIndex(
+        (d) => d.id === chunk_id,
+      );
+      if (link_dst_origin_index !== -1) {
+        if (!data[indicator2][link_dst_origin_index]["links"]) {
+          data[indicator2][link_dst_origin_index]["links"] = [];
+        }
+        data[indicator2][link_dst_origin_index]["links"].push({
+          indicator1: indicator1,
+          indicator2: indicator2,
+          var1: var1,
+          var2: var2,
+          uncertainty: link_mention.uncertainty,
+          text: link_mention.text,
+        });
+      }
+    });
+    return data;
+  }
+
+  function fetchLog() {
+    fetch(`${server_address}/log/get/`)
+      .then((res) => res.json())
+      .then((res) => {
+        log = res;
+        console.log("fetched log", log);
+      });
+  }
+  function save_log(log) {
+    fetch(`${server_address}/log/save/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        log,
+      }),
+    }).then((res) => {
+      console.log("saved log", res);
+    });
+  }
+  onMount(async () => {
+    console.log("on mount");
+    await fetchVersionsCount();
+    await fetchPipelineData(step, current_versions[step]);
+    await fetchMenuData(step, right_panel_version);
+    await fetchRuleMenu(step, current_versions[step]);
+    await fetchLog();
+  });
 </script>
 
 <div class="flex grow cursor-auto flex-col">
   <!-- side panel -->
-  <div class="mt-[-1.4rem] flex w-fit items-end gap-y-0.5 px-0.5 text-sm">
+  <div
+    class="mt-[-1.4rem] flex w-fit items-end gap-x-1 gap-y-0.5 px-0.5 text-sm"
+  >
     <div
       tabindex="0"
       role="button"
-      class="pipeline-step-button"
+      class="pipeline-step-button flex items-center justify-center"
       class:active={show_step === 1}
-      on:click={() => (show_step = 1)}
+      on:click={() => changeStep(1)}
       on:keyup={() => {}}
     >
-      Indicators
+      <span>Indicators</span>
+      <!-- <span
+        class="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-gray-300 text-xs"
+      >
+        {`v${+current_versions["var_type"].slice(1) + 1}`}
+      </span> -->
     </div>
+    <div class="flex h-full items-center p-0.5">
+      <img
+        src={last_execute_prompt_step_number >= 2
+          ? "arrow-right-filled-green.svg"
+          : "arrow-right-empty.svg"}
+        alt="->"
+      />
+    </div>
+
     <div
       tabindex="0"
       role="button"
-      class="pipeline-step-button"
+      class="pipeline-step-button flex items-center justify-center"
       class:active={show_step === 2}
-      on:click={() => (show_step = 2)}
+      on:click={() => changeStep(2)}
       on:keyup={() => {}}
     >
-      Variables
+      <span>Variables</span>
+      <!-- <span
+        class="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-gray-300 text-xs"
+      >
+        {`v${+current_versions["var"].slice(1) + 1}`}
+      </span> -->
+    </div>
+    <div class="flex h-full items-center p-0.5">
+      <img
+        src={last_execute_prompt_step_number >= 3
+          ? "arrow-right-filled-green.svg"
+          : "arrow-right-empty.svg"}
+        alt="->"
+      />
     </div>
     <div
       tabindex="0"
       role="button"
-      class="pipeline-step-button"
+      class="pipeline-step-button flex items-center justify-center"
       class:active={show_step === 3}
-      on:click={() => (show_step = 3)}
+      on:click={() => changeStep(3)}
       on:keyup={() => {}}
     >
-      Links
+      <span>Links</span>
+      <!-- <span
+        class="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-gray-300 text-xs"
+      >
+        {`v${+current_versions["link"].slice(1) + 1}`}
+      </span> -->
     </div>
   </div>
+  {#if ui_loading}
+    <div class="flex h-full items-center justify-center">
+      <div class="loader">
+        <img src="loader.svg" class="animate-spin" alt="Loading..." />
+      </div>
+    </div>
+  {/if}
 
-  {#key show_step}
-    {#if show_step === 1}
-      <div in:slide|global class="step-1 flex grow">
-        <div
-          class="flex min-w-[25rem] max-w-[30rem] flex-col gap-y-1 overflow-y-auto bg-gray-100"
-        >
-          <PromptHeader
-            title="Identify Indicators"
-            on:run={() => execute_prompt(data, "identify_var_types")}
-            bind:measure_uncertainty
-            on:toggle-measure-uncertainty={() =>
-              (measure_uncertainty = !measure_uncertainty)}
-          ></PromptHeader>
-          <VarTypeDataEntry
-            bind:data={data.identify_var_types.var_type_definitions}
-          ></VarTypeDataEntry>
-          <PromptEntry
-            data={{
-              system_prompt_blocks:
-                data.identify_var_types.system_prompt_blocks,
-              user_prompt_blocks: data.identify_var_types.user_prompt_blocks,
-            }}
-          />
-        </div>
-        <IdentifyVarTypeResults
-          data={pipeline_result?.identify_var_types || []}
-          title={selectedTitle}
-          {titleOptions}
-          buttonText="Update Rules"
-          data_loading={false}
-          on:base_or_new_button_click={() => update_rules()}
-          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
-          on:remove_var_type={(e) => remove_var_type(e.detail, "base")}
-          on:add_var_type={(e) => add_var_type(e.detail, "base")}
-          on:title_change={(e) => handle_title_change(e.detail)}
+  {#if show_step === 1 && prompt_data?.identify_var_types}
+    <div in:slide|global class="step-1 flex h-1 grow">
+      <div
+        class="flex min-w-[25rem] max-w-[30rem] flex-col gap-y-1 overflow-y-auto bg-gray-100"
+      >
+        <PromptHeader
+          title="Identify Indicators"
+          versionCount={versionsCount["var_type"]}
+          based_on_options={{ versions: [] }}
+          current_version={current_versions["var_type"]}
+          on:run={() =>
+            execute_prompt(
+              prompt_data,
+              "identify_var_types",
+              current_versions["var_type"],
+            )}
+          bind:measure_uncertainty
+          on:toggle-measure-uncertainty={() =>
+            (measure_uncertainty = !measure_uncertainty)}
+          on:select-version={(e) => handle_version_selected(e.detail)}
+          on:add-version={() => handle_version_added("var_type")}
+          on:delete-version={(e) =>
+            handle_version_deleted("var_type", e.detail)}
+        ></PromptHeader>
+        <VarTypeDataEntry
+          bind:data={prompt_data.identify_var_types.var_type_definitions}
+          on:save={handleSave}
+        ></VarTypeDataEntry>
+        <PromptEntry
+          data={{
+            system_prompt_blocks:
+              prompt_data.identify_var_types.system_prompt_blocks,
+            user_prompt_blocks:
+              prompt_data.identify_var_types.user_prompt_blocks,
+          }}
+          on:save={handleSave}
         />
-        <IdentifyVarTypeResults
-          data={tmp_data?.identify_var_types || []}
-          title={selectedTitle}
-          {titleOptions}
-          buttonText="Save Version"
-          {data_loading}
-          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
-          on:remove_var_type={(e) => remove_var_type(e.detail, "new")}
-          on:add_var_type={(e) => add_var_type(e.detail, "new")}
-          on:base_or_new_button_click={() => handle_save()}
+        <RuleEntry
+          {interview_ids}
+          {menu_data}
+          {step}
+          logData={log["identify_var_types"]}
+          on:rule_change={(e) => update_rules(e)}
         />
       </div>
-    {:else if show_step === 2}
-      <div in:slide|global class="step-2 flex grow">
-        <div class="flex min-w-[25] max-w-[30rem] flex-col gap-y-1 bg-gray-100">
-          <PromptHeader
-            title="Identify Variables"
-            on:run={() => execute_prompt(data, "identify_vars")}
-            bind:measure_uncertainty
-            on:toggle-measure-uncertainty={() =>
-              (measure_uncertainty = !measure_uncertainty)}
-          ></PromptHeader>
-          <VarDataEntry bind:data={data.identify_vars.var_definitions}
-          ></VarDataEntry>
-          <PromptEntry
-            data={{
-              system_prompt_blocks: data.identify_vars.system_prompt_blocks,
-              user_prompt_blocks: data.identify_vars.user_prompt_blocks,
-            }}
-          />
-        </div>
-        <IdentifyVarResults
-          title="baseline"
-          data={pipeline_result?.identify_vars || []}
-          data_loading={false}
-          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+      <IdentifyVarTypeResults
+        data={pipeline_result?.identify_var_types || []}
+        title={`Results: Version ${+current_versions[step].slice(1) + 1}`}
+        current_version={current_versions["var_type"]}
+        versions={[]}
+        {data_loading}
+        {uncertainty_graph_loading}
+        estimated_time={estimated_times["identify_var_types"] *
+          (measure_uncertainty ? 5 : 1)}
+        on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+      />
+      <IdentifyVarTypeResults
+        data={right_panel_result?.identify_var_types || []}
+        title={right_panel_version}
+        current_version={right_panel_version}
+        versions={versionsCount["var_type"].versions}
+        data_loading={false}
+        uncertainty_graph_loading={false}
+        on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+        on:version_changed={(e) => handle_version_change(e.detail)}
+      />
+    </div>
+  {:else if show_step === 2 && prompt_data.identify_vars}
+    <div in:slide|global class="step-2 flex h-1 grow">
+      <div
+        class="flex min-w-[25] max-w-[30rem] flex-col gap-y-1 overflow-y-auto bg-gray-100"
+      >
+        <PromptHeader
+          title="Identify Variables"
+          versionCount={versionsCount["var"]}
+          current_version={current_versions["var"]}
+          based_on_options={versionsCount["var_type"]}
+          bind:based_on={prompt_data.identify_vars.based_on}
+          on:run={() =>
+            execute_prompt(
+              prompt_data,
+              "identify_vars",
+              current_versions["var"],
+            )}
+          bind:measure_uncertainty
+          on:toggle-measure-uncertainty={() =>
+            (measure_uncertainty = !measure_uncertainty)}
+          on:select-version={(e) => handle_version_selected(e.detail)}
+          on:add-version={() => handle_version_added("var")}
+          on:delete-version={(e) => handle_version_deleted("var", e.detail)}
+        ></PromptHeader>
+        <VarDataEntry
+          bind:data={prompt_data.identify_vars.var_definitions}
+          on:save={handleSave}
+        ></VarDataEntry>
+        <PromptEntry
+          data={{
+            system_prompt_blocks:
+              prompt_data.identify_vars.system_prompt_blocks,
+            user_prompt_blocks: prompt_data.identify_vars.user_prompt_blocks,
+          }}
+          on:save={handleSave}
         />
-        <IdentifyVarResults
-          title="new"
-          data={tmp_data?.identify_vars || []}
-          {data_loading}
-          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+        <RuleEntry
+          {interview_ids}
+          {menu_data}
+          {step}
+          logData={log["identify_vars"]}
+          on:rule_change={(e) => update_rules(e)}
         />
       </div>
-    {:else if show_step === 3}
-      <div in:slide|global class="step-2 flex grow">
-        <div
-          class="flex min-w-[25rem] max-w-[30rem] flex-col gap-y-1 bg-gray-100"
-        >
-          <PromptHeader
-            title="Identify Links"
-            on:run={() => execute_prompt(data, "identify_links")}
-            bind:measure_uncertainty
-            on:toggle-measure-uncertainty={() =>
-              (measure_uncertainty = !measure_uncertainty)}
-          ></PromptHeader>
-          <PromptEntry
-            data={{
-              system_prompt_blocks: data.identify_links.system_prompt_blocks,
-              user_prompt_blocks: data.identify_links.user_prompt_blocks,
-            }}
-          />
-        </div>
-        <IdentifyLinkResults
-          title="baseline"
-          data={pipeline_result?.identify_links || []}
-          data_loading={false}
-          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+      <IdentifyVarResults
+        data={pipeline_result?.identify_vars || []}
+        title={`Results: Version ${+current_versions[step].slice(1) + 1}`}
+        versions={[]}
+        current_version={right_panel_version}
+        {data_loading}
+        {uncertainty_graph_loading}
+        variable_definitions={prompt_data.identify_vars.var_definitions}
+        estimated_time={estimated_times["identify_vars"] *
+          (measure_uncertainty ? 5 : 1)}
+        on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+      />
+      <IdentifyVarResults
+        data={right_panel_result?.identify_vars || []}
+        title={right_panel_version}
+        versions={versionsCount["var"].versions}
+        current_version={right_panel_version}
+        data_loading={false}
+        uncertainty_graph_loading={false}
+        variable_definitions={right_prompt_data.identify_vars.var_definitions}
+        on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+        on:version_changed={(e) => handle_version_change(e.detail)}
+      />
+    </div>
+  {:else if show_step === 3 && prompt_data.identify_links}
+    <div in:slide|global class="step-2 flex h-1 grow">
+      <div
+        class="flex min-w-[25rem] max-w-[30rem] flex-col gap-y-1 overflow-y-auto bg-gray-100"
+      >
+        <PromptHeader
+          title="Identify Links"
+          versionCount={versionsCount["link"]}
+          current_version={current_versions["link"]}
+          based_on_options={versionsCount["var"]}
+          bind:based_on={prompt_data.identify_links.based_on}
+          on:run={() =>
+            execute_prompt(
+              prompt_data,
+              "identify_links",
+              current_versions["link"],
+            )}
+          bind:measure_uncertainty
+          on:toggle-measure-uncertainty={() =>
+            (measure_uncertainty = !measure_uncertainty)}
+          on:select-version={(e) => handle_version_selected(e.detail)}
+          on:add-version={() => handle_version_added("link")}
+          on:delete-version={(e) => handle_version_deleted("link", e.detail)}
+        ></PromptHeader>
+        <PromptEntry
+          data={{
+            system_prompt_blocks:
+              prompt_data.identify_links.system_prompt_blocks,
+            user_prompt_blocks: prompt_data.identify_links.user_prompt_blocks,
+          }}
+          on:save={handleSave}
         />
-        <IdentifyLinkResults
-          title="new"
-          data={tmp_data?.identify_links || []}
-          {data_loading}
-          on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+        <RuleEntry
+          {interview_ids}
+          {menu_data}
+          {step}
+          logData={log["identify_links"]}
+          on:rule_change={(e) => update_rules(e)}
         />
       </div>
-    {/if}
-  {/key}
+      <IdentifyLinkResults
+        data={pipeline_result?.identify_links || []}
+        title={`Results: Version ${+current_versions[step].slice(1) + 1}`}
+        versions={[]}
+        current_version={current_versions["link"]}
+        {data_loading}
+        estimated_time={estimated_times["identify_links"] *
+          (measure_uncertainty ? 5 : 1)}
+        {uncertainty_graph_loading}
+        variable_definitions={prompt_data.identify_vars?.var_definitions}
+        on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+      />
+      <IdentifyLinkResults
+        data={right_panel_result?.identify_links || []}
+        title={right_panel_version}
+        versions={versionsCount["link"].versions}
+        current_version={right_panel_version}
+        data_loading={false}
+        uncertainty_graph_loading={false}
+        variable_definitions={right_prompt_data.identify_vars?.var_definitions}
+        on:navigate_evidence={(e) => navigate_evidence(e.detail)}
+        on:version_changed={(e) => handle_version_change(e.detail)}
+      />
+    </div>
+  {/if}
 
   <button
     aria-label="close"
@@ -418,12 +1033,29 @@
 
 <style lang="postcss">
   .pipeline-step-button {
-    @apply w-[5.5rem]  rounded-sm border-r  border-gray-600 bg-gray-200 p-1 text-center opacity-50 hover:bg-gray-300;
+    @apply inline-flex  rounded-sm  border-gray-600 bg-gray-200 p-1 px-3 text-center opacity-50 hover:bg-gray-400;
     transition: all 0.2s;
+    min-width: 5.5rem;
   }
   .active {
-    @apply pointer-events-none w-[5rem] bg-green-300 opacity-100;
+    @apply pointer-events-none bg-yellow-100 opacity-100;
   }
-  .container {
+  .dashed-arrow {
+    width: 20px;
+    height: 2px;
+    border-top: 2px dashed #888;
+    position: relative;
+    margin: 0 5px;
+  }
+  .dashed-arrow::after {
+    content: "";
+    position: absolute;
+    right: -5px;
+    top: -6px;
+    width: 0;
+    height: 0;
+    border-left: 6px solid #888;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
   }
 </style>

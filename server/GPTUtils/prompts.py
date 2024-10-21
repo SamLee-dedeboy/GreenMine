@@ -85,6 +85,7 @@ def identify_var_prompt_factory(
                             {{
                                 "tag": string (one of the above or "none")
                                 "evidence": [] (list of transcript conversation indices, empty if tag is "none"),
+                                "keywords": [] (list of keywords, empty if tag is "none"),
                                 "explanation": string (explain why the evidence indicates the tag in Traditional Chinese), or "none" if tag is "none"
                             }}
                         ]
@@ -101,12 +102,14 @@ def identify_var_prompt_factory(
                 lambda x: {
                     "var": x["tag"],
                     "evidence": x["evidence"],
+                    "keywords": x["keywords"],
                     "explanation": x["explanation"],
                 },
                 response,
             )
         )
         response = list(filter(lambda x: x["var"] != "none", response))
+        response = list(filter(lambda x: x["explanation"] != "none", response))
         return response
 
     response_format = "json"
@@ -131,7 +134,9 @@ def identify_link_prompt_factory(
                     {{
                         "result": 
                             {{
-                                "relationship": string (relationship between the two variables, or "none"),
+                                "source": string (source concept),
+                                "target": string (target concept),
+                                "relationship": string (relationship between the two concepts or "none"),
                                 "evidence": [] (list of transcript conversation indices, empty if relationship is "none"),
                                 "explanation": string (explain why the evidence indicates the relationship in Traditional Chinese), or "none" if relationship is "none"
                             }}
@@ -151,7 +156,28 @@ def identify_link_prompt_factory(
     response_format = "json"
     return messages, response_format, extract_response_func
 
-    return
+
+def topic_assignment_prompt_factory(texts):
+    messages = [
+        {
+            "role": "system",
+            "content": """You are a topic assignment system. The user will provide you with a list of texts in Chinese. You need to assign one topic to summarize all of them. 
+            The topic should be a simple noun-phrase in Traditional Chinese. Only one topic should be generated.
+            Reply with the JSON format: 
+            {{
+                topic: string (Traditional Chinese)
+            }}
+            """,
+        },
+        {"role": "user", "content": "\n".join(texts)},
+    ]
+
+    def extract_response_func(response):
+        response = json.loads(response)["topic"]
+        return response
+
+    response_format = "json"
+    return messages, response_format, extract_response_func
 
 
 def node_extraction_prompt_factory(paragraph, var_name, definition):

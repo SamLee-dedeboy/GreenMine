@@ -1,19 +1,45 @@
 <script lang="ts">
   import type { tVarTypeData } from "lib/types";
+  import { createEventDispatcher } from "svelte";
   import { slide } from "svelte/transition";
   export let data: tVarTypeData;
+  const dispatch = createEventDispatcher();
   let show = true;
+  function handleSaveDef(updatedData: tVarTypeData) {
+    console.log(updatedData);
+    dispatch("save", { type: "var_type_definitions", data: updatedData });
+  }
 </script>
 
-<div class="flex flex-col px-1">
+<div class="relative flex flex-col gap-y-0.5 px-1">
   <div
     tabindex="0"
     role="button"
-    class="entry-trigger"
-    on:click={() => (show = !show)}
+    on:click={(e) => {
+      if (!e.defaultPrevented) show = !show;
+    }}
     on:keyup={() => {}}
+    class="entry-trigger relative font-serif"
   >
     Indicator Definitions
+  </div>
+  <div
+    role="button"
+    tabindex="0"
+    class="absolute right-2 top-0.5 flex items-center justify-center rounded-sm normal-case italic leading-3 text-gray-600 outline-double outline-1 outline-gray-300 hover:bg-gray-400"
+    on:mouseover={(e) => {
+      e.preventDefault();
+    }}
+    on:focus={(e) => {
+      e.preventDefault();
+    }}
+    on:click={(e) => {
+      e.preventDefault();
+      handleSaveDef(data);
+    }}
+    on:keyup={() => {}}
+  >
+    <img src="save.svg" alt="" class="h-5 w-5" />
   </div>
   {#if show}
     <div transition:slide class="var-type-definition-content divide-y text-sm">
