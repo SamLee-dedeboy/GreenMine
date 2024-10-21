@@ -95,7 +95,8 @@
       // reset detail highlights
       if (DetailDPSIR.highlighting()) {
         DetailDPSIR.resetHighlights();
-        dispatch("var-selected", null); // for app.svelte to reset hightlight the chunks
+        // dispatch("var-selected", null); // for app.svelte to reset hightlight the chunks
+        handleHighlightChunks(null);
         return;
       }
       // reset all highlights
@@ -105,7 +106,8 @@
       // Object.keys(var_type_states).forEach((key) => {
       //   var_type_states[key].revealed = false;
       // });
-      dispatch("var-selected", null); // for app.svelte to reset hightlight the chunks
+      // dispatch("var-selected", null); // for app.svelte to reset hightlight the chunks
+      handleHighlightChunks(null);
       render(data, links, var_type_states);
     }
   }
