@@ -51,6 +51,12 @@
   }
 
   function handleAddRule() {
+    console.log(
+      "Adding rule...",
+      selectedAction,
+      selectedSnippet,
+      selectedValue,
+    );
     if (
       selectedAction === undefined ||
       selectedSnippet === undefined ||
@@ -80,8 +86,8 @@
       dispatch("rule_change", [logEntry, "add"]);
 
       // Reset all selections
-      selectedAction = "add";
-      selectedSnippet = undefined;
+      // selectedAction = "add";
+      // selectedSnippet = undefined;
       selectedValue = undefined;
       selectedSourceValue = undefined;
       selectedTargetValue = undefined;
@@ -116,7 +122,7 @@
     {#if show_rules}
       <div transition:slide class="mt-1 flex divide-x text-sm">
         <!-- Left column: Control panel -->
-        <div class="flex-1">
+        <div class="min-w-[11rem] flex-1">
           <div class="flex flex-col border-t border-gray-200">
             <div class="mx-1 my-1 flex flex-grow flex-col space-y-2">
               <div class="flex flex-row">
@@ -165,8 +171,7 @@
                 <div class="flex flex-row">
                   <label
                     for="source-value-select"
-                    class="w-1/3 text-sm italic text-gray-600"
-                    >Source Value</label
+                    class="w-1/3 text-sm italic text-gray-600">From</label
                   >
                   <div class="w-2/3">
                     <VarsDropDown
@@ -179,8 +184,7 @@
                 <div class="flex flex-row">
                   <label
                     for="target-value-select"
-                    class="w-1/3 text-sm italic text-gray-600"
-                    >Target Value</label
+                    class="w-1/3 text-sm italic text-gray-600">To</label
                   >
                   <div class="w-2/3">
                     <VarsDropDown
