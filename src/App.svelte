@@ -169,7 +169,7 @@
     <div class="page flex h-full space-x-1">
       {#if show_prompts}
         <div
-          class="absolute left-1/4 top-1/2 z-10 flex h-[80vh] w-[70vw] min-w-[85rem] -translate-x-1/4 -translate-y-1/2 items-stretch rounded-md bg-gray-200 pt-6 shadow-md outline outline-1 outline-gray-300"
+          class="absolute left-1/4 top-1/2 z-10 flex h-[80vh] min-w-[70vw] -translate-x-1/4 -translate-y-1/2 items-stretch rounded-md bg-gray-200 pt-6 shadow-md outline outline-1 outline-gray-300"
           use:draggable
         >
           <Prompts
@@ -191,11 +191,13 @@
           ></KeywordSeaViewer>
         </div>
       {/if}
-      {#if !interview_data_loading}
-        <div
-          class="ml-1 mt-2 flex flex-col bg-gray-200 pt-2 outline-double outline-2 outline-gray-300"
-          use:draggable
-        >
+      <div
+        class="min-h-8 ml-1 mt-2 flex flex-col bg-gray-200 pt-2 outline-double outline-2 outline-gray-300"
+        use:draggable
+      >
+        {#if interview_data_loading}
+          <img src="loader.svg" class="animate-spin" alt="loading..." />
+        {:else}
           <ControlPanel
             on:toggle-viz={() => (show_dpsir = !show_dpsir)}
             on:toggle-prompt={() => {
@@ -205,8 +207,8 @@
               show_keywordsea = !show_keywordsea;
             }}
           ></ControlPanel>
-        </div>
-      {/if}
+        {/if}
+      </div>
       <div
         class="z-10 flex h-full w-[75%] flex-col items-center justify-center"
       >
