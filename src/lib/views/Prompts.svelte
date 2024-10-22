@@ -55,7 +55,7 @@
     identify_vars: [],
     identify_links: [],
   };
-  let measure_uncertainty = false;
+  let measure_uncertainty = true;
   let current_versions = {
     var_type: "v0",
     var: "v0",
@@ -888,7 +888,7 @@
   {:else if show_step === 2 && prompt_data.identify_vars}
     <div in:slide|global class="step-2 flex h-1 grow">
       <div
-        class="flex min-w-[25] max-w-[30rem] flex-col gap-y-1 overflow-y-auto bg-gray-100"
+        class="flex min-w-[25rem] max-w-[30rem] flex-col gap-y-1 overflow-y-auto bg-gray-100"
       >
         <PromptHeader
           title="Identify Variables"

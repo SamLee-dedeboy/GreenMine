@@ -38,7 +38,9 @@
         role="button"
         tabindex="0"
         class="ml-4 flex w-fit items-center gap-x-1 rounded-sm bg-gray-200 px-1 text-xs italic outline outline-1 outline-gray-300 hover:outline-2"
-        on:click={() => dispatch("toggle-measure-uncertainty")}
+        on:click={() => {
+          // dispatch("toggle-measure-uncertainty")
+        }}
         on:keyup={() => {}}
       >
         <div
