@@ -74,14 +74,14 @@
             class="relative flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 font-semibold text-gray-600 opacity-80 outline outline-[1.5px] outline-gray-400 hover:bg-green-200 hover:opacity-100"
             class:selected={version === current_version}
             on:click={() => {
-              if (version === current_version) {
+              if (version === current_version && version !== "v0") {
                 dispatch("delete-version", version);
               } else {
                 dispatch("select-version", version);
               }
             }}
           >
-            {#if version === current_version}
+            {#if version === current_version && version !== "v0"}
               <div
                 class="absolute bottom-0 left-0 right-0 top-0 hidden items-center justify-center rounded-full bg-red-200"
               >
