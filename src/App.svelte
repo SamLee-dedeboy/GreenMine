@@ -191,20 +191,22 @@
           ></KeywordSeaViewer>
         </div>
       {/if}
-      <div
-        class="ml-1 mt-2 flex flex-col bg-gray-200 pt-2 outline-double outline-2 outline-gray-300"
-        use:draggable
-      >
-        <ControlPanel
-          on:toggle-viz={() => (show_dpsir = !show_dpsir)}
-          on:toggle-prompt={() => {
-            show_prompts = !show_prompts;
-          }}
-          on:toggle-keywordsea={() => {
-            show_keywordsea = !show_keywordsea;
-          }}
-        ></ControlPanel>
-      </div>
+      {#if !interview_data_loading}
+        <div
+          class="ml-1 mt-2 flex flex-col bg-gray-200 pt-2 outline-double outline-2 outline-gray-300"
+          use:draggable
+        >
+          <ControlPanel
+            on:toggle-viz={() => (show_dpsir = !show_dpsir)}
+            on:toggle-prompt={() => {
+              show_prompts = !show_prompts;
+            }}
+            on:toggle-keywordsea={() => {
+              show_keywordsea = !show_keywordsea;
+            }}
+          ></ControlPanel>
+        </div>
+      {/if}
       <div
         class="z-10 flex h-full w-[75%] flex-col items-center justify-center"
       >
