@@ -13,16 +13,14 @@
       '<span class="text-yellow-600" contenteditable=false>${$1}</span>',
     );
   }
-  function updateBlockContent(index: number, newContent: string) {
+  function updateBlockContent(key: string, index: number, newContent: string) {
     const plainText = newContent.replace(/<[^>]*>/g, "").trim();
-    data.system_prompt_blocks[index][1] = plainText;
+    data[key + "_prompt_blocks"][index][1] = plainText;
     data = { ...data }; // Trigger reactivity
   }
   function handleSavePrompt(updatedData: tPrompt) {
-    console.log(updatedData);
     dispatch("save", { type: "prompt", data: updatedData });
   }
-  onMount(() => {});
 </script>
 
 <div class="">
@@ -65,9 +63,8 @@
           <div
             class="grow pl-2 text-left text-sm italic text-gray-500"
             contenteditable
-            on:input={(e) => updateBlockContent(index, e.target.innerHTML)}
-            on:blur={function () {
-              this.innerHTML = highlight_variables(this.innerHTML);
+            on:blur={function (e) {
+              updateBlockContent("system", index, e.target.innerHTML);
             }}
           >
             {@html highlight_variables(block_content)}
@@ -84,8 +81,8 @@
           <div
             class="grow pl-2 text-left text-sm italic text-gray-500"
             contenteditable
-            on:blur={function () {
-              this.innerHTML = highlight_variables(this.innerHTML);
+            on:blur={function (e) {
+              updateBlockContent("user", index, e.target.innerHTML);
             }}
           >
             {@html highlight_variables(block_content)}
