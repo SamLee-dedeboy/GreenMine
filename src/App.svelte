@@ -160,6 +160,7 @@
 
   setContext("fetchData", fetchData);
   setContext("handleHighlightChunks", handleHighlightChunks);
+  setContext("fetchLinkVersion", fetchLinkVersion);
 </script>
 
 <main class="h-full w-full px-1">

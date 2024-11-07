@@ -34,6 +34,7 @@
     identify_vars: 2,
     identify_links: 3,
   };
+  const fetchLinkVersion: Function = getContext("fetchLinkVersion");
   const dispatch = createEventDispatcher();
   let prompt_data: tServerPromptData;
   let right_prompt_data: tServerPromptData;
@@ -449,6 +450,9 @@
       .then((data) => {
         if (data === "success") {
           console.log("saved");
+          if (key === "identify_links") {
+            fetchLinkVersion();
+          }
         } else {
           console.error("Unexpected response:", data);
         }

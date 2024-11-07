@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, SvelteComponent_1 } from "svelte";
   import * as d3 from "d3";
 
   export let estimated_time;
@@ -38,7 +38,7 @@
       .join("rect")
       .attr("x", (d) => xScale(d))
       .attr("y", 0)
-      .attr("width", svgWidth / rect_data.length - offset)
+      .attr("width", Math.max(1, svgWidth / rect_data.length - offset))
       .attr("height", svgHeight)
       .attr("fill", "black")
       .attr("opacity", 0);
