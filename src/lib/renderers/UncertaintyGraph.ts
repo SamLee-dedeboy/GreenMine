@@ -171,7 +171,7 @@ export class UncertaintyGraph {
           }
           const simulation = d3
             .forceSimulation(data_w_coordinates)
-            .alphaMin(0.01)
+            .alphaMin(0.35)
             .force(
               "radial",
               d3
