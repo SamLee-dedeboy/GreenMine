@@ -55,7 +55,7 @@ export class UncertaintyGraph {
         this.padding.top + this.height / 2,
       ],
     };
-    this.dispatch = d3.dispatch("force_end");
+    this.dispatch = d3.dispatch("force_end", "snippet_clicked");
 
     this.polarRadiusScale = d3
       .scaleLinear()
@@ -159,22 +159,7 @@ export class UncertaintyGraph {
             .attr("cursor", "pointer")
             .on("click", function (e, d) {
               console.log("click", d);
-              const conversation = conversationToHtml(
-                d.evidence,
-                d.evidence_conversation,
-                d.id.split("_")[0],
-              );
-              const explanation = d.explanation;
-              const tooltip_conversation = d3
-                .select(svg.node().parentNode.parentNode)
-                .select(".uncertainty-tooltip-conversation")
-                .html(conversation);
-              d3.select(svg.node().parentNode.parentNode)
-                .select(".uncertainty-tooltip-explanation")
-                .html(explanation);
-              tooltip_conversation
-                .node()
-                .scrollIntoView({ behavior: "smooth" });
+              self.dispatch.call("snippet_clicked", null, d);
             });
           if (highlight_ids) {
             enter_nodes
@@ -444,19 +429,4 @@ function darkenColor(hex, percent) {
   // Convert back to hex and return
   const toHex = (value) => value.toString(16).padStart(2, "0");
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-}
-
-function conversationToHtml(
-  evidence: number[],
-  conversation: string[],
-  pid: string,
-) {
-  let conversation_html = "";
-  conversation.forEach((c, i) => {
-    if (i > 0 && evidence[i] - evidence[i - 1] > 1) {
-      conversation_html += `<p>...</p>`;
-    }
-    conversation_html += `<p>${pid}: ${c}</p>`;
-  });
-  return conversation_html;
 }

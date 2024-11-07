@@ -10,6 +10,7 @@ export type tChunk = {
   title: string;
   topic: string;
   raw_keywords: string[];
+  index?: number;
 };
 export type tConversation = {
   speaker: number;

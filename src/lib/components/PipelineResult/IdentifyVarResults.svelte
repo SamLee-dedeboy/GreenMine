@@ -26,6 +26,7 @@
   export let current_version: string;
   export let variable_definitions: tVarData;
   export let estimated_time = 0;
+  let searched_snippet = "";
   const dispatch = createEventDispatcher();
   $: handleVersionChanged(current_version);
   let show_uncertainty_graph = false;
@@ -78,7 +79,7 @@
   });
 </script>
 
-<div class="flex min-w-[25rem] flex-1 flex-col bg-gray-100 px-1 shadow-lg">
+<div class="flex w-[30rem] flex-1 flex-col bg-gray-100 px-1 shadow-lg">
   {#if versions.length > 0}
     <VersionsMenu {versions} bind:current_version />
   {:else}
@@ -91,7 +92,22 @@
       {#if show_others}
         <div class="ml-1">Keywords around "其他"</div>
       {:else if !show_uncertainty_graph}
-        <div class="w-[4rem] shrink-0">Snippet</div>
+        <!-- <div class="w-[4rem] shrink-0">Snippet</div> -->
+        <div class="column-snippet relative w-[4rem] shrink-0">
+          <span>
+            {searched_snippet === "" ? "Snippet" : searched_snippet}
+          </span>
+          <div class="search absolute bottom-0 left-0 right-0 top-0 hidden">
+            <img class="h-4 w-4" src="search.svg" alt="search" />
+            <div
+              class="search-bar grow text-xs"
+              contenteditable
+              on:input={(e) => {
+                searched_snippet = e.target.innerText.trim();
+              }}
+            ></div>
+          </div>
+        </div>
         <div class="flex pl-2">Variables</div>
       {/if}
       <div class="ml-auto flex">
@@ -169,7 +185,7 @@
       <div
         class="flex h-1 grow flex-col divide-y divide-black overflow-y-auto pr-3"
       >
-        {#each sort_by_uncertainty(data) as datum}
+        {#each sort_by_uncertainty(data).filter( (d) => new RegExp(`^${searched_snippet}`).test(d.id), ) as datum}
           {@const isNone = Object.keys(datum.identify_vars_result).length === 0}
           <div class="flex divide-x" class:isNone>
             <div class="w-[4rem] shrink-0 text-[0.9rem]">
@@ -291,5 +307,15 @@
   }
   .enabled {
     @apply pointer-events-auto opacity-100;
+  }
+  .column-snippet:hover,
+  .column-snippet:focus-within {
+    & span {
+      display: none;
+    }
+
+    & .search {
+      @apply flex items-center;
+    }
   }
 </style>

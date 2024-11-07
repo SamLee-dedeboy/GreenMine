@@ -42,6 +42,7 @@ export const OverviewDPSIR = {
         .map((d) => +d);
       const pattern = svg
         .append("defs")
+        .attr("class", "ringPattern")
         .append("pattern")
         .attr("id", "ringPattern")
         .attr("width", svgWidth)
@@ -206,7 +207,10 @@ export const OverviewDPSIR = {
                 .attr("stroke", (d: tLinkObject) => {
                   return self.varTypeColorScale(d.source);
                 });
-              d3.select(`#arrow-${d.source}-${d.target}`).attr("opacity", 1);
+              d3.select(`#arrowhead-${d.source}-${d.target}`).attr(
+                "opacity",
+                1,
+              );
               tooltip
                 .html(
                   `
@@ -284,10 +288,11 @@ export const OverviewDPSIR = {
 
     const arrowData = linkData.map((d) => d.arrows).flat();
     svg
-      .selectAll("defs")
+      .selectAll("defs.arrowhead")
       .data(arrowData)
       .enter()
       .append("defs")
+      .attr("class", "arrowhead")
       .append("marker")
       .attr("id", (d) => `arrowhead-${d.source}-${d.target}`)
       .attr("viewBox", "0 0 10 10")

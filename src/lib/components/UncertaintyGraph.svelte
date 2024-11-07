@@ -1,7 +1,9 @@
 <script lang="ts">
   import { server_address, var_type_names } from "lib/constants";
   import { UncertaintyGraph } from "lib/renderers/UncertaintyGraph";
+  import LinkResult from "./PipelineResult/LinkResult.svelte";
   import { varTypeColorScale } from "lib/store";
+  import { setOpacity } from "lib/utils";
   import type {
     tIdentifyVarTypes,
     tIdentifyVars,
@@ -13,6 +15,7 @@
   export let version: string;
   export let variables: tVarData = {};
   export let key: string; // "identify_var_types" | "identify_vars" | "identify_links"
+  export let max_degree: number;
 
   let group = "driver"; // "driver" | "pressure" | "state" | "impact" | "response"
   let highlighted_vars: string[] = [];
@@ -23,6 +26,7 @@
   const svgId = "uncertainty-graph-" + Math.floor(Math.random() * 1000);
   let uncertaintyGraph: UncertaintyGraph = new UncertaintyGraph(svgId);
   let allow_switch_group = true;
+  let tooltip_container;
 
   let dr_result = {};
   $: fetchPlotData(version, key);
@@ -83,12 +87,86 @@
       updatePlot(dr_result, group, highlighted_vars);
     }
   }
+  function conversationToHtml(
+    evidence: number[],
+    conversation: string[],
+    pid: string,
+  ) {
+    let conversation_html = "";
+    conversation.forEach((c, i) => {
+      if (i > 0 && evidence[i] - evidence[i - 1] > 1) {
+        conversation_html += `<p>...</p>`;
+      }
+      conversation_html += `<p>${pid}: ${c}</p>`;
+    });
+    return conversation_html;
+  }
+
+  function extractSnippetResult(data, key) {
+    if (key === "identify_var_types") {
+      return `${data.var_type}`;
+    } else if (key === "identify_vars") {
+      return data.vars.map((v) => `${v.var_name}`).join(", ");
+    } else if (key === "identify_links") {
+      return `
+      <span style="background-color: ${setOpacity($varTypeColorScale(data.indicator1), 0.7, "rgbaHex")}">${data.var1} </span>
+       - 
+      <span style="background-color: ${setOpacity($varTypeColorScale(data.indicator2), 0.7, "rgbaHex")}">${data.var2} </span>
+      <span> (${data.relationship}) </span>`;
+    }
+  }
+
+  function extractSnippetConversation(d, key) {
+    const explanation = d.explanation;
+    if (key === "identify_vars") {
+      const evidence: number[] = Array.from(
+        new Set(d.vars.map((v) => v.evidence).flat()),
+      );
+      const explanations = d.vars.map((v) => v.explanation);
+      const conversation = conversationToHtml(
+        evidence,
+        d.evidence_conversation,
+        d.id,
+      );
+      const explanation = `<div class="flex flex-col">
+    ${explanations.map((e, i) => `<span>${d.vars[i].var_name}: </span><p style="border-bottom: 1px dashed black; padding-left: 0.25rem;">${e}</p>`).join("")}
+      </div>`;
+      return { conversation, explanation };
+    } else {
+      const conversation = conversationToHtml(
+        d.evidence,
+        d.evidence_conversation,
+        d.id.split("_")[0],
+      );
+      return { conversation, explanation };
+    }
+  }
+  function handleSnippetClicked(d) {
+    console.log("snippet clicked", d);
+    // id and result
+    const id = d.id;
+    const result = extractSnippetResult(d, key);
+    tooltip_container.querySelector(".snippet-id").innerHTML = id;
+    tooltip_container.querySelector(".snippet-result").innerHTML = result;
+    // conversation and explanation
+    const { conversation, explanation } = extractSnippetConversation(d, key);
+    tooltip_container.querySelector(
+      ".uncertainty-tooltip-conversation",
+    ).innerHTML = conversation;
+    tooltip_container.querySelector(
+      ".uncertainty-tooltip-explanation",
+    ).innerHTML = explanation;
+    tooltip_container
+      .querySelector(".uncertainty-tooltip-conversation")
+      .scrollIntoView({ behavior: "smooth" });
+  }
 
   onMount(() => {
     uncertaintyGraph.init();
     uncertaintyGraph.on("force_end", () => {
       allow_switch_group = true;
     });
+    uncertaintyGraph.on("snippet_clicked", handleSnippetClicked);
     if (key === "identify_vars") {
       highlighted_vars = [];
     }
@@ -394,8 +472,13 @@
     </svg>
   </div>
   <div
-    class="relative z-50 mt-2 flex grow flex-col text-xs outline outline-1 outline-gray-300"
+    bind:this={tooltip_container}
+    class="tooltip-container relative z-50 mt-2 flex grow flex-col text-xs outline outline-1 outline-gray-300"
   >
+    <div class="flex items-center gap-x-2 py-0.5">
+      <div class="snippet-id"></div>
+      <div class="snippet-result flex gap-x-2 capitalize"></div>
+    </div>
     <div class="flex divide-x">
       <div class="flex flex-1 flex-col">
         <div
@@ -439,6 +522,11 @@
   .uncertainty-tooltip-conversation {
     & p {
       @apply border border-dashed border-black bg-yellow-100 pl-1 pr-3;
+    }
+  }
+  .tooltip-container {
+    & span {
+      @apply rounded-sm px-1 py-0.5 italic text-gray-700;
     }
   }
 </style>

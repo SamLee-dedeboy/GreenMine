@@ -14,6 +14,7 @@
   export let uncertainty_graph_loading: boolean;
   export let estimated_time = 0;
   export let current_version: string;
+  let searched_snippet = "";
   let show_uncertainty_graph = false;
   $: has_uncertainty = data.some((datum) => datum.uncertainty);
   const dispatch = createEventDispatcher();
@@ -53,7 +54,7 @@
 
 <div
   class="relative z-50 flex
-     min-w-[30rem]
+     w-[30rem]
             flex-1 flex-col
             bg-gray-100 px-1 shadow-lg"
   transition:fade={{
@@ -73,7 +74,21 @@
       style={`border-bottom: ${show_uncertainty_graph ? "unset" : "1px solid black"}`}
     >
       {#if !show_uncertainty_graph}
-        <div class="w-[4rem] shrink-0">Snippet</div>
+        <div class="column-snippet relative w-[4rem] shrink-0">
+          <span>
+            {searched_snippet === "" ? "Snippet" : searched_snippet}
+          </span>
+          <div class="search absolute bottom-0 left-0 right-0 top-0 hidden">
+            <img class="h-4 w-4" src="search.svg" alt="search" />
+            <div
+              class="search-bar grow text-xs"
+              contenteditable
+              on:input={(e) => {
+                searched_snippet = e.target.innerText.trim();
+              }}
+            ></div>
+          </div>
+        </div>
         <div class="flex pl-2">Indicators</div>
       {/if}
       <div
@@ -101,7 +116,7 @@
       <div
         class="flex h-1 grow flex-col divide-y divide-black overflow-y-scroll"
       >
-        {#each sort_by_uncertainty(data) as datum, i}
+        {#each sort_by_uncertainty(data).filter( (d) => new RegExp(`^${searched_snippet}`).test(d.id), ) as datum, i}
           {#if datum.identify_var_types_result}
             {@const isNone = datum.identify_var_types_result.length === 0}
             <div class="flex items-center divide-x bg-gray-200" class:isNone>
@@ -198,5 +213,15 @@
   }
   .active {
     @apply bg-green-200;
+  }
+  .column-snippet:hover,
+  .column-snippet:focus-within {
+    & span {
+      display: none;
+    }
+
+    & .search {
+      @apply flex items-center;
+    }
   }
 </style>

@@ -59,6 +59,8 @@ def identify_var_type_prompt_factory(
             )
         )
         response = list(filter(lambda x: x["var_type"] != "none", response))
+        response = list(filter(lambda x: x["explanation"] != "none", response))
+        response = list(filter(lambda x: len(x["evidence"]) != 0, response))
         return response
 
     response_format = "json"
@@ -109,6 +111,7 @@ def identify_var_prompt_factory(
             )
         )
         response = list(filter(lambda x: x["var"] != "none", response))
+        response = list(filter(lambda x: len(x["evidence"]) != 0, response))
         response = list(filter(lambda x: x["explanation"] != "none", response))
         return response
 
@@ -150,6 +153,10 @@ def identify_link_prompt_factory(
     def extract_response_func(response):
         response = json.loads(response)["result"]
         if response["relationship"] == "none":
+            return None
+        if len(response["evidence"]) == 0:
+            return None
+        if response["explanation"] == "none":
             return None
         return response
 
