@@ -111,6 +111,7 @@ def identify_vars_uncertainty(
             for var_type, vars in chunk["identify_vars_result"].items():
                 iteration_results[chunk_index][var_type].append(vars)
     for chunk_index, chunk in enumerate(all_chunks):
+        avg_uncertainty = 0
         for var_type, vars in iteration_results[chunk_index].items():
             ensemble_vars = merge_vars(vars)
             candidate_vars = list(
@@ -118,6 +119,7 @@ def identify_vars_uncertainty(
             )
             vars_set = set([var for var_list in candidate_vars for var in var_list])
             uncertainty = average_pairwise_jaccard(candidate_vars)
+            avg_uncertainty += uncertainty
             for var in vars_set:
                 var_occurrence = len(
                     list(filter(lambda candidate: var in candidate, candidate_vars))
@@ -128,9 +130,10 @@ def identify_vars_uncertainty(
                 ensemble_vars[var_index]["confidence"] = confidence
                 ensemble_vars[var_index]["uncertainty"] = uncertainty
                 chunk["identify_vars_result"][var_type] = ensemble_vars
+        avg_uncertainty /= len(iteration_results[chunk_index].keys())
         if "uncertainty" not in chunk:
             chunk["uncertainty"] = {}
-        chunk["uncertainty"]["identify_vars"] = uncertainty
+        chunk["uncertainty"]["identify_vars"] = avg_uncertainty
     return all_chunks
 
 
