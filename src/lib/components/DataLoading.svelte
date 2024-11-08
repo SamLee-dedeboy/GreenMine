@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, SvelteComponent_1 } from "svelte";
+  import { onMount } from "svelte";
   import * as d3 from "d3";
 
   export let estimated_time;
