@@ -128,9 +128,9 @@ def identify_vars_uncertainty(
                 ensemble_vars[var_index]["confidence"] = confidence
                 ensemble_vars[var_index]["uncertainty"] = uncertainty
                 chunk["identify_vars_result"][var_type] = ensemble_vars
-            if "uncertainty" not in chunk:
-                chunk["uncertainty"] = {}
-            chunk["uncertainty"]["identify_vars"] = uncertainty
+        if "uncertainty" not in chunk:
+            chunk["uncertainty"] = {}
+        chunk["uncertainty"]["identify_vars"] = uncertainty
     return all_chunks
 
 

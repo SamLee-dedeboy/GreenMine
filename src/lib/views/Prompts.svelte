@@ -940,7 +940,7 @@
         data={pipeline_result?.identify_vars || []}
         title={`Results: Version ${+current_versions[step].slice(1) + 1}`}
         versions={[]}
-        current_version={right_panel_version}
+        current_version={current_versions["var"]}
         {data_loading}
         {uncertainty_graph_loading}
         variable_definitions={prompt_data.identify_vars.var_definitions}
