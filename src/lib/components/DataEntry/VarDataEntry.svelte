@@ -7,6 +7,7 @@
   const dispatch = createEventDispatcher();
   let show = true;
   let shown_var_type: string = "driver";
+  $: console.log(data[shown_var_type]);
   function handleAddVar() {
     data[shown_var_type] = [
       {
@@ -16,6 +17,8 @@
       },
       ...data[shown_var_type],
     ];
+    data = data;
+    console.log("add var", data);
   }
   function handleDeleteVar(index: number) {
     data[shown_var_type] = data[shown_var_type].filter((_, i) => i !== index);
@@ -78,7 +81,7 @@
       {#if shown_var_type !== ""}
         <div
           transition:slide
-          class="flex max-h-[12rem] flex-col divide-y overflow-y-auto pr-3"
+          class="flex max-h-[18rem] min-h-[15rem] flex-col divide-y overflow-y-auto pr-3"
         >
           <div class="flex divide-x">
             <div
@@ -93,68 +96,70 @@
               </div>
             </div>
           </div>
-          {#each data[shown_var_type] as { var_name, definition, factor_type }, index}
-            <div class="flex divide-x">
-              <div class="flex w-[7rem] shrink-0">
-                <div
-                  class="relative flex w-[5rem] shrink-0 items-center justify-center capitalize italic text-gray-600"
-                  contenteditable
-                  on:blur={(e) => {
-                    data[shown_var_type][index].var_name =
-                      e.target.innerText.trim();
-                  }}
-                >
-                  {var_name}
-                </div>
-                {#if factor_type !== "none"}
+          {#key shown_var_type}
+            {#each data[shown_var_type] as { var_name, definition, factor_type }, index}
+              <div class="flex divide-x">
+                <div class="flex w-[7rem] shrink-0">
                   <div
-                    role="button"
-                    tabindex="0"
-                    class="flex cursor-pointer items-center rounded text-xs text-gray-500 hover:bg-gray-400"
-                    on:click={() =>
-                      (data[shown_var_type][index].factor_type =
-                        data[shown_var_type][index].factor_type === "social"
-                          ? "ecological"
-                          : "social")}
-                    on:keyup={() => {}}
+                    class="relative flex w-[5rem] shrink-0 items-center justify-center capitalize italic text-gray-600"
+                    contenteditable
+                    on:blur={(e) => {
+                      data[shown_var_type][index].var_name =
+                        e.target.innerText.trim();
+                    }}
                   >
-                    <img
-                      src={`${factor_type}.svg`}
-                      alt={factor_type}
-                      class="h-4 w-4"
-                    />
+                    {var_name}
                   </div>
-                {/if}
-              </div>
-              <div class="flex flex-grow pl-2 text-left italic text-gray-500">
-                <div
-                  class="min-h-[1.5rem] flex-grow"
-                  contenteditable
-                  on:blur={(e) => {
-                    data[shown_var_type][index].definition =
-                      e.target.innerText.trim();
-                  }}
-                >
-                  {definition}
+                  {#if factor_type !== "none"}
+                    <div
+                      role="button"
+                      tabindex="0"
+                      class="flex cursor-pointer items-center rounded text-xs text-gray-500 hover:bg-gray-400"
+                      on:click={() =>
+                        (data[shown_var_type][index].factor_type =
+                          data[shown_var_type][index].factor_type === "social"
+                            ? "ecological"
+                            : "social")}
+                      on:keyup={() => {}}
+                    >
+                      <img
+                        src={`${factor_type}.svg`}
+                        alt={factor_type}
+                        class="h-4 w-4"
+                      />
+                    </div>
+                  {/if}
                 </div>
-                <div class="flex flex-shrink-0 items-center">
+                <div class="flex flex-grow pl-2 text-left italic text-gray-500">
                   <div
-                    role="button"
-                    tabindex="0"
-                    class="flex h-6 w-6 cursor-pointer items-center justify-center rounded text-xs text-gray-500 hover:bg-gray-400"
-                    on:click={() => handleDeleteVar(index)}
-                    on:keyup={() => {}}
+                    class="min-h-[1.5rem] flex-grow"
+                    contenteditable
+                    on:blur={(e) => {
+                      data[shown_var_type][index].definition =
+                        e.target.innerText.trim();
+                    }}
                   >
-                    <img
-                      src="remove.svg"
-                      alt="remove"
-                      class="h-3 w-3 object-contain"
-                    />
+                    {definition}
+                  </div>
+                  <div class="flex flex-shrink-0 items-center">
+                    <div
+                      role="button"
+                      tabindex="0"
+                      class="flex h-6 w-6 cursor-pointer items-center justify-center rounded text-xs text-gray-500 hover:bg-gray-400"
+                      on:click={() => handleDeleteVar(index)}
+                      on:keyup={() => {}}
+                    >
+                      <img
+                        src="remove.svg"
+                        alt="remove"
+                        class="h-3 w-3 object-contain"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          {/each}
+            {/each}
+          {/key}
         </div>
       {/if}
     </div>

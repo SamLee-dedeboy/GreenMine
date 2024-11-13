@@ -214,6 +214,16 @@
   ) {
     console.log("executing prompt", data, key, version);
     if (!data) return;
+    await handleSave("prompt", data[key]);
+    if (key === "identify_var_types") {
+      await handleSave(
+        "var_type_definitions",
+        prompt_data[key].var_type_definitions,
+      );
+    } else if (key === "identify_vars") {
+      await handleSave("var_definitions", prompt_data[key].var_definitions);
+    }
+
     data_loading = true;
     last_execute_prompt_step_number = step_to_numbers[key];
 
@@ -411,8 +421,8 @@
       });
   }
 
-  function handleSave(event) {
-    const { type, data } = event.detail;
+  function handleSave(type, data) {
+    // const { type, data } = event.detail;
     const key = `identify_${stepMap[show_step]}s`;
 
     if (type === "var_definitions") {
@@ -851,7 +861,10 @@
         ></PromptHeader>
         <VarTypeDataEntry
           bind:data={prompt_data.identify_var_types.var_type_definitions}
-          on:save={handleSave}
+          on:save={(e) => {
+            const { type, data } = e.detail;
+            handleSave(type, data);
+          }}
         ></VarTypeDataEntry>
         <PromptEntry
           data={{
@@ -860,7 +873,10 @@
             user_prompt_blocks:
               prompt_data.identify_var_types.user_prompt_blocks,
           }}
-          on:save={handleSave}
+          on:save={(e) => {
+            const { type, data } = e.detail;
+            handleSave(type, data);
+          }}
         />
         <RuleEntry
           {interview_ids}
@@ -918,7 +934,10 @@
         ></PromptHeader>
         <VarDataEntry
           bind:data={prompt_data.identify_vars.var_definitions}
-          on:save={handleSave}
+          on:save={(e) => {
+            const { type, data } = e.detail;
+            handleSave(type, data);
+          }}
         ></VarDataEntry>
         <PromptEntry
           data={{
@@ -926,7 +945,10 @@
               prompt_data.identify_vars.system_prompt_blocks,
             user_prompt_blocks: prompt_data.identify_vars.user_prompt_blocks,
           }}
-          on:save={handleSave}
+          on:save={(e) => {
+            const { type, data } = e.detail;
+            handleSave(type, data);
+          }}
         />
         <RuleEntry
           {interview_ids}
@@ -990,7 +1012,10 @@
               prompt_data.identify_links.system_prompt_blocks,
             user_prompt_blocks: prompt_data.identify_links.user_prompt_blocks,
           }}
-          on:save={handleSave}
+          on:save={(e) => {
+            const { type, data } = e.detail;
+            handleSave(type, data);
+          }}
         />
         <RuleEntry
           {interview_ids}
