@@ -216,7 +216,10 @@ def getDPSIR(link_version):
     ]
 
     var_definitions = json.load(
-        open(f"{prompt_context_path}v0_var_definitions.json", encoding="utf-8")
+        open(
+            f"{prompt_context_path}v{link_version_number}_var_definitions.json",
+            encoding="utf-8",
+        )
     )
 
     nodes = v2_processing.collect_nodes(identify_links, var_types, var_definitions)
