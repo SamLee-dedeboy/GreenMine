@@ -471,7 +471,7 @@ export const DetailDPSIR = {
                   d3.select(".tooltip")
                     .html(
                       `
-                      <div>${d.definition}</div>
+                      <div>${d.definition || "No definition"}</div>
                       <div>Frequency: ${d.frequency}</div>
                       <div>Mentioned by: ${Array.from(
                         new Set(

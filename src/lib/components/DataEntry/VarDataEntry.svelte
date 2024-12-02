@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { var_type_names } from "lib/constants";
   import type { tVarData } from "lib/types";
   import { createEventDispatcher } from "svelte";
   import { onMount } from "svelte";
@@ -64,7 +65,8 @@
       <div
         class="flex w-[6rem] flex-col items-end gap-y-0.5 divide-y border-r border-gray-300"
       >
-        {#each Object.keys(data) as var_type, index}
+        {#each var_type_names as var_type, index}
+          <!-- {#each Object.keys(data) as var_type, index} -->
           <div
             role="button"
             tabindex="0"

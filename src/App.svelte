@@ -100,7 +100,7 @@
       });
   }
 
-  function fetchDPSIRData(link_version: string | undefined = "v0") {
+  function fetchDPSIRData(link_version: string | undefined) {
     if (!link_version) return;
     console.log("fetching DPSIR data", link_version);
     data_loading = true;

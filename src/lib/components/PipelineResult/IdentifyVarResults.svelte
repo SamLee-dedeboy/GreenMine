@@ -47,7 +47,8 @@
       return sort_by_id(data);
     }
     return data.sort(
-      (a, b) => -(a.uncertainty.identify_vars - b.uncertainty.identify_vars),
+      (a, b) =>
+        -(a.uncertainty.identify_vars || 0 - b.uncertainty.identify_vars || 0),
     );
   }
 

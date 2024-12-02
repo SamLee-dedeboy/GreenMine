@@ -2,6 +2,7 @@
   import type { tVarTypeData } from "lib/types";
   import { createEventDispatcher } from "svelte";
   import { slide } from "svelte/transition";
+  import { var_type_names } from "lib/constants";
   export let data: tVarTypeData;
   const dispatch = createEventDispatcher();
   let show = true;
@@ -43,7 +44,8 @@
   </div>
   {#if show}
     <div transition:slide class="var-type-definition-content divide-y text-sm">
-      {#each Object.entries(data) as [var_type, definition], index}
+      {#each var_type_names as var_type, index}
+        {@const definition = data[var_type] || ""}
         <div class="flex divide-x">
           <div class="w-[5rem] shrink-0 pr-2 capitalize italic text-gray-600">
             {var_type}
