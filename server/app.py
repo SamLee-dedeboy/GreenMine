@@ -36,7 +36,7 @@ keyword_embeddings = json.load(
 userdict = keyword_data_path + "userdict.txt"
 stopwords = ["綠島"]
 kpca_reducer = dr.init_kpca_reducer(
-    list(map(lambda x: x["embedding"], keyword_embeddings))
+    list(map(lambda x: x["embeddings"], keyword_embeddings))
 )
 
 testing = False
@@ -44,7 +44,7 @@ testing = False
 
 @app.route("/test/")
 def test():
-    return "Hello Lyudao"
+    return "Hello GreenMine"
 
 
 @app.route("/pipeline/all_versions/")
