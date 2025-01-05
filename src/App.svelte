@@ -16,7 +16,7 @@
   import DPSIR from "lib/views/DPSIR.svelte";
   import BrowserBlockingPage from "lib/views/BrowserBlockingPage.svelte";
   import * as utils from "lib/utils";
-  import { server_address } from "lib/constants";
+  import { server_address, var_type_names } from "lib/constants";
   import * as d3 from "d3";
   import { varTypeColorScale } from "lib/store";
   import Prompts from "lib/views/Prompts.svelte";
@@ -139,11 +139,6 @@
       .then((res: tServerDataDPSIR) => {
         var_data = res.DPSIR_data;
         vis_links = utils.link_to_vis_link(res.pipeline_links);
-        const var_types = Object.keys(var_data);
-        $varTypeColorScale = d3
-          .scaleOrdinal()
-          .domain(var_types)
-          .range(d3.schemeSet2);
         data_loading = false;
       });
   }
@@ -163,6 +158,7 @@
   }
 
   function handleEvidenceSelected(e) {
+    console.log("handle evidence selected", e.detail);
     // interview_viewer_component.handleEvidenceSelected(e.detail);
     const { chunk_id, evidence, explanation } = e.detail;
     interview_viewer_component.handleEvidenceSelected(
@@ -188,6 +184,10 @@
     await fetchDocuments();
     await fetchLinkVersion();
     // await fetchDPSIRData(current_vis_link_version);
+        $varTypeColorScale = d3
+          .scaleOrdinal()
+          .domain(['driver','impact',  'pressure', 'response', 'state' ])
+          .range(d3.schemeSet2);
   });
 
   // setContext("fetchData", fetchData);

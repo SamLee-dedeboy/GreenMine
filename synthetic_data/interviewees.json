@@ -1,87 +1,170 @@
 [
-    {
-      "name": "Edrick Vallis",
-      "occupation": "Retired Chem-Baron Enforcer",
-      "background": "Edrick, 58, is a former enforcer for one of Zaun’s influential chem-barons. After decades of loyalty, he left his position due to guilt over the environmental and social harm caused by the chem-baron’s operations. Now, he lives a quieter life, volunteering at a local clinic.",
-      "connection": "Edrick provides a unique perspective on Zaun’s power dynamics and the role of influential industries in exacerbating the city’s environmental issues.",
-      "expectation": "Edrick believes meaningful change will require cooperation between the chem-barons and grassroots movements. He hopes to see Zaun transition toward more sustainable practices, even if it means challenging the entrenched powers he once served."
-    },
-    {
-      "name": "Koryx Darnell",
-      "occupation": "Street Vendor and Inventor",
-      "background": "Koryx, 26, is a self-taught inventor who sells small, handcrafted filtration devices to help residents cope with Zaun’s polluted air. They started their business after seeing friends and family suffer from pollution-related illnesses.",
-      "connection": "Koryx embodies Zaun’s spirit of ingenuity, using their knowledge to create low-cost solutions for their community. However, they struggle with access to resources and funding.",
-      "expectation": "Koryx hopes for government or private sector support to scale up local innovations that directly address Zaun’s environmental challenges. They also advocate for community-driven initiatives rather than top-down interventions."
-    },
-    {
-      "name": "Cendra Brax",
-      "occupation": "Factory Worker and Single Parent",
-      "background": "Cendra is a 34-year-old machinist working in one of Zaun’s many alchemical processing plants. She grew up in Zaun and has spent her entire life navigating the city's harsh environment. Her job involves long shifts in poorly ventilated factory conditions, exposing her to harmful fumes daily.",
-      "connection": "Cendra represents the working class, whose labor sustains Zaun's industrial economy. She lives in the lower levels of the city, where the 'Gray Wind' is most intense.",
-      "expectation": " Cendra dreams of a cleaner Zaun where her children can grow up without respiratory illnesses. She hopes the city's leadership will invest in cleaner technologies and enforce stricter pollution controls."
-    },
-    {
-      "name": "Selina Morvale",
-      "occupation": "Alchemical Researcher",
-      "background": "Selina, 40, works in a small independent lab experimenting with sustainable alchemical processes. Despite limited resources, she is passionate about finding cleaner alternatives to the city’s current industrial methods.",
-      "connection": "Selina believes Zaun’s scientific community holds the key to solving its environmental issues but struggles against the influence of chem-barons.",
-      "expectation": "Selina envisions a Zaun where innovation and sustainability coexist, driven by community-focused research and funding for cleaner technologies."
-    },
-    {
-      "name": "Ferin Goss",
-      "occupation": "Dockworker",
-      "background": "Ferin, 29, loads and unloads shipments in Zaun's polluted docks, where industrial waste frequently contaminates the water. He has a deep connection to the city's waterways, having grown up fishing with his father before pollution destroyed aquatic life.",
-      "connection": "Ferin is part of the working-class communities most directly affected by water pollution, particularly through loss of livelihoods.",
-      "expectation": "Ferin hopes for a cleanup of Zaun’s waterways, believing restored rivers could bring back ecological balance and provide economic opportunities."
-    },
-    {
-      "name": "Dessa Talvek",
-      "occupation": "Community Organizer",
-      "background": "Dessa, 33, leads a grassroots organization advocating for clean air and better living conditions in Zaun’s poorest districts. She grew up in the Sumps and has firsthand experience with pollution-related health issues.",
-      "connection": "Dessa is a voice for marginalized communities, working to mobilize residents and pressure chem-barons into addressing environmental concerns.",
-      "expectation": "Dessa dreams of Zaun where residents have a say in environmental decisions and access to safe, healthy living conditions."
-    },
-    {
-      "name": "Renar Krynn",
-      "occupation": "Street Performer",
-      "background": "Renar, 22, is a street musician who uses his performances to raise awareness about environmental issues. His music reflects the struggles of Zaun’s people and the beauty he believes the city can reclaim.",
-      "connection": "Renar represents Zaun’s creative and activist youth, determined to inspire change through art and storytelling.",
-      "expectation": "Renar envisions a Zaun that values its people and environment, where creativity can thrive without being overshadowed by industrial greed."
-    },
-    {
-      "name": "Kyla Horth",
-      "occupation": "Medic",
-      "background": "Kyla, 48, runs a small clinic in Zaun’s lower districts, treating patients with pollution-related illnesses. Her work has made her acutely aware of the city's dire environmental impact on health.",
-      "connection": "Kyla sees the human cost of Zaun’s pollution daily and advocates for systemic change to address its root causes.",
-      "expectation": "Kyla hopes for a Zaun where public health is prioritized, with stricter regulations on industrial emissions and greater access to healthcare."
-    },
-    {
-      "name": "Tavin Wrynn",
-      "occupation": "Chem-Baron Assistant",
-      "background": "Tavin, 31, works as a personal assistant to a chem-baron, managing day-to-day operations. Although loyal to his employer, he struggles with the moral implications of his work.",
-      "connection": "Tavin provides an insider’s view of the chem-barons’ operations and their potential for contributing to environmental reform.",
-      "expectation": "Tavin hopes his employer can be convinced to adopt more sustainable practices, balancing profit with responsibility to Zaun’s people."
-    },
-    {
-      "name": "Joran Fell",
-      "occupation": "Urban Farmer",
-      "background": "Joran, 38, runs a small rooftop garden in Zaun’s upper districts, providing fresh produce to local residents. His farm serves as a beacon of hope in a city dominated by industry.",
-      "connection": "Joran is part of a growing movement toward urban agriculture, which offers sustainable food sources and a reprieve from pollution.",
-      "expectation": "Joran dreams of a greener Zaun, where urban farming is supported and expanded to improve air quality and community well-being."
-    },
-    {
-      "name": "Mila Thark",
-      "occupation": "Schoolteacher",
-      "background": "Mila, 45, teaches science at a local school, focusing on educating Zaun’s youth about the environmental challenges they face. She integrates practical lessons on pollution and sustainability into her curriculum.",
-      "connection": "Mila shapes the next generation’s understanding of Zaun’s environmental issues, fostering awareness and innovation among her students.",
-      "expectation": "Mila hopes to see Zaun’s leaders invest in education and sustainable technologies to build a brighter future for the city’s youth."
-    },
-    {
-      "name": "Vek Marlow",
-      "occupation": "Waste Scavenger",
-      "background": "Vek, 19, scours Zaun’s waste dumps for salvageable materials to sell, making a living from the city’s discarded industrial byproducts. He has developed a keen understanding of Zaun’s waste systems.",
-      "connection": "Vek’s work highlights the underbelly of Zaun’s waste management crisis and the resilience of its poorest residents.",
-      "expectation": "Vek hopes for better waste management systems and recycling initiatives that can reduce pollution and provide safer jobs for people like him."
-    }
-  ]
-  
+  {
+    "name": "Edrick Vallis",
+    "occupation": "Retired Chem-Baron Enforcer",
+    "background": "Edrick, 58, is a former enforcer for one of Zaun’s influential chem-barons. After decades of loyalty, he left his position due to guilt over the environmental and social harm caused by the chem-baron’s operations. Now, he lives a quieter life, volunteering at a local clinic.",
+    "connection": "Edrick provides a unique perspective on Zaun’s power dynamics and the role of influential industries in exacerbating the city’s environmental issues.",
+    "expectation": "Edrick believes meaningful change will require cooperation between the chem-barons and grassroots movements. He hopes to see Zaun transition toward more sustainable practices, even if it means challenging the entrenched powers he once served."
+  },
+  {
+    "name": "Koryx Darnell",
+    "occupation": "Street Vendor and Inventor",
+    "background": "Koryx, 26, is a self-taught inventor who sells small, handcrafted filtration devices to help residents cope with Zaun’s polluted air. They started their business after seeing friends and family suffer from pollution-related illnesses.",
+    "connection": "Koryx embodies Zaun’s spirit of ingenuity, using their knowledge to create low-cost solutions for their community. However, they struggle with access to resources and funding.",
+    "expectation": "Koryx hopes for government or private sector support to scale up local innovations that directly address Zaun’s environmental challenges. They also advocate for community-driven initiatives rather than top-down interventions."
+  },
+  {
+    "name": "Cendra Brax",
+    "occupation": "Factory Worker and Single Parent",
+    "background": "Cendra is a 34-year-old machinist working in one of Zaun’s many alchemical processing plants. She grew up in Zaun and has spent her entire life navigating the city's harsh environment. Her job involves long shifts in poorly ventilated factory conditions, exposing her to harmful fumes daily.",
+    "connection": "Cendra represents the working class, whose labor sustains Zaun's industrial economy. She lives in the lower levels of the city, where the 'Gray Wind' is most intense.",
+    "expectation": " Cendra dreams of a cleaner Zaun where her children can grow up without respiratory illnesses. She hopes the city's leadership will invest in cleaner technologies and enforce stricter pollution controls."
+  },
+  {
+    "name": "Selina Morvale",
+    "occupation": "Alchemical Researcher",
+    "background": "Selina, 40, works in a small independent lab experimenting with sustainable alchemical processes. Despite limited resources, she is passionate about finding cleaner alternatives to the city’s current industrial methods.",
+    "connection": "Selina believes Zaun’s scientific community holds the key to solving its environmental issues but struggles against the influence of chem-barons.",
+    "expectation": "Selina envisions a Zaun where innovation and sustainability coexist, driven by community-focused research and funding for cleaner technologies."
+  },
+  {
+    "name": "Ferin Goss",
+    "occupation": "Dockworker",
+    "background": "Ferin, 29, loads and unloads shipments in Zaun's polluted docks, where industrial waste frequently contaminates the water. He has a deep connection to the city's waterways, having grown up fishing with his father before pollution destroyed aquatic life.",
+    "connection": "Ferin is part of the working-class communities most directly affected by water pollution, particularly through loss of livelihoods.",
+    "expectation": "Ferin hopes for a cleanup of Zaun’s waterways, believing restored rivers could bring back ecological balance and provide economic opportunities."
+  },
+  {
+    "name": "Dessa Talvek",
+    "occupation": "Community Organizer",
+    "background": "Dessa, 33, leads a grassroots organization advocating for clean air and better living conditions in Zaun’s poorest districts. She grew up in the Sumps and has firsthand experience with pollution-related health issues.",
+    "connection": "Dessa is a voice for marginalized communities, working to mobilize residents and pressure chem-barons into addressing environmental concerns.",
+    "expectation": "Dessa dreams of Zaun where residents have a say in environmental decisions and access to safe, healthy living conditions."
+  },
+  {
+    "name": "Renar Krynn",
+    "occupation": "Street Performer",
+    "background": "Renar, 22, is a street musician who uses his performances to raise awareness about environmental issues. His music reflects the struggles of Zaun’s people and the beauty he believes the city can reclaim.",
+    "connection": "Renar represents Zaun’s creative and activist youth, determined to inspire change through art and storytelling.",
+    "expectation": "Renar envisions a Zaun that values its people and environment, where creativity can thrive without being overshadowed by industrial greed."
+  },
+  {
+    "name": "Kyla Horth",
+    "occupation": "Medic",
+    "background": "Kyla, 48, runs a small clinic in Zaun’s lower districts, treating patients with pollution-related illnesses. Her work has made her acutely aware of the city's dire environmental impact on health.",
+    "connection": "Kyla sees the human cost of Zaun’s pollution daily and advocates for systemic change to address its root causes.",
+    "expectation": "Kyla hopes for a Zaun where public health is prioritized, with stricter regulations on industrial emissions and greater access to healthcare."
+  },
+  {
+    "name": "Tavin Wrynn",
+    "occupation": "Chem-Baron Assistant",
+    "background": "Tavin, 31, works as a personal assistant to a chem-baron, managing day-to-day operations. Although loyal to his employer, he struggles with the moral implications of his work.",
+    "connection": "Tavin provides an insider’s view of the chem-barons’ operations and their potential for contributing to environmental reform.",
+    "expectation": "Tavin hopes his employer can be convinced to adopt more sustainable practices, balancing profit with responsibility to Zaun’s people."
+  },
+  {
+    "name": "Joran Fell",
+    "occupation": "Urban Farmer",
+    "background": "Joran, 38, runs a small rooftop garden in Zaun’s upper districts, providing fresh produce to local residents. His farm serves as a beacon of hope in a city dominated by industry.",
+    "connection": "Joran is part of a growing movement toward urban agriculture, which offers sustainable food sources and a reprieve from pollution.",
+    "expectation": "Joran dreams of a greener Zaun, where urban farming is supported and expanded to improve air quality and community well-being."
+  },
+  {
+    "name": "Mila Thark",
+    "occupation": "Schoolteacher",
+    "background": "Mila, 45, teaches science at a local school, focusing on educating Zaun’s youth about the environmental challenges they face. She integrates practical lessons on pollution and sustainability into her curriculum.",
+    "connection": "Mila shapes the next generation’s understanding of Zaun’s environmental issues, fostering awareness and innovation among her students.",
+    "expectation": "Mila hopes to see Zaun’s leaders invest in education and sustainable technologies to build a brighter future for the city’s youth."
+  },
+  {
+    "name": "Vek Marlow",
+    "occupation": "Waste Scavenger",
+    "background": "Vek, 19, scours Zaun’s waste dumps for salvageable materials to sell, making a living from the city’s discarded industrial byproducts. He has developed a keen understanding of Zaun’s waste systems.",
+    "connection": "Vek’s work highlights the underbelly of Zaun’s waste management crisis and the resilience of its poorest residents.",
+    "expectation": "Vek hopes for better waste management systems and recycling initiatives that can reduce pollution and provide safer jobs for people like him."
+  },
+  {
+    "name": "Lina Greaves",
+    "occupation": "Former Miner",
+    "background": "Lina, 52, spent most of her life working in the mines that supply raw materials for Zaun's industrial machines. Exposure to toxic substances during her mining career left her with chronic lung issues, forcing her into early retirement. With limited savings, she now relies on her grown children, who also work in hazardous jobs, to make ends meet.",
+    "connection": "Lina’s story is emblematic of the cycle of environmental harm in Zaun—workers sacrifice their health to sustain the city’s economy, only to face severe consequences later in life. Despite her struggles, Lina feels a deep bond with Zaun, viewing it as a place of resilience and community.",
+    "expectation": "Lina hopes for better health protections for workers and a shift toward safer industrial practices. She believes the city owes its laborers a chance at healthier lives and cleaner surroundings."
+  },
+  {
+    "name": "Jarro Slyke",
+    "occupation": "Black Market Engineer",
+    "background": "Jarro, 34, specializes in repairing and modifying illegal machinery used by Zaun’s lower-tier industries. Despite his questionable line of work, Jarro prides himself on his technical skills and often provides free repairs for struggling families. He has seen firsthand the hazardous conditions of Zaun's underground workshops, where safety is often sacrificed for productivity.",
+    "connection": "Jarro’s connection to Zaun lies in its unregulated nature, which he views as both its greatest strength and its fatal flaw. He admires the freedom to innovate but despairs at the lack of oversight that puts lives and the environment at risk.",
+    "expectation": "Jarro wants Zaun to embrace a balance between innovation and safety. He believes that introducing voluntary guidelines for safe engineering could protect workers and reduce environmental damage without stifling creativity."
+  },
+  {
+    "name": "Niya Valt",
+    "occupation": "Street Healer",
+    "background": "Niya, 27, roams Zaun’s poorest neighborhoods, offering herbal remedies and basic medical care to those who cannot afford clinic visits. She learned healing techniques from her grandmother, who was an apothecary in the days before Zaun’s industrial boom. Niya uses her knowledge to counteract the effects of the city’s pervasive pollution.",
+    "connection": "Niya views Zaun’s industrial growth as both a blessing and a curse. While it has brought technological advancements, it has also destroyed the natural balance her grandmother cherished. She feels the city has lost touch with its roots.",
+    "expectation": "Niya dreams of a Zaun that integrates traditional practices with modern science, creating a holistic approach to health and environmental care. She advocates for more green spaces and cleaner air to reduce the burden on the city’s residents."
+  },
+  {
+    "name": "Torric Blythe",
+    "occupation": "Alchemical Waste Processor",
+    "background": "Torric, 45, oversees a small-scale alchemical waste processing facility that struggles to keep up with Zaun's industrial output. He took over the business from his father, who started it as a way to mitigate some of the city's environmental damage. Torric is passionate about his work but constantly battles against larger corporations that ignore waste management regulations.",
+    "connection": "Torric’s family business symbolizes the few attempts at responsible industry in Zaun. Despite his efforts, he often feels powerless against the tide of unchecked pollution caused by larger players in the city’s economy.",
+    "expectation": "Torric hopes for stronger enforcement of waste disposal regulations and incentives for smaller, sustainable businesses like his. He believes Zaun has the potential to be a model of responsible innovation if accountability is prioritized."
+  },
+  {
+    "name": "Arel Vint",
+    "occupation": "Environmental Artist",
+    "background": "Arel, 31, creates large-scale art installations using discarded materials from Zaun’s factories. Through their work, they aim to highlight the city’s environmental issues and the resilience of its people. Arel’s pieces often spark conversations about the cost of progress in a city driven by industrial ambition.",
+    "connection": "Arel views Zaun as a paradox—its creative potential is unmatched, but its reliance on unsustainable practices threatens its future. They feel a deep responsibility to raise awareness through their art.",
+    "expectation": "Arel envisions a Zaun where art plays a pivotal role in driving social and environmental change. They hope their work inspires others to advocate for cleaner technologies and sustainable practices."
+  },
+  {
+    "name": "Rynor Kell",
+    "occupation": "Chem-Baron Strategist",
+    "background": "Rynor, 39, is a strategist for one of Zaun’s influential chem-barons. His job involves managing resources and mitigating risks, including public backlash against the chem-baron’s environmental practices. Despite his role, Rynor privately questions the long-term sustainability of their methods.",
+    "connection": "Rynor’s position gives him a unique perspective on Zaun’s power dynamics and the potential for reform from within. While loyal to his employer, he recognizes the need for change to ensure Zaun’s survival.",
+    "expectation": "Rynor believes incremental reforms are the most realistic path forward. He hopes to influence his employer to adopt cleaner technologies that could serve as a model for others in Zaun."
+  },
+  {
+    "name": "Elra Vey",
+    "occupation": "Sewer Technician",
+    "background": "Elra, 36, works in Zaun’s crumbling sewer system, maintaining infrastructure that is decades old and overwhelmed by industrial waste. She often finds herself cleaning up spills of hazardous chemicals that pose severe risks to both workers and the environment.",
+    "connection": "Elra’s connection to Zaun lies in its underappreciated infrastructure. She believes the city’s survival depends on the unseen efforts of workers like her, who keep the systems running despite minimal support.",
+    "expectation": "Elra wants significant investment in infrastructure upgrades and stricter controls on industrial waste dumping. She dreams of a Zaun where essential systems are valued and maintained."
+  },
+  {
+    "name": "Vekta Sarn",
+    "occupation": "Street Cleaner",
+    "background": "Vekta, 18, works as a street cleaner, collecting debris and alchemical waste that clogs Zaun’s lower districts. She took the job to support her younger siblings after losing her parents to pollution-related illnesses.",
+    "connection": "Vekta sees Zaun as both a harsh and beautiful place. She takes pride in her work, believing that even small efforts can make a difference in the lives of her neighbors.",
+    "expectation": "Vekta hopes for community-driven cleanup initiatives and better waste management systems. She dreams of a Zaun where no one has to choose between survival and safety."
+  },
+  {
+    "name": "Osric Fane",
+    "occupation": "Historian",
+    "background": "Osric, 50, is a historian documenting Zaun’s transformation from a thriving natural habitat to an industrial hub. He has spent years gathering accounts from older residents and studying the city’s environmental decline.",
+    "connection": "Osric’s connection to Zaun is rooted in its past. He believes the city’s history holds valuable lessons for its future, particularly in balancing growth with sustainability.",
+    "expectation": "Osric hopes his work will inspire Zaun’s leaders to consider long-term consequences and implement policies that honor the city’s heritage while protecting its future."
+  },
+  {
+    "name": "Lyra Wrenn",
+    "occupation": "Social Media Activist",
+    "background": "Lyra, 21, uses social media to raise awareness about Zaun’s environmental issues, sharing stories and evidence of the city’s pollution. She collaborates with grassroots organizations to amplify their messages and mobilize young people.",
+    "connection": "Lyra represents Zaun’s tech-savvy youth, who are finding new ways to advocate for change. She believes digital platforms can be powerful tools for holding leaders accountable.",
+    "expectation": "Lyra dreams of a Zaun where citizens have a voice in environmental policies. She hopes to see more transparent governance and community-driven solutions."
+  },
+  {
+    "name": "Gregor Thain",
+    "occupation": "Industrial Safety Inspector",
+    "background": "Gregor, 43, works as an independent safety inspector, auditing factories for compliance with basic safety and environmental standards. His reports are often ignored by larger industries, but he continues his work out of a sense of duty.",
+    "connection": "Gregor’s connection to Zaun is shaped by his frustration with its lack of accountability. He sees the potential for change but knows it requires collective effort from both industry and government.",
+    "expectation": "Gregor hopes for stricter enforcement of safety regulations and greater public awareness of industrial malpractice. He believes Zaun can become a safer, cleaner city with the right reforms."
+  },
+  {
+    "name": "Nira Fen",
+    "occupation": "Airship Pilot",
+    "background": "Nira, 30, flies cargo airships through Zaun’s dense smog, transporting goods between the city and its neighbors. Her job exposes her to the full extent of Zaun’s air pollution, which has taken a toll on her health.",
+    "connection": "Nira’s work gives her a bird’s-eye view of Zaun’s environmental problems, from polluted skies to overflowing waste dumps. She feels a strong responsibility to advocate for cleaner skies.",
+    "expectation": "Nira hopes for advancements in clean energy technologies to reduce Zaun’s air pollution. She dreams of piloting airships through clear skies, free of the toxic smog that defines her city."
+  }
+]

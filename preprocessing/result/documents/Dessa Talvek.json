@@ -51,7 +51,7 @@
             "chem-barons",
             "voices heard"
         ],
-        "title": "\"Community Organizing for Environmental Justice in Zaun\""
+        "title": "Community Organizing for Health in Zaun's Sumps"
     },
     {
         "id": "Dessa Talvek_1",
@@ -81,8 +81,8 @@
             "survive",
             "organizing",
             "shared stories",
-            "interconnected",
-            "story-sharing",
+            "interconnected struggles",
+            "Story-sharing",
             "powerful",
             "platform",
             "residents",
@@ -98,7 +98,7 @@
             "neighborhoods",
             "community spirit"
         ],
-        "title": "\"Community Mobilization Through Story-Sharing and Clean-Up Events\""
+        "title": "\"Building Community through Stories and Action\""
     },
     {
         "id": "Dessa Talvek_2",
@@ -141,7 +141,7 @@
             "decisions",
             "impact"
         ],
-        "title": "Advocacy for Environmental Change and Community Engagement"
+        "title": "Advocating for Environmental Change and Community Input"
     },
     {
         "id": "Dessa Talvek_3",
@@ -181,7 +181,7 @@
             "success",
             "momentum"
         ],
-        "title": "Envisioning a Healthier, Collaborative Future for Zaun"
+        "title": "Envisioning a Healthier Future for Zaun Community"
     },
     {
         "id": "Dessa Talvek_4",
@@ -220,9 +220,10 @@
             "science-backed evidence",
             "officials",
             "community-led studies",
-            "empower residents"
+            "empower",
+            "residents"
         ],
-        "title": "\"Collaborative Efforts for Environmental Advocacy in Zaun\""
+        "title": "Collaborative Efforts in Environmental Advocacy and Research"
     },
     {
         "id": "Dessa Talvek_5",
@@ -264,7 +265,7 @@
             "air",
             "water quality",
             "priorities",
-            "studies",
+            "in-depth studies",
             "long-term health impacts",
             "pollution",
             "residents",
@@ -284,7 +285,7 @@
             "implications",
             "health"
         ],
-        "title": "Engaging Communities in Environmental Scientific Research"
+        "title": "Empowering Communities Through Environmental Science Engagement"
     },
     {
         "id": "Dessa Talvek_6",
@@ -319,7 +320,7 @@
             "change",
             "achieve together"
         ],
-        "title": "\"Community Resilience and the Importance of Educational Workshops\""
+        "title": "\"Community Resilience and Educational Initiatives Discussion\""
     },
     {
         "id": "Dessa Talvek_7",
@@ -364,7 +365,7 @@
             "cleaner",
             "Zaun"
         ],
-        "title": "\"Community Resilience and Vision for a Cleaner Zaun\""
+        "title": "Community Resilience and Environmental Advocacy in Zaun"
     },
     {
         "id": "Dessa Talvek_8",
@@ -382,6 +383,6 @@
             "struggles",
             "means a lot"
         ],
-        "title": "Community Struggles: A Conversation of Support and Understanding"
+        "title": "The Importance of Listening to Community Struggles"
     }
 ]

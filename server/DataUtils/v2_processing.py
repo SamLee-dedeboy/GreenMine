@@ -110,6 +110,8 @@ def generate_keyword_data(
     keyword_list = list(keyword_mentions.keys())
     keyword_list = list(filter(lambda x: x not in stopwords, keyword_list))
     keyword_list = list(filter(lambda x: x in keyword_embeddings_dict, keyword_list))
+    if len(keyword_list) == 0:
+        return [], {}, {}
 
     keyword_statistics = {
         keyword: {
@@ -121,7 +123,7 @@ def generate_keyword_data(
     }
 
     all_keyword_embeddings = [
-        keyword_embeddings_dict[keyword]["embedding"] for keyword in keyword_list
+        keyword_embeddings_dict[keyword]["embeddings"] for keyword in keyword_list
     ]
     if reducer is None:
         XY, reducer, dr_scaler, min_coord, max_coord, init_positions = dr.scatter_plot(

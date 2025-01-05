@@ -20,7 +20,7 @@
             "younger",
             "machinist"
         ],
-        "title": "Cendra's Journey: From Laborer to Machinist in Zaun"
+        "title": "Career Journey in Zaun's Factories: Cendra's Story"
     },
     {
         "id": "Cendra Brax_1",
@@ -58,7 +58,7 @@
             "environmental factors",
             "Gray Wind"
         ],
-        "title": "Impact of Pollution on Family Life in Zaun"
+        "title": "Impact of Zaun's Environment on Family Health"
     },
     {
         "id": "Cendra Brax_2",
@@ -84,6 +84,8 @@
             "getting through the day",
             "mask",
             "work",
+            "protect",
+            "home",
             "quality time",
             "kids",
             "community meetings",
@@ -92,7 +94,7 @@
             "pollution",
             "health effects"
         ],
-        "title": "Coping with Workplace Challenges and Health Risks"
+        "title": "Coping with Work Challenges and Health Risks"
     },
     {
         "id": "Cendra Brax_3",
@@ -115,7 +117,7 @@
             "pollution-related",
             "health problems"
         ],
-        "title": "\"Improving Healthcare and Support for Pollution-Affected Communities\""
+        "title": "Improving Healthcare Support for Pollution-Impacted Communities"
     },
     {
         "id": "Cendra Brax_4",
@@ -145,12 +147,12 @@
             "products",
             "coworkers",
             "health risks",
+            "jobs",
             "food",
             "urgency",
-            "work",
             "concern"
         ],
-        "title": "\"Concerns Over Workplace Safety and Community Healthcare Needs\""
+        "title": "\"Concerns Over Factory Safety and Community Healthcare Needs\""
     },
     {
         "id": "Cendra Brax_5",
@@ -177,7 +179,7 @@
             "breathe",
             "clean air"
         ],
-        "title": "\"Discussing Job Security and Environmental Initiatives\""
+        "title": "Addressing Job Security and Environmental Concerns in the City"
     },
     {
         "id": "Cendra Brax_6",
@@ -214,7 +216,7 @@
             "exhausted",
             "involved"
         ],
-        "title": "Community Advocacy for Clean Air and Water"
+        "title": "\"Advocating for a Cleaner Future: Community Involvement Discussion\""
     },
     {
         "id": "Cendra Brax_7",
@@ -251,7 +253,7 @@
             "city",
             "seeds for the future"
         ],
-        "title": "Inspiring Community Engagement for Environmental Advocacy"
+        "title": "Motivating Community Engagement for Environmental Advocacy"
     },
     {
         "id": "Cendra Brax_8",
@@ -270,7 +272,7 @@
             "too late",
             "kids"
         ],
-        "title": "Promoting Sustainability in Children's Education"
+        "title": "Implementing Sustainability Education for Future Generations"
     },
     {
         "id": "Cendra Brax_9",
@@ -305,6 +307,6 @@
             "future",
             "proud"
         ],
-        "title": "\"Building a Better Future Together in Zaun\""
+        "title": "\"Hope and Collective Action for a Better Future\""
     }
 ]

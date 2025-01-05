@@ -21,7 +21,7 @@
             "treating patients",
             "pollution-related illnesses"
         ],
-        "title": "Kyla Horth: Medic in Zaun's Lower Districts"
+        "title": "Kyla Horth: Medic's Role in Zaun's Pollution Crisis"
     },
     {
         "id": "Kyla Horth_1",
@@ -48,7 +48,6 @@
             "asthma cases",
             "chronic bronchitis",
             "lung conditions",
-            "young children",
             "breathing difficulties",
             "pollution",
             "air",
@@ -59,7 +58,7 @@
             "health",
             "powerless"
         ],
-        "title": "Health Issues Impacted by Industrialization in Zaun"
+        "title": "Impact of Industrialization on Health in Zaun"
     },
     {
         "id": "Kyla Horth_2",
@@ -97,7 +96,7 @@
             "risky",
             "ineffective strategies"
         ],
-        "title": "Environmental Challenges and Coping Strategies in Zaun"
+        "title": "Environmental Challenges and Community Coping in Zaun"
     },
     {
         "id": "Kyla Horth_3",
@@ -132,7 +131,7 @@
             "profit",
             "public health"
         ],
-        "title": "Improving Public Health in Zaun: A Call for Action"
+        "title": "Improving Public Health in Zaun: Regulations and Accountability"
     },
     {
         "id": "Kyla Horth_4",
@@ -168,7 +167,7 @@
             "individuals",
             "crucial"
         ],
-        "title": "Community Advocacy and Engagement for Health Awareness"
+        "title": "\"Advocating for Community Health Through Education and Engagement\""
     },
     {
         "id": "Kyla Horth_5",
@@ -228,7 +227,7 @@
             "coexist",
             "harmoniously"
         ],
-        "title": "Motivation Through Patient Care in Zaun"
+        "title": "Motivation Through Patient Care and Community Well-being"
     },
     {
         "id": "Kyla Horth_7",
@@ -251,7 +250,7 @@
             "healthier residents",
             "healthier economy"
         ],
-        "title": "Advocating Sustainable Practices for Public Health and Economy"
+        "title": "\"Message to Leaders: Prioritizing Public Health for Economic Growth\""
     },
     {
         "id": "Kyla Horth_8",
@@ -285,7 +284,7 @@
             "insufficient",
             "scale of the problem"
         ],
-        "title": "Hopeful Initiatives for a Cleaner Future in Zaun"
+        "title": "Hopeful Initiatives for Zaun's Environmental and Health Challenges"
     },
     {
         "id": "Kyla Horth_9",
@@ -315,11 +314,10 @@
             "pollution",
             "knowledge",
             "power",
-            "effects",
-            "demand",
-            "change"
+            "immediate effects",
+            "demand for change"
         ],
-        "title": "Promoting Awareness and Resources for Environmental Health"
+        "title": "\"Discussing Resources and Awareness for Pollution Control\""
     },
     {
         "id": "Kyla Horth_10",
@@ -349,13 +347,14 @@
             "green technologies",
             "impact",
             "residents' health",
+            "engage",
             "advocacy",
             "education",
             "sharing experiences",
             "Zaun",
             "healthy place"
         ],
-        "title": "\"Enhancing Local Government Investment for Healthier Communities\""
+        "title": "Investing in Air Quality for Community Health"
     },
     {
         "id": "Kyla Horth_11",
@@ -374,6 +373,6 @@
             "shining a light",
             "issues"
         ],
-        "title": "Celebrating Impactful Work and Sharing Experiences"
+        "title": "\"Highlighting Impactful Work Through Engaging Conversations\""
     }
 ]

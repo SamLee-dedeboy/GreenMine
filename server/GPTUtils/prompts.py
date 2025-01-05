@@ -30,7 +30,7 @@ def identify_var_type_prompt_factory(
                             {{
                                 "concept": string ("driver" or "pressure" or "state" or "impact" or "response", or "none"),
                                 "evidence": [] (list of transcript conversation indices, empty if concept is "none"),
-                                "explanation": string (explain why the evidence indicates the concept in Traditional Chinese), or "none" if concept is "none"
+                                "explanation": string (explain why the evidence indicates the concept), or "none" if concept is "none"
                             }}
                         ]
                     }}
@@ -88,7 +88,7 @@ def identify_var_prompt_factory(
                                 "tag": string (one of the above or "none")
                                 "evidence": [] (list of transcript conversation indices, empty if tag is "none"),
                                 "keywords": [] (list of keywords, empty if tag is "none"),
-                                "explanation": string (explain why the evidence indicates the tag in Traditional Chinese), or "none" if tag is "none"
+                                "explanation": string (explain why the evidence indicates the tag), or "none" if tag is "none"
                             }}
                         ]
                     }}
@@ -141,7 +141,7 @@ def identify_link_prompt_factory(
                                 "target": string (target concept),
                                 "relationship": string (relationship between the two concepts or "none"),
                                 "evidence": [] (list of transcript conversation indices, empty if relationship is "none"),
-                                "explanation": string (explain why the evidence indicates the relationship in Traditional Chinese), or "none" if relationship is "none"
+                                "explanation": string (explain why the evidence indicates the relationship in), or "none" if relationship is "none"
                             }}
                         
                     }}
@@ -168,11 +168,11 @@ def topic_assignment_prompt_factory(texts):
     messages = [
         {
             "role": "system",
-            "content": """You are a topic assignment system. The user will provide you with a list of texts in Chinese. You need to assign one topic to summarize all of them. 
-            The topic should be a simple noun-phrase in Traditional Chinese. Only one topic should be generated.
+            "content": """You are a topic assignment system. The user will provide you with a list of texts. You need to assign one topic to summarize all of them. 
+            The topic should be a simple noun-phrase. Only one topic should be generated.
             Reply with the JSON format: 
             {{
-                topic: string (Traditional Chinese)
+                topic: string 
             }}
             """,
         },
@@ -201,7 +201,7 @@ def node_extraction_prompt_factory(paragraph, var_name, definition):
             "content": """ You are a variables identification system.
             The user wants you to identify if there are any {var_name} in the monologue.
             It may include the following objects: {definition}
-            The user will give you a monologue in Chinese.
+            The user will give you a monologue.
             You will need to identify if the variable is mentioned in the monologue.
             Please provide output in JSON format as follows:
             {{
@@ -227,7 +227,7 @@ def mention_extraction_prompt_factory(sentences, extracted_var, var_definition):
         {
             "role": "system",
             "content": """You are a mention extraction system that extracts mentions from a monologue.
-            The user will give you a monologue, a concept, and its definition in Chinese.
+            The user will give you a monologue, a concept, and its definition.
             You need to extract the sentences that mentions the concept from the monologue.
             Note that the concept may not be directly matched in the monologue, instead, it could be a synonym or a related word, or if the sentence is talking in relevant context.
             Reply with the following JSON format:

@@ -1,0 +1,336 @@
+[
+    {
+        "id": "Vekta Sarn_0",
+        "conversation": [
+            {
+                "speaker": "interviewer",
+                "content": "Thank you for meeting with me today, Vekta. I really appreciate your time. To start off, can you tell me a bit about your background and what brought you to work as a street cleaner in Zaun?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "Sure, I’m glad to be here. I’m 18 and I've been working as a street cleaner for a little over a year now. I took this job to help support my younger siblings after we lost our parents due to pollution-related illnesses. It's been tough, but I feel it’s my responsibility to take care of them."
+            }
+        ],
+        "raw_keywords": [
+            "18",
+            "street cleaner",
+            "year",
+            "support",
+            "younger siblings",
+            "lost",
+            "parents",
+            "pollution-related illnesses",
+            "tough",
+            "responsibility"
+        ],
+        "title": "\"Vekta: A Young Street Cleaner’s Story of Responsibility\""
+    },
+    {
+        "id": "Vekta Sarn_1",
+        "conversation": [
+            {
+                "speaker": "interviewer",
+                "content": "I’m so sorry to hear about your parents. That must have been incredibly difficult for you. How has your experience been in this job since you started?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "It’s definitely challenging. The streets are dirty, and I have to deal with a lot of hazardous waste—especially alchemical debris that clogs the lower districts. But at the same time, I take pride in it. Even though it doesn't seem like a big deal, I believe my work makes a difference to my neighbors."
+            },
+            {
+                "speaker": "interviewer",
+                "content": "That’s really commendable. It sounds like you find purpose in what you do despite the challenges. Can you share some specific experiences you've had while working?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "One time, I found a huge pile of discarded alchemical vials and chemicals near a playground. I had to call for help because I wasn’t equipped to safely handle it alone. It was disheartening to see something so toxic around kids. I've also seen how respiratory problems have risen in my community, and it makes me worry for my siblings."
+            }
+        ],
+        "raw_keywords": [
+            "challenging",
+            "streets",
+            "dirty",
+            "hazardous waste",
+            "alchemical debris",
+            "lower districts",
+            "pride",
+            "work",
+            "difference",
+            "neighbors",
+            "discarded alchemical vials",
+            "chemicals",
+            "playground",
+            "help",
+            "toxic",
+            "kids",
+            "respiratory problems",
+            "community",
+            "worry",
+            "siblings"
+        ],
+        "title": "Finding Purpose in Challenging Work Environment"
+    },
+    {
+        "id": "Vekta Sarn_2",
+        "conversation": [
+            {
+                "speaker": "interviewer",
+                "content": "That’s alarming. The presence of hazardous waste near children is such a critical issue. Have you noticed any changes in your community since you started working?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "Well, more people are getting sick, and we're facing a lot more pollution. It’s like the smog from factories is getting thicker. But I've also seen more people coming together to clean up their neighborhoods. It gives me hope."
+            }
+        ],
+        "raw_keywords": [
+            "sick",
+            "pollution",
+            "smog",
+            "factories",
+            "thicker",
+            "people",
+            "clean up",
+            "neighborhoods",
+            "hope"
+        ],
+        "title": "Community Response to Hazardous Waste Concerns"
+    },
+    {
+        "id": "Vekta Sarn_3",
+        "conversation": [
+            {
+                "speaker": "interviewer",
+                "content": "It's great to hear that community spirit is alive despite the pollution struggles. What would you say are the biggest day-to-day challenges you face in your role?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "The biggest challenge is probably the lack of proper tools. We often have to make do with what we have. And sometimes, when you're surrounded by pollution, it gets overwhelming. You're breathing in all this smog while trying to clean up the city."
+            },
+            {
+                "speaker": "interviewer",
+                "content": "I can only imagine how tough that must be. Have you experienced any health issues yourself from working in such conditions?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "I’ve had my share of respiratory issues, yes. There are days when the Gray Wind is so bad that I have to stop working and go home. It’s frustrating because I want to help, but my own health is at risk."
+            }
+        ],
+        "raw_keywords": [
+            "biggest challenge",
+            "lack of proper tools",
+            "pollution",
+            "overwhelming",
+            "smog",
+            "clean up the city",
+            "respiratory issues",
+            "Gray Wind",
+            "frustrating",
+            "help",
+            "health",
+            "risk"
+        ],
+        "title": "\"Community Spirit Amidst Pollution Challenges and Health Risks\""
+    },
+    {
+        "id": "Vekta Sarn_4",
+        "conversation": [
+            {
+                "speaker": "interviewer",
+                "content": "That’s very concerning. It seems like there’s a real need for better safety measures. If you had a say in improving conditions in Zaun, what would you suggest?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "I would love to see community-driven cleanup initiatives and better waste management systems. More resources for street cleaners like proper equipment and protective gear would really help. Also, better regulations for factories would be essential."
+            }
+        ],
+        "raw_keywords": [
+            "community-driven",
+            "cleanup initiatives",
+            "waste management systems",
+            "resources",
+            "street cleaners",
+            "proper equipment",
+            "protective gear",
+            "better regulations",
+            "factories"
+        ],
+        "title": "Improving Safety and Cleanliness in Zaun"
+    },
+    {
+        "id": "Vekta Sarn_5",
+        "conversation": [
+            {
+                "speaker": "interviewer",
+                "content": "Those are very relevant suggestions. It seems like there’s a real opportunity for community-led solutions. Have you had any discussions with your neighbors about these ideas?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "Yes, we often talk about it. A group of us is planning to meet to discuss ways to organize more clean-up events in the neighborhood. People are willing to help, but we just need a framework to guide us."
+            },
+            {
+                "speaker": "interviewer",
+                "content": "That sounds promising! Collaboration is key for change. What kind of support do you believe the community needs to start these initiatives?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "I think we need some help from local organizations or government. Maybe they could provide us with supplies for clean-up, like bags and gloves, or even financial support for larger projects."
+            }
+        ],
+        "raw_keywords": [
+            "clean-up events",
+            "neighborhood",
+            "help",
+            "local organizations",
+            "government",
+            "supplies",
+            "bags",
+            "gloves",
+            "financial support",
+            "larger projects"
+        ],
+        "title": "Community-Led Initiatives for Neighborhood Clean-Up Solutions"
+    },
+    {
+        "id": "Vekta Sarn_6",
+        "conversation": [
+            {
+                "speaker": "interviewer",
+                "content": "That's a great point. Have you seen any local organizations getting involved in environmental issues recently?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "A few have popped up, but most of them focus on awareness rather than action. It would be great if they could partner with residents to organize something more impactful."
+            }
+        ],
+        "raw_keywords": [
+            "awareness",
+            "action",
+            "partner",
+            "residents",
+            "organize",
+            "impactful"
+        ],
+        "title": "Local Organizations and Environmental Action Discussion"
+    },
+    {
+        "id": "Vekta Sarn_7",
+        "conversation": [
+            {
+                "speaker": "interviewer",
+                "content": "Absolutely. It's important that organizations don't just raise awareness but also mobilize and empower communities. If more people listened to your concerns, how would you envision a better Zaun?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "I dream of a Zaun where there’s clean air to breathe and waterways that we can trust again. A place where children can play outside without fear of pollution. A Zaun where no one has to choose between survival and safety."
+            }
+        ],
+        "raw_keywords": [
+            "Zaun",
+            "clean air",
+            "breathe",
+            "waterways",
+            "trust",
+            "children",
+            "play",
+            "pollution",
+            "survival",
+            "safety"
+        ],
+        "title": "Envisioning a Better Future for Zaun"
+    },
+    {
+        "id": "Vekta Sarn_8",
+        "conversation": [
+            {
+                "speaker": "interviewer",
+                "content": "That’s a beautiful vision, Vekta. It sounds like clean air and safer environments are central to your hopes for the future. What do you think is the first step toward making that vision a reality?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "I think the first step is raising awareness – getting people to understand how pollution is affecting us. Then, building community initiatives to start cleaning up our neighborhoods and advocating for better policies."
+            }
+        ],
+        "raw_keywords": [
+            "raising awareness",
+            "pollution",
+            "affecting",
+            "community initiatives",
+            "cleaning up",
+            "neighborhoods",
+            "advocating",
+            "better policies"
+        ],
+        "title": "\"Vision for a Cleaner Future: Raising Awareness and Action\""
+    },
+    {
+        "id": "Vekta Sarn_9",
+        "conversation": [
+            {
+                "speaker": "interviewer",
+                "content": "Raising awareness can be powerful. How do you think younger generations can contribute to this movement?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "Younger people are passionate! I think they can spread the message through social media, gather support, and organize events. They can push for change and show that we care about our future."
+            },
+            {
+                "speaker": "interviewer",
+                "content": "That's very encouraging to hear. Empowering youth is crucial. Do you feel hopeful about the future despite the challenges you face?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "Honestly, yes. I see my neighbors and my siblings working together, and it gives me hope. We may be facing big challenges, but if we unite and act, I believe there’s a chance for change."
+            }
+        ],
+        "raw_keywords": [
+            "younger people",
+            "passionate",
+            "spread the message",
+            "social media",
+            "gather support",
+            "organize events",
+            "push for change",
+            "care about our future",
+            "neighbors",
+            "siblings",
+            "working together",
+            "hope",
+            "big challenges",
+            "unite",
+            "act",
+            "chance for change"
+        ],
+        "title": "Empowering Youth for Future Change and Awareness"
+    },
+    {
+        "id": "Vekta Sarn_10",
+        "conversation": [
+            {
+                "speaker": "interviewer",
+                "content": "That's a great mindset to have, Vekta. Thank you for sharing your experiences and insights with me today. Is there anything else you'd like to add before we wrap up?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "Just that I hope people realize the impact of their actions—not just for us today, but for future generations. Zaun doesn't have to be just a polluted place; it can be better."
+            },
+            {
+                "speaker": "interviewer",
+                "content": "Thank you, Vekta. Your perspective is invaluable, and I believe that sharing these stories will help drive the change we need. I wish you and your community all the best!"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "Thank you! I appreciate the opportunity to speak about these issues."
+            }
+        ],
+        "raw_keywords": [
+            "impact",
+            "actions",
+            "future generations",
+            "Zaun",
+            "polluted place",
+            "better",
+            "opportunity",
+            "issues"
+        ],
+        "title": "\"Building a Better Future for Zaun\""
+    }
+]

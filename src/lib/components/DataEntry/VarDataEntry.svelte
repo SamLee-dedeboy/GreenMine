@@ -103,7 +103,7 @@
               <div class="flex divide-x">
                 <div class="flex w-[7rem] shrink-0">
                   <div
-                    class="relative flex w-[5rem] shrink-0 items-center justify-center capitalize italic text-gray-600"
+                    class="relative flex w-[5rem] shrink-0 items-center justify-center capitalize italic text-gray-600 break-all"
                     contenteditable
                     on:blur={(e) => {
                       data[shown_var_type][index].var_name =

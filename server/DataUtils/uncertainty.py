@@ -1,3 +1,4 @@
+import json
 from GPTUtils import query
 from collections import defaultdict
 
@@ -27,14 +28,30 @@ def identify_var_types_uncertainty(
     # uncertainty calculation
     iteration_results = []
     k = 5
+    all_prompts = []
+    splits = [0]
     for _ in range(k):
-        all_chunks = query.identify_var_types(
-            all_chunks,
-            openai_client,
-            system_prompt_blocks,
-            user_prompt_blocks,
-            prompt_variables,
+        prompts, post_process, response_format, extract_response_func = (
+            query.identify_var_types(
+                all_chunks,
+                openai_client,
+                system_prompt_blocks,
+                user_prompt_blocks,
+                prompt_variables,
+            )
         )
+
+        all_prompts += prompts
+        splits.append(len(prompts) + (splits[-1] if len(splits) > 0 else 0))
+    all_responses = query.multithread_prompts(
+        openai_client, all_prompts, response_format=response_format, temperature=0.0
+    )
+    for i in range(k):
+        responses = all_responses[splits[i] : splits[i + 1]]
+        if response_format == "json":
+            responses = [extract_response_func(i) for i in responses]
+        all_chunks = post_process(all_chunks, responses)
+
         for chunk_index, chunk in enumerate(all_chunks):
             if len(iteration_results) <= chunk_index:
                 iteration_results.append([])
@@ -95,22 +112,50 @@ def identify_vars_uncertainty(
         return list(merged_vars.values())
 
     # uncertainty calculation
-    k = 5
+    k = 2
+    all_prompts = []
+    splits = [0]
+    iteration_contexts = []
     iteration_results = []
     for _ in range(k):
-        all_chunks = query.identify_vars(
+        (
+            prompts,
+            post_process,
+            response_format,
+            extract_response_func,
+            response_index_to_chunk_index,
+            prompt_variables,
+        ) = query.identify_vars(
             all_chunks,
             openai_client,
             system_prompt_blocks,
             user_prompt_blocks,
             prompt_variables,
         )
+        all_prompts += prompts
+        iteration_contexts.append(response_index_to_chunk_index)
+        splits.append(len(prompts) + (splits[-1] if len(splits) > 0 else 0))
+    all_responses = query.multithread_prompts(
+        openai_client, all_prompts, response_format=response_format, temperature=0.0
+    )
+    for i in range(k):
+        responses = all_responses[splits[i] : splits[i + 1]]
+        if response_format == "json":
+            responses = [extract_response_func(i) for i in responses]
+        all_chunks = post_process(
+            all_chunks, responses, iteration_contexts[i], prompt_variables
+        )
+
         for chunk_index, chunk in enumerate(all_chunks):
             if len(iteration_results) <= chunk_index:
                 iteration_results.append(defaultdict(list))
             for var_type, vars in chunk["identify_vars_result"].items():
                 iteration_results[chunk_index][var_type].append(vars)
+
     for chunk_index, chunk in enumerate(all_chunks):
+        var_types = chunk["identify_var_types_result"]
+        if len(var_types) == 0:
+            continue
         avg_uncertainty = 0
         for var_type, vars in iteration_results[chunk_index].items():
             ensemble_vars = merge_vars(vars)

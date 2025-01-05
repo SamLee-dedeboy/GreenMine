@@ -15,11 +15,18 @@
   const handleHighlightChunks = getContext("handleHighlightChunks") as Function;
 
   $: if (mounted && data) {
+    console.log("update keyword sea", { data });
+    if(!data || data.keyword_list.length === 0) {
+      console.log("clear")
+      keyword_sea_renderer.clear();
+    } else {
+
     keyword_sea_renderer.update_keywords(
       data,
       degree_key,
       $varTypeColorScale(key),
     );
+    }
   }
 
   function handleKeywordSelected(keyword: string) {
@@ -55,12 +62,14 @@
       {key}
     </div>
   {/if}
+{#if !data || data.keyword_list.length === 0}
+<div>No Data</div>
+{/if}
   <div
     class="tooltip pointer-events-none absolute h-fit w-fit rounded border border-black bg-white py-1 pl-0.5 pr-1 text-xs opacity-0"
   ></div>
   <svg id={svgId}></svg>
 </div>
-
 <style lang="postcss">
   svg {
     & .rect-hover {

@@ -289,22 +289,22 @@ def identify_var_types(
             )
         )
         prompt_list.append(prompt)
-    responses = multithread_prompts(
-        openai_client, prompt_list, response_format=response_format, temperature=0.0
-    )
-    if response_format == "json":
-        responses = [extract_response_func(i) for i in responses]
-    for chunk_index, extraction_result in enumerate(responses):
-        chunk = all_chunks[chunk_index]
-        var_type_checklist = ["driver", "pressure", "state", "impact", "response"]
-        extraction_result = list(
-            filter(lambda x: x["var_type"] in var_type_checklist, extraction_result)
-        )
-        extraction_result = filter_evidences(
-            extraction_result, len(chunk["conversation"])
-        )
-        chunk["identify_var_types_result"] = extraction_result
-    return all_chunks
+
+    def post_process(all_chunks, responses):
+        for chunk_index, extraction_result in enumerate(responses):
+            chunk = all_chunks[chunk_index]
+            var_type_checklist = ["driver", "pressure", "state", "impact", "response"]
+            extraction_result = list(
+                filter(lambda x: x["var_type"] in var_type_checklist, extraction_result)
+            )
+            extraction_result = filter_evidences(
+                extraction_result, len(chunk["conversation"])
+            )
+            chunk["identify_var_types_result"] = extraction_result
+            all_chunks[chunk_index] = chunk
+        return all_chunks
+
+    return prompt_list, post_process, response_format, extract_response_func
 
 
 def identify_vars(
@@ -342,23 +342,32 @@ def identify_vars(
             prompt_list.append(prompt)
             response_index_to_chunk_index[response_index] = (chunk_index, var_type)
             response_index += 1
-    responses = multithread_prompts(
-        openai_client, prompt_list, response_format=response_format, temperature=0.0
+
+    def post_process(
+        all_chunks, responses, response_index_to_chunk_index, prompt_variables
+    ):
+        for response_index, extraction_result in enumerate(responses):
+            chunk_index, var_type = response_index_to_chunk_index[response_index]
+            chunk = all_chunks[chunk_index]
+            var_checklist = prompt_variables[var_type["var_type"]]["var_checklist"]
+            extraction_result = list(
+                filter(lambda x: x["var"] in var_checklist, extraction_result)
+            )
+            extraction_result = filter_evidences(
+                extraction_result, len(chunk["conversation"])
+            )
+            chunk["identify_vars_result"][var_type["var_type"]] = extraction_result
+            all_chunks[chunk_index] = chunk
+        return all_chunks
+
+    return (
+        prompt_list,
+        post_process,
+        response_format,
+        extract_response_func,
+        response_index_to_chunk_index,
+        prompt_variables,
     )
-    if response_format == "json":
-        responses = [extract_response_func(i) for i in responses]
-    for response_index, extraction_result in enumerate(responses):
-        chunk_index, var_type = response_index_to_chunk_index[response_index]
-        chunk = all_chunks[chunk_index]
-        var_checklist = prompt_variables[var_type["var_type"]]["var_checklist"]
-        extraction_result = list(
-            filter(lambda x: x["var"] in var_checklist, extraction_result)
-        )
-        extraction_result = filter_evidences(
-            extraction_result, len(chunk["conversation"])
-        )
-        chunk["identify_vars_result"][var_type["var_type"]] = extraction_result
-    return all_chunks
 
 
 def identify_links(

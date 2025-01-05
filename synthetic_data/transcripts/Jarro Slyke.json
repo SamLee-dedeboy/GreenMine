@@ -1,0 +1,130 @@
+[
+    {
+        "speaker": "interviewer",
+        "content": "Thank you for joining me today, Jarro. Let's start with a bit about your background. Can you tell me how you ended up working as a black market engineer in Zaun?"
+    },
+    {
+        "speaker": "interviewee",
+        "content": "Sure! I've been working with machines since I was a kid, fixing up anything I could get my hands on. After dropping out of school, I found a niche repairing and modifying illegal machinery for some of the smaller, struggling industries in Zaun. It’s a messy world, but I can’t resist a challenge."
+    },
+    {
+        "speaker": "interviewer",
+        "content": "It sounds like you have a real passion for engineering. How do you feel about the work you're doing, given its legal status?"
+    },
+    {
+        "speaker": "interviewee",
+        "content": "It’s complicated. I enjoy the technical aspects, and I do my best to help the community by providing free repairs. But I also see the risks we're all taking. Safety isn’t a priority for many of these workshops."
+    },
+    {
+        "speaker": "interviewer",
+        "content": "That must be quite challenging. Can you describe some of the conditions you’ve observed in these underground workshops?"
+    },
+    {
+        "speaker": "interviewee",
+        "content": "Honestly, it’s like a jungle down there. Improvised setups, no real safety gear, and often, the equipment is beyond worn out. I've seen injuries that could have been easily avoided with proper oversight."
+    },
+    {
+        "speaker": "interviewer",
+        "content": "That sounds concerning. How has the pollution in Zaun affected your work and the people you work with?"
+    },
+    {
+        "speaker": "interviewee",
+        "content": "The air quality is terrible. You can really feel it in your chest after a long day of working. Many of the workers have respiratory issues, which makes their already tough jobs even harder. It's frustrating because they’re often too desperate to care about the risks."
+    },
+    {
+        "speaker": "interviewer",
+        "content": "It sounds like a vicious cycle. With that in mind, what do you think are some possible solutions to improve safety in these environments?"
+    },
+    {
+        "speaker": "interviewee",
+        "content": "I believe in the need for voluntary safety guidelines for engineers. It’s not about stopping innovation; it’s about protecting the people behind the machines. A balance can be struck."
+    },
+    {
+        "speaker": "interviewer",
+        "content": "I like that idea. What kind of guidelines do you think would be most effective?"
+    },
+    {
+        "speaker": "interviewee",
+        "content": "Simple stuff, really—like requiring proper ventilation in workshops or basic first aid training for workers. We also need to share knowledge on safer practices without losing our creativity."
+    },
+    {
+        "speaker": "interviewer",
+        "content": "That sounds practical. Have you ever encountered any pushback from your peers regarding these safety recommendations?"
+    },
+    {
+        "speaker": "interviewee",
+        "content": "Oh, definitely. Many see it as a limitation on their work. But the truth is, you can’t innovate if you’re too sick to work or if accidents happen every day."
+    },
+    {
+        "speaker": "interviewer",
+        "content": "That’s a valid point. Have you noticed any recent changes or trends in how people are responding to pollution and safety regulations?"
+    },
+    {
+        "speaker": "interviewee",
+        "content": "Yeah, there seems to be a growing awareness among the community. People are beginning to realize that they need to advocate for their health. More groups are forming to speak up about the pollution."
+    },
+    {
+        "speaker": "interviewer",
+        "content": "That’s encouraging! Do you think these community voices can influence change in policy or regulations in Zaun?"
+    },
+    {
+        "speaker": "interviewee",
+        "content": "It’s possible. If they can unite and present a cohesive message, they can push for better conditions. It won’t be easy, but it’s a start."
+    },
+    {
+        "speaker": "interviewer",
+        "content": "Absolutely. What motivates you to continue your work despite the risks involved?"
+    },
+    {
+        "speaker": "interviewee",
+        "content": "The people I help. When I see families struggling, I know my skills can make a difference, even if it’s just keeping their machines running longer. It’s fulfilling."
+    },
+    {
+        "speaker": "interviewer",
+        "content": "That’s incredibly admirable. Do you have any personal experiences that stand out—like a moment that reaffirmed your commitment to this work?"
+    },
+    {
+        "speaker": "interviewee",
+        "content": "There was a sick woman who relied on a machine I fixed for her family’s business. The day she could get back to work—it felt like I was giving her life back. Moments like that keep me going."
+    },
+    {
+        "speaker": "interviewer",
+        "content": "That’s powerful, Jarro. It shows how interconnected health and work are for the people in Zaun. How do you think you could collaborate with environmental scientists to help find solutions?"
+    },
+    {
+        "speaker": "interviewee",
+        "content": "I think sharing information is key. If you understand what we do down in the workshops, you can help create effective solutions that cater to our unique challenges."
+    },
+    {
+        "speaker": "interviewer",
+        "content": "Collaboration could really lead to innovative solutions. Have there been any initiatives in Zaun that have tried to connect engineers and scientists?"
+    },
+    {
+        "speaker": "interviewee",
+        "content": "Not so much. It's usually every group for themselves. But I see the potential for partnerships. If more engineers participate in discussions, it could lead to actionable change."
+    },
+    {
+        "speaker": "interviewer",
+        "content": "Creating a bridge between those groups is essential. What would you say to other engineers who might be hesitant to get involved?"
+    },
+    {
+        "speaker": "interviewee",
+        "content": "I’d tell them that change starts with awareness. Ignoring the problem won’t make it go away. We need to face it, together."
+    },
+    {
+        "speaker": "interviewer",
+        "content": "Absolutely, Jarro. One last question—if you could see one significant change for Zaun in the future, what would it be?"
+    },
+    {
+        "speaker": "interviewee",
+        "content": "I’d want a Zaun that prioritizes health as much as innovation. A place where kids grow up breathing clean air and working in safe environments. That’s the dream."
+    },
+    {
+        "speaker": "interviewer",
+        "content": "That’s a beautiful vision. Thank you so much for sharing your experiences and insights today, Jarro. I really appreciate your thoughts."
+    },
+    {
+        "speaker": "interviewee",
+        "content": "Thank you for listening. I hope something good comes out of this conversation."
+    }
+]

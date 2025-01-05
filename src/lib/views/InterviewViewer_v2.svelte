@@ -116,11 +116,17 @@
     evidence_index: number[],
     explanation: string,
   ) {
+    console.log("handle evidence selected: ", {
+      chunk_id,
+      evidence_index,
+      explanation,
+    });
     resetHighlights();
     show_interview = []; //clear and not show the previous evidence interview index
-    const interview_index_match = chunk_id.match(/N(\d+)/);
-    if (!interview_index_match) return;
-    const interview_index = parseInt(interview_index_match[1], 10) - 1;
+    const interview_index = data.findIndex((interview: tTranscript) => interview.file_name === chunk_id.split('_')[0]);
+    if (interview_index === -1) return;
+    chunk_id = chunk_id.replace(/ /g, "-");
+    // const interview_index = parseInt(interview_index_match[1], 10) - 1;
     // show transcript
     show_interview[interview_index] = true;
     // highlight evidences
@@ -131,6 +137,7 @@
     });
     await tick();
     const target = document.querySelector(`#${chunk_id}-${evidence_index[0]}`);
+    console.log({ target });
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -188,6 +195,7 @@
   }
 
   onMount(() => {
+    console.log("interview viewer data: ", data);
     init_highlight_evidence();
   });
 </script>

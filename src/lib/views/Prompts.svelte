@@ -895,8 +895,7 @@
         versions={[]}
         {data_loading}
         {uncertainty_graph_loading}
-        estimated_time={estimated_times["identify_var_types"] *
-          (measure_uncertainty ? 5 : 1)}
+        estimated_time={estimated_times["identify_var_types"]}
         on:navigate_evidence={(e) => navigate_evidence(e.detail)}
       />
       <IdentifyVarTypeResults
@@ -968,8 +967,7 @@
         {data_loading}
         {uncertainty_graph_loading}
         variable_definitions={prompt_data.identify_vars.var_definitions}
-        estimated_time={estimated_times["identify_vars"] *
-          (measure_uncertainty ? 5 : 1)}
+        estimated_time={estimated_times["identify_vars"]}
         on:navigate_evidence={(e) => navigate_evidence(e.detail)}
       />
       <IdentifyVarResults
@@ -1033,8 +1031,7 @@
         versions={[]}
         current_version={current_versions["link"]}
         {data_loading}
-        estimated_time={estimated_times["identify_links"] *
-          (measure_uncertainty ? 5 : 1)}
+        estimated_time={estimated_times["identify_links"]}
         {uncertainty_graph_loading}
         variable_definitions={prompt_data.identify_vars?.var_definitions}
         on:navigate_evidence={(e) => navigate_evidence(e.detail)}

@@ -56,6 +56,12 @@ export class KeyWordRect {
     //   .attr("class", "label-group");
   }
 
+  clear() {
+    d3.select("#" + this.svgId)
+      .selectAll("g.node")
+      .remove();
+  }
+
   // call this when data is updated
   update_keywords(keyword_data: tKeywordData, stat_key: string, color: string) {
     color = "#0d6db1";

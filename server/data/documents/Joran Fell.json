@@ -22,7 +22,7 @@
             "green space",
             "concrete"
         ],
-        "title": "From Concrete to Green: Joran's Urban Farming Journey"
+        "title": "From City to Farm: Joran's Urban Gardening Journey"
     },
     {
         "id": "Joran Fell_1",
@@ -54,10 +54,11 @@
             "Gray Wind",
             "air quality",
             "plants",
-            "wash the produce",
+            "wash",
+            "produce",
             "pollutants"
         ],
-        "title": "Challenges of Urban Rooftop Gardening and Pollution Concerns"
+        "title": "Challenges of Urban Farming in Polluted Environments"
     },
     {
         "id": "Joran Fell_2",
@@ -99,7 +100,7 @@
             "produce",
             "smog"
         ],
-        "title": "Impact of Environmental Issues on Community Health and Wellness"
+        "title": "Impact of Environmental Issues on Health and Community Strategies"
     },
     {
         "id": "Joran Fell_3",
@@ -127,7 +128,7 @@
             "health",
             "environment"
         ],
-        "title": "Revamping Urban Agriculture: Community Support and Sustainability"
+        "title": "Advocating for Urban Agriculture and Community Support"
     },
     {
         "id": "Joran Fell_4",
@@ -150,7 +151,7 @@
             "resources",
             "voices"
         ],
-        "title": "Promoting Community Change Through Urban Agriculture Advocacy"
+        "title": "Advocacy for Urban Agriculture and Community Engagement"
     },
     {
         "id": "Joran Fell_5",
@@ -177,7 +178,7 @@
             "creating balance",
             "industrialization"
         ],
-        "title": "\"Urban Farming's Role in Sustainable Urban Development\""
+        "title": "The Role of Urban Farming in Zaun's Sustainability."
     },
     {
         "id": "Joran Fell_6",
@@ -217,7 +218,7 @@
             "green initiatives",
             "community"
         ],
-        "title": "Improving Zaun's Environmental Conditions: Strategies and Community Support"
+        "title": "Improving Zaun's Environmental Conditions: Suggested Actions and Community Readiness"
     },
     {
         "id": "Joran Fell_7",
@@ -257,7 +258,7 @@
             "veggie",
             "customer"
         ],
-        "title": "\"Envisioning Urban Farming: Collaboration and Resilience in Rooftops\""
+        "title": "\"Envisioning a Greener Future through Urban Rooftop Farming\""
     },
     {
         "id": "Joran Fell_8",
@@ -292,6 +293,6 @@
             "future generations",
             "healthier future"
         ],
-        "title": "\"Empowering Change: A Vision for Zaun's Future\""
+        "title": "Empowering Change: A Vision for Zaun's Future"
     }
 ]

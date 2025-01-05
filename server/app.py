@@ -277,26 +277,13 @@ def curate_identify_var_types():
         )
         return json.dumps(all_chunks, default=vars)
     else:
-        if testing:
-            all_chunks = json.load(
-                open(
-                    pipeline_result_path
-                    + "identify_var_types/v0_chunk_w_var_types.json"
-                )
-            )
-        else:
-            all_chunks = uncertainty.identify_var_types_uncertainty(
-                all_chunks,
-                openai_client,
-                system_prompt_blocks,
-                user_prompt_blocks,
-                prompt_variables,
-            )
-
-        # local.save_json(
-        #     all_chunks,
-        #     pipeline_result_path + "identify_var_types/chunk_w_var_types.json",
-        # )
+        all_chunks = uncertainty.identify_var_types_uncertainty(
+            all_chunks,
+            openai_client,
+            system_prompt_blocks,
+            user_prompt_blocks,
+            prompt_variables,
+        )
         return json.dumps(all_chunks, default=vars)
 
 
@@ -531,7 +518,7 @@ def compute_identify_vars_keywords_others():
     others_mentioned_chunks_by_var_type = defaultdict(lambda: defaultdict(list))
     for chunk in identify_vars_result:
         for var_type, variables in chunk["identify_vars_result"].items():
-            other_variables = [var for var in variables if var["var"] == "其他"]
+            other_variables = [var for var in variables if var["var"].lower() == "misc"]
             for occurrence in other_variables:
                 for keyword in occurrence["keywords"]:
                     others_mentioned_chunks_by_var_type[var_type][keyword].append(
@@ -541,7 +528,14 @@ def compute_identify_vars_keywords_others():
                             "explanation": occurrence["explanation"],
                         }
                     )
-    res = {}
+    res = {
+        var_type: {
+            "keyword_list": [],
+            "keyword_statistics": [],
+            "keyword_coordinates": [],
+        }
+        for var_type in ["driver", "pressure", "state", "impact", "response"]
+    }
     for var_type, keywords_mentions in others_mentioned_chunks_by_var_type.items():
         keyword_list, keyword_statistics, keyword_coordinates = (
             v2_processing.generate_keyword_data(

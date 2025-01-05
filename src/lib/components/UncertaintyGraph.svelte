@@ -103,9 +103,11 @@
   }
 
   function extractSnippetResult(data, key) {
+    console.log({data})
     if (key === "identify_var_types") {
       return `${data.var_type}`;
     } else if (key === "identify_vars") {
+      if(!data.vars) return undefined
       return data.vars.map((v) => `${v.var_name}`).join(", ");
     } else if (key === "identify_links") {
       return `
@@ -146,6 +148,17 @@
     // id and result
     const id = d.id;
     const result = extractSnippetResult(d, key);
+    if(!result) {
+      tooltip_container.querySelector(".snippet-id").innerHTML = ""
+      tooltip_container.querySelector(".snippet-result").innerHTML = "No data extracted";
+      tooltip_container.querySelector(
+      ".uncertainty-tooltip-conversation",
+    ).innerHTML = ""
+    tooltip_container.querySelector(
+      ".uncertainty-tooltip-explanation",
+    ).innerHTML = ""
+      return
+    }
     tooltip_container.querySelector(".snippet-id").innerHTML = id;
     tooltip_container.querySelector(".snippet-result").innerHTML = result;
     // conversation and explanation

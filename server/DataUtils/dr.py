@@ -76,6 +76,7 @@ def init_kpca_reducer(X):
 
 def reapply_dr(X, scaler, estimator, min_val, max_val):
     X = np.array(X)
+    print(X.shape)
     X = scaler.transform(X)
     XY = estimator.transform(X)
     XY, _, _ = min_max_normalize(XY, min_val, max_val)
