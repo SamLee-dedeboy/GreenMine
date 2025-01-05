@@ -1,8 +1,6 @@
 api_key
-data/*
 !data/README.md
 taskone
-Rui
 .vscode
 *.pyc
 .DS_Store
@@ -15,9 +13,8 @@ __pychache__
 *.zip
 prompts/**/*.json
 .DS_Store
-v1_data
-server/data/*
 server/data/**/*.jsonl
+server/data/**/*.json
 openai_api_key
 node_modules
 .prettierrc
@@ -25,3 +22,4 @@ server/request_log.txt
 server/GPTUtils/contexts/*.json
 server/GPTUtils/prompts/*.json
 notes
+request_log.txt

@@ -1,4 +1,3 @@
-import glob
 from flask import Flask, request
 from flask_cors import CORS
 import json
@@ -6,32 +5,26 @@ import os
 from openai import OpenAI
 import statistics
 
-
 # from . import GPTUtils
 # from . import DataUtils
-from GPTUtils import query, prompts
-from DataUtils import local, dr, v1_processing, uncertainty, v2_processing, cluster
+from GPTUtils import query
+from DataUtils import local, dr, uncertainty, v2_processing, cluster
 from collections import defaultdict
-from sklearn.metrics.pairwise import pairwise_distances
-import numpy as np
 
 # init, do not read data
 app = Flask(__name__)
 CORS(app)
 dirname = os.path.dirname(__file__)
 relative_path = lambda dirname, filename: os.path.join(dirname, filename)
-# node_data_path = relative_path(dirname, "data/v2/user/nodes/")
-chunk_data_path = relative_path(dirname, "data/v2/user/chunk/")
 keyword_data_path = relative_path(dirname, "data/v2/user/keyword/")
-v1_data_path = relative_path(dirname, "data/v1/")
 # pipeline result path
 pipeline_result_path = relative_path(dirname, "data/v2/user/pipeline/")
 # prompt path
 prompt_path = relative_path(dirname, "GPTUtils/prompts/")
 # prompt context data path
 prompt_context_path = relative_path(dirname, "GPTUtils/contexts/")
-# log path
-log_path = relative_path(dirname, "data/v2/user/log/")
+# rule path
+rule_path = relative_path(dirname, "data/v2/user/rule/")
 # openai
 openai_api_key = open(relative_path(dirname, "openai_api_key")).read()
 openai_client = OpenAI(api_key=openai_api_key, timeout=10)
@@ -54,28 +47,12 @@ def test():
     return "Hello Lyudao"
 
 
-@app.route("/v1_data/")
-def get_data():
-    interview_data = process_interview(
-        glob.glob(chunk_data_path + f"chunk_summaries_w_ktte/*.json")
-    )
-    v1_data = get_data_v1(v1_data_path)
-    return {"interviews": interview_data, "v1": v1_data}
-
-
 @app.route("/pipeline/all_versions/")
 @app.route("/pipeline/all_versions/<empty_flag>/")
 def get_pipeline_versions(empty_flag="allow_empty"):
     res = {}
     for step in ["var_type", "var", "link"]:
         versions = []
-        # Check prompts
-        # prompt_files = os.listdir(prompt_path)
-        # for file in prompt_files:
-        #     if file.endswith(f"_identify_{step}s.json"):
-        #         version = file.split("_")[0]
-        #         versions.add(version)
-
         # Check pipeline results
         result_files = os.listdir(
             os.path.join(pipeline_result_path, f"identify_{step}s")
@@ -93,14 +70,6 @@ def get_pipeline_versions(empty_flag="allow_empty"):
                     continue
                 versions.append(version)
 
-        # # Check definitions (only for var_type and var)
-        # if step in ["var_type", "var"]:
-        #     definition_files = os.listdir(prompt_context_path)
-        #     for file in definition_files:
-        #         if file.endswith(f"_{step}_definitions.json"):
-        #             version = file.split("_")[0]
-        #             versions.add(version)
-
         # Convert versions to a sorted list of integers
         version_numbers = sorted([int(v.replace("v", "")) for v in versions])
         res[step] = {
@@ -111,9 +80,6 @@ def get_pipeline_versions(empty_flag="allow_empty"):
 
 @app.route("/pipeline/<step>/<version>/")
 def get_pipeline(step, version):
-    # step = var_type, var, link
-    # version_number = version.replace("v", "")
-    # print(version_number)
     definitions = {}
     if step in ["var_type", "var"]:
         definitions = json.load(
@@ -621,17 +587,17 @@ def get_uncertainty_graph():
     return json.dumps(data, default=vars)
 
 
-@app.route("/log/save/", methods=["POST"])
-def save_log():
-    log = request.json["log"]
-    local.save_json(log, f"{log_path}log.json")
+@app.route("/rule/save/", methods=["POST"])
+def save_rule():
+    rule = request.json["rule"]
+    local.save_json(rule, f"{rule_path}rule.json")
     return "success"
 
 
-@app.route("/log/get/", methods=["GET"])
-def get_log():
-    log = json.load(open(f"{log_path}log.json", encoding="utf-8"))
-    return log
+@app.route("/rule/get/", methods=["GET"])
+def get_rule():
+    rule = json.load(open(f"{rule_path}rule.json", encoding="utf-8"))
+    return rule
 
 
 def process_interview(filepaths):
@@ -692,110 +658,3 @@ def chunk_w_var_mentions(chunks, all_nodes):
                     {"var_name": var_name, "conversation_ids": conversation_ids}
                 )
     return chunk_dict
-
-
-def get_data_v1(data_path=v1_data_path):
-    (
-        interviews,
-        reports,
-        report_embeddings,
-        chunk_links,
-        chunk_nodes,
-        topic_tsnes,
-        keyword_coordinates,
-        keyword_statistics,
-    ) = processData(data_path)
-    res = {
-        "interviews": interviews,
-        # 'reports': reports,
-        "chunk_links": chunk_links,
-        "chunk_nodes": chunk_nodes,
-        "topic_tsnes": topic_tsnes,
-        "keyword_coordinates": keyword_coordinates,
-        "keyword_statistics": keyword_statistics,
-    }
-    return res
-    # return json.dumps(res, default=vars)
-
-
-def processData(data_path, reload=False):
-    # interview
-    interview_dict = defaultdict(dict)
-    interviews = []
-    data_by_chunk = {}
-    for interview_file in glob.glob(data_path + "chunk_summaries/*.json"):
-        interview_data = json.load(open(interview_file, encoding="utf-8"))
-        interview_file = interview_file.replace("\\", "/")
-        file_name = interview_file.split("/")[-1].replace(".json", "")
-        participant = file_name.split("_")[0]
-        background_topics = file_name.split("_")[1]
-        interview_dict[participant][background_topics] = interview_data
-        # interview_dict[participant] = interview_data
-        for chunk in interview_data:
-            if chunk["topic"] in ["商業", "汙染", "貿易", "農業"]:
-                chunk["topic"] = "其他"
-            data_by_chunk[chunk["id"]] = chunk
-    interview_dict = dict(
-        sorted(interview_dict.items(), key=lambda x: int(x[0].replace("N", "")))
-    )
-    for participant, interview in interview_dict.items():
-        background = interview["background"]
-        topics = interview["topics"]
-        whole_interview = background + topics
-        interviews.append({"file_name": participant, "data": whole_interview})
-
-    # reports
-    reports = []
-    report_embeddings = {}
-
-    # chunk_graph
-    chunk_links = json.load(
-        open(data_path + "chunk_similarities.json", encoding="utf-8")
-    )
-    chunk_embeddings = json.load(
-        open(data_path + "chunk_embeddings.json", encoding="utf-8")
-    )
-    chunk_nodes = {}
-    for interview in interviews:
-        for chunk in interview["data"]:
-            # chunk['keywords'] = chunk['raw_keywords']
-            chunk_nodes[chunk["id"]] = chunk
-    # topic tsnes
-    topic_tsnes = json.load(
-        open(data_path + "chunk_coordinates.json", encoding="utf-8")
-    )
-    # keywords
-    keyword_coordinates = json.load(
-        open(data_path + "keyword_coordinates.json", encoding="utf-8")
-    )
-    keyword_statistics = json.load(
-        open(data_path + "keyword_statistics.json", encoding="utf-8")
-    )
-    # keyword_statistics = {k['keyword']: k for k in keyword_statistics}
-
-    if reload:
-        # chunk graph
-        chunk_links = v1_processing.chunk_cosine_similarity(chunk_embeddings)
-        chunk_links = v1_processing.normalize_weight(chunk_links)
-        # topic tsnes
-        for chunk in chunk_embeddings:
-            chunk["topic"] = data_by_chunk[chunk["id"]]["topic"]
-        chunks_by_topic = v1_processing.group_by_key(chunk_embeddings, "topic")
-        topic_tsnes = v1_processing.tsne_by_topic(chunks_by_topic)
-        # keyword
-        keywords = json.load(open(data_path + "keywords.json", encoding="utf-8"))
-        keyword_embeddings = [keyword["embedding"] for keyword in keywords]
-        coordinates = dr.scatter_plot(keyword_embeddings, method="tsne")
-        keyword_coordinates = {
-            k["keyword"]: c.tolist() for k, c in zip(keywords, coordinates)
-        }
-    return (
-        interviews,
-        reports,
-        report_embeddings,
-        chunk_links,
-        chunk_nodes,
-        topic_tsnes,
-        keyword_coordinates,
-        keyword_statistics,
-    )
