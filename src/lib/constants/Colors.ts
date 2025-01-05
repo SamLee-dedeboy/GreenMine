@@ -1,52 +1,59 @@
-import * as d3 from "d3"
+import * as d3 from "d3";
 import { topicname } from ".";
 
 export const categoricalColors = [
-    "#8dd3c7",
-    "#ffffb3",
-    "#bebada",
-    "#fb8072",
-    "#80b1d3",
-    "#fdb462",
-    "#b3de69",
-    "#fccde5",
-    "#d9d9d9",
-    "#bc80bd",
-    "#ccebc5",
-    "#ffed6f",
-    "#1f78b4",
-    "#33a02c",
-    "#e31a1c",
-    "#ff7f00",
-    "#6a3d9a",
-    "#b15928",
-    "#a6cee3",
-    "#b2df8a",
-    "#fb9a99",
-    "#fdbf6f",
-  ];
+  "#8dd3c7",
+  "#ffffb3",
+  "#bebada",
+  "#fb8072",
+  "#80b1d3",
+  "#fdb462",
+  "#b3de69",
+  "#fccde5",
+  "#d9d9d9",
+  "#bc80bd",
+  "#ccebc5",
+  "#ffed6f",
+  "#1f78b4",
+  "#33a02c",
+  "#e31a1c",
+  "#ff7f00",
+  "#6a3d9a",
+  "#b15928",
+  "#a6cee3",
+  "#b2df8a",
+  "#fb9a99",
+  "#fdbf6f",
+];
 
-export const groups = ['drivers','pressures','states','impacts','responses'];
+export const groups = [
+  "drivers",
+  "pressures",
+  "states",
+  "impacts",
+  "responses",
+];
 export const groupColors = d3
-.scaleOrdinal()
-.domain(groups)
-.range(d3.schemeSet2)
+  .scaleOrdinal()
+  .domain(groups)
+  .range(d3.schemeSet2);
 
 export const emotions = ["proud", "resigned", "angry", "worried", "neutral"];
-export const emotionColorScale = d3
-    .scaleOrdinal()
-    .domain(emotions)
-    .range([
-      "#fdb66e", // proud
-      "#c5d0fb", // resigned
-      "#ff5e5e", // anger
-      "#fbd4f7", // worried
-      "#eeeeee", // neutral
-    ]);
-export const topicColorScale = d3
-      .scaleOrdinal()
-      .domain(topicname)
-      .range(categoricalColors)
+// export const emotionColorScale = d3
+//     .scaleOrdinal()
+//     .domain(emotions)
+//     .range([
+//       "#fdb66e", // proud
+//       "#c5d0fb", // resigned
+//       "#ff5e5e", // anger
+//       "#fbd4f7", // worried
+//       "#eeeeee", // neutral
+//     ]);
+
+// export const topicColorScale = d3
+//       .scaleOrdinal()
+//       .domain(topicname)
+//       .range(categoricalColors)
 
 // export const emotionColorScale = d3
 //     .scaleOrdinal()

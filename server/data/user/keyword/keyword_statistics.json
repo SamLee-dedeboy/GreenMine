@@ -1,0 +1,814 @@
+[
+    {
+        "keyword": "operations",
+        "frequency": 2
+    },
+    {
+        "keyword": "potential",
+        "frequency": 2
+    },
+    {
+        "keyword": "chemistry",
+        "frequency": 2
+    },
+    {
+        "keyword": "overwhelming",
+        "frequency": 2
+    },
+    {
+        "keyword": "profit",
+        "frequency": 4
+    },
+    {
+        "keyword": "sustainability",
+        "frequency": 3
+    },
+    {
+        "keyword": "investing",
+        "frequency": 3
+    },
+    {
+        "keyword": "cleaner alternatives",
+        "frequency": 2
+    },
+    {
+        "keyword": "chem-barons",
+        "frequency": 11
+    },
+    {
+        "keyword": "larger scale",
+        "frequency": 2
+    },
+    {
+        "keyword": "regulations",
+        "frequency": 3
+    },
+    {
+        "keyword": "educating",
+        "frequency": 2
+    },
+    {
+        "keyword": "organizing workshops",
+        "frequency": 2
+    },
+    {
+        "keyword": "community members",
+        "frequency": 5
+    },
+    {
+        "keyword": "experiences",
+        "frequency": 5
+    },
+    {
+        "keyword": "skepticism",
+        "frequency": 2
+    },
+    {
+        "keyword": "voices",
+        "frequency": 6
+    },
+    {
+        "keyword": "community forums",
+        "frequency": 3
+    },
+    {
+        "keyword": "environmental issues",
+        "frequency": 2
+    },
+    {
+        "keyword": "community",
+        "frequency": 12
+    },
+    {
+        "keyword": "concerns",
+        "frequency": 3
+    },
+    {
+        "keyword": "issues",
+        "frequency": 7
+    },
+    {
+        "keyword": "bridge",
+        "frequency": 2
+    },
+    {
+        "keyword": "needs",
+        "frequency": 2
+    },
+    {
+        "keyword": "solutions",
+        "frequency": 8
+    },
+    {
+        "keyword": "change",
+        "frequency": 13
+    },
+    {
+        "keyword": "effort",
+        "frequency": 2
+    },
+    {
+        "keyword": "thank you",
+        "frequency": 5
+    },
+    {
+        "keyword": "Zaun",
+        "frequency": 28
+    },
+    {
+        "keyword": "performing",
+        "frequency": 2
+    },
+    {
+        "keyword": "three years",
+        "frequency": 2
+    },
+    {
+        "keyword": "grew up",
+        "frequency": 3
+    },
+    {
+        "keyword": "city",
+        "frequency": 5
+    },
+    {
+        "keyword": "passionate",
+        "frequency": 2
+    },
+    {
+        "keyword": "music",
+        "frequency": 4
+    },
+    {
+        "keyword": "art",
+        "frequency": 2
+    },
+    {
+        "keyword": "struggles",
+        "frequency": 7
+    },
+    {
+        "keyword": "pollution",
+        "frequency": 30
+    },
+    {
+        "keyword": "Gray Wind",
+        "frequency": 7
+    },
+    {
+        "keyword": "smog",
+        "frequency": 5
+    },
+    {
+        "keyword": "audience",
+        "frequency": 2
+    },
+    {
+        "keyword": "struggling to breathe",
+        "frequency": 2
+    },
+    {
+        "keyword": "kids",
+        "frequency": 7
+    },
+    {
+        "keyword": "heartbreaking",
+        "frequency": 4
+    },
+    {
+        "keyword": "waterways",
+        "frequency": 5
+    },
+    {
+        "keyword": "drinking water",
+        "frequency": 2
+    },
+    {
+        "keyword": "respiratory problems",
+        "frequency": 5
+    },
+    {
+        "keyword": "frustrating",
+        "frequency": 3
+    },
+    {
+        "keyword": "health issues",
+        "frequency": 5
+    },
+    {
+        "keyword": "fight",
+        "frequency": 2
+    },
+    {
+        "keyword": "come together",
+        "frequency": 2
+    },
+    {
+        "keyword": "awareness",
+        "frequency": 5
+    },
+    {
+        "keyword": "younger generation",
+        "frequency": 3
+    },
+    {
+        "keyword": "connect",
+        "frequency": 2
+    },
+    {
+        "keyword": "statistics",
+        "frequency": 2
+    },
+    {
+        "keyword": "hope",
+        "frequency": 8
+    },
+    {
+        "keyword": "industry",
+        "frequency": 3
+    },
+    {
+        "keyword": "home",
+        "frequency": 2
+    },
+    {
+        "keyword": "breathe",
+        "frequency": 5
+    },
+    {
+        "keyword": "clean air",
+        "frequency": 3
+    },
+    {
+        "keyword": "show",
+        "frequency": 2
+    },
+    {
+        "keyword": "local artists",
+        "frequency": 2
+    },
+    {
+        "keyword": "environment",
+        "frequency": 10
+    },
+    {
+        "keyword": "spreading the word",
+        "frequency": 2
+    },
+    {
+        "keyword": "social media",
+        "frequency": 3
+    },
+    {
+        "keyword": "businesses",
+        "frequency": 3
+    },
+    {
+        "keyword": "food",
+        "frequency": 2
+    },
+    {
+        "keyword": "volunteers",
+        "frequency": 2
+    },
+    {
+        "keyword": "organize",
+        "frequency": 4
+    },
+    {
+        "keyword": "small action",
+        "frequency": 2
+    },
+    {
+        "keyword": "job",
+        "frequency": 2
+    },
+    {
+        "keyword": "important issues",
+        "frequency": 2
+    },
+    {
+        "keyword": "life",
+        "frequency": 3
+    },
+    {
+        "keyword": "working",
+        "frequency": 2
+    },
+    {
+        "keyword": "help",
+        "frequency": 2
+    },
+    {
+        "keyword": "effects",
+        "frequency": 4
+    },
+    {
+        "keyword": "illnesses",
+        "frequency": 2
+    },
+    {
+        "keyword": "people",
+        "frequency": 3
+    },
+    {
+        "keyword": "air quality",
+        "frequency": 6
+    },
+    {
+        "keyword": "chronic coughs",
+        "frequency": 2
+    },
+    {
+        "keyword": "children",
+        "frequency": 4
+    },
+    {
+        "keyword": "profits",
+        "frequency": 3
+    },
+    {
+        "keyword": "transparency",
+        "frequency": 4
+    },
+    {
+        "keyword": "accountability",
+        "frequency": 3
+    },
+    {
+        "keyword": "impact",
+        "frequency": 4
+    },
+    {
+        "keyword": "community leaders",
+        "frequency": 2
+    },
+    {
+        "keyword": "cleaner technologies",
+        "frequency": 3
+    },
+    {
+        "keyword": "resistance",
+        "frequency": 4
+    },
+    {
+        "keyword": "persistent",
+        "frequency": 2
+    },
+    {
+        "keyword": "rally",
+        "frequency": 2
+    },
+    {
+        "keyword": "accountable",
+        "frequency": 2
+    },
+    {
+        "keyword": "science",
+        "frequency": 2
+    },
+    {
+        "keyword": "workshops",
+        "frequency": 5
+    },
+    {
+        "keyword": "clinics",
+        "frequency": 2
+    },
+    {
+        "keyword": "patients",
+        "frequency": 2
+    },
+    {
+        "keyword": "trust",
+        "frequency": 2
+    },
+    {
+        "keyword": "residents",
+        "frequency": 7
+    },
+    {
+        "keyword": "sustainable practices",
+        "frequency": 8
+    },
+    {
+        "keyword": "conversation",
+        "frequency": 2
+    },
+    {
+        "keyword": "dream",
+        "frequency": 2
+    },
+    {
+        "keyword": "funding",
+        "frequency": 7
+    },
+    {
+        "keyword": "appreciate",
+        "frequency": 2
+    },
+    {
+        "keyword": "work",
+        "frequency": 5
+    },
+    {
+        "keyword": "factories",
+        "frequency": 2
+    },
+    {
+        "keyword": "tough",
+        "frequency": 2
+    },
+    {
+        "keyword": "taking care",
+        "frequency": 2
+    },
+    {
+        "keyword": "asthma",
+        "frequency": 3
+    },
+    {
+        "keyword": "mask",
+        "frequency": 2
+    },
+    {
+        "keyword": "community meetings",
+        "frequency": 5
+    },
+    {
+        "keyword": "programs",
+        "frequency": 2
+    },
+    {
+        "keyword": "healthcare",
+        "frequency": 2
+    },
+    {
+        "keyword": "specific issues",
+        "frequency": 2
+    },
+    {
+        "keyword": "manage",
+        "frequency": 2
+    },
+    {
+        "keyword": "concern",
+        "frequency": 3
+    },
+    {
+        "keyword": "stricter regulations",
+        "frequency": 6
+    },
+    {
+        "keyword": "emissions",
+        "frequency": 5
+    },
+    {
+        "keyword": "support",
+        "frequency": 5
+    },
+    {
+        "keyword": "workers",
+        "frequency": 2
+    },
+    {
+        "keyword": "unite",
+        "frequency": 3
+    },
+    {
+        "keyword": "petitions",
+        "frequency": 3
+    },
+    {
+        "keyword": "involved",
+        "frequency": 3
+    },
+    {
+        "keyword": "turn things around",
+        "frequency": 2
+    },
+    {
+        "keyword": "listening",
+        "frequency": 4
+    },
+    {
+        "keyword": "health",
+        "frequency": 8
+    },
+    {
+        "keyword": "respiratory issues",
+        "frequency": 4
+    },
+    {
+        "keyword": "passion",
+        "frequency": 2
+    },
+    {
+        "keyword": "make a difference",
+        "frequency": 4
+    },
+    {
+        "keyword": "battle",
+        "frequency": 2
+    },
+    {
+        "keyword": "time",
+        "frequency": 3
+    },
+    {
+        "keyword": "understanding",
+        "frequency": 2
+    },
+    {
+        "keyword": "stories",
+        "frequency": 2
+    },
+    {
+        "keyword": "families",
+        "frequency": 6
+    },
+    {
+        "keyword": "difference",
+        "frequency": 3
+    },
+    {
+        "keyword": "cleaner air",
+        "frequency": 2
+    },
+    {
+        "keyword": "effective",
+        "frequency": 3
+    },
+    {
+        "keyword": "challenge",
+        "frequency": 2
+    },
+    {
+        "keyword": "investment",
+        "frequency": 2
+    },
+    {
+        "keyword": "resources",
+        "frequency": 8
+    },
+    {
+        "keyword": "innovation",
+        "frequency": 2
+    },
+    {
+        "keyword": "education",
+        "frequency": 4
+    },
+    {
+        "keyword": "collaborating",
+        "frequency": 2
+    },
+    {
+        "keyword": "industries",
+        "frequency": 2
+    },
+    {
+        "keyword": "powerless",
+        "frequency": 2
+    },
+    {
+        "keyword": "organizing",
+        "frequency": 3
+    },
+    {
+        "keyword": "clean-up events",
+        "frequency": 2
+    },
+    {
+        "keyword": "neighborhoods",
+        "frequency": 4
+    },
+    {
+        "keyword": "public image",
+        "frequency": 2
+    },
+    {
+        "keyword": "creativity",
+        "frequency": 2
+    },
+    {
+        "keyword": "collective effort",
+        "frequency": 2
+    },
+    {
+        "keyword": "reality",
+        "frequency": 2
+    },
+    {
+        "keyword": "action",
+        "frequency": 3
+    },
+    {
+        "keyword": "docks",
+        "frequency": 2
+    },
+    {
+        "keyword": "water",
+        "frequency": 4
+    },
+    {
+        "keyword": "fish",
+        "frequency": 2
+    },
+    {
+        "keyword": "industrial waste",
+        "frequency": 2
+    },
+    {
+        "keyword": "environmental groups",
+        "frequency": 3
+    },
+    {
+        "keyword": "locals",
+        "frequency": 2
+    },
+    {
+        "keyword": "input",
+        "frequency": 2
+    },
+    {
+        "keyword": "government",
+        "frequency": 2
+    },
+    {
+        "keyword": "listen",
+        "frequency": 4
+    },
+    {
+        "keyword": "water quality",
+        "frequency": 2
+    },
+    {
+        "keyword": "school",
+        "frequency": 2
+    },
+    {
+        "keyword": "advocate",
+        "frequency": 4
+    },
+    {
+        "keyword": "eager",
+        "frequency": 2
+    },
+    {
+        "keyword": "survive",
+        "frequency": 3
+    },
+    {
+        "keyword": "data",
+        "frequency": 2
+    },
+    {
+        "keyword": "officials",
+        "frequency": 4
+    },
+    {
+        "keyword": "pressure",
+        "frequency": 2
+    },
+    {
+        "keyword": "air quality monitoring",
+        "frequency": 2
+    },
+    {
+        "keyword": "public health",
+        "frequency": 2
+    },
+    {
+        "keyword": "sick",
+        "frequency": 2
+    },
+    {
+        "keyword": "success",
+        "frequency": 2
+    },
+    {
+        "keyword": "pollution levels",
+        "frequency": 2
+    },
+    {
+        "keyword": "health impacts",
+        "frequency": 2
+    },
+    {
+        "keyword": "empower",
+        "frequency": 3
+    },
+    {
+        "keyword": "knowledge",
+        "frequency": 4
+    },
+    {
+        "keyword": "air",
+        "frequency": 4
+    },
+    {
+        "keyword": "engage",
+        "frequency": 3
+    },
+    {
+        "keyword": "resilience",
+        "frequency": 3
+    },
+    {
+        "keyword": "important",
+        "frequency": 2
+    },
+    {
+        "keyword": "communities",
+        "frequency": 2
+    },
+    {
+        "keyword": "means a lot",
+        "frequency": 2
+    },
+    {
+        "keyword": "nature",
+        "frequency": 2
+    },
+    {
+        "keyword": "urban farming",
+        "frequency": 3
+    },
+    {
+        "keyword": "pollutants",
+        "frequency": 3
+    },
+    {
+        "keyword": "air purifiers",
+        "frequency": 2
+    },
+    {
+        "keyword": "industrialization",
+        "frequency": 2
+    },
+    {
+        "keyword": "collaborate",
+        "frequency": 2
+    },
+    {
+        "keyword": "schools",
+        "frequency": 2
+    },
+    {
+        "keyword": "power",
+        "frequency": 2
+    },
+    {
+        "keyword": "contribute",
+        "frequency": 2
+    },
+    {
+        "keyword": "advocating",
+        "frequency": 2
+    },
+    {
+        "keyword": "students",
+        "frequency": 2
+    },
+    {
+        "keyword": "enthusiasm",
+        "frequency": 2
+    },
+    {
+        "keyword": "educational programs",
+        "frequency": 2
+    },
+    {
+        "keyword": "environmental stewardship",
+        "frequency": 2
+    },
+    {
+        "keyword": "adults",
+        "frequency": 2
+    },
+    {
+        "keyword": "participation",
+        "frequency": 2
+    },
+    {
+        "keyword": "individuals",
+        "frequency": 2
+    },
+    {
+        "keyword": "recycling initiatives",
+        "frequency": 2
+    },
+    {
+        "keyword": "discussions",
+        "frequency": 2
+    },
+    {
+        "keyword": "advocacy",
+        "frequency": 2
+    },
+    {
+        "keyword": "recycled",
+        "frequency": 2
+    }
+]

@@ -7,12 +7,16 @@
   const speaker_title = {
     1: "Host",
     0: "Guest",
+    "interviewer": "Host",
+    "interviewee": "Guest",
   };
   const speaker_background = {
     1: "bg-lime-200",
+    "interviewer": "bg-lime-200",
     // 1: "bg-stone-200",
     // 0: "bg-lime-100",
     0: "bg-yellow-100",
+    "interviewee": "bg-yellow-100",
   };
   let data_changes = 0;
   /**
@@ -148,6 +152,7 @@
   }
 
   function handleChunkClick(chunk_id) {
+    console.log({ chunk_id }, document.querySelector(`#${chunk_id}-0`));
     document.querySelector(`#${chunk_id}-0`)?.scrollIntoView({
       behavior: "smooth",
       block: "center",
@@ -281,7 +286,7 @@
                             {chunk_index + 1}.
                           </div>
                           <div class="px-1 text-sm">
-                            {chunk.title}
+                            {chunk.title.replace(/^[^\w]+|[^\w]+$/g, '')}
                           </div>
                         </div>
                       {/each}

@@ -1,0 +1,355 @@
+[
+    {
+        "id": "Vek Marlow_0",
+        "conversation": [
+            {
+                "speaker": "interviewer",
+                "content": "Hi Vek, thank you for taking the time to speak with me today. Could you start by sharing a little about your background and what brought you to your current job as a waste scavenger?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "Sure! I’m Vek Marlow, I’m 19, and I've been scavenging through Zaun’s waste dumps for about three years now. It’s not an easy life, but it’s what I can do to survive here."
+            }
+        ],
+        "raw_keywords": [
+            "Vek Marlow",
+            "19",
+            "scavenging",
+            "Zaun",
+            "waste dumps",
+            "three years",
+            "not an easy life",
+            "survive"
+        ],
+        "title": "\"Interview with Waste Scavenger Vek Marlow\""
+    },
+    {
+        "id": "Vek Marlow_1",
+        "conversation": [
+            {
+                "speaker": "interviewer",
+                "content": "That sounds tough. What motivated you to start working in waste management at such a young age?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "Well, my family fell on hard times, and I realized I had to pitch in. I noticed that while the city generates a lot of waste, there’s also plenty of things that can be reused or recycled. So, I started going to the dumps and looking for salvageable materials."
+            },
+            {
+                "speaker": "interviewer",
+                "content": "It must be quite a challenge with all the pollution in Zaun. How has the environment affected your work and your health?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "Honestly, it’s pretty rough. The air is often thick with that Gray Wind, and I’ve had to deal with respiratory issues. Some days, it feels like the pollution just clings to you, even after showering. It gets hard to breathe sometimes."
+            }
+        ],
+        "raw_keywords": [
+            "family",
+            "hard times",
+            "pitch in",
+            "city",
+            "waste",
+            "reused",
+            "recycled",
+            "dumps",
+            "salvageable materials",
+            "Gray Wind",
+            "respiratory issues",
+            "pollution",
+            "breathe"
+        ],
+        "title": "Challenges and Motivation in Waste Management Work"
+    },
+    {
+        "id": "Vek Marlow_2",
+        "conversation": [
+            {
+                "speaker": "interviewer",
+                "content": "That sounds alarming. Have you sought any medical help for your respiratory problems?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "Yeah, but the clinics are always packed with people who have similar issues. They don’t always have the time or resources to help everyone. So, I just try to manage it on my own, but it can be frustrating."
+            },
+            {
+                "speaker": "interviewer",
+                "content": "I can imagine. It must be tough for those working in such conditions. What strategies do you use to cope with the hazardous environment?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "I wear a mask sometimes, but it's not always effective. I also try to limit my time in the filthiest areas and prioritize bringing in materials from cleaner spots. I’ve also learned to pick my battles; some days, I just don’t go out if the air quality is really bad."
+            }
+        ],
+        "raw_keywords": [
+            "clinics",
+            "packed",
+            "people",
+            "issues",
+            "time",
+            "resources",
+            "manage",
+            "frustrating",
+            "mask",
+            "effective",
+            "limit",
+            "filthiest areas",
+            "prioritize",
+            "materials",
+            "cleaner spots",
+            "pick my battles",
+            "air quality"
+        ],
+        "title": "Coping with Respiratory Challenges in Hazardous Environments"
+    },
+    {
+        "id": "Vek Marlow_3",
+        "conversation": [
+            {
+                "speaker": "interviewer",
+                "content": "That’s a smart approach. How do you feel about the current waste management practices in Zaun? Do you think there’s enough support for people in your line of work?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "Not at all. The city hardly cares about effective waste management or recycling initiatives. Most of the focus is on profits. We're left to deal with the mess on our own, and it feels like we’re forgotten."
+            },
+            {
+                "speaker": "interviewer",
+                "content": "That sounds very frustrating. What changes would you like to see that could help improve the situation?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "I'd love to see better waste management systems in place where things can actually be recycled instead of just thrown away. More community involvement in cleanup efforts would make a big difference too."
+            }
+        ],
+        "raw_keywords": [
+            "city",
+            "waste management",
+            "recycling initiatives",
+            "profits",
+            "mess",
+            "forgotten",
+            "better waste management systems",
+            "recycled",
+            "thrown away",
+            "community involvement",
+            "cleanup efforts"
+        ],
+        "title": "Waste Management Challenges and Community Solutions in Zaun"
+    },
+    {
+        "id": "Vek Marlow_4",
+        "conversation": [
+            {
+                "speaker": "interviewer",
+                "content": "That’s really insightful. Engagement from the community can be vital. Have you seen any initiatives or programs that you think are doing well in terms of sustainability?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "Not really. Most initiatives get shut down quickly or are just for show, without any real impact. The government seems more interested in quick money than real solutions."
+            }
+        ],
+        "raw_keywords": [
+            "initiatives",
+            "shut down",
+            "show",
+            "real impact",
+            "government",
+            "quick money",
+            "real solutions"
+        ],
+        "title": "Community Engagement and Sustainability Initiatives' Effectiveness"
+    },
+    {
+        "id": "Vek Marlow_5",
+        "conversation": [
+            {
+                "speaker": "interviewer",
+                "content": "That's disheartening to hear. How do you think the local government can better engage with communities like yours to address these issues?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "They need to listen to us. Host community meetings, ask for our input. We know what’s happening on the ground, but they treat us like we don’t matter."
+            },
+            {
+                "speaker": "interviewer",
+                "content": "Absolutely. Empowering communities is essential. What would be an ideal change for your work and especially for the working conditions you face?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "Better regulations on waste disposal would help reduce pollution, and safer, more sustainable job opportunities would be life-changing. Plus, education on recycling could make a difference."
+            }
+        ],
+        "raw_keywords": [
+            "listen",
+            "community meetings",
+            "input",
+            "happening",
+            "matter",
+            "regulations",
+            "waste disposal",
+            "pollution",
+            "sustainable job opportunities",
+            "life-changing",
+            "education",
+            "recycling",
+            "difference"
+        ],
+        "title": "Empowering Communities for Better Local Government Engagement"
+    },
+    {
+        "id": "Vek Marlow_6",
+        "conversation": [
+            {
+                "speaker": "interviewer",
+                "content": "Those are great suggestions. Have you and your peers thought about organizing or advocating for these changes collectively?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "We've spoken about it among ourselves, but it’s tough. It's hard to get everyone to rally around these ideas when we're just trying to survive day-to-day."
+            },
+            {
+                "speaker": "interviewer",
+                "content": "That makes sense. Survival often takes priority. If there were resources available for outreach and advocacy, do you think your community would engage?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "Absolutely. People want to see change; we just need the support and a way to organize."
+            }
+        ],
+        "raw_keywords": [
+            "tough",
+            "hard",
+            "rally",
+            "ideas",
+            "survive",
+            "day-to-day",
+            "change",
+            "support",
+            "organize"
+        ],
+        "title": "Advocacy and Organizing for Community Change"
+    },
+    {
+        "id": "Vek Marlow_7",
+        "conversation": [
+            {
+                "speaker": "interviewer",
+                "content": "What would be the first step in that kind of organization, do you think?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "We’d probably need to form a group and start discussions about what we can do. Maybe collaborate with local environmental groups that are already doing some advocacy."
+            },
+            {
+                "speaker": "interviewer",
+                "content": "That sounds like a solid plan. Collaborating with existing organizations could provide a strong foundation. Have you heard of any local groups that might be interested?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "I’ve seen a couple that do clean-up drives, and there are some that focus on environmental education. They might be open to working with us."
+            },
+            {
+                "speaker": "interviewer",
+                "content": "It definitely sounds promising. How would you feel about reaching out to them to see if they're willing to collaborate?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "I’m willing to give it a shot. If it means our voices will be heard, I think it’s worth the effort."
+            }
+        ],
+        "raw_keywords": [
+            "group",
+            "discussions",
+            "collaborate",
+            "local",
+            "environmental groups",
+            "advocacy",
+            "clean-up drives",
+            "environmental education",
+            "working",
+            "voices",
+            "effort"
+        ],
+        "title": "Collaborating for Environmental Advocacy Initiatives"
+    },
+    {
+        "id": "Vek Marlow_8",
+        "conversation": [
+            {
+                "speaker": "interviewer",
+                "content": "That’s a great attitude! Do you think this collaboration could result in making tangible changes in your community?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "It could, especially if we can show that there’s a genuine problem and a clear solution that benefits everyone. It’s just about getting started."
+            },
+            {
+                "speaker": "interviewer",
+                "content": "Definitely. It often starts with small steps. In your opinion, what can we do as researchers or advocates to support these community efforts?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "You can help by providing information, resources, and maybe even funding for programs. Even just spreading the word about our struggles can raise awareness."
+            },
+            {
+                "speaker": "interviewer",
+                "content": "Absolutely, raising awareness is critical. What, in your experience, do you think would resonate the most with people outside of Zaun?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "Showing the human impact—like families affected by pollution and kids struggling to breathe. That hits home more than just statistics about pollution."
+            }
+        ],
+        "raw_keywords": [
+            "genuine problem",
+            "clear solution",
+            "benefits",
+            "getting started",
+            "information",
+            "resources",
+            "funding",
+            "programs",
+            "spreading the word",
+            "struggles",
+            "raise awareness",
+            "human impact",
+            "families",
+            "pollution",
+            "kids",
+            "struggling to breathe",
+            "statistics"
+        ],
+        "title": "\"Collaborative Solutions for Community Change and Awareness\""
+    },
+    {
+        "id": "Vek Marlow_9",
+        "conversation": [
+            {
+                "speaker": "interviewer",
+                "content": "I agree. Personal stories are powerful. Thank you for sharing your insights today, Vek. Is there anything else you would like to add?"
+            },
+            {
+                "speaker": "interviewee",
+                "content": "Just that I hope someone out there listens, and we can finally see some real changes happening in Zaun."
+            },
+            {
+                "speaker": "interviewer",
+                "content": "Thank you again for your time, Vek. Your experiences and insights are invaluable as we work toward improving the situation in Zaun."
+            },
+            {
+                "speaker": "interviewee",
+                "content": "Thank you for caring and for asking. It means a lot."
+            }
+        ],
+        "raw_keywords": [
+            "hope",
+            "listens",
+            "real changes",
+            "Zaun",
+            "caring",
+            "asking",
+            "means a lot"
+        ],
+        "title": "\"Insights on Personal Stories and Change in Zaun\""
+    }
+]

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, setContext } from "svelte";
   import InterviewViewer from "lib/views/InterviewViewer_v2.svelte";
-  import SimGraph from "lib/v1/SimGraph.svelte";
+  // import SimGraph from "lib/v1/SimGraph.svelte";
   import ControlPanel from "lib/components/ControlPanel.svelte";
   import { draggable } from "lib/utils/draggable";
   import type {
@@ -57,6 +57,33 @@
     });
   }
 
+  function fetchDocuments() {
+    interview_data_loading = true;
+    fetch(`${server_address}/documents/`)
+      .then((res) => res.json())
+      .then((res: tServerData) => {
+        // console.log({ res });
+        interview_data = res.interviews;
+        interview_ids = interview_data.flatMap((file) =>
+          file.data.map((interview) => interview.id),
+        );
+        // interview_ids.sort((a, b) => {
+        //   const [fileA, numA] = a.split("_");
+        //   const [fileB, numB] = b.split("_");
+
+        //   // First, compare the file names (N1, N2, etc.)
+        //   const fileComparison = fileA.localeCompare(fileB, undefined, {
+        //     numeric: true,
+        //   });
+        //   if (fileComparison !== 0) {
+        //     return fileComparison;
+        //   }
+        //   // If file names are the same, compare the numbers after the underscore
+        //   return Number(numA) - Number(numB);
+        // });
+        interview_data_loading = false;
+      });
+  }
   function fetchData() {
     interview_data_loading = true;
     fetch(`${server_address}/v1_data/`)
@@ -101,7 +128,10 @@
   }
 
   function fetchDPSIRData(link_version: string | undefined) {
-    if (!link_version) return;
+    if (!link_version) {
+      data_loading = false;
+      return;
+    }
     console.log("fetching DPSIR data", link_version);
     data_loading = true;
     fetch(`${server_address}/dpsir/${link_version}/`)
@@ -122,9 +152,10 @@
     fetch(`${server_address}/pipeline/all_versions/not_allow_empty/`)
       .then((res) => res.json())
       .then((res) => {
+        console.log(res)
         vis_link_versions = res["link"].versions;
-        current_vis_link_version =
-          vis_link_versions[vis_link_versions.length - 1];
+        current_vis_link_version = vis_link_versions.length > 0 ?
+          vis_link_versions[vis_link_versions.length - 1] : undefined;
       })
       .catch((error) => {
         console.error(`Error fetching versions count for links:`, error);
@@ -153,12 +184,13 @@
 
   onMount(async () => {
     await fetchTest();
-    await fetchData();
+    // await fetchData();
+    await fetchDocuments();
     await fetchLinkVersion();
     // await fetchDPSIRData(current_vis_link_version);
   });
 
-  setContext("fetchData", fetchData);
+  // setContext("fetchData", fetchData);
   setContext("handleHighlightChunks", handleHighlightChunks);
   setContext("fetchLinkVersion", fetchLinkVersion);
 </script>
@@ -226,6 +258,7 @@
             <div>Data Loading...</div>
           {/if}
           {#if !data_loading && show_dpsir}
+          {#if var_data}
             <div class="absolute left-[10rem] top-4 z-10 w-fit">
               <VersionsMenu
                 versions={vis_link_versions}
@@ -233,10 +266,16 @@
               ></VersionsMenu>
             </div>
             <DPSIR data={var_data} links={vis_links}></DPSIR>
+            {:else}
+            <div>No data available. Please use the 
+              prompt panel
+              <img src="bot.svg" alt="bot" class="h-6 w-6 inline-block" />
+               to generate data.</div>
+            {/if}
           {/if}
-          {#if !data_loading && !show_dpsir}
+          <!-- {#if !data_loading && !show_dpsir}
             <SimGraph topic_data={chunk_graph} {keyword_data}></SimGraph>
-          {/if}
+          {/if} -->
         </div>
       </div>
       <div class="flex h-full grow flex-col">

@@ -1,4 +1,5 @@
 from flask import Flask, request
+import glob
 from flask_cors import CORS
 import json
 import os
@@ -16,15 +17,16 @@ app = Flask(__name__)
 CORS(app)
 dirname = os.path.dirname(__file__)
 relative_path = lambda dirname, filename: os.path.join(dirname, filename)
-keyword_data_path = relative_path(dirname, "data/v2/user/keyword/")
+keyword_data_path = relative_path(dirname, "data/user/keyword/")
+document_path = relative_path(dirname, "data/documents/")
 # pipeline result path
-pipeline_result_path = relative_path(dirname, "data/v2/user/pipeline/")
+pipeline_result_path = relative_path(dirname, "data/user/pipeline/")
 # prompt path
 prompt_path = relative_path(dirname, "GPTUtils/prompts/")
 # prompt context data path
 prompt_context_path = relative_path(dirname, "GPTUtils/contexts/")
 # rule path
-rule_path = relative_path(dirname, "data/v2/user/rule/")
+rule_path = relative_path(dirname, "data/user/rule/")
 # openai
 openai_api_key = open(relative_path(dirname, "openai_api_key")).read()
 openai_client = OpenAI(api_key=openai_api_key, timeout=10)
@@ -48,8 +50,23 @@ def test():
 
 
 @app.route("/pipeline/all_versions/")
-@app.route("/pipeline/all_versions/<empty_flag>/")
-def get_pipeline_versions(empty_flag="allow_empty"):
+def get_pipeline_prompt_versions():
+    res = {}
+    for step in ["var_type", "var", "link"]:
+        versions = []
+        # Check pipeline prompts
+        for file in glob.glob(prompt_path + f"*.json"):
+            if file.endswith(f"_identify_{step}s.json"):
+                versions.append(file.split("/")[-1].split("_")[0])
+        version_numbers = sorted([int(v.replace("v", "")) for v in versions])
+        res[step] = {
+            "versions": [f"v{v}" for v in version_numbers],
+        }
+    return json.dumps(res)
+
+
+@app.route("/pipeline/all_versions/not_allow_empty/")
+def get_pipeline_versions():
     res = {}
     for step in ["var_type", "var", "link"]:
         versions = []
@@ -66,7 +83,7 @@ def get_pipeline_versions(empty_flag="allow_empty"):
                         encoding="utf-8",
                     )
                 )
-                if empty_flag == "not_allow_empty" and len(data) == 0:
+                if len(data) == 0:
                     continue
                 versions.append(version)
 
@@ -78,27 +95,40 @@ def get_pipeline_versions(empty_flag="allow_empty"):
     return json.dumps(res)
 
 
+@app.route("/documents/")
+def get_documents():
+    interview_data = process_interview(glob.glob(document_path + f"*.json"))
+    return json.dumps({"interviews": interview_data}, default=vars)
+
+
 @app.route("/pipeline/<step>/<version>/")
 def get_pipeline(step, version):
-    definitions = {}
-    if step in ["var_type", "var"]:
-        definitions = json.load(
+    # pipeline data
+    try:
+        identify_data = json.load(
             open(
-                f"{prompt_context_path}{version}_{step}_definitions.json",
+                f"{pipeline_result_path}identify_{step}s/{version}_chunk_w_{step}s.json",
                 encoding="utf-8",
             )
         )
+    except FileNotFoundError:
+        identify_data = []
+
+    definitions = {}
+    if step in ["var_type", "var"]:
+        try:
+            definitions = json.load(
+                open(
+                    f"{prompt_context_path}{version}_{step}_definitions.json",
+                    encoding="utf-8",
+                )
+            )
+        except FileNotFoundError:
+            definitions = {}
     # prompts
     identify_prompts = json.load(
         open(
             f"{prompt_path}{version}_identify_{step}s.json",
-            encoding="utf-8",
-        )
-    )
-    # pipeline data
-    identify_data = json.load(
-        open(
-            f"{pipeline_result_path}identify_{step}s/{version}_chunk_w_{step}s.json",
             encoding="utf-8",
         )
     )
@@ -610,24 +640,17 @@ def process_interview(filepaths):
         participant = interview_file.split("/")[-1].replace(".json", "")
         interview_dict[participant] = interview_data
         for chunk in interview_data:
-            if chunk["topic"] in ["商業", "汙染", "貿易", "農業"]:
-                chunk["topic"] = "其他"
+            chunk["id"] = chunk["id"].replace(" ", "-")
+            #     if chunk["topic"] in ["商業", "汙染", "貿易", "農業"]:
+            #         chunk["topic"] = "其他"
             data_by_chunk[chunk["id"]] = chunk
-    interview_dict = dict(
-        sorted(interview_dict.items(), key=lambda x: int(x[0].replace("N", "")))
-    )
+    # interview_dict = dict(
+    #     sorted(interview_dict.items(), key=lambda x: int(x[0].replace("N", "")))
+    # )
+    interview_dict = dict(sorted(interview_dict.items(), key=lambda x: x[0]))
     for participant, interview in interview_dict.items():
         interviews.append({"file_name": participant, "data": interview})
     return interviews
-
-
-def collect_chunks(filepaths):
-    interviews = process_interview(filepaths)
-    chunks = []
-    for interview in interviews:
-        for chunk in interview["data"]:
-            chunks.append(chunk)
-    return chunks
 
 
 def collect_nodes(filepaths):

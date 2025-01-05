@@ -4,7 +4,7 @@
 </script>
 
 <div class="flex flex-col divide-y rounded-md bg-gray-50 shadow-md">
-  <div
+  <!-- <div
     tabindex="0"
     role="button"
     class="controller-button"
@@ -12,8 +12,8 @@
     on:keyup={() => {}}
   >
     <img src="hex.svg" alt="tab" class="h-6 w-6" />
-  </div>
-  <div
+  </div> -->
+  <!-- <div
     tabindex="0"
     role="button"
     class="controller-button"
@@ -21,7 +21,7 @@
     on:keyup={() => {}}
   >
     <img src="book-copy.svg" alt="tab" class="h-6 w-6" />
-  </div>
+  </div> -->
   <div
     tabindex="0"
     role="button"

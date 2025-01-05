@@ -1,1 +1,0 @@
-Stores user-generated data from executing the pipeline

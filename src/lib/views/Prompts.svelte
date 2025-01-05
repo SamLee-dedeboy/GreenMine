@@ -124,9 +124,11 @@
       fetch(`${server_address}/pipeline/all_versions/`)
         .then((res) => res.json())
         .then((res) => {
+          console.log({res})
           versionsCount = res;
           const versions = versionsCount[step].versions;
-          current_versions[step] = versions[versions.length - 1];
+          // current_versions[step] = versions.length > 1? versions[versions.length - 1] : "v0";
+          current_versions[step] = `v${versions.length - 1}`;
           resolve();
           console.log(current_versions);
         })
@@ -166,11 +168,11 @@
           ...prompt_data,
           [key]: res.prompts,
         };
-        pipeline_result = {
-          ...pipeline_result,
-          [key]: res.pipeline_result,
-        };
-        pipeline_result = updatePanelData(pipeline_result, log, key);
+          pipeline_result = {
+            ...pipeline_result,
+            [key]: res.pipeline_result,
+          };
+          pipeline_result = updatePanelData(pipeline_result, log, key);
       })
       .catch((error) => {
         console.error(
@@ -729,7 +731,7 @@
   }
 
   function fetchLog() {
-    fetch(`${server_address}/log/get/`)
+    fetch(`${server_address}/rule/get/`)
       .then((res) => res.json())
       .then((res) => {
         log = res;
@@ -737,7 +739,7 @@
       });
   }
   function save_log(log) {
-    fetch(`${server_address}/log/save/`, {
+    fetch(`${server_address}/rule/save/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -882,7 +884,7 @@
           {interview_ids}
           {menu_data}
           {step}
-          logData={log["identify_var_types"]}
+          logData={log["identify_var_types"] || []}
           on:rule_change={(e) => update_rules(e)}
         />
       </div>
@@ -954,7 +956,7 @@
           {interview_ids}
           {menu_data}
           {step}
-          logData={log["identify_vars"]}
+          logData={log["identify_vars"] || []}
           on:rule_change={(e) => update_rules(e)}
         />
       </div>
@@ -1021,7 +1023,7 @@
           {interview_ids}
           {menu_data}
           {step}
-          logData={log["identify_links"]}
+          logData={log["identify_links"] || []}
           on:rule_change={(e) => update_rules(e)}
         />
       </div>

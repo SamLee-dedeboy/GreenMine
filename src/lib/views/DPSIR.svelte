@@ -51,20 +51,6 @@
       ?.addEventListener("click", handleEmptySpaceClicked);
   }
 
-  function switchRenderer() {
-    // if it is in detail mode, then switch to overview mode
-    if (isDetailMode) {
-      Object.keys(var_type_states).forEach((key) => {
-        var_type_states[key].revealed = false;
-      });
-    } else {
-      Object.keys(var_type_states).forEach((key) => {
-        var_type_states[key].revealed = true;
-      });
-    }
-    render(data, links, var_type_states);
-  }
-
   async function render(
     vars: tDPSIR,
     links: tVisLink[],

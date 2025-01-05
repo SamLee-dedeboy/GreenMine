@@ -3,7 +3,7 @@
   import { varTypeColorScale } from "lib/store";
   import type { tKeywordData } from "lib/types";
   import { onMount, getContext } from "svelte";
-  export let data: tKeywordData;
+  export let data: tKeywordData | undefined;
   export let key: string = "keyword";
   export let show_key: boolean = true;
   export let degree_key = "tf_idf";
@@ -14,7 +14,7 @@
   let mounted = false;
   const handleHighlightChunks = getContext("handleHighlightChunks") as Function;
 
-  $: if (mounted) {
+  $: if (mounted && data) {
     keyword_sea_renderer.update_keywords(
       data,
       degree_key,
@@ -35,11 +35,13 @@
     };
     keyword_sea_renderer.init(svgId, svgSize.width, svgSize.height);
     keyword_sea_renderer.on("keywordSelected", handleKeywordSelected);
+    if(data) {
     keyword_sea_renderer.update_keywords(
       data,
       degree_key,
       $varTypeColorScale(key),
     );
+    }
     mounted = true;
   });
 </script>
