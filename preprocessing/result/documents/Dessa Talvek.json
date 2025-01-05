@@ -51,7 +51,7 @@
             "chem-barons",
             "voices heard"
         ],
-        "title": "\"Empowering Change: Dessa's Journey in Community Organizing\""
+        "title": "\"Community Organizing for Environmental Justice in Zaun\""
     },
     {
         "id": "Dessa Talvek_1",
@@ -81,8 +81,8 @@
             "survive",
             "organizing",
             "shared stories",
-            "interconnected struggles",
-            "Story-sharing",
+            "interconnected",
+            "story-sharing",
             "powerful",
             "platform",
             "residents",
@@ -98,7 +98,7 @@
             "neighborhoods",
             "community spirit"
         ],
-        "title": "\"Building Community Connections Through Collective Action\""
+        "title": "\"Community Mobilization Through Story-Sharing and Clean-Up Events\""
     },
     {
         "id": "Dessa Talvek_2",
@@ -141,7 +141,7 @@
             "decisions",
             "impact"
         ],
-        "title": "\"Advocating for Environmental Change and Community Involvement\""
+        "title": "Advocacy for Environmental Change and Community Engagement"
     },
     {
         "id": "Dessa Talvek_3",
@@ -181,7 +181,7 @@
             "success",
             "momentum"
         ],
-        "title": "Envisioning a Healthier Future for Zaun Through Community Engagement"
+        "title": "Envisioning a Healthier, Collaborative Future for Zaun"
     },
     {
         "id": "Dessa Talvek_4",
@@ -210,6 +210,7 @@
             "sharing resources",
             "strategies",
             "effective",
+            "engaging",
             "academic institutions",
             "research support",
             "valuable data",
@@ -218,11 +219,10 @@
             "advocacy efforts",
             "science-backed evidence",
             "officials",
-            "reality",
             "community-led studies",
             "empower residents"
         ],
-        "title": "\"Building Collaborative Environmental Partnerships for Community Impact\""
+        "title": "\"Collaborative Efforts for Environmental Advocacy in Zaun\""
     },
     {
         "id": "Dessa Talvek_5",
@@ -253,6 +253,7 @@
             }
         ],
         "raw_keywords": [
+            "eager",
             "participate",
             "concerns",
             "validated",
@@ -260,22 +261,30 @@
             "knowledge",
             "environment",
             "advocate",
-            "air quality",
+            "air",
             "water quality",
+            "priorities",
             "studies",
-            "health impacts",
+            "long-term health impacts",
             "pollution",
-            "data",
-            "change",
+            "residents",
+            "tangible",
+            "visible data",
+            "drive change",
+            "develop",
+            "clear",
             "accessible materials",
-            "findings",
+            "explain findings",
+            "layman’s terms",
             "workshops",
             "engage",
             "community",
+            "discuss",
+            "data",
             "implications",
             "health"
         ],
-        "title": "Empowering Communities Through Scientific Engagement and Transparency"
+        "title": "Engaging Communities in Environmental Scientific Research"
     },
     {
         "id": "Dessa Talvek_6",
@@ -310,7 +319,7 @@
             "change",
             "achieve together"
         ],
-        "title": "\"Motivation and Challenges in Community Engagement\""
+        "title": "\"Community Resilience and the Importance of Educational Workshops\""
     },
     {
         "id": "Dessa Talvek_7",
@@ -355,7 +364,7 @@
             "cleaner",
             "Zaun"
         ],
-        "title": "Community Resilience and Environmental Advocacy in Zaun"
+        "title": "\"Community Resilience and Vision for a Cleaner Zaun\""
     },
     {
         "id": "Dessa Talvek_8",
@@ -373,6 +382,6 @@
             "struggles",
             "means a lot"
         ],
-        "title": "\"Community Struggles: A Conversation of Understanding\""
+        "title": "Community Struggles: A Conversation of Support and Understanding"
     }
 ]

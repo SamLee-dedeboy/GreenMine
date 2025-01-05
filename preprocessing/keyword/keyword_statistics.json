@@ -220,14 +220,6 @@
         "frequency": 2
     },
     {
-        "keyword": "song",
-        "frequency": 2
-    },
-    {
-        "keyword": "protect",
-        "frequency": 2
-    },
-    {
         "keyword": "hope",
         "frequency": 8
     },
@@ -237,7 +229,7 @@
     },
     {
         "keyword": "home",
-        "frequency": 3
+        "frequency": 2
     },
     {
         "keyword": "breathe",
@@ -321,7 +313,7 @@
     },
     {
         "keyword": "air quality",
-        "frequency": 7
+        "frequency": 6
     },
     {
         "keyword": "chronic coughs",
@@ -330,6 +322,10 @@
     {
         "keyword": "children",
         "frequency": 4
+    },
+    {
+        "keyword": "profits",
+        "frequency": 3
     },
     {
         "keyword": "transparency",
@@ -360,6 +356,10 @@
         "frequency": 2
     },
     {
+        "keyword": "rally",
+        "frequency": 2
+    },
+    {
         "keyword": "accountable",
         "frequency": 2
     },
@@ -385,7 +385,7 @@
     },
     {
         "keyword": "residents",
-        "frequency": 6
+        "frequency": 7
     },
     {
         "keyword": "sustainable practices",
@@ -409,7 +409,7 @@
     },
     {
         "keyword": "work",
-        "frequency": 4
+        "frequency": 5
     },
     {
         "keyword": "factories",
@@ -597,7 +597,7 @@
     },
     {
         "keyword": "reality",
-        "frequency": 3
+        "frequency": 2
     },
     {
         "keyword": "action",
@@ -621,7 +621,7 @@
     },
     {
         "keyword": "environmental groups",
-        "frequency": 2
+        "frequency": 3
     },
     {
         "keyword": "locals",
@@ -644,16 +644,16 @@
         "frequency": 2
     },
     {
-        "keyword": "profits",
-        "frequency": 2
-    },
-    {
         "keyword": "school",
         "frequency": 2
     },
     {
         "keyword": "advocate",
         "frequency": 4
+    },
+    {
+        "keyword": "eager",
+        "frequency": 2
     },
     {
         "keyword": "survive",
@@ -693,7 +693,7 @@
     },
     {
         "keyword": "health impacts",
-        "frequency": 3
+        "frequency": 2
     },
     {
         "keyword": "empower",
@@ -704,8 +704,8 @@
         "frequency": 4
     },
     {
-        "keyword": "findings",
-        "frequency": 2
+        "keyword": "air",
+        "frequency": 4
     },
     {
         "keyword": "engage",
@@ -744,10 +744,6 @@
         "frequency": 2
     },
     {
-        "keyword": "air",
-        "frequency": 3
-    },
-    {
         "keyword": "industrialization",
         "frequency": 2
     },
@@ -773,6 +769,10 @@
     },
     {
         "keyword": "students",
+        "frequency": 2
+    },
+    {
+        "keyword": "enthusiasm",
         "frequency": 2
     },
     {

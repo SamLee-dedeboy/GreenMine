@@ -20,7 +20,7 @@
             "younger",
             "machinist"
         ],
-        "title": "\"Career Journey: Cendra's Path in Zaun's Factories\""
+        "title": "Cendra's Journey: From Laborer to Machinist in Zaun"
     },
     {
         "id": "Cendra Brax_1",
@@ -84,8 +84,6 @@
             "getting through the day",
             "mask",
             "work",
-            "protect",
-            "home",
             "quality time",
             "kids",
             "community meetings",
@@ -94,7 +92,7 @@
             "pollution",
             "health effects"
         ],
-        "title": "Coping Strategies in a Challenging Work Environment"
+        "title": "Coping with Workplace Challenges and Health Risks"
     },
     {
         "id": "Cendra Brax_3",
@@ -117,7 +115,7 @@
             "pollution-related",
             "health problems"
         ],
-        "title": "Support Needed for Healthcare and Pollution Management"
+        "title": "\"Improving Healthcare and Support for Pollution-Affected Communities\""
     },
     {
         "id": "Cendra Brax_4",
@@ -147,12 +145,12 @@
             "products",
             "coworkers",
             "health risks",
-            "jobs",
             "food",
             "urgency",
+            "work",
             "concern"
         ],
-        "title": "\"Workplace Safety Concerns in the Community\""
+        "title": "\"Concerns Over Workplace Safety and Community Healthcare Needs\""
     },
     {
         "id": "Cendra Brax_5",
@@ -179,7 +177,7 @@
             "breathe",
             "clean air"
         ],
-        "title": "\"Addressing Job Security and Environmental Concerns\""
+        "title": "\"Discussing Job Security and Environmental Initiatives\""
     },
     {
         "id": "Cendra Brax_6",
@@ -253,7 +251,7 @@
             "city",
             "seeds for the future"
         ],
-        "title": "Motivating Community Engagement Through Family Activities and Advocacy"
+        "title": "Inspiring Community Engagement for Environmental Advocacy"
     },
     {
         "id": "Cendra Brax_8",
@@ -272,7 +270,7 @@
             "too late",
             "kids"
         ],
-        "title": "Promoting Sustainability Education for Future Generations"
+        "title": "Promoting Sustainability in Children's Education"
     },
     {
         "id": "Cendra Brax_9",
@@ -307,6 +305,6 @@
             "future",
             "proud"
         ],
-        "title": "\"Voices for Change: A Conversation on Community Hope\""
+        "title": "\"Building a Better Future Together in Zaun\""
     }
 ]
