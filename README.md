@@ -2,8 +2,8 @@
 
 This is the open-source repository for GreenMine, introduced in the paper titled: **Visual Text Mining with Progressive Taxonomy Construction for Environmental Studies**
 
-<img src="./doc/overview.jpg" alt="overview"/>
-<img src="./doc/dpsir.jpg" alt="dpsir" style="margin-top: 2rem"/>
+<img src="doc/overview.jpg" alt="overview"/>
+<img src="doc/dpsir.jpg" alt="dpsir" style="margin-top: 2rem"/>
 
 ## Reproduction Guide
 
