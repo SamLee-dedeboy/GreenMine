@@ -48,7 +48,7 @@
     }
     return data.sort(
       (a, b) =>
-        -(a.uncertainty.identify_vars || 0 - b.uncertainty.identify_vars || 0),
+        (b.uncertainty.identify_vars || 0) - (a.uncertainty.identify_vars || 0),
     );
   }
 

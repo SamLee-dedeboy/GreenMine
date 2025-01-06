@@ -79,13 +79,12 @@
   ) {
     resetHighlights();
     external_highlights = true;
-    console.log({ highlight_chunk_mentions });
     if (highlight_chunk_mentions === null) {
       external_highlights = false;
       highlight_chunk_mentions = [];
     }
     highlight_chunk_mentions.forEach((chunk) => {
-      const chunk_id = chunk.chunk_id;
+      const chunk_id = chunk.chunk_id.replace(/ /g, "-");
       const [interview_index, chunk_index] = chunk_indexes[chunk_id];
       highlight_transcripts.add(interview_index); //collect nodes with highlighted chunks
       highlight_chunk[interview_index][chunk_index] = true;
@@ -183,7 +182,7 @@
 
   function highlight_conversations(highlight_chunks: tMention[]) {
     highlight_chunks.forEach((chunk_mention) => {
-      const chunk_id = chunk_mention.chunk_id;
+      const chunk_id = chunk_mention.chunk_id.replace(/ /g, "-");;
       const highlight_conversation_ids =
         chunk_mention.conversation_ids || chunk_mention.evidence || [];
       highlight_conversation_ids.forEach((message_id) => {
@@ -195,7 +194,6 @@
   }
 
   onMount(() => {
-    console.log("interview viewer data: ", data);
     init_highlight_evidence();
   });
 </script>

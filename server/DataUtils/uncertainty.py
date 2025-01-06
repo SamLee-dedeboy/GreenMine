@@ -1,4 +1,5 @@
 import json
+import copy
 from GPTUtils import query
 from collections import defaultdict
 
@@ -112,7 +113,7 @@ def identify_vars_uncertainty(
         return list(merged_vars.values())
 
     # uncertainty calculation
-    k = 2
+    k = 5
     all_prompts = []
     splits = [0]
     iteration_contexts = []
@@ -196,10 +197,10 @@ def identify_links_uncertainty(
             for link in links:
                 link_id = f"{link['var1']}_{link['var2']}"
                 if link_id not in merged_links:
-                    link["response"]["relationship"] = [
+                    merged_links[link_id] = copy.deepcopy(link)
+                    merged_links[link_id]["response"]["relationship"] = [
                         link["response"]["relationship"]
                     ]
-                    merged_links[link_id] = link
                 else:
                     merged_links[link_id]["response"]["evidence"] = list(
                         set(
@@ -215,9 +216,19 @@ def identify_links_uncertainty(
 
     # identify links
     iteration_results = []
+    all_prompts = []
+    splits = [0]
     k = 5
     for _ in range(k):
-        all_chunks = query.identify_links(
+        (
+            prompts,
+            post_process,
+            response_format,
+            extract_response_func,
+            chunk_dict,
+            chunk_id_list,
+            link_metadata_list,
+        ) = query.identify_links(
             all_chunks,
             raw_links,
             openai_client,
@@ -225,10 +236,28 @@ def identify_links_uncertainty(
             user_prompt_blocks,
             prompt_variables,
         )
+        all_prompts += prompts
+        splits.append(len(prompts) + (splits[-1] if len(splits) > 0 else 0))
+
+    all_responses = query.multithread_prompts(
+        openai_client, all_prompts, response_format=response_format, temperature=1.0
+    )
+    original_chunk_dict = copy.deepcopy(chunk_dict)
+    for i in range(k):
+        chunk_dict = copy.deepcopy(original_chunk_dict)
+        responses = all_responses[splits[i] : splits[i + 1]]
+        if response_format == "json":
+            responses = [extract_response_func(i) for i in responses]
+        all_chunks = post_process(
+            chunk_dict, responses, chunk_id_list, link_metadata_list
+        )
+
         for chunk_index, chunk in enumerate(all_chunks):
             if len(iteration_results) <= chunk_index:
                 iteration_results.append([])
             iteration_results[chunk_index].append(chunk["identify_links_result"])
+    save_json(iteration_results, "iteration_results.json")
+
     for chunk_index, chunk in enumerate(all_chunks):
         if chunk["identify_links_result"] == []:
             chunk["uncertainty"]["identify_links"] = 0
@@ -242,6 +271,7 @@ def identify_links_uncertainty(
         )
         uncertainty = average_pairwise_jaccard(candidate_links)
         for link in ensemble_links:
+            # save_json(link, "link.json")
             link_occurrence = len(
                 list(
                     filter(
@@ -292,3 +322,8 @@ def average_pairwise_jaccard(candidate_sets):
         jaccard_distance = (len(union) - len(intersection)) / len(union)
         total_jaccard_distance += jaccard_distance
     return total_jaccard_distance / len(pairs)
+
+
+def save_json(data, path):
+    with open(path, "w") as f:
+        json.dump(data, f, indent=4)

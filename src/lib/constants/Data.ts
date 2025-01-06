@@ -26,6 +26,6 @@ export const emotionname = ["resigned", "neutral", "worried", "angry", "proud"];
 
 export const estimated_times = {
   identify_var_types: 40 * 1000, // ms
-  identify_vars: 45 * 1000,
-  identify_links: 120 * 1000,
+  identify_vars: 90 * 1000,
+  identify_links: 180 * 1000,
 };

@@ -30,7 +30,7 @@
     );
   }
   onMount(() => {
-    console.log({ datum });
+    // console.log({ datum });
   });
 </script>
 

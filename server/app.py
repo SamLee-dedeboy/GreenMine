@@ -35,7 +35,7 @@ var_types = ["driver", "pressure", "state", "impact", "response"]
 keyword_embeddings = json.load(
     open(keyword_data_path + "keywords.json", encoding="utf-8")
 )
-userdict = keyword_data_path + "userdict.txt"
+# userdict = keyword_data_path + "userdict.txt"
 stopwords = ["綠島"]
 kpca_reducer = dr.init_kpca_reducer(
     list(map(lambda x: x["embeddings"], keyword_embeddings))
@@ -224,8 +224,8 @@ def getDPSIR(link_version):
         nodes,
         keyword_embeddings,
         stopwords,
-        userdict,
-        kpca_reducer,
+        userdict=None,
+        reducer=kpca_reducer,
     )
     # filter out variables named '其他'
     for var_type, var_data in DPSIR_data.items():
@@ -233,7 +233,7 @@ def getDPSIR(link_version):
         filtered_variable_mentions = {
             var_name: mentions
             for var_name, mentions in variable_mentions.items()
-            if var_name != "其他"
+            if var_name != "misc"
         }
         DPSIR_data[var_type]["variable_mentions"] = filtered_variable_mentions
 

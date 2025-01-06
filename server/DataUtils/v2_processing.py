@@ -206,7 +206,7 @@ def _generate_keyword_data(
     }
 
     all_keyword_embeddings = [
-        keyword_embeddings_dict[keyword]["embedding"] for keyword in all_keywords
+        keyword_embeddings_dict[keyword]["embeddings"] for keyword in all_keywords
     ]
     if reducer is None:
         XY, reducer, dr_scaler, min_coord, max_coord, init_positions = dr.scatter_plot(

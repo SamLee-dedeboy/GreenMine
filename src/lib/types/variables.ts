@@ -111,7 +111,7 @@ export type tLinkObject = {
   };
   target: {
     var_type: string;
-    var_name: string;
+    variable_name: string;
     leftTop: number[];
     width: number;
     height: number;

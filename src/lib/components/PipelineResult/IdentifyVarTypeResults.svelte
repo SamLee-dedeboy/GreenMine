@@ -35,7 +35,6 @@
       (a, b) =>
         b.uncertainty.identify_var_types - a.uncertainty.identify_var_types,
     );
-    console.log({ sorted });
     return sorted;
   }
 

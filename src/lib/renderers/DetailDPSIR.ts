@@ -62,7 +62,6 @@ export const DetailDPSIR = {
       .select("image")
       .classed("box-icon-highlight", false)
       .classed("box-icon-not-highlight", false);
-    console.log("click on svg");
     // this.dispatch.call("VarOrLinkSelected", null, null);
     // this.dispatch.call("VarTypeUnSelected", null, null);
     this.clicked_link = null;
@@ -119,7 +118,6 @@ export const DetailDPSIR = {
         var_type_states[link.source.var_type].revealed &&
         var_type_states[link.target.var_type].revealed,
     );
-    console.log({ links, var_type_states });
     const svg = d3.select("#" + this.svgId);
     const [_1, _2, svgWidth, svgHeight] = d3
       .select("#" + self.svgId)
@@ -151,7 +149,6 @@ export const DetailDPSIR = {
       })
       .filter((link) => link !== undefined);
 
-    console.log({ linkData });
     const link_paths = svg
       .select("g.detail-link-group")
       .selectAll(".link")
@@ -262,25 +259,32 @@ export const DetailDPSIR = {
                 rects
                   .filter(
                     (box_data: tRectObject) =>
-                      box_data.variable_name === d.source.var_name ||
-                      box_data.variable_name === d.target.var_name,
+                      box_data.variable_name === d.source.variable_name ||
+                      box_data.variable_name === d.target.variable_name,
                   )
                   .classed("clicked-box-highlight", true)
                   .classed("box-not-highlight", false);
-
-                d3.select(`image#${d.source.var_name}`)
+                console.log(
+                  rects.filter(
+                    (box_data: tRectObject) =>
+                      box_data.variable_name === d.source.variable_name ||
+                      box_data.variable_name === d.target.variable_name,
+                  ),
+                  { rects: rects.data(), d },
+                );
+                d3.select(`image#${d.source.variable_name}`)
                   .classed("clicked-box-highlight", true)
                   .classed("box-not-highlight", false);
 
-                d3.select(`image#${d.target.var_name}`)
+                d3.select(`image#${d.target.variable_name}`)
                   .classed("clicked-box-highlight", true)
                   .classed("box-not-highlight", false);
 
                 labels
                   .filter(
                     (label_data: tRectObject) =>
-                      label_data.variable_name === d.source.var_name ||
-                      label_data.variable_name === d.target.var_name,
+                      label_data.variable_name === d.source.variable_name ||
+                      label_data.variable_name === d.target.variable_name,
                   )
                   .classed("box-label-highlight", true)
                   .classed("box-label-not-highlight", false)
@@ -449,7 +453,6 @@ export const DetailDPSIR = {
             .append("g")
             .attr("class", "tag")
             .each(function (d: tRectObject) {
-              console.log({ d });
               const tag = d3.select(this);
               const rect = tag
                 .append("rect")

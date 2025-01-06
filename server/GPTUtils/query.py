@@ -121,156 +121,6 @@ def get_embedding(client, text, model="text-embedding-3-small"):
         return get_embedding(client, text, model)
 
 
-def var_extraction(
-    client,
-    node_file_path: str,
-    link_file_path: str,
-    chunk_dict: Dict[str, tChunkWithVarMentions],
-    var_name: str,
-    var_type: str,
-    var_definition: str,
-    all_def_dict: dict,
-):
-    node_extraction_prompts = []
-    chunks = list(chunk_dict.values())
-    for chunk in chunks:
-        interviewee_messages = [
-            message["content"]
-            for message in chunk["conversation"]
-            if str(message["speaker"]) == "0"
-        ]
-        interviewee_messages_str = "\n".join(interviewee_messages)
-        node_extraction_prompts.append(
-            prompts.node_extraction_prompt_factory(
-                interviewee_messages_str, var_name, var_definition
-            )
-        )
-    # node_extraction_prompts = node_extraction_prompts[:10]
-    responses = multithread_prompts(
-        client, node_extraction_prompts, response_format="json"
-    )
-    mentioned_responses = [json.loads(res)["mentioned"] for res in responses]
-    mentioned_chunks = [
-        chunk
-        for chunk, mentioned in zip(chunks, mentioned_responses)
-        if mentioned == "yes"
-    ]
-
-    # evidence extraction
-    evidence_prompts = []
-    for chunk in mentioned_chunks:
-        interviewee_messages = [
-            message["content"]
-            for message in chunk["conversation"]
-            if str(message["speaker"]) == "0"
-        ]
-        evidence_prompts.append(
-            prompts.mention_extraction_prompt_factory(
-                interviewee_messages, var_name, var_definition
-            )
-        )
-    # evidence_prompts = evidence_prompts[:10]
-    responses = multithread_prompts(client, evidence_prompts, response_format="json")
-    evidence_response = [json.loads(res)["mentions"] for res in responses]
-    final_mentions = []
-    for chunk, evidence in zip(mentioned_chunks, evidence_response):
-        if len(evidence) == 0:
-            continue
-        evidence = list(set(evidence))
-        final_mentions.append(
-            {
-                "chunk_id": chunk["id"],
-                "conversation_ids": evidence,
-            }
-        )
-    var_type_nodes = json.load(open(node_file_path, encoding="utf-8"))
-    var_type_nodes["variable_mentions"][var_name] = {
-        "variable_name": var_name,
-        "mentions": final_mentions,
-    }
-    save_json(var_type_nodes, node_file_path)
-
-    final_mention_chunks = [
-        chunk_dict[mention["chunk_id"]] for mention in final_mentions
-    ]
-    new_connections = connection_extraction(
-        client, final_mention_chunks, var_name, var_type, var_definition, all_def_dict
-    )
-    old_connections = json.load(open(link_file_path, encoding="utf-8"))
-    save_json(old_connections + new_connections, link_file_path)
-
-
-def connection_extraction(
-    client,
-    chunks: List[tChunkWithVarMentions],
-    new_var: str,
-    new_var_type: str,
-    new_var_def: str,
-    def_dict: dict,
-):
-    var_types = ["driver", "pressure", "state", "impact", "response"]
-    relationships_prompts = []
-    metadata_list = []
-    for chunk in chunks:
-        for indicator2 in var_types:
-            indicator1 = new_var_type
-            print(chunk)
-            if (
-                indicator1 in chunk["var_mentions"]
-                and indicator2 in chunk["var_mentions"]
-            ):
-                # get chunk content
-                chunk_content = messages_to_str(chunk["conversation"])
-                vars2 = list(
-                    map(lambda m: m["var_name"], chunk["var_mentions"][indicator2])
-                )
-                comb_vars1_vars2 = [[new_var, var2] for var2 in vars2]
-                for comb in comb_vars1_vars2:
-                    var2_def = def_dict[comb[1]]
-                    relationships_prompts.append(
-                        prompts.find_relationships_chunk_prompts_factory(
-                            chunk_content, comb, new_var_def, var2_def
-                        )
-                    )
-                    metadata_list.append(
-                        {
-                            "chunk_id": chunk["id"],
-                            "var1": comb[0],
-                            "var2": comb[1],
-                            "indicator1": indicator1,
-                            "indicator2": indicator2,
-                        }
-                    )
-    # relationships_prompts = relationships_prompts[:50]
-    # metadata_list = metadata_list[:50]
-    connections = multithread_prompts(
-        client,
-        relationships_prompts,
-        model="gpt-3.5-turbo-0125",
-        response_format="json",
-    )
-    results = []
-    for response, metadata in zip(connections, metadata_list):
-        try:
-            response = json.loads(response)
-        except:
-            response = "error"
-        # filter responses with no connection
-        if response["relationship"] == "No":
-            continue
-        results.append(
-            {
-                "chunk_id": metadata["chunk_id"],
-                "var1": metadata["var1"],
-                "var2": metadata["var2"],
-                "indicator1": metadata["indicator1"],
-                "indicator2": metadata["indicator2"],
-                "response": response,
-            }
-        )
-    return results
-
-
 def identify_var_types(
     all_chunks,
     openai_client,
@@ -387,7 +237,7 @@ def identify_links(
     link_metadata_list = []
     variable_definitions = prompt_variables["variable_definitions"]
     for link in links:
-        if link["var1"] == "其他" or link["var2"] == "其他":
+        if link["var1"] == "misc" or link["var2"] == "misc":
             continue
         conversation = chunk_dict[link["chunk_id"]]["conversation"]
         prompt_variables["conversation"] = conversation_to_string(conversation)
@@ -405,64 +255,71 @@ def identify_links(
         prompt_list.append(prompt)
         chunk_id_list.append(link["chunk_id"])
         link_metadata_list.append(link)
-    responses = multithread_prompts(
-        openai_client, prompt_list, response_format=response_format, temperature=0.0
-    )
-    if response_format == "json":
-        responses = [extract_response_func(i) for i in responses]
 
-    for response_index, extraction_result in enumerate(responses):
-        if extraction_result is None:
-            continue
-        chunk_id = chunk_id_list[response_index]
-        chunk = chunk_dict[chunk_id]
-        extraction_result = filter_evidences(
-            [extraction_result], len(chunk["conversation"])
-        )[0]
-        link_metadata = link_metadata_list[response_index]
-        # check if the source and target variables are valid
-        if (
-            extraction_result["source"] != link_metadata["var1"]
-            and extraction_result["source"] != link_metadata["var2"]
-        ):
-            continue
-        if (
-            extraction_result["target"] != link_metadata["var1"]
-            and extraction_result["target"] != link_metadata["var2"]
-        ):
-            continue
-        if extraction_result["source"] == link_metadata["var1"]:
-            source_var, source_indicator = (
-                link_metadata["var1"],
-                link_metadata["indicator1"],
+    def post_process(chunk_dict, responses, chunk_id_list, link_metadata_list):
+        for response_index, extraction_result in enumerate(responses):
+            if extraction_result is None:
+                continue
+            chunk_id = chunk_id_list[response_index]
+            chunk = chunk_dict[chunk_id]
+            extraction_result = filter_evidences(
+                [extraction_result], len(chunk["conversation"])
+            )[0]
+            link_metadata = link_metadata_list[response_index]
+            # check if the source and target variables are valid
+            if (
+                extraction_result["source"] != link_metadata["var1"]
+                and extraction_result["source"] != link_metadata["var2"]
+            ):
+                continue
+            if (
+                extraction_result["target"] != link_metadata["var1"]
+                and extraction_result["target"] != link_metadata["var2"]
+            ):
+                continue
+            if extraction_result["source"] == link_metadata["var1"]:
+                source_var, source_indicator = (
+                    link_metadata["var1"],
+                    link_metadata["indicator1"],
+                )
+                target_var, target_indicator = (
+                    link_metadata["var2"],
+                    link_metadata["indicator2"],
+                )
+            else:
+                source_var, source_indicator = (
+                    link_metadata["var2"],
+                    link_metadata["indicator2"],
+                )
+                target_var, target_indicator = (
+                    link_metadata["var1"],
+                    link_metadata["indicator1"],
+                )
+            chunk["identify_links_result"].append(
+                {
+                    "chunk_id": link_metadata["chunk_id"],
+                    # "var1": link_metadata["var1"],
+                    # "var2": link_metadata["var2"],
+                    "var1": source_var,
+                    "var2": target_var,
+                    "indicator1": source_indicator,
+                    "indicator2": target_indicator,
+                    "response": extraction_result,
+                }
             )
-            target_var, target_indicator = (
-                link_metadata["var2"],
-                link_metadata["indicator2"],
-            )
-        else:
-            source_var, source_indicator = (
-                link_metadata["var2"],
-                link_metadata["indicator2"],
-            )
-            target_var, target_indicator = (
-                link_metadata["var1"],
-                link_metadata["indicator1"],
-            )
-        chunk["identify_links_result"].append(
-            {
-                "chunk_id": link_metadata["chunk_id"],
-                # "var1": link_metadata["var1"],
-                # "var2": link_metadata["var2"],
-                "var1": source_var,
-                "var2": target_var,
-                "indicator1": source_indicator,
-                "indicator2": target_indicator,
-                "response": extraction_result,
-            }
-        )
-    all_chunks = list(chunk_dict.values())
-    return all_chunks
+            chunk_dict[chunk_id] = chunk
+        all_chunks = list(chunk_dict.values())
+        return all_chunks
+
+    return (
+        prompt_list,
+        post_process,
+        response_format,
+        extract_response_func,
+        chunk_dict,
+        chunk_id_list,
+        link_metadata_list,
+    )
 
 
 def filter_candidate_links(chunk_w_vars):

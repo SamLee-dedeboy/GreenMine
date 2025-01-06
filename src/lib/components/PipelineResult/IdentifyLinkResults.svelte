@@ -21,7 +21,7 @@
   let searched_snippet = "";
   let show_graph = Array(data.length).fill(false);
   let show_uncertainty_graph = false;
-  $: has_uncertainty = data.some((datum) => datum.uncertainty.identify_links);
+  $: has_uncertainty = data.some((datum) => datum.uncertainty.identify_links !== undefined);
   $: max_degree = compute_max_degree(data);
   $: handleVersionChanged(current_version);
 
@@ -54,9 +54,10 @@
     show_uncertainty_graph = false;
   }
   onMount(() => {
-    console.log("links:", { data });
+    console.log("links:", { data }, has_uncertainty, uncertainty_graph_loading, data.some((datum) => datum.uncertainty.identify_links !== undefined));
   });
   function sort_by_uncertainty(data: tIdentifyLinks[]) {
+    console.log("sorting...", has_uncertainty);
     if (data.length === 0) return data;
     if (!has_uncertainty) {
       data = sort_by_id(data);
@@ -64,6 +65,7 @@
     data = data.sort(
       (a, b) => -(a.uncertainty.identify_links - b.uncertainty.identify_links),
     );
+    console.log("sorted data: ", data);
     data.forEach((datum, index) => {
       datum.index = index;
     });
