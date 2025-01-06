@@ -26,7 +26,7 @@ pip install -r requirements.txt
 flask run
 ```
 
-3. The backend should be launched at `localhost:5000`. You can check by accessing `localhost:5000` in your browser, you should see `Hello GreenMine` showing on the web page.
+3. The backend should be launched at `localhost:5000`. You can check by accessing `localhost:5000/test/` in your browser, you should see `Hello GreenMine` showing on the web page.
 
 ### 4. Launching Front-end
 
