@@ -1,262 +1,887 @@
 {
     "driver": [
         {
-            "definition": "The process of developing industries to meet economic and material needs, often resulting in increased resource use and environmental impacts.",
-            "factor_type": "social",
-            "var_name": "Industrialization"
+            "var_name": "Agriculture",
+            "definition": "Activities related to crop cultivation, livestock grazing, and conversion of land for agricultural use.\nExamples: Activities related to crop cultivation, livestock grazing, and conversion of land for agricultural use.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The increase in human population, driving higher demand for resources, housing, and infrastructure.",
-            "factor_type": "social",
-            "var_name": "Population Growth"
+            "var_name": "Aquaculture",
+            "definition": "Describes industries and activities involving aquaculture facilities or the artificial rearing of aquatic species.\nExamples: Describes industries and activities involving aquaculture facilities or the artificial rearing of aquatic species.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The removal of natural materials to support human activities, leading to habitat alteration and depletion.",
-            "factor_type": "ecological",
-            "var_name": "Resource Extraction"
+            "var_name": "Awareness",
+            "definition": "Describes the level of awareness and informational gaps in how society or individuals perceive the value of the environment, resources, and ecosystems.\nExamples: Describes the level of awareness and informational gaps in how society or individuals perceive the value of the environment, resources, and ecosystems.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The absence or weak enforcement of environmental policies, allowing unchecked exploitation and pollution.",
-            "factor_type": "social",
-            "var_name": "Regulatory Gaps"
+            "var_name": "Behavior",
+            "definition": "Reflects habitual behaviors and decision-making tendencies of individuals or communities.\nExamples: Reflects habitual behaviors and decision-making tendencies of individuals or communities.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The reliance on coal, oil, and gas as primary energy sources, contributing to pollution and climate change.",
-            "factor_type": "ecological",
-            "var_name": "Fossil Fuel Use"
+            "var_name": "Chemicals",
+            "definition": "Describes chemicals as well as the production and application of chemical substances.\nExamples: Describes chemicals as well as the production and application of chemical substances.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "Disparities in wealth and power, resulting in uneven access to resources and uneven distribution of environmental impacts.",
-            "factor_type": "social",
-            "var_name": "Economic Inequality"
+            "var_name": "Climate",
+            "definition": "Describes climatic conditions and variability, including long-term trends in rainfall, temperature, and storms.\nExamples: Describes climatic conditions and variability, including long-term trends in rainfall, temperature, and storms.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "Prioritization of rapid innovation, often neglecting long-term environmental sustainability.",
-            "factor_type": "social",
-            "var_name": "Technological Focus"
+            "var_name": "Culture",
+            "definition": "Describes cultural factors such as social values, traditional beliefs, or symbolic identities.\nExamples: Describes cultural factors such as social values, traditional beliefs, or symbolic identities.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The growth of cities and urban areas, leading to habitat loss and increased pollution.",
-            "factor_type": "ecological",
-            "var_name": "Urban Expansion"
+            "var_name": "Demography",
+            "definition": "Describes population structure, density, dynamics, and scale.\nExamples: Describes population structure, density, dynamics, and scale.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The use of short-term, low-cost solutions to address challenges, which may lead to unsustainable outcomes.",
-            "factor_type": "social",
-            "var_name": "Improvised Practices"
+            "var_name": "Economy",
+            "definition": "Economic factors involving finance, income, market activities, livelihoods, and industrial structures.\nExamples: Economic factors involving finance, income, market activities, livelihoods, and industrial structures.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "None of the above fits",
-            "factor_type": "none",
-            "var_name": "misc"
-        }
-    ],
-    "impact": [
-        {
-            "definition": "The release of harmful substances into the atmosphere, reducing air quality and causing health problems for humans and wildlife.",
-            "factor_type": "ecological",
-            "var_name": "Air Pollution"
+            "var_name": "Education",
+            "definition": "Refers to resources, learning pathways, and knowledge dissemination activities related to formal education and research.\nExamples: Refers to resources, learning pathways, and knowledge dissemination activities related to formal education and research.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The introduction of toxic substances into water bodies, affecting aquatic ecosystems and reducing water availability for human use.",
-            "factor_type": "ecological",
-            "var_name": "Water Contamination"
+            "var_name": "Energy",
+            "definition": "Emphasizes natural resources used for energy generation, electricity production, transportation, or industrial purposes, as well as the demand for, exploration, and utilization of energy.\nExamples: Emphasizes natural resources used for energy generation, electricity production, transportation, or industrial purposes, as well as the demand for, exploration, and utilization of energy.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The loss of soil fertility and structure due to erosion, pollution, or overuse, reducing agricultural productivity.",
-            "factor_type": "ecological",
-            "var_name": "Soil Degradation"
+            "var_name": "Governance",
+            "definition": "Encompasses multiple aspects of governance, including governmental systems, institutional frameworks, policymaking and legislation, management capacity, enforcement efficiency, and stakeholder participation.\nExamples: Encompasses multiple aspects of governance, including governmental systems, institutional frameworks, policymaking and legislation, management capacity, enforcement efficiency, and stakeholder participation.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The destruction or alteration of natural habitats, leading to biodiversity decline and ecosystem disruption.",
-            "factor_type": "ecological",
-            "var_name": "Habitat Loss"
+            "var_name": "Housing",
+            "definition": "Describes human housing needs, the presence of living spaces, and their patterns of use.\nExamples: Describes human housing needs, the presence of living spaces, and their patterns of use.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "Increased prevalence of diseases and health conditions caused by exposure to pollutants and degraded environments.",
-            "factor_type": "social",
-            "var_name": "Health Risks"
+            "var_name": "Industry",
+            "definition": "Describes the industries, activities, and scale of the industrial and manufacturing sectors.\nExamples: Describes the industries, activities, and scale of the industrial and manufacturing sectors.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "Long-term alterations in temperature, precipitation, and weather patterns due to increased greenhouse gas emissions.",
-            "factor_type": "ecological",
-            "var_name": "Climate Change"
+            "var_name": "Infrastructure",
+            "definition": "Describes national, urban, and local facilities and infrastructure that support social and economic operations and provide public services.\nExamples: Describes national, urban, and local facilities and infrastructure that support social and economic operations and provide public services.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The depletion of natural resources, limiting their availability for future use and increasing competition.",
-            "factor_type": "ecological",
-            "var_name": "Resource Scarcity"
+            "var_name": "Mining",
+            "definition": "Describes the excavation, mining, and extraction of minerals, oil and gas, sand, and other geological resources from the surface or underground.\nExamples: Describes the excavation, mining, and extraction of minerals, oil and gas, sand, and other geological resources from the surface or underground.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "Adverse effects on economic systems due to resource depletion, environmental disasters, or health crises.",
-            "factor_type": "social",
-            "var_name": "Economic Instability"
+            "var_name": "Recreation",
+            "definition": "Describes the daily recreational activities and spatial use of local residents, which may be accompanied by small-scale or informal economic activities not primarily aimed at generating economic profit.\nExamples: Describes the daily recreational activities and spatial use of local residents, which may be accompanied by small-scale or informal economic activities not primarily aimed at generating economic profit.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The forced migration of communities due to environmental degradation, resource scarcity, or climate-related disasters.",
-            "factor_type": "social",
-            "var_name": "Social Displacement"
+            "var_name": "Safety",
+            "definition": "Describes institutions, actions, measures, infrastructure, and equipment related to personal, community, and national security.\nExamples: Describes institutions, actions, measures, infrastructure, and equipment related to personal, community, and national security.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "None of the above fits",
-            "factor_type": "none",
-            "var_name": "misc"
+            "var_name": "Technology",
+            "definition": "Describes the development, application, service, and accessibility of technology.\nExamples: Describes the development, application, service, and accessibility of technology.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Tourism",
+            "definition": "Describes activities of external visitors for tourism and entertainment purposes, characterized by commercial orientation and economic scale.\nExamples: Describes activities of external visitors for tourism and entertainment purposes, characterized by commercial orientation and economic scale.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Trade",
+            "definition": "Describes the circulation of natural resources or goods, market connections, and cross-border trade activities.\nExamples: Describes the circulation of natural resources or goods, market connections, and cross-border trade activities.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Transportation",
+            "definition": "Describes transportation systems and the use of vehicles for the movement of people and goods across land, sea, and air.\nExamples: Describes transportation systems and the use of vehicles for the movement of people and goods across land, sea, and air.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Urbanization",
+            "definition": "Describes the process of urbanization, including spatial expansion, increased density, and changes in socioeconomic structures.\nExamples: Describes the process of urbanization, including spatial expansion, increased density, and changes in socioeconomic structures.",
+            "factor_type": "ecological"
         }
     ],
     "pressure": [
         {
-            "definition": "The release of pollutants, such as greenhouse gases or toxins, into the air, water, or soil.",
-            "factor_type": "ecological",
-            "var_name": "Emissions"
+            "var_name": "Biota",
+            "definition": "Specific biological groups and population statuses that constitute ecosystems.\nExamples: Specific biological groups and population statuses that constitute ecosystems.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The removal of forests for agriculture, urban development, or industrial use, leading to ecosystem imbalance.",
-            "factor_type": "ecological",
-            "var_name": "Deforestation"
+            "var_name": "Construction",
+            "definition": "Describes construction activities related to buildings, physical infrastructure, and civil engineering works.\nExamples: Describes construction activities related to buildings, physical infrastructure, and civil engineering works.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The excessive harvesting of fish and marine resources, reducing species populations and affecting aquatic ecosystems.",
-            "factor_type": "ecological",
-            "var_name": "Overfishing"
+            "var_name": "Destructive fishing",
+            "definition": "Refers to fishing practices that cause significant, irreversible, or long-term damage to biological communities and the environment.\nExamples: Refers to fishing practices that cause significant, irreversible, or long-term damage to biological communities and the environment.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The dumping of industrial, household, or hazardous waste in landfills, water bodies, or unregulated areas.",
-            "factor_type": "ecological",
-            "var_name": "Waste Disposal"
+            "var_name": "Disaster",
+            "definition": "Types of natural disasters and extreme events.\nExamples: Types of natural disasters and extreme events.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The transformation of natural landscapes into urban or agricultural areas, leading to habitat fragmentation.",
-            "factor_type": "ecological",
-            "var_name": "Land Conversion"
+            "var_name": "Disease",
+            "definition": "Describes occurrences of infections in organisms, the presence of pathogens, or the outbreak of diseases.\nExamples: Describes occurrences of infections in organisms, the presence of pathogens, or the outbreak of diseases.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The widespread application of pesticides, fertilizers, or industrial chemicals, which can leach into ecosystems.",
-            "factor_type": "ecological",
-            "var_name": "Chemical Use"
+            "var_name": "Environment",
+            "definition": "Describes static physical and chemical conditions within natural systems.\nExamples: Describes static physical and chemical conditions within natural systems.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "Excessive use of natural resources, exceeding the environment's capacity to regenerate.",
-            "factor_type": "social",
-            "var_name": "Overconsumption"
+            "var_name": "Environmental change",
+            "definition": "Describes dynamic changes in physical and chemical conditions in the environment.\nExamples: Describes dynamic changes in physical and chemical conditions in the environment.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "Human activities conducted without proper oversight, leading to unintended environmental harm.",
-            "factor_type": "social",
-            "var_name": "Unregulated Practices"
+            "var_name": "Erosion",
+            "definition": "Describes terrain erosion, abrasion, or substrate loss caused by natural or indirectly human-induced factors such as water flow, waves, sediment depletion, or seawater intrusion.\nExamples: Describes terrain erosion, abrasion, or substrate loss caused by natural or indirectly human-induced factors such as water flow, waves, sediment depletion, or seawater intrusion.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The exploitation of fossil fuels or other energy sources, often causing habitat destruction and pollution.",
-            "factor_type": "ecological",
-            "var_name": "Energy Extraction"
+            "var_name": "Fisheries",
+            "definition": "Describes fisheries, fishing activities and gear, fishery scale and labor structure, resource pressures, and the use and management of fishery resources.\nExamples: Describes fisheries, fishing activities and gear, fishery scale and labor structure, resource pressures, and the use and management of fishery resources.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "None of the above fits",
-            "factor_type": "none",
-            "var_name": "misc"
-        }
-    ],
-    "response": [
-        {
-            "definition": "Measures to reduce or eliminate the release of harmful substances into the environment.",
-            "factor_type": "social",
-            "var_name": "Pollution Control"
+            "var_name": "Forestry",
+            "definition": "Describes activities such as deforestation, degradation, and land-use conversion within forestry and forest systems, emphasizing long-term or irreversible impacts on forest structure and resource extraction.\nExamples: Describes activities such as deforestation, degradation, and land-use conversion within forestry and forest systems, emphasizing long-term or irreversible impacts on forest structure and resource extraction.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "Planting trees to restore deforested areas and improve ecosystem health.",
-            "factor_type": "ecological",
-            "var_name": "Reforestation"
+            "var_name": "Harvesting",
+            "definition": "Describes the extraction and use of natural resources other than fisheries.\nExamples: Describes the extraction and use of natural resources other than fisheries.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "Systems and strategies for collecting, recycling, and properly disposing of waste materials.",
-            "factor_type": "social",
-            "var_name": "Waste Management"
+            "var_name": "Illegal activity",
+            "definition": "Emphasizes behaviors and activities that violate laws or regulations.\nExamples: Emphasizes behaviors and activities that violate laws or regulations.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "Policies and laws designed to limit harmful practices and encourage sustainable development.",
-            "factor_type": "social",
-            "var_name": "Environmental Regulation"
+            "var_name": "Invasive species",
+            "definition": "Describes the invasion, introduction, release, or spread of non-native species.\nExamples: Describes the invasion, introduction, release, or spread of non-native species.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The shift to energy sources such as solar, wind, and hydropower to reduce reliance on fossil fuels.",
-            "factor_type": "ecological",
-            "var_name": "Renewable Energy Adoption"
+            "var_name": "LULC",
+            "definition": "Emphasizes land and habitat use, cover, conversion, expansion, development, spatial occupation, and morphological changes.\nExamples: Emphasizes land and habitat use, cover, conversion, expansion, development, spatial occupation, and morphological changes.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "Farming practices that maintain soil health, conserve water, and reduce chemical use.",
-            "factor_type": "ecological",
-            "var_name": "Sustainable Agriculture"
+            "var_name": "Nutrient loading",
+            "definition": "Describes the use, input, discharge, accumulation of nutrients, and the occurrence of eutrophication in water bodies.\nExamples: Describes the use, input, discharge, accumulation of nutrients, and the occurrence of eutrophication in water bodies.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "Initiatives to educate communities about environmental issues and promote eco-friendly behaviors.",
-            "factor_type": "social",
-            "var_name": "Public Awareness Campaigns"
+            "var_name": "Overexploitation",
+            "definition": "Emphasizes overexploitation or use of resources beyond their regenerative capacity.\nExamples: Emphasizes overexploitation or use of resources beyond their regenerative capacity.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "Programs to protect and preserve endangered species and critical habitats.",
-            "factor_type": "ecological",
-            "var_name": "Conservation Efforts"
+            "var_name": "Physical damage",
+            "definition": "Describes physical disturbances to ecosystems directly caused by human activities, including actions such as trampling, scraping, pressing, contact, treading, anchoring, and dredging.\nExamples: Describes physical disturbances to ecosystems directly caused by human activities, including actions such as trampling, scraping, pressing, contact, treading, anchoring, and dredging.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "Innovation of eco-friendly technologies to reduce environmental impacts and improve efficiency.",
-            "factor_type": "social",
-            "var_name": "Green Technology Development"
-        },
-        {
-            "definition": "None of the above fits",
-            "factor_type": "none",
-            "var_name": "misc"
+            "var_name": "Describes the presence, release, and accumulation of gaseous, liquid, solid, or toxic pollutants, and the activities and processes by which they are discharged into the environment.",
+            "definition": "Air pollution; Water pollution; Improper waste disposal; Waste disposal (waste dump site); Wastewater; Pollution; Garbage; Sewage; Fuel spill; Marine debris; Atmospheric emissions; CO₂ emissions per sector; Coastal discharge behavior; Gas emissions into the atmosphere; Household soot emission; Household sulphur dioxide emission; Increasing levels of contaminants; Industrial soot (dust) emission; Industrial sulphur dioxide emission; Industrial waste gas emission; Industrial wastewater discharge; Introduction of inorganic compounds; Introduction of organic compounds; Marine debris; Marine litter; Non-point & point source waterborne discharges; Production of solid waste; Release of solid waste; Sewage discharge per 10,000 Yuan output value; Shipping pollution; Solid waste; Liquid waste; Oil spills; Waste water discharge rates (TSS); Waste water discharge rates (toxics); Littering\nExamples: Air pollution; Water pollution; Improper waste disposal; Waste disposal (waste dump site); Wastewater; Pollution; Garbage; Sewage; Fuel spill; Marine debris; Atmospheric emissions; CO₂ emissions per sector; Coastal discharge behavior; Gas emissions into the atmosphere; Household soot emission; Household sulphur dioxide emission; Increasing levels of contaminants; Industrial soot (dust) emission; Industrial sulphur dioxide emission; Industrial waste gas emission; Industrial wastewater discharge; Introduction of inorganic compounds; Introduction of organic compounds; Marine debris; Marine litter; Non-point & point source waterborne discharges; Production of solid waste; Release of solid waste; Sewage discharge per 10,000 Yuan output value; Shipping pollution; Solid waste; Liquid waste; Oil spills; Waste water discharge rates (TSS); Waste water discharge rates (toxics); Littering",
+            "factor_type": "ecological"
         }
     ],
     "state": [
         {
-            "definition": "The concentration of pollutants and particulates in the atmosphere, indicating the health of the air.",
-            "factor_type": "ecological",
-            "var_name": "Air Quality"
+            "var_name": "Education indicator",
+            "definition": "Assessing individual educational attainment and the quality of the education system.\nExamples: Assessing individual educational attainment and the quality of the education system.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The chemical, physical, and biological characteristics of water, determining its suitability for ecosystems and human use.",
-            "factor_type": "ecological",
-            "var_name": "Water Quality"
+            "var_name": "Energy indicator",
+            "definition": "Evaluating energy accessibility, usage, and efficiency.\nExamples: Evaluating energy accessibility, usage, and efficiency.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The health and fertility of soil, including its nutrient content, pH levels, and contamination status.",
-            "factor_type": "ecological",
-            "var_name": "Soil Condition"
+            "var_name": "Family and Relationships",
+            "definition": "Measuring family relationships, intimate connections, and community bonds.\nExamples: Measuring family relationships, intimate connections, and community bonds.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The variety and abundance of species within an ecosystem, reflecting its health and resilience.",
-            "factor_type": "ecological",
-            "var_name": "Biodiversity"
+            "var_name": "Health Care",
+            "definition": "Assessing the accessibility and quality of public health and medical services.\nExamples: Assessing the accessibility and quality of public health and medical services.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The extent of natural or vegetated areas within a region, contributing to ecosystem services and urban health.",
-            "factor_type": "ecological",
-            "var_name": "Green Space Coverage"
+            "var_name": "Income",
+            "definition": "Measuring income levels, financial stability, and purchasing power.\nExamples: Measuring income levels, financial stability, and purchasing power.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The prevailing temperature, precipitation, and weather conditions over a specific timeframe.",
-            "factor_type": "ecological",
-            "var_name": "Climate Patterns"
+            "var_name": "Jobs",
+            "definition": "Evaluating employment status, productivity, and job quality.\nExamples: Evaluating employment status, productivity, and job quality.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The number of individuals inhabiting a specific area, affecting resource use and environmental pressures.",
-            "factor_type": "social",
-            "var_name": "Population Density"
+            "var_name": "Resilience",
+            "definition": "Measuring the resilience and vulnerability of individuals or communities to poverty and external shocks.\nExamples: Measuring the resilience and vulnerability of individuals or communities to poverty and external shocks.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The intensity and type of industrial, commercial, and agricultural activities occurring in a region.",
-            "factor_type": "social",
-            "var_name": "Economic Activity Levels"
+            "var_name": "Social Equity",
+            "definition": "Assessing the fairness of resource distribution and access to opportunities.\nExamples: Assessing the fairness of resource distribution and access to opportunities.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "The amount and types of solid or hazardous waste present in the environment over time.",
-            "factor_type": "ecological",
-            "var_name": "Waste Accumulation"
+            "var_name": "Social Security",
+            "definition": "Measuring the accessibility and satisfaction with basic social services.\nExamples: Measuring the accessibility and satisfaction with basic social services.",
+            "factor_type": "ecological"
         },
         {
-            "definition": "None of the above fits",
-            "factor_type": "none",
-            "var_name": "misc"
+            "var_name": "Water and Sanitation",
+            "definition": "Measuring the accessibility and efficiency of drinking water, sanitation facilities, and water resource management.\nExamples: Measuring the accessibility and efficiency of drinking water, sanitation facilities, and water resource management.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Abundance",
+            "definition": "Describes the abundance and density of biological populations within an ecosystem.\nExamples: Describes the abundance and density of biological populations within an ecosystem.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Air indicator",
+            "definition": "Describes the gaseous composition and physicochemical properties of air.\nExamples: Describes the gaseous composition and physicochemical properties of air.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Anthropogenic disturbance",
+            "definition": "Describes the state of environmental or ecological disturbance caused by human activities.\nExamples: Describes the state of environmental or ecological disturbance caused by human activities.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Biodiversity",
+            "definition": "Describes species diversity, composition, and distribution within ecosystems, including species richness and community structure.\nExamples: Describes species diversity, composition, and distribution within ecosystems, including species richness and community structure.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Biological disturbance",
+            "definition": "Describes the presence of invasive species, diseases, pathogens, or other ecological factors that may harm or disrupt organisms within ecosystems.\nExamples: Describes the presence of invasive species, diseases, pathogens, or other ecological factors that may harm or disrupt organisms within ecosystems.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Biological indicator",
+            "definition": "Describes the health condition, physiological functions, and performance of organisms.\nExamples: Describes the health condition, physiological functions, and performance of organisms.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Biomass",
+            "definition": "Describes the total biomass or stock of various organisms within an ecosystem.\nExamples: Describes the total biomass or stock of various organisms within an ecosystem.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Biotic species",
+            "definition": "Describes the identity and quantity of specific biological species or groups.\nExamples: Describes the identity and quantity of specific biological species or groups.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Coastal geomorphology",
+            "definition": "Describes the geomorphological features and physical changes in coastal areas.\nExamples: Describes the geomorphological features and physical changes in coastal areas.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Cover",
+            "definition": "Describes the spatial coverage of species within ecosystems.\nExamples: Describes the spatial coverage of species within ecosystems.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Ecosystem services",
+            "definition": "Describes the services and functions provided by ecosystems.\nExamples: Describes the services and functions provided by ecosystems.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Extreme event",
+            "definition": "Describes short-term, high-intensity natural events within ecosystems and the resulting environmental changes.\nExamples: Describes short-term, high-intensity natural events within ecosystems and the resulting environmental changes.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Habitat",
+            "definition": "Describes the characteristics and quality of habitats within ecosystems.\nExamples: Describes the characteristics and quality of habitats within ecosystems.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Hydrological indicator",
+            "definition": "Describes hydrological conditions and the physical, chemical, and biological properties of water bodies.\nExamples: Describes hydrological conditions and the physical, chemical, and biological properties of water bodies.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Nutrient indicator",
+            "definition": "Describes the composition and status of nutrients in environmental media.\nExamples: Describes the composition and status of nutrients in environmental media.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Plant species",
+            "definition": "Describes specific plant species or groups and their quantities.\nExamples: Describes specific plant species or groups and their quantities.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Pollution indicator",
+            "definition": "Describes pollution levels and the accumulation of pollutants in environmental media.\nExamples: Describes pollution levels and the accumulation of pollutants in environmental media.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Resource indicator",
+            "definition": "Describes the condition of natural resources within ecosystems.\nExamples: Describes the condition of natural resources within ecosystems.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Soil indicator",
+            "definition": "Describes the composition and physicochemical properties of soil or sediments.\nExamples: Describes the composition and physicochemical properties of soil or sediments.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Spatial pattern",
+            "definition": "Describes the spatial distribution and extent of environmental elements.\nExamples: Describes the spatial distribution and extent of environmental elements.",
+            "factor_type": "ecological"
+        }
+    ],
+    "impact": [
+        {
+            "var_name": "Ecosystem services",
+            "definition": "The benefits people obtain from ecosystems.\nExamples: The benefits people obtain from ecosystems.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Supporting services",
+            "definition": "Services necessary for the production of all other ecosystem services.\nExamples: Services necessary for the production of all other ecosystem services.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Changes in biodiversity",
+            "definition": "Changes in the conditions of biodiversity.\nExamples: Changes in the conditions of biodiversity.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Changes in biomass",
+            "definition": "Changes in the conditions of biomass.\nExamples: Changes in the conditions of biomass.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Changes in biotic species",
+            "definition": "Changes in the conditions of biotic species.\nExamples: Changes in the conditions of biotic species.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Changes in plant species",
+            "definition": "Changes in the conditions of plant species.\nExamples: Changes in the conditions of plant species.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Habitat provision",
+            "definition": "Describes the habitat function of ecosystems in providing safe and suitable living and dwelling spaces.\nExamples: Describes the habitat function of ecosystems in providing safe and suitable living and dwelling spaces.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Nutrient cycling",
+            "definition": "Describes the processes of nutrient cycling, transformation, and reuse within ecosystems.\nExamples: Describes the processes of nutrient cycling, transformation, and reuse within ecosystems.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Primary production",
+            "definition": "Describes the function of primary producers in synthesizing energy through photosynthesis and producing oxygen and nutrients.\nExamples: Describes the function of primary producers in synthesizing energy through photosynthesis and producing oxygen and nutrients.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Soil formation",
+            "definition": "Describes the processes of sediment deposition, formation, and maintenance within ecosystems, as well as their role in storing organic matter.\nExamples: Describes the processes of sediment deposition, formation, and maintenance within ecosystems, as well as their role in storing organic matter.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Water cycling",
+            "definition": "Describes hydrological cycle processes within ecosystems, such as precipitation, transpiration, evaporation, freezing, melting, runoff, infiltration, percolation, and condensation.\nExamples: Describes hydrological cycle processes within ecosystems, such as precipitation, transpiration, evaporation, freezing, melting, runoff, infiltration, percolation, and condensation.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Regulating services",
+            "definition": "The benefits obtained from the regulation of ecosystem processes.\nExamples: The benefits obtained from the regulation of ecosystem processes.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Air quality regulation",
+            "definition": "Describes how ecosystems regulate air quality by absorbing or transforming air pollutants through physical, chemical, and biological processes.\nExamples: Describes how ecosystems regulate air quality by absorbing or transforming air pollutants through physical, chemical, and biological processes.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Climate regulation",
+            "definition": "Describes how ecosystems influence regional and global climate stability through carbon cycling, energy exchange, and microclimate regulation.\nExamples: Describes how ecosystems influence regional and global climate stability through carbon cycling, energy exchange, and microclimate regulation.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Disease regulation",
+            "definition": "Describes how ecosystems regulate diseases and pathogens.\nExamples: Describes how ecosystems regulate diseases and pathogens.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Erosion regulation",
+            "definition": "Describes how ecosystems stabilize soil and sediments, reduce erosion and geomorphological changes, and protect coastal and terrestrial environments.\nExamples: Describes how ecosystems stabilize soil and sediments, reduce erosion and geomorphological changes, and protect coastal and terrestrial environments.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Invasive species regulation",
+            "definition": "Describes the ecosystem's capacity to resist invasive species, maintaining ecological balance and the diversity of native species.\nExamples: Describes the ecosystem's capacity to resist invasive species, maintaining ecological balance and the diversity of native species.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Natural hazard regulation",
+            "definition": "Describes how ecosystems mitigate the impacts of natural disasters such as storms, tsunamis, and floods.\nExamples: Describes how ecosystems mitigate the impacts of natural disasters such as storms, tsunamis, and floods.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Pest regulation",
+            "definition": "Describes the ecosystem's function in regulating pests and diseases.\nExamples: Describes the ecosystem's function in regulating pests and diseases.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Pollination",
+            "definition": "Describes the ecosystem’s provision of pollination services, supporting plant reproduction and ecosystem productivity.\nExamples: Describes the ecosystem’s provision of pollination services, supporting plant reproduction and ecosystem productivity.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Pollution regulation",
+            "definition": "Describes how ecosystems control and reduce environmental pollutants through physical, chemical, and biological processes.\nExamples: Describes how ecosystems control and reduce environmental pollutants through physical, chemical, and biological processes.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Water purification",
+            "definition": "Emphasizes the role of ecosystems in filtering, decomposing, absorbing, and detoxifying impurities, organic waste, and compounds in water through water quality regulation.\nExamples: Emphasizes the role of ecosystems in filtering, decomposing, absorbing, and detoxifying impurities, organic waste, and compounds in water through water quality regulation.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Water regulation",
+            "definition": "Emphasizes the role of ecosystems in regulating water flow dynamics and water availability through hydrological regulation.\nExamples: Emphasizes the role of ecosystems in regulating water flow dynamics and water availability through hydrological regulation.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Provisioning services",
+            "definition": "The material products humans obtain from the ecosystem.\nExamples: The material products humans obtain from the ecosystem.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Biological materials",
+            "definition": "Describes the provision of biochemical substances, natural remedies, and medicinal resources by ecosystems.\nExamples: Describes the provision of biochemical substances, natural remedies, and medicinal resources by ecosystems.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Energy resources",
+            "definition": "Describes the ecosystem’s provision of stable, secure, and affordable energy resources to support households, communities, and livelihood activities.\nExamples: Describes the ecosystem’s provision of stable, secure, and affordable energy resources to support households, communities, and livelihood activities.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Food",
+            "definition": "Describes the supply of various types of food derived from plants, animals, and microorganisms by ecosystems.\nExamples: Describes the supply of various types of food derived from plants, animals, and microorganisms by ecosystems.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Fresh water",
+            "definition": "Describes the availability of usable freshwater resources provided by ecosystems.\nExamples: Describes the availability of usable freshwater resources provided by ecosystems.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Genetic resources",
+            "definition": "Describes the genetic and hereditary resources contained within organisms in the ecosystem.\nExamples: Describes the genetic and hereditary resources contained within organisms in the ecosystem.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Ornamental resources",
+            "definition": "Describes the provision of resources for aesthetic or decorative purposes by ecosystems.\nExamples: Describes the provision of resources for aesthetic or decorative purposes by ecosystems.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Space resources",
+            "definition": "Describes the available space and area provided by the ecosystem.\nExamples: Describes the available space and area provided by the ecosystem.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Tourism values",
+            "definition": "Describes the value of ecosystems in attracting tourism and generating income.\nExamples: Describes the value of ecosystems in attracting tourism and generating income.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Cultural services",
+            "definition": "The nonmaterial benefits people obtain from ecosystems.\nExamples: The nonmaterial benefits people obtain from ecosystems.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Aesthetic values",
+            "definition": "Describes the aesthetic and scenic values provided by ecosystems.\nExamples: Describes the aesthetic and scenic values provided by ecosystems.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Cultural diversity",
+            "definition": "Describes the ecosystem's role in supporting cultural diversity and promoting cultural expression and the continuation of traditions among different communities.\nExamples: Describes the ecosystem's role in supporting cultural diversity and promoting cultural expression and the continuation of traditions among different communities.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Cultural heritage values",
+            "definition": "Describes the cultural traditions, historical memory, and local knowledge carried by ecosystems.\nExamples: Describes the cultural traditions, historical memory, and local knowledge carried by ecosystems.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Educational values",
+            "definition": "Describes ecosystems as spaces for education and knowledge transmission, supporting learning and the enhancement of environmental awareness.\nExamples: Describes ecosystems as spaces for education and knowledge transmission, supporting learning and the enhancement of environmental awareness.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Existence value",
+            "definition": "Describes the value people assign to the mere existence of ecosystems or species, regardless of direct use.\nExamples: Describes the value people assign to the mere existence of ecosystems or species, regardless of direct use.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Inspiration",
+            "definition": "Describes the ecosystem’s capacity to inspire art, culture, creativity, and spiritual experiences through its natural features, landscapes, and biodiversity.\nExamples: Describes the ecosystem’s capacity to inspire art, culture, creativity, and spiritual experiences through its natural features, landscapes, and biodiversity.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Knowledge systems",
+            "definition": "Describes the ecosystem's support for and promotion of local knowledge, traditional wisdom, and scientific research.\nExamples: Describes the ecosystem's support for and promotion of local knowledge, traditional wisdom, and scientific research.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Recreation and ecotourism",
+            "definition": "Describes the opportunities ecosystems provide for recreational activities and ecotourism, promoting well-being and generating economic benefits.\nExamples: Describes the opportunities ecosystems provide for recreational activities and ecotourism, promoting well-being and generating economic benefits.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Sense of place",
+            "definition": "Describes the cultural meaning and identity that ecosystems confer on a place, strengthening community attachment and local connection.\nExamples: Describes the cultural meaning and identity that ecosystems confer on a place, strengthening community attachment and local connection.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Social relations",
+            "definition": "Describes the role of ecosystems in fostering social cohesion, strengthening community identity, and supporting social interactions through shared use, management, or appreciation of natural environments.\nExamples: Describes the role of ecosystems in fostering social cohesion, strengthening community identity, and supporting social interactions through shared use, management, or appreciation of natural environments.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Spiritual and religious values",
+            "definition": "Describes the spiritual or religious meanings embedded in ecosystems, offering communities a source of spiritual support and cultural symbolism.\nExamples: Describes the spiritual or religious meanings embedded in ecosystems, offering communities a source of spiritual support and cultural symbolism.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Human welfare",
+            "definition": "The overall well-being of individuals and communities.\nExamples: The overall well-being of individuals and communities.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Basic human needs",
+            "definition": "Access to goods\nExamples: Access to goods",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "",
+            "definition": "Access to information\nExamples: Access to information",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "",
+            "definition": "Clothing\nExamples: Clothing",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "",
+            "definition": "Education access\nExamples: Education access",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Declining quality of human resources",
+            "definition": "Eldercare\nExamples: Eldercare",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "",
+            "definition": "Employment\nExamples: Employment",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Unemployment",
+            "definition": "Energy resources\nExamples: Energy resources",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "",
+            "definition": "Infrastructure\nExamples: Infrastructure",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "",
+            "definition": "Mental health\nExamples: Mental health",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "",
+            "definition": "Natural space\nExamples: Natural space",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Reduced beach access for people",
+            "definition": "Parental care\nExamples: Parental care",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "",
+            "definition": "Participation\nExamples: Participation",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "",
+            "definition": "Personal and psychological development\nExamples: Personal and psychological development",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "",
+            "definition": "Physical health\nExamples: Physical health",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Health risk; Impacts on human health; Increasing human health concerns; Increasing human health issues",
+            "definition": "Security\nExamples: Security",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Conflicts between groups of fishers when dolphin death occurs; Conflicts increase; Increased conflict; Increased exclusion; Local conflicts; Social conflict; Increase coastal erosion; Increase flooding",
+            "definition": "Shelter\nExamples: Shelter",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "",
+            "definition": "Sufficient nutritious food\nExamples: Sufficient nutritious food",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Availability of fish as food",
+            "definition": "Water resources\nExamples: Water resources",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Water utilization popularization rate; Availability of water",
+            "definition": "\nExamples: ",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Measures the stability of the economic environment and its capacity to withstand risks.",
+            "definition": "Economic instability; Economic vulnerability; International trade embargo; Poverty; Socioeconomic impacts; Total economic losses due to marine disasters\nExamples: Economic instability; Economic vulnerability; International trade embargo; Poverty; Socioeconomic impacts; Total economic losses due to marine disasters",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Measures the stability, adequacy, and sustainability of income.",
+            "definition": "Associated incomes; Economic loss from decrease in fishing income; Engel's coefficient; Less revenue from coastal tourism; Less revenue from fisheries; Local economy (community); Property; Proportion of added value of the tertiary industry; Reduced job productivity; Tourist operator incomes; Declined revenue\nExamples: Associated incomes; Economic loss from decrease in fishing income; Engel's coefficient; Less revenue from coastal tourism; Less revenue from fisheries; Local economy (community); Property; Proportion of added value of the tertiary industry; Reduced job productivity; Tourist operator incomes; Declined revenue",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Measures the ability to secure stable and sustainable sources of livelihood.",
+            "definition": "Destruction of livelihoods; Livelihood benefits compromise; Livelihood loss; Constrained livelihood\nExamples: Destruction of livelihoods; Livelihood benefits compromise; Livelihood loss; Constrained livelihood",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Ability to help others",
+            "definition": "Describes the individual's capacity and opportunity to engage in mutual support, contribute to society, and assist others.\nExamples: Describes the individual's capacity and opportunity to engage in mutual support, contribute to society, and assist others.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Mutual respect",
+            "definition": "Describes the atmosphere of mutual respect, inclusiveness, and social harmony among individuals in society.\nExamples: Describes the atmosphere of mutual respect, inclusiveness, and social harmony among individuals in society.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Social cohesion and fulfillment",
+            "definition": "Enhances social cohesion and mutual support through close family and community relationships, providing emotional fulfillment and a sense of belonging.\nExamples: Enhances social cohesion and mutual support through close family and community relationships, providing emotional fulfillment and a sense of belonging.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Access to nature",
+            "definition": "Describes the opportunities and accessibility for people to engage with nature and enjoy natural experiences.\nExamples: Describes the opportunities and accessibility for people to engage with nature and enjoy natural experiences.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Aesthetics",
+            "definition": "Describes the visual aesthetics and sensory enjoyment provided by the natural environment.\nExamples: Describes the visual aesthetics and sensory enjoyment provided by the natural environment.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Affection/respect toward nature",
+            "definition": "Describes people's emotional connection to and respect for the natural environment, which enhances environmental awareness and cultural values.\nExamples: Describes people's emotional connection to and respect for the natural environment, which enhances environmental awareness and cultural values.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Community vitality",
+            "definition": "Describes community cohesion, vitality, and the level of social participation.\nExamples: Describes community cohesion, vitality, and the level of social participation.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Cultural requirement",
+            "definition": "Describes the fulfillment of cultural needs, including spaces for traditional activities, festivals, and cultural practices.\nExamples: Describes the fulfillment of cultural needs, including spaces for traditional activities, festivals, and cultural practices.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Cultural requirement",
+            "definition": "Describes the fulfillment of cultural needs, including spaces for traditional activities, festivals, and cultural practices.\nExamples: Describes the fulfillment of cultural needs, including spaces for traditional activities, festivals, and cultural practices.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Freedom of choice and action",
+            "definition": "Describes individual autonomy and freedom in making life choices and taking actions.\nExamples: Describes individual autonomy and freedom in making life choices and taking actions.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Happiness",
+            "definition": "Describes the individual's subjective sense of well-being and psychological satisfaction.\nExamples: Describes the individual's subjective sense of well-being and psychological satisfaction.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Identity",
+            "definition": "Describes the cultural identity, sense of belonging, and self-worth experienced by individuals or groups.\nExamples: Describes the cultural identity, sense of belonging, and self-worth experienced by individuals or groups.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Life satisfaction",
+            "definition": "Describes the individual's overall life satisfaction and sense of well-being.\nExamples: Describes the individual's overall life satisfaction and sense of well-being.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Sense of place (topophilia)",
+            "definition": "Describes people’s emotional attachment to and sense of belonging to specific places.\nExamples: Describes people’s emotional attachment to and sense of belonging to specific places.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Other impacts",
+            "definition": "Terms that are not related to existing ecosystem service or human welfare categories.\nExamples: Terms that are not related to existing ecosystem service or human welfare categories.",
+            "factor_type": "ecological"
+        }
+    ],
+    "response": [
+        {
+            "var_name": "Adaptation strategies",
+            "definition": "Describes actions that promote adaptation and enhance the resilience of societies and ecosystems in response to risks and impacts from environmental or socioeconomic changes.\nExamples: Describes actions that promote adaptation and enhance the resilience of societies and ecosystems in response to risks and impacts from environmental or socioeconomic changes.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Assessment and valuation",
+            "definition": "Describes actions that assess or value ecosystem services, ecological benefits, environmental impacts, or management effectiveness to support policy and management decisions.\nExamples: Describes actions that assess or value ecosystem services, ecological benefits, environmental impacts, or management effectiveness to support policy and management decisions.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Awareness",
+            "definition": "Describes actions that enhance public awareness, concern, and willingness to act on environmental issues through information dissemination, advocacy, or participatory mechanisms.\nExamples: Describes actions that enhance public awareness, concern, and willingness to act on environmental issues through information dissemination, advocacy, or participatory mechanisms.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Climate change coping strategies",
+            "definition": "Describes mitigation and adaptation measures addressing climate change impacts, as well as carbon management-related actions.\nExamples: Describes mitigation and adaptation measures addressing climate change impacts, as well as carbon management-related actions.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Conservation",
+            "definition": "Describes conservation, protection, and management actions targeting biodiversity, habitats, species, or genetic resources.\nExamples: Describes conservation, protection, and management actions targeting biodiversity, habitats, species, or genetic resources.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Education",
+            "definition": "Describes efforts to promote the acquisition and enhancement of knowledge and skills through education, training, or information sharing.\nExamples: Describes efforts to promote the acquisition and enhancement of knowledge and skills through education, training, or information sharing.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Enforcement",
+            "definition": "Describes actions by governments or authorities to enforce laws and policies, including inspections and penalties for violations.\nExamples: Describes actions by governments or authorities to enforce laws and policies, including inspections and penalties for violations.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Financial support",
+            "definition": "Describes financial support, subsidies, or investment actions for environmental protection, sustainable development, or socioeconomic adaptation.\nExamples: Describes financial support, subsidies, or investment actions for environmental protection, sustainable development, or socioeconomic adaptation.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Governance improvement",
+            "definition": "Describes actions to strengthen governance capacity, including institutional coordination, policy integration, stakeholder engagement, and decision-making transparency.\nExamples: Describes actions to strengthen governance capacity, including institutional coordination, policy integration, stakeholder engagement, and decision-making transparency.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Legislation",
+            "definition": "Describes actions involving the enactment or amendment of laws, regulations, policies, standards, or restrictions to support ecosystem conservation and sustainable management.\nExamples: Describes actions involving the enactment or amendment of laws, regulations, policies, standards, or restrictions to support ecosystem conservation and sustainable management.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "License and permit",
+            "definition": "Describes measures that regulate resource use or human activities through the issuance of permits, licenses, or quotas.\nExamples: Describes measures that regulate resource use or human activities through the issuance of permits, licenses, or quotas.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Maintenance",
+            "definition": "Describes ongoing or supportive operations carried out to maintain the normal functioning and stability of ecosystems, resources, facilities, or management systems.\nExamples: Describes ongoing or supportive operations carried out to maintain the normal functioning and stability of ecosystems, resources, facilities, or management systems.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Management",
+            "definition": "Describes direct management measures and actions targeting the environment, organisms, public health, or natural resources.\nExamples: Describes direct management measures and actions targeting the environment, organisms, public health, or natural resources.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Monitoring",
+            "definition": "Describes actions involving environmental monitoring, ecosystem monitoring, or resource condition monitoring.\nExamples: Describes actions involving environmental monitoring, ecosystem monitoring, or resource condition monitoring.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Planning",
+            "definition": "Describes development visions and implementation frameworks promoted through policy design, resource allocation, land use planning, or future development plans.\nExamples: Describes development visions and implementation frameworks promoted through policy design, resource allocation, land use planning, or future development plans.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Pollution control",
+            "definition": "Describes actions to reduce, treat, or manage pollutants or waste in air, water, soil, or other environmental media.\nExamples: Describes actions to reduce, treat, or manage pollutants or waste in air, water, soil, or other environmental media.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Practical actions",
+            "definition": "Describes concrete actions, efforts, or preventive measures taken directly to achieve goals related to environmental protection, ecosystem management, resource use, or pollution control.\nExamples: Describes concrete actions, efforts, or preventive measures taken directly to achieve goals related to environmental protection, ecosystem management, resource use, or pollution control.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Protected areas",
+            "definition": "Describes actions to designate or establish nature reserves, marine protected areas, biosphere reserves, or other types of protected areas.\nExamples: Describes actions to designate or establish nature reserves, marine protected areas, biosphere reserves, or other types of protected areas.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Research",
+            "definition": "Describes scientific research, technological development, project-based initiatives, and knowledge production related to environmental and ecological issues.\nExamples: Describes scientific research, technological development, project-based initiatives, and knowledge production related to environmental and ecological issues.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Restoration",
+            "definition": "Describes actions aimed at the restoration, rehabilitation, or ecological reconstruction of degraded or damaged ecosystems.\nExamples: Describes actions aimed at the restoration, rehabilitation, or ecological reconstruction of degraded or damaged ecosystems.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Sustainable development",
+            "definition": "Describes strategic development actions that promote the integrated advancement of economic, social, and environmental objectives under principles of sustainable governance.\nExamples: Describes strategic development actions that promote the integrated advancement of economic, social, and environmental objectives under principles of sustainable governance.",
+            "factor_type": "ecological"
+        },
+        {
+            "var_name": "Other responses",
+            "definition": "Terms that cannot be classified under existing response variables.\nExamples: Terms that cannot be classified under existing response variables.",
+            "factor_type": "ecological"
         }
     ]
 }

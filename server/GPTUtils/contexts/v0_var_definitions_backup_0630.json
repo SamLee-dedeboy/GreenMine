@@ -1,0 +1,262 @@
+{
+    "driver": [
+        {
+            "definition": "The process of developing industries to meet economic and material needs, often resulting in increased resource use and environmental impacts.",
+            "factor_type": "social",
+            "var_name": "Industrialization"
+        },
+        {
+            "definition": "The increase in human population, driving higher demand for resources, housing, and infrastructure.",
+            "factor_type": "social",
+            "var_name": "Population Growth"
+        },
+        {
+            "definition": "The removal of natural materials to support human activities, leading to habitat alteration and depletion.",
+            "factor_type": "ecological",
+            "var_name": "Resource Extraction"
+        },
+        {
+            "definition": "The absence or weak enforcement of environmental policies, allowing unchecked exploitation and pollution.",
+            "factor_type": "social",
+            "var_name": "Regulatory Gaps"
+        },
+        {
+            "definition": "The reliance on coal, oil, and gas as primary energy sources, contributing to pollution and climate change.",
+            "factor_type": "ecological",
+            "var_name": "Fossil Fuel Use"
+        },
+        {
+            "definition": "Disparities in wealth and power, resulting in uneven access to resources and uneven distribution of environmental impacts.",
+            "factor_type": "social",
+            "var_name": "Economic Inequality"
+        },
+        {
+            "definition": "Prioritization of rapid innovation, often neglecting long-term environmental sustainability.",
+            "factor_type": "social",
+            "var_name": "Technological Focus"
+        },
+        {
+            "definition": "The growth of cities and urban areas, leading to habitat loss and increased pollution.",
+            "factor_type": "ecological",
+            "var_name": "Urban Expansion"
+        },
+        {
+            "definition": "The use of short-term, low-cost solutions to address challenges, which may lead to unsustainable outcomes.",
+            "factor_type": "social",
+            "var_name": "Improvised Practices"
+        },
+        {
+            "definition": "None of the above fits",
+            "factor_type": "none",
+            "var_name": "misc"
+        }
+    ],
+    "impact": [
+        {
+            "definition": "The release of harmful substances into the atmosphere, reducing air quality and causing health problems for humans and wildlife.",
+            "factor_type": "ecological",
+            "var_name": "Air Pollution"
+        },
+        {
+            "definition": "The introduction of toxic substances into water bodies, affecting aquatic ecosystems and reducing water availability for human use.",
+            "factor_type": "ecological",
+            "var_name": "Water Contamination"
+        },
+        {
+            "definition": "The loss of soil fertility and structure due to erosion, pollution, or overuse, reducing agricultural productivity.",
+            "factor_type": "ecological",
+            "var_name": "Soil Degradation"
+        },
+        {
+            "definition": "The destruction or alteration of natural habitats, leading to biodiversity decline and ecosystem disruption.",
+            "factor_type": "ecological",
+            "var_name": "Habitat Loss"
+        },
+        {
+            "definition": "Increased prevalence of diseases and health conditions caused by exposure to pollutants and degraded environments.",
+            "factor_type": "social",
+            "var_name": "Health Risks"
+        },
+        {
+            "definition": "Long-term alterations in temperature, precipitation, and weather patterns due to increased greenhouse gas emissions.",
+            "factor_type": "ecological",
+            "var_name": "Climate Change"
+        },
+        {
+            "definition": "The depletion of natural resources, limiting their availability for future use and increasing competition.",
+            "factor_type": "ecological",
+            "var_name": "Resource Scarcity"
+        },
+        {
+            "definition": "Adverse effects on economic systems due to resource depletion, environmental disasters, or health crises.",
+            "factor_type": "social",
+            "var_name": "Economic Instability"
+        },
+        {
+            "definition": "The forced migration of communities due to environmental degradation, resource scarcity, or climate-related disasters.",
+            "factor_type": "social",
+            "var_name": "Social Displacement"
+        },
+        {
+            "definition": "None of the above fits",
+            "factor_type": "none",
+            "var_name": "misc"
+        }
+    ],
+    "pressure": [
+        {
+            "definition": "The release of pollutants, such as greenhouse gases or toxins, into the air, water, or soil.",
+            "factor_type": "ecological",
+            "var_name": "Emissions"
+        },
+        {
+            "definition": "The removal of forests for agriculture, urban development, or industrial use, leading to ecosystem imbalance.",
+            "factor_type": "ecological",
+            "var_name": "Deforestation"
+        },
+        {
+            "definition": "The excessive harvesting of fish and marine resources, reducing species populations and affecting aquatic ecosystems.",
+            "factor_type": "ecological",
+            "var_name": "Overfishing"
+        },
+        {
+            "definition": "The dumping of industrial, household, or hazardous waste in landfills, water bodies, or unregulated areas.",
+            "factor_type": "ecological",
+            "var_name": "Waste Disposal"
+        },
+        {
+            "definition": "The transformation of natural landscapes into urban or agricultural areas, leading to habitat fragmentation.",
+            "factor_type": "ecological",
+            "var_name": "Land Conversion"
+        },
+        {
+            "definition": "The widespread application of pesticides, fertilizers, or industrial chemicals, which can leach into ecosystems.",
+            "factor_type": "ecological",
+            "var_name": "Chemical Use"
+        },
+        {
+            "definition": "Excessive use of natural resources, exceeding the environment's capacity to regenerate.",
+            "factor_type": "social",
+            "var_name": "Overconsumption"
+        },
+        {
+            "definition": "Human activities conducted without proper oversight, leading to unintended environmental harm.",
+            "factor_type": "social",
+            "var_name": "Unregulated Practices"
+        },
+        {
+            "definition": "The exploitation of fossil fuels or other energy sources, often causing habitat destruction and pollution.",
+            "factor_type": "ecological",
+            "var_name": "Energy Extraction"
+        },
+        {
+            "definition": "None of the above fits",
+            "factor_type": "none",
+            "var_name": "misc"
+        }
+    ],
+    "response": [
+        {
+            "definition": "Measures to reduce or eliminate the release of harmful substances into the environment.",
+            "factor_type": "social",
+            "var_name": "Pollution Control"
+        },
+        {
+            "definition": "Planting trees to restore deforested areas and improve ecosystem health.",
+            "factor_type": "ecological",
+            "var_name": "Reforestation"
+        },
+        {
+            "definition": "Systems and strategies for collecting, recycling, and properly disposing of waste materials.",
+            "factor_type": "social",
+            "var_name": "Waste Management"
+        },
+        {
+            "definition": "Policies and laws designed to limit harmful practices and encourage sustainable development.",
+            "factor_type": "social",
+            "var_name": "Environmental Regulation"
+        },
+        {
+            "definition": "The shift to energy sources such as solar, wind, and hydropower to reduce reliance on fossil fuels.",
+            "factor_type": "ecological",
+            "var_name": "Renewable Energy Adoption"
+        },
+        {
+            "definition": "Farming practices that maintain soil health, conserve water, and reduce chemical use.",
+            "factor_type": "ecological",
+            "var_name": "Sustainable Agriculture"
+        },
+        {
+            "definition": "Initiatives to educate communities about environmental issues and promote eco-friendly behaviors.",
+            "factor_type": "social",
+            "var_name": "Public Awareness Campaigns"
+        },
+        {
+            "definition": "Programs to protect and preserve endangered species and critical habitats.",
+            "factor_type": "ecological",
+            "var_name": "Conservation Efforts"
+        },
+        {
+            "definition": "Innovation of eco-friendly technologies to reduce environmental impacts and improve efficiency.",
+            "factor_type": "social",
+            "var_name": "Green Technology Development"
+        },
+        {
+            "definition": "None of the above fits",
+            "factor_type": "none",
+            "var_name": "misc"
+        }
+    ],
+    "state": [
+        {
+            "definition": "The concentration of pollutants and particulates in the atmosphere, indicating the health of the air.",
+            "factor_type": "ecological",
+            "var_name": "Air Quality"
+        },
+        {
+            "definition": "The chemical, physical, and biological characteristics of water, determining its suitability for ecosystems and human use.",
+            "factor_type": "ecological",
+            "var_name": "Water Quality"
+        },
+        {
+            "definition": "The health and fertility of soil, including its nutrient content, pH levels, and contamination status.",
+            "factor_type": "ecological",
+            "var_name": "Soil Condition"
+        },
+        {
+            "definition": "The variety and abundance of species within an ecosystem, reflecting its health and resilience.",
+            "factor_type": "ecological",
+            "var_name": "Biodiversity"
+        },
+        {
+            "definition": "The extent of natural or vegetated areas within a region, contributing to ecosystem services and urban health.",
+            "factor_type": "ecological",
+            "var_name": "Green Space Coverage"
+        },
+        {
+            "definition": "The prevailing temperature, precipitation, and weather conditions over a specific timeframe.",
+            "factor_type": "ecological",
+            "var_name": "Climate Patterns"
+        },
+        {
+            "definition": "The number of individuals inhabiting a specific area, affecting resource use and environmental pressures.",
+            "factor_type": "social",
+            "var_name": "Population Density"
+        },
+        {
+            "definition": "The intensity and type of industrial, commercial, and agricultural activities occurring in a region.",
+            "factor_type": "social",
+            "var_name": "Economic Activity Levels"
+        },
+        {
+            "definition": "The amount and types of solid or hazardous waste present in the environment over time.",
+            "factor_type": "ecological",
+            "var_name": "Waste Accumulation"
+        },
+        {
+            "definition": "None of the above fits",
+            "factor_type": "none",
+            "var_name": "misc"
+        }
+    ]
+}
